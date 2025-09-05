@@ -1,6 +1,6 @@
 ﻿[build]
-  functions = "functions"
-  publish   = "."
+  functions = "Athar/functions"
+  publish   = "Athar"
 
 # القاعدة العامة لروابط الموقع
 [[redirects]]
@@ -8,3 +8,4 @@
   to   = "/index.html"
 
   status = 200
+
