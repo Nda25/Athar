@@ -2,15 +2,9 @@
   functions = "functions"
   publish   = "."
 
-# ✅ استثناء صريح لمسار الدوال (لا يُعاد توجيهه للـ index.html)
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to   = "/.netlify/functions/:splat"
-  status = 200
-  force  = true
-
 # القاعدة العامة لروابط الموقع
 [[redirects]]
   from = "/*"
   to   = "/index.html"
+
   status = 200
