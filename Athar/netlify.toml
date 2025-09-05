@@ -1,6 +1,12 @@
 [build]
-  functions = "Athar/functions"
-  publish   = "Athar"
+  functions = "functions"
+  publish   = "."
+
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to   = "/.netlify/functions/:splat"
+  status = 200
+  force  = true
 
 [[redirects]]
   from = "/*"
