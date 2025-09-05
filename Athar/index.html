@@ -1,0 +1,367 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="dark light">
+<title>أثر</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
+  :root{
+    --sea-25:#f0f9ff; --sea-50:#e6f2ff; --sea-100:#d7e9ff; --sea-200:#b9d7ff;
+    --sea-300:#93c5fd; --sea-400:#60a5fa; --sea-500:#3b82f6; --sea-600:#1e40af;
+    --sea-700:#1e3a8a; --sea-800:#172554;
+    --ink:#1e293b; --muted:#475569; --card:#ffffff; --radius:20px;
+  }
+  html.dark{ --card:#0f172a; --ink:#e2e8f0; --muted:#cbd5e1; }
+
+  *{box-sizing:border-box}
+  html{ scroll-behavior:smooth }
+  body{
+    font-family:'Cairo',sans-serif; color:var(--ink); line-height:1.9; font-size:17px;
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 700px at 100% -10%, var(--sea-100), transparent 60%),
+      radial-gradient(1200px 700px at -10% 100%, var(--sea-50), transparent 60%),
+      linear-gradient(180deg, #fff, var(--sea-25) 85%);
+  }
+  html.dark body{
+    background:
+      radial-gradient(1200px 700px at 100% -10%, rgba(59,130,246,.12), transparent 60%),
+      radial-gradient(1200px 700px at -10% 100%, rgba(59,130,246,.10), transparent 60%),
+      linear-gradient(180deg, #0b1220, #111827 85%);
+  }
+
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.10;
+    background-image:url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBvcGFjaXR5PSIwLjg0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0IiBmaWxsPSIjMWUzYThhIi8+PHBhdGggZD0iTTIwIDEyYy0yIDMtNCAzLTYgMHMwLTQgMy02IDYgMCAzIDYiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii4yIi8+PGNpcmNsZSBjeD0iMzYiIGN5PSIzNiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjxwYXRoIGQ9Ik0yOCAzNmMyIDMgNCAzIDYgMHMwLTQtMy02LTYgMC0zIDYiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii4yIi8+PC9nPjwvc3ZnPg==');
+    background-size:48px 48px;
+  }
+  html.dark body::before{ opacity:.07; }
+
+  .card{ background:var(--card); border:1px solid rgba(59,130,246,.22); border-radius:var(--radius); box-shadow:0 18px 50px rgba(0,0,0,.12); }
+  html.dark .card{ border-color:rgba(59,130,246,.32); box-shadow:0 22px 60px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.03) inset }
+
+  .btn-sea{ background:var(--sea-500); color:#fff; font-weight:800; border-radius:12px; padding:.95rem 1.25rem; box-shadow:0 12px 30px rgba(59,130,246,.35); transition:.2s; border:1px solid rgba(0,0,0,.05); }
+  .btn-sea:hover{ background:var(--sea-400); transform:translateY(-1px) }
+  .btn-sea:active{ transform:translateY(0) scale(.98) }
+  .btn-sea[disabled]{ opacity:.7; cursor:not-allowed; }
+  .btn-sea:focus-visible{ outline:3px solid rgba(96,165,250,.55); outline-offset:2px }
+
+  .chip{ display:inline-block; padding:.28rem .65rem; border-radius:999px; background:var(--sea-100); color:#0c4a6e; font-size:.82rem; border:1px solid rgba(59,130,246,.25); }
+  #chips{ display:flex; flex-wrap:wrap; gap:.35rem; justify-content:flex-end; }
+
+  .divider{ height:14px; background:
+    radial-gradient(circle at 6px 7px, var(--sea-500) 3px, transparent 4px) repeat-x left/28px 14px,
+    radial-gradient(circle at 20px 7px, var(--sea-300) 2.4px, transparent 3.6px) repeat-x left/28px 14px;
+    opacity:.35; margin:.6rem 0 1rem; }
+
+  input{
+    background:#fff; color:#0f172a; border:1px solid rgba(59,130,246,.35);
+    border-radius:12px; padding:.9rem 1rem; outline:none; -webkit-appearance:none; appearance:none;
+  }
+  html.dark input{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6; }
+  input::placeholder{ color:#64748b }  
+  html.dark input::placeholder{ color:#cbd5e1; opacity:.85 }
+
+  .select-wrap{ position:relative }
+  .select-wrap .sel{
+    width:100%; background:#fff; color:#0f172a; border:1px solid rgba(59,130,246,.35);
+    border-radius:12px; padding:.9rem 1rem; padding-inline-start:2.2rem; outline:none; -webkit-appearance:none; appearance:none;
+  }
+  html.dark .select-wrap .sel{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6; }
+  .select-wrap .sel:focus-visible{ outline:3px solid rgba(96,165,250,.45); outline-offset:2px }
+  .select-wrap .sel-icon{
+    position:absolute; inset-inline-start:.7rem; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; pointer-events:none; color:#3b82f6;
+  }
+  .select-wrap .sel-icon svg{ width:16px; height:16px; display:block; fill:currentColor }
+  html.dark .select-wrap .sel-icon{ color:#93c5fd }
+
+  .muted{ color:var(--muted) }
+
+  .header-wrap{ position:relative; padding:22px 0 10px; text-align:center }
+  .theme-btn{
+    position:fixed; inset-inline-end:10px; top:10px;
+    padding:.45rem .8rem; border-radius:10px;
+    border:1px solid rgba(59,130,246,.35);
+    background:rgba(255,255,255,.7); backdrop-filter:blur(8px);
+    font-size:.9rem; z-index:50;
+  }
+  html.dark .theme-btn{ background:rgba(17,24,39,.6); border-color:#3b82f6; color:#e2e8f0 }
+
+  .brand-name{ font-weight:800; font-size:3rem; color:#1e40af; text-shadow:0 1px 0 rgba(255,255,255,.55) }
+  .brand-row{ display:flex; align-items:center; justify-content:center; gap:.6rem }
+  .brand-icon svg{ width:28px; height:28px; transform:translateY(2px); fill:var(--sea-500) }
+  .brand-tag{ color:var(--muted); font-weight:700; margin-top:.18rem; }
+  html.dark .brand-name{ color:#93c5fd; }
+  html.dark .brand-tag{ color:#e2e8f0 }
+  @media (max-width: 640px){ .brand-name{ font-size:2.4rem } }
+
+  .soft{ color:#1f4a8a; opacity:.95 }
+  html.dark .soft{ color:#e6f0ff; }
+  .thin{ font-weight:600; letter-spacing:.2px }
+
+  .toast{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    background:rgba(17,24,39,.9); color:#fff; padding:.7rem 1rem; border-radius:10px;
+    box-shadow:0 10px 25px rgba(0,0,0,.25); opacity:0; transition:.22s; z-index:60;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px);}
+</style>
+</head>
+<body class="p-4">
+  <div class="max-w-5xl mx-auto space-y-6">
+
+    <header class="header-wrap">
+      <button id="theme" class="theme-btn">الوضع الداكن</button>
+      <div class="text-center">
+        <div class="brand-row">
+          <span class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2c2.8 0 5 2.2 5 5 0 1.2-.4 2.2-1.1 3.1.7.3 1.5.5 2.3.5 2.2 0 4-1.8 4-4 0-2.7-2.2-4.9-4.9-4.9-2.2 0-4 1.5-4.6 3.5C12.5 2.1 12.2 2 12 2ZM3.8 6.2C5 5 6.8 5 8 6.2c1 1 1.3 2.5.8 3.8C10.1 9.6 11 9.3 12 9.3c3.7 0 6.7 3 6.7 6.7S15.7 22.7 12 22.7 5.3 19.7 5.3 16c0-1 .2-1.9.7-2.8-1.3.5-2.8.2-3.8-.8-1.2-1.2-1.2-3 0-4.2Z"/>
+            </svg>
+          </span>
+          <div class="brand-name">أثَـــــر</div>
+        </div>
+        <div class="brand-tag">حيـن يلتقـي الشغـفُ بالمعرفــــة… يُصنــعُ الأثـــر</div>
+      </div>
+    </header>
+
+    <section id="controls" class="card p-5">
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1">المادة</label>
+        <div class="select-wrap">
+          <select id="subject" class="sel text-lg">
+            <option value="" selected disabled>اختر المادة</option>
+            <option>الفيزياء</option><option>الكيمياء</option><option>الأحياء</option>
+            <option>الرياضيات</option><option>اللغة العربية</option><option>اللغة الإنجليزية</option>
+            <option>التاريخ</option><option>الدراسات الإسلامية</option><option>مهارات رقمية</option>
+            <option>الاجتماعيات</option><option>إدارة الأعمال</option>
+          </select>
+          <span class="sel-icon" aria-hidden="true">
+            <svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">نوع الاستراتيجية (بلوم)</label>
+          <div class="select-wrap">
+            <select id="type" class="sel text-lg">
+              <option>الكل</option><option>تذكّر</option><option>فهم</option><option>تطبيق</option>
+              <option>تحليل</option><option>تقييم</option><option>إبداع</option>
+            </select>
+            <span class="sel-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg>
+            </span>
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium mb-1">اسم الدرس (اختياري)</label>
+          <input id="lesson" placeholder=" مثال: الاتزان الدوراني " class="w-full text-lg">
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 mt-4">
+        <button id="gen" class="btn-sea">ساعدني على الإبداع</button>
+        <span id="status" class="muted text-sm"></span>
+      </div>
+    </section>
+
+    <section id="out" class="card p-6 hidden">
+      <div class="flex items-center justify-between gap-3">
+        <h2 id="title" class="text-2xl font-extrabold"></h2>
+        <div id="chips" class="text-sm"></div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-bold">الأهمية</h3>
+          <p id="importance" class="mt-1"></p>
+        </div>
+        <div>
+          <h3 class="font-bold">مواد/أدوات</h3>
+          <p id="materials" class="mt-1"></p>
+        </div>
+      </div>
+
+      <div class="mt-5 grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-bold">الأهداف</h3>
+          <ul id="goals" class="list-disc pr-6 mt-1"></ul>
+        </div>
+        <div>
+          <h3 class="font-bold">خطوات التطبيق</h3>
+          <ol id="steps" class="list-decimal pr-6 mt-1"></ol>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <h3 class="font-bold">أمثلة عملية</h3>
+        <ul id="examples" class="list-disc pr-6 mt-1"></ul>
+      </div>
+
+      <div class="mt-5 grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-bold">التقويم (Exit Ticket/أدوات)</h3>
+          <p id="assessment" class="mt-1"></p>
+        </div>
+        <div>
+          <h3 class="font-bold">تفريق التعليم</h3>
+          <ul id="diff" class="list-disc pr-6 mt-1"></ul>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <h3 class="font-bold">الأثر المتوقع</h3>
+        <p id="impact" class="mt-1"></p>
+      </div>
+
+      <div class="mt-5">
+        <h3 class="font-bold">المصادر</h3>
+        <ul id="cites" class="list-disc pr-6 mt-1"></ul>
+      </div>
+
+      <div class="mt-6 flex gap-2">
+        <button id="copy" class="btn-sea">نسخ</button>
+      </div>
+    </section>
+
+    <p id="err" class="text-center text-[var(--sea-700)] font-medium hidden">اختر المادة أولاً.</p>
+
+    <footer class="text-center mt-6">
+      <div class="flex items-center justify-center gap-2 soft">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--sea-500)" aria-hidden="true">
+          <path d="M12 2c2.8 0 5 2.2 5 5 0 1.2-.4 2.2-1.1 3.1.7.3 1.5.5 2.3.5 2.2 0 4-1.8 4-4 0-2.7-2.2-4.9-4.9-4.9-2.2 0-4 1.5-4.6 3.5C12.5 2.1 12.2 2 12 2ZM3.8 6.2C5 5 6.8 5 8 6.2c1 1 1.3 2.5.8 3.8C10.1 9.6 11 9.3 12 9.3c3.7 0 6.7 3 6.7 6.7S15.7 22.7 12 22.7 5.3 19.7 5.3 16c0-1 .2-1.9.7-2.8-1.3.5-2.8.2-3.8-.8-1.2-1.2-1.2-3 0-4.2Z"/>
+        </svg>
+        <span class="thin">التعليم شرارةٌ صغيرة… تُضيء عقولًا كبيرة.</span>
+      </div>
+      <div class="mt-2 text-sm soft">مبادرة معلمة الفيزياء: ندى محمد المجيرش</div>
+      <div class="text-sm soft">مدارس التربية النموذجية - الريان</div>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" style="display:none"></div>
+
+<script>
+/* أدوات مساعدة */
+function $(id){return document.getElementById(id);}
+function listTo(el, arr){
+  el.innerHTML = ""; (arr||[]).forEach(function(v){
+    var t=(v||"").toString().trim(); if(!t) return;
+    var li=document.createElement("li"); li.textContent=t; el.appendChild(li);
+  });
+}
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.style.display = "block";
+  requestAnimationFrame(function(){
+    t.classList.add("show");
+    setTimeout(function(){ t.classList.remove("show");
+      setTimeout(function(){ t.style.display="none"; }, 220);
+    }, 2200);
+  });
+}
+function setLoading(btn, isLoading){
+  if(isLoading){ btn.dataset._label=btn.textContent; btn.textContent="نبدع من أجلك "; btn.disabled=true; }
+  else{ btn.textContent=btn.dataset._label||"ساعدني على الإبداع"; btn.disabled=false; }
+}
+
+/* الثيم */
+(function initTheme(){
+  var saved = localStorage.getItem("theme");
+  if(saved === "dark"){ document.documentElement.classList.add("dark"); }
+  $("theme").textContent = document.documentElement.classList.contains("dark") ? "وضع فاتح" : "الوضع الداكن";
+})();
+$("theme").addEventListener("click", function(){
+  document.documentElement.classList.toggle("dark");
+  var isDark = document.documentElement.classList.contains("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+  this.textContent = isDark ? "وضع فاتح" : "الوضع الداكن";
+});
+
+/* نسخ الناتج */
+$("copy").addEventListener("click", function(){
+  var text = document.querySelector("#out").innerText;
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(function(){ toast("تم النسخ ✓"); });
+  }else{
+    var ta=document.createElement("textarea"); ta.value=text;
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("تم النسخ ✓"); }
+    finally{ document.body.removeChild(ta); }
+  }
+});
+
+/* استدعاء فنكشن نتلايفي */
+$("gen").addEventListener("click", async function(){
+  var subject = $("subject").value.trim();
+  var type    = $("type").value.trim();
+  var lesson  = $("lesson").value.trim();
+
+  if(!subject){ $("err").classList.remove("hidden"); toast("اختر المادة أولاً."); return; }
+  $("err").classList.add("hidden");
+  $("status").textContent = "جاري تحويل شغفك إلى استراتيجية ملموسة … ✨";
+  setLoading($("gen"), true);
+
+  try{
+    const res = await fetch("/.netlify/functions/strategy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subject, bloomType: type, lesson })
+    });
+
+    if(!res.ok){
+      const txt = await res.text();
+      throw new Error("خطأ من الخادم: " + res.status + " | " + txt);
+    }
+
+    const data = await res.json();
+    if(!data || !data.strategy_name) throw new Error("استجابة غير مكتملة.");
+
+    $("title").textContent = data.strategy_name || "—";
+    var chips=[]; if(subject) chips.push(subject);
+    if((data.bloom||type)) chips.push(data.bloom||type);
+    if(lesson) chips.push("الدرس: "+lesson);
+    $("chips").innerHTML = chips.map(function(t){return '<span class="chip">'+t+'</span>';}).join("");
+
+    $("importance").textContent = data.importance || "—";
+    $("materials").textContent  = data.materials  || "—";
+    $("assessment").textContent = data.assessment || "—";
+    $("impact").textContent     = data.expected_impact || "—";
+    listTo($("goals"), data.goals);
+    listTo($("steps"), data.steps);
+    listTo($("examples"), data.examples);
+
+    $("diff").innerHTML = "";
+    [["دعم: ",data.diff_support],["أساسي: ",data.diff_core],["تحدّي: ",data.diff_challenge]].forEach(function(pair){
+      var k=pair[0], v=pair[1]; if(v){ var li=document.createElement("li"); li.textContent=k+v; $("diff").appendChild(li); }
+    });
+
+    $("cites").innerHTML = "";
+    (data.citations||[]).forEach(function(c){
+      if (!c.title) return;
+      var li=document.createElement("li"); li.className="mb-3";
+      var strong=document.createElement("strong"); strong.className="font-bold text-[var(--sea-700)]";
+      strong.textContent=c.title; li.appendChild(strong);
+      if(c.benefit){ var p=document.createElement("p"); p.className="text-sm muted pr-4 mt-1"; p.textContent=c.benefit; li.appendChild(p); }
+      $("cites").appendChild(li);
+    });
+
+    $("out").classList.remove("hidden");
+    $("status").textContent = "تم — أنشأت لك استراتيجية تليقٌ بشغفك ✨";
+  }catch(err){
+    console.error(err);
+    $("status").textContent = err.message || "حدث خطأ غير متوقع.";
+    toast("تعذّر التوليد. جرّب مجددًا.");
+  }finally{
+    setLoading($("gen"), false);
+  }
+});
+</script>
+</body>
+</html>
