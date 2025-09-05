@@ -2,11 +2,11 @@
   functions = "functions"
   publish   = "."
 
-# القاعدة العامة لروابط الموقع
 [[redirects]]
   from = "/*"
   to   = "/index.html"
   status = 200
+
 
 
 
