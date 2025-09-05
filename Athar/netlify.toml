@@ -1,11 +1,12 @@
 ﻿[build]
-  functions = "functions"
+  functions = " Athar / functions"
   publish   = "Athar"
 
 [[redirects]]
   from = "/*"
   to   = "/index.html"
   status = 200
+
 
 
 
