@@ -1,26 +1,31 @@
-﻿exports.handler = async (event) => {
+// netlify/functions/strategy.js
+exports.handler = async (event) => {
+  // السماح فقط بـ POST
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // نحاول نقرأ JSON بأمان
+  // قراءة الـ JSON بأمان
   let payload = {};
   try { payload = JSON.parse(event.body || "{}"); }
   catch { return { statusCode: 400, body: "Bad JSON body" }; }
 
   const { subject, bloomType, lesson } = payload;
 
-  // مفتاح Gemini من متغيّرات البيئة في Netlify
-  const API_KEY = process.env.GEMINI_API_KEY;
+  // مفاتيح وإعدادات من البيئة (يمكن تغييرها من لوحة نتلايفي)
+  const API_KEY     = process.env.GEMINI_API_KEY;
+  const MODEL       = process.env.GEMINI_MODEL || "gemini-1.5-flash"; // سريع وثابت
+  const TIMEOUT_MS  = +(process.env.TIMEOUT_MS || 23000);             // 23 ثانية
+  const RETRIES     = +(process.env.RETRIES || 2);                     // محاولتان إضافيتان
+  const BACKOFF_MS  = +(process.env.BACKOFF_MS || 700);               // 700ms, ثم ×2
+
   if (!API_KEY) {
     return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
   }
 
-  const MODEL = "gemini-2.5-flash-preview-05-20";
-
+  // بناء البرومبت (مطابق لكودك)
   const typePart   = (bloomType && bloomType !== "الكل") ? `(تصنيف بلوم: "${bloomType}")` : "";
   const lessonPart = lesson ? `ومناسبة لدرس "${lesson}"` : "";
-
   const prompt =
 `أنا معلمة ثانوي. أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
 اكتبي بطاقة استراتيجية عملية بصيغة JSON بالمفاتيح الآتية:
@@ -33,7 +38,9 @@ citations (مصفوفة كائنات {title, benefit} حيث title هو اسم �
 اللغة: عربية فصحى واضحة، مختصرة ولكن دقيقة، بدون مقدمات إنشائية.`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
-  const body = {
+
+  // جسم الطلب (مطابق لكودك مع نفس الاستجابة المتوقعة)
+  const reqBody = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       responseMimeType: "application/json",
@@ -61,40 +68,96 @@ citations (مصفوفة كائنات {title, benefit} حيث title هو اسم �
     }
   };
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body)
-    });
+  // دالة مساعدة: نوم بسيط
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-    if (!res.ok) {
-      const txt = await res.text(); // ممكن يرجع HTML خطأ
-      return { statusCode: res.status, body: txt };
+  // استدعاء API مع timeout
+  async function callOnce() {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(reqBody),
+        signal: controller.signal
+      });
+
+      const text = await res.text(); // نقرأ كنص أولاً لأي حال
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        err.body = text;
+        throw err;
+      }
+
+      // نحاول تحويل النص لJSON
+      let json;
+      try { json = JSON.parse(text); }
+      catch (e) {
+        const err = new Error("Bad JSON from API");
+        err.status = 502;
+        err.body = text.slice(0, 300);
+        throw err;
+      }
+
+      const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+
+      let data;
+      try { data = JSON.parse(raw); }
+      catch {
+        const err = new Error("Bad model JSON");
+        err.status = 502;
+        err.body = raw.slice(0, 300);
+        throw err;
+      }
+
+      if (!data?.strategy_name) {
+        const err = new Error("Incomplete response from model");
+        err.status = 502;
+        throw err;
+      }
+
+      data._meta = { subject, bloomType: bloomType || "", lesson: lesson || "" };
+      return data;
+
+    } finally {
+      clearTimeout(timer);
     }
+  }
 
-    const json = await res.json();
+  // إعادة محاولات تلقائية للأخطاء القابلة لإعادة المحاولة
+  let attempt = 0;
+  while (true) {
+    try {
+      const data = await callOnce();
+      return {
+        statusCode: 200,
+        headers: { "content-type": "application/json; charset=utf-8" },
+        body: JSON.stringify(data)
+      };
+    } catch (err) {
+      attempt++;
+      const status = err.status || 0;
+      const isTimeout = /timeout|AbortError/i.test(String(err?.message));
+      const retriable = isTimeout || [429,500,502,503,504].includes(status);
 
-    // نستخرج النص الخام ثم نحوله JSON
-    const raw =
-      json?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      if (retriable && attempt <= RETRIES) {
+        // backoff متزايد: 700ms، ثم 1400ms ...
+        await sleep(BACKOFF_MS * attempt);
+        continue;
+      }
 
-    let data;
-    try { data = JSON.parse(raw); }
-    catch { return { statusCode: 502, body: "Bad model JSON: " + raw.slice(0, 300) }; }
+      // لو انقطع بسبب مهلة نُعيد 504 لتكون واضحة
+      if (isTimeout) {
+        return { statusCode: 504, body: "Gateway Timeout: model did not respond in time" };
+      }
 
-    if (!data?.strategy_name) {
-      return { statusCode: 502, body: "Incomplete response from model" };
+      // غير ذلك نُرجع حالة الخادم/نص الخطأ إن وجد
+      const code = status || 500;
+      const body = err.body || String(err.message || err);
+      return { statusCode: code, body };
     }
-
-    data._meta = { subject, bloomType: bloomType || "", lesson: lesson || "" };
-
-    return {
-      statusCode: 200,
-      headers: { "content-type": "application/json; charset=utf-8" },
-      body: JSON.stringify(data)
-    };
-  } catch (err) {
-    return { statusCode: 500, body: String(err?.message || err) };
   }
 };
