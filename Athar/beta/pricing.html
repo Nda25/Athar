@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>الخطط — أثــر</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<meta name="color-scheme" content="dark light">
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
+
+  <!-- الشريط العلوي -->
+  <div class="topbar">
+    <div class="actions">
+      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+      <a class="btn" href="index.html">الرئيسية</a>
+    </div>
+    <div class="user">
+      <span id="nav-auth" style="display:inline-flex; gap:10px">
+        <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
+        <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
+      </span>
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+    </div>
+  </div>
+
+  <!-- الهيدر -->
+  <header>
+    <div class="hero">
+      <div class="hero-plate"></div>
+      <h1 class="logo">أثــر</h1>
+      <div class="tag"><span class="dot"></span>اختر الخطة المناسبة وابدأ</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="card" style="margin-top:-14px">
+        <h2 class="title">الخطط</h2>
+        <p class="lead">كل الخطط تمنحك وصولًا كاملًا للأدوات والمزايا، مع دعم فني ومواد إرشادية.</p>
+        <div id="choose-plan" class="plans" style="margin-top:22px">
+          <div class="plan">
+            <h4>أسبوعي</h4>
+            <div class="price">10 ر.س</div>
+            <button class="btn primary" data-plan="weekly">اشترك الآن</button>
+          </div>
+          <div class="plan">
+            <h4>شهري</h4>
+            <div class="price">30 ر.س</div>
+            <button class="btn primary" data-plan="monthly">اشترك الآن</button>
+          </div>
+          <div class="plan">
+            <h4>نصف سنوي</h4>
+            <div class="price">170 ر.س</div>
+            <button class="btn primary" data-plan="semi">اشترك الآن</button>
+          </div>
+          <div class="plan">
+            <h4>سنوي</h4>
+            <div class="price">340 ر.س</div>
+            <button class="btn primary" data-plan="annual">اشترك الآن</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="box">
+          <h3>ماذا يشمل الاشتراك؟</h3>
+          <p>توليد استراتيجيات وأنشطة وأسئلة، قوالب قابلة للتخصيص، ولوحة تتبّع مبسّطة.</p>
+        </div>
+        <div class="box">
+          <h3>التفعيل الفوري</h3>
+          <p>بعد الاشتراك يتم التحويل مباشرة إلى منصة «أثــر». لاحقًا سنربط الدفع الفعلي بعملية تفعيل تلقائي.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ذيل -->
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
+  </footer>
+
+  <!-- مودالات التسجيل/الدخول موجودة هنا أيضًا -->
+  <div class="modal" id="modal-register" aria-hidden="true">
+    <div class="sheet">
+      <h3>تسجيل حساب جديد</h3>
+      <form id="register-form">
+        <div class="form-row">
+          <div>
+            <label>الاسم الكامل</label>
+            <input name="name" placeholder="مثال: ندى المجيرش" required>
+          </div>
+          <div>
+            <label>رقم الجوال (اختياري)</label>
+            <input name="phone" placeholder="05xxxxxxxx">
+          </div>
+        </div>
+        <label>البريد الإلكتروني</label>
+        <input type="email" name="email" placeholder="name@example.com" required>
+        <label>كلمة المرور</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+        <div class="help">لأغراض التجربة فقط؛ سيُحفظ محليًا.</div>
+        <div class="actions-row">
+          <a href="#" class="btn ghost" data-close>إغلاق</a>
+          <button class="btn primary" type="submit">إنشاء حساب</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="modal-login" aria-hidden="true">
+    <div class="sheet">
+      <h3>تسجيل الدخول</h3>
+      <form id="login-form">
+        <label>الإيميل أو الجوال</label>
+        <input name="identity" placeholder="name@example.com أو 05xxxxxxxx" required>
+        <label>كلمة المرور</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+        <div class="actions-row">
+          <a href="#" class="btn ghost" data-close>إغلاق</a>
+          <button class="btn primary" type="submit">دخول</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
