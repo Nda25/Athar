@@ -1,146 +1,12 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>أثــر — النسخة التجريبية</title>
-
-<!-- الخطوط: العنوان أميري فقط، الباقي كايرو -->
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
-
-<style>
-  :root{
-    /* لوحة كلاسيكية أنيقة */
-    --ink:#0f172a;           /* نص */
-    --muted:#64748b;         /* نص ثانوي */
-    --brand:#1d4ed8;         /* أزرق ملكي */
-    --brand-2:#0ea5e9;       /* أزرق سماوي */
-    --gold:#c8a84e;          /* لمسة ذهبية بسيطة */
-    --bg:#f7f8fc;            /* خلفية فاتحة */
-    --card:#ffffff;          /* كروت */
-    --glass: rgba(255,255,255,.12);
-    --radius: 16px;
-    --shadow: 0 18px 44px rgba(0,0,0,.12);
-  }
-  .dark{
-    --ink:#e5e7eb;
-    --muted:#a5b4fc;
-    --bg:#0b1220;
-    --card:#0f1629;
-    --glass: rgba(255,255,255,.06);
-    --shadow: 0 24px 60px rgba(0,0,0,.55);
-  }
-
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:"Cairo",system-ui,Tahoma,Arial; color:var(--ink);
-    background-color:var(--bg); overflow-x:hidden;
-  }
-
-  /* زخرفة خلفية: نمط نقاط + نجوم + تدرجات هادئة (تظهر في الفاتح والداكن) */
-  .backdrop{
-    position:fixed; inset:-2% -2% 0 -2%; z-index:-2; pointer-events:none;
-    background:
-      radial-gradient(1200px 800px at 100% -120%, #93c5fd33, transparent 60%),
-      radial-gradient(1100px 700px at -10% 0%, #c4b5fd33, transparent 60%),
-      conic-gradient(from 120deg at 50% -20%, #e0f2ff33, #f5f3ff33, #e0f2ff33);
-  }
-  .pattern{
-    position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.55;
-    background:
-      radial-gradient(circle at 20% 30%, #9fb3c44a 1.2px, transparent 1.3px) 0 0/26px 26px,
-      radial-gradient(circle at 80% 70%, #9fb3c44a 1.2px, transparent 1.3px) 0 0/28px 28px;
-    mix-blend-mode: soft-light;
-  }
-  .dark .pattern{ opacity:.28 }
-
-  /* الشريط العلوي */
-  .topbar{
-    position:sticky; top:0; z-index:50;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 18px; backdrop-filter:saturate(160%) blur(12px);
-    background:linear-gradient(90deg, var(--glass), transparent);
-    border-bottom:1px solid #ffffff18;
-  }
-  .actions,.user{display:flex; align-items:center; gap:10px}
-  .btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    padding:10px 14px; border-radius:12px; text-decoration:none;
-    border:1px solid #ffffff22; background:linear-gradient(180deg,#ffffff22,#ffffff10);
-    color:var(--ink); font-weight:700; transition:transform .12s ease, box-shadow .12s ease;
-    box-shadow:0 6px 18px rgba(0,0,0,.06);
-  }
-  .btn:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,0,0,.14) }
-  .btn.primary{
-    color:#fff; border:0; background:linear-gradient(180deg, var(--brand), var(--brand-2));
-    box-shadow:0 14px 40px #1d4ed855;
-  }
-
-  /* الهيدر */
-  header{ position:relative; padding:68px 18px 40px; text-align:center; }
-  .hero{
-    max-width:1100px; margin:0 auto; position:relative;
-  }
-  .hero-plate{
-    position:absolute; inset:-60px -20px auto -20px; height:260px; z-index:-1; border-radius:26px;
-    background:linear-gradient(180deg, #1e40af, #2563eb);
-    box-shadow: inset 0 -1px 0 rgba(255,255,255,.25), 0 22px 60px rgba(29,78,216,.35);
-  }
-  .logo{
-    font-family:"Amiri",serif; font-weight:700;
-    font-size:clamp(46px, 6.4vw, 86px); margin:0;
-    color:#fbfdff; letter-spacing:2px;
-    text-shadow: 0 1px 0 #dbeafe, 0 10px 20px #1d4ed866, 0 30px 60px #1e3a8a55;
-  }
-  .tag{
-    display:inline-flex; align-items:center; gap:8px;
-    margin-top:12px; padding:10px 16px; border-radius:999px;
-    background:linear-gradient(180deg,#ffffff38,#ffffff18);
-    border:1px solid #ffffff35; color:#eef2ff; font-weight:700;
-    backdrop-filter: blur(6px) saturate(160%);
-  }
-  .tag .dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 0 3px #fef9c3aa }
-
-  /* المحتوى */
-  main{ padding:18px }
-  .container{ max-width:980px; margin:0 auto }
-  .card{
-    background:var(--card); border:1px solid #ffffff16; border-radius:var(--radius);
-    padding:24px; box-shadow:var(--shadow);
-  }
-  .title{
-    text-align:center; margin:0 0 10px; color:var(--brand);
-    font-size:clamp(22px,3.6vw,30px); font-weight:800;
-  }
-  .lead{ text-align:center; margin:0; color:var(--ink); opacity:.95 }
-
-  .grid{ display:grid; gap:18px; margin-top:22px; grid-template-columns:1fr }
-  @media(min-width:800px){ .grid{ grid-template-columns:1fr 1fr } }
-
-  .box{
-    background: linear-gradient(180deg, #ffffffcc, #ffffffaa);
-    border:1px solid #e5e7eb66; border-radius:16px; padding:22px;
-    box-shadow:0 12px 30px rgba(0,0,0,.08);
-    transition:transform .18s ease, box-shadow .18s ease;
-  }
-  .dark .box{ background:linear-gradient(180deg,#111827,#0f172a); border-color:#ffffff10 }
-  .box:hover{ transform:translateY(-6px) rotateX(1deg) rotateY(-1deg); box-shadow:0 26px 60px rgba(0,0,0,.20) }
-  .box h3{ margin:0 0 10px; color:#1d4ed8; font-size:20px; }
-  .box p{ margin:0; color:var(--ink); opacity:.92 }
-
-  /* ذيل بسيط */
-  footer{ text-align:center; padding:34px 18px 46px; color:var(--muted) }
-  .foot-line{ margin:0 0 6px; font-size:15px }
-  .foot-name{ margin:0; font-size:14px } /* Cairo */
-
-  /* رابط */
-  a.link{ color:var(--brand); text-decoration:none; font-weight:700 }
-  a.link:hover{ text-decoration:underline }
-
-  .switch{ cursor:pointer }
-</style>
 </head>
 <body>
   <div class="backdrop"></div>
@@ -149,12 +15,15 @@
   <!-- الشريط العلوي -->
   <div class="topbar">
     <div class="actions">
-      <button class="btn switch" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-      <a class="btn primary" href="pricing.html" title="الخطط والاشتراك">اشترك</a>
+      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+      <a class="btn primary" href="#pricing" title="الخطط والاشتراك">اشترك</a>
     </div>
     <div class="user">
-      <a class="btn" href="register.html">تسجيل</a>
-      <a class="btn" href="login.html">دخول</a>
+      <span id="nav-auth" style="display:inline-flex; gap:10px">
+        <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
+        <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
+      </span>
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
     </div>
   </div>
 
@@ -170,7 +39,7 @@
   <main>
     <div class="container">
 
-      <!-- 1) كيف وُلد أثر؟ -->
+      <!-- كيف وُلد أثر؟ -->
       <section class="card" style="margin-top:-14px">
         <h2 class="title">كيف وُلد «أثــر»؟</h2>
         <p class="lead">
@@ -182,7 +51,7 @@
         </p>
       </section>
 
-      <!-- 2) ما هو أثر؟ + 3) كيف يفيدني أثر كمعلم/ة؟ -->
+      <!-- ما هو أثر؟ + كيف يفيدني أثر كمعلم/ة؟ -->
       <section class="grid">
         <div class="box">
           <h3>ما هو «أثــر»؟</h3>
@@ -197,30 +66,94 @@
           <p>
             يوفّر لك قوالب جاهزة قابلة للتعديل، أسئلة متدرجة، بطاقات أنشطة،
             تتبعًا مبسّطًا، وتجارب محدودة عبر أكواد؛ لتصميم درس ثري في دقائق
-            بدل ساعات. <a class="link" href="pricing.html">اطّلع/ي على الخطط</a>.
+            بدل ساعات. <a class="link" href="#pricing">اطّلع/ي على الخطط</a>.
           </p>
+        </div>
+      </section>
+
+      <!-- التسعير -->
+      <section id="pricing" class="card" style="margin-top:18px">
+        <h2 class="title">الخطط</h2>
+        <div id="choose-plan" class="plans">
+          <div class="plan">
+            <h4>أسبوعي</h4>
+            <div class="price">10 ر.س</div>
+            <button class="btn primary" data-plan="weekly">اشترك الآن</button>
+          </div>
+          <div class="plan">
+            <h4>شهري</h4>
+            <div class="price">30 ر.س</div>
+            <button class="btn primary" data-plan="monthly">اشترك الآن</button>
+          </div>
+          <div class="plan">
+            <h4>نصف سنوي</h4>
+            <div class="price">170 ر.س</div>
+            <button class="btn primary" data-plan="semi">اشترك الآن</button>
+          </div>
+          <div class="plan">
+            <h4>سنوي</h4>
+            <div class="price">340 ر.س</div>
+            <button class="btn primary" data-plan="annual">اشترك الآن</button>
+          </div>
         </div>
       </section>
 
     </div>
   </main>
 
-  <!-- ذيل بسيط مثل النسخة الأصلية -->
+  <!-- ذيل -->
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-<script>
-  // حفظ واختيار الوضع (داكن/فاتح)
-  const root = document.documentElement;
-  const saved = localStorage.getItem('athar:theme');
-  if(saved === 'dark'){ root.classList.add('dark'); }
-  document.getElementById('themeToggle').addEventListener('click', ()=>{
-    root.classList.toggle('dark');
-    localStorage.setItem('athar:theme', root.classList.contains('dark') ? 'dark' : 'light');
-  });
-</script>
+  <!-- مودال التسجيل -->
+  <div class="modal" id="modal-register" aria-hidden="true">
+    <div class="sheet">
+      <h3>تسجيل حساب جديد</h3>
+      <form id="register-form">
+        <div class="form-row">
+          <div>
+            <label>الاسم الكامل</label>
+            <input name="name" placeholder="مثال: ندى المجيرش" required>
+          </div>
+          <div>
+            <label>رقم الجوال (اختياري)</label>
+            <input name="phone" placeholder="05xxxxxxxx">
+          </div>
+        </div>
+        <label>البريد الإلكتروني</label>
+        <input type="email" name="email" placeholder="name@example.com" required>
+        <label>كلمة المرور</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+        <div class="help">لأغراض التجربة فقط؛ سيُحفظ محليًا.</div>
+        <div class="actions-row">
+          <a href="#" class="btn ghost" data-close>إغلاق</a>
+          <button class="btn primary" type="submit">إنشاء حساب</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
+  <!-- مودال الدخول -->
+  <div class="modal" id="modal-login" aria-hidden="true">
+    <div class="sheet">
+      <h3>تسجيل الدخول</h3>
+      <form id="login-form">
+        <label>الإيميل أو الجوال</label>
+        <input name="identity" placeholder="name@example.com أو 05xxxxxxxx" required>
+        <label>كلمة المرور</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+        <div class="actions-row">
+          <a href="#" class="btn ghost" data-close>إغلاق</a>
+          <button class="btn primary" type="submit">دخول</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast"></div>
+
+  <script src="app.js"></script>
 </body>
 </html>
