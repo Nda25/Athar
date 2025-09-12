@@ -12,11 +12,11 @@
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- شريط علوي موحّد -->
+  <!-- شريط علوي -->
   <div class="topbar">
     <div class="actions">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-      <a class="btn primary" href="index.html#pricing">اشترك</a>
+      <a class="btn primary" href="pricing.html">الخطط</a>
     </div>
     <div class="user">
       <span id="nav-auth" style="display:inline-flex; gap:10px">
@@ -45,19 +45,28 @@
             <p><strong>الاسم:</strong> <span class="js-user-name">—</span></p>
             <p><strong>البريد:</strong> <span id="u-email">—</span></p>
             <p><strong>الجوال:</strong> <span id="u-phone">—</span></p>
+            <p><strong>المدرسة:</strong> <span id="u-school">—</span></p>
             <p><strong>تاريخ التسجيل:</strong> <span id="u-created">—</span></p>
           </div>
+
           <div class="box">
             <h3>الاشتراك</h3>
             <p id="sub-state" class="badge" style="display:none"></p>
             <p><strong>الخطة:</strong> <span id="s-plan">—</span></p>
             <p><strong>تاريخ البداية:</strong> <span id="s-start">—</span></p>
             <p><strong>تاريخ الانتهاء:</strong> <span id="s-end">—</span></p>
-            <div class="actions-row" style="margin-top:10px">
-              <a class="btn primary" href="index.html#pricing">ترقية / تجديد</a>
+
+            <hr style="margin:14px 0; border:none; border-top:1px solid #e5e7eb44">
+            <h3>التجربة عبر كود</h3>
+            <p><strong>الكود:</strong> <span id="t-code">—</span></p>
+            <p><strong>المتبقّي من التوليدات:</strong> <span id="t-left">—</span></p>
+            <p><strong>انتهاء الصلاحية:</strong> <span id="t-exp">—</span></p>
+            <div class="actions-row" style="margin-top:8px">
+              <button class="btn" id="use-one" type="button">استخدام توليدة</button>
             </div>
           </div>
         </div>
+
         <div class="actions-row" style="margin-top:18px">
           <button id="logout" class="btn">تسجيل الخروج</button>
           <button id="delete" class="btn" style="background:#ef4444;color:#fff;border:0">حذف الحساب</button>
@@ -75,33 +84,33 @@
 
   <script src="app.js"></script>
   <script>
-    // تعبئة بيانات الملف الشخصي
+    // تعبئة الملف الشخصي
     document.addEventListener('DOMContentLoaded', ()=>{
-      if(!localStorage.getItem('athar:auth')){
-        // لو مو مسجل دخول، نرجعه للرئيسية
-        location.href = 'index.html';
-        return;
-      }
+      if(!localStorage.getItem('athar:auth')){ location.href = 'index.html'; return; }
       try{
         const u = JSON.parse(localStorage.getItem('athar:user')||'null');
         const s = JSON.parse(localStorage.getItem('athar:sub')||'null');
+        const t = JSON.parse(localStorage.getItem('athar:trial')||'null');
+
         if(u){
           document.querySelectorAll('.js-user-name').forEach(n=> n.textContent = u.name || '—');
-          document.getElementById('u-email').textContent = u.email || '—';
-          document.getElementById('u-phone').textContent = u.phone || '—';
+          document.getElementById('u-email').textContent   = u.email  || '—';
+          document.getElementById('u-phone').textContent   = u.phone  || '—';
+          document.getElementById('u-school').textContent  = u.school || '—';
           document.getElementById('u-created').textContent = u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-SA') : '—';
         }
         if(s){
           document.getElementById('sub-state').style.display='inline-block';
-          document.getElementById('sub-state').textContent='نشط';
-          const planNames = {weekly:'أسبوعي',monthly:'شهري',semi:'نصف سنوي',annual:'سنوي'};
-          document.getElementById('s-plan').textContent = planNames[s.plan] || '—';
+          const active = new Date() <= new Date(s.endsAt);
+          document.getElementById('sub-state').textContent = active ? 'نشط' : 'منتهي';
+          document.getElementById('s-plan').textContent  = ({weekly:'أسبوعي',monthly:'شهري',semi:'نصف سنوي',annual:'سنوي'})[s.plan] || '—';
           document.getElementById('s-start').textContent = new Date(s.startedAt).toLocaleDateString('ar-SA');
-          document.getElementById('s-end').textContent = new Date(s.endsAt).toLocaleDateString('ar-SA');
-        } else {
-          document.getElementById('s-plan').textContent = '—';
-          document.getElementById('s-start').textContent = '—';
-          document.getElementById('s-end').textContent = '—';
+          document.getElementById('s-end').textContent   = new Date(s.endsAt).toLocaleDateString('ar-SA');
+        }
+        if(t){
+          document.getElementById('t-code').textContent = t.code || '—';
+          document.getElementById('t-left').textContent = (t.remaining ?? '—');
+          document.getElementById('t-exp').textContent  = t.expiresAt ? new Date(t.expiresAt).toLocaleDateString('ar-SA') : '—';
         }
       }catch(e){}
     });
