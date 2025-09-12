@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>أثــر — النسخة التجريبية</title>
 
-<!-- خطوط -->
+<!-- الخطوط: العنوان (أثــر) = Amiri ، بقية النص = Cairo -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
-
 <meta name="color-scheme" content="dark light">
+
 <style>
   :root{
-    --ink:#0f172a;            /* نص أساسي */
-    --muted:#64748b;          /* نص ثانوي */
-    --brand:#2563eb;          /* أزرق أساسي */
-    --brand-2:#4f46e5;        /* أزرق بنفسجي */
-    --bg:#f6f8fc;             /* خلفية فاتحة */
-    --card:#ffffff;           /* خلفية كرت */
+    --ink:#0f172a;           /* نص أساسي */
+    --muted:#64748b;         /* نص ثانوي */
+    --brand:#2563eb;         /* أزرق أساسي */
+    --brand-2:#4f46e5;       /* أزرق بنفسجي */
+    --bg:#f6f8fc;            /* خلفية فاتحة */
+    --card:#ffffff;          /* خلفية كرت */
     --glass: rgba(255,255,255,.12);
     --radius: 16px;
     --shadow: 0 20px 50px rgba(0,0,0,.12);
@@ -35,13 +35,20 @@
   html,body{height:100%}
   body{
     margin:0; font-family:"Cairo",system-ui,Tahoma,Arial; color:var(--ink);
-    background:
-      radial-gradient(1200px 800px at 100% -100%, #8ec5ff22, transparent 60%),
-      radial-gradient(1000px 700px at -10% 0%, #bda6ff22, transparent 60%),
-      conic-gradient(from 120deg at 50% -20%, #e0f2ff33, #f5f3ff33, #e0f2ff33);
     background-color:var(--bg);
     overflow-x:hidden;
   }
+  /* طبقة زخرفة خلفية (نقاط + نجوم خفيفة) */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(1200px 800px at 100% -100%, #8ec5ff22, transparent 60%),
+      radial-gradient(1000px 700px at -10% 0%, #bda6ff22, transparent 60%),
+      conic-gradient(from 120deg at 50% -20%, #e0f2ff33, #f5f3ff33, #e0f2ff33),
+      radial-gradient(circle at 20% 30%, #ffffff55 1.2px, transparent 1.3px) 0 0/26px 26px,
+      radial-gradient(circle at 80% 70%, #ffffff55 1.2px, transparent 1.3px) 0 0/28px 28px;
+  }
+  .dark body::before{ opacity:.3 }
 
   /* شريط علوي */
   .topbar{
@@ -68,13 +75,19 @@
   }
 
   /* الهيدر */
-  header{
-    position:relative; padding:62px 18px 36px; text-align:center;
+  header{ position:relative; padding:62px 18px 36px; text-align:center; }
+  .hero-wrap{ max-width:1100px; margin:0 auto; position:relative; }
+  .hero-bg{
+    position:absolute; inset:-60px -20px auto -20px; height:260px; z-index:-1;
+    border-radius:28px;
+    background: radial-gradient(1200px 300px at 50% 0, #2563ebaa, transparent 70%),
+                linear-gradient(180deg,#2563eb,#4f46e5);
+    filter: saturate(110%);
   }
   .logo{
+    font-family:"Amiri", serif; /* العنوان فقط أميري */
     font-size: clamp(44px, 6vw, 82px);
-    font-weight:800; letter-spacing:2px; margin:0;
-    color:white;
+    font-weight:700; letter-spacing:2px; margin:0; color:white;
     text-shadow:
       0 1px 0 #dbeafe,
       0 8px 18px #2563eb66,
@@ -86,16 +99,6 @@
     background:linear-gradient(180deg,#ffffff33,#ffffff18);
     border:1px solid #ffffff30; color:#eef2ff; font-weight:700;
     backdrop-filter: blur(6px) saturate(160%);
-  }
-  .hero-wrap{
-    max-width:1100px; margin:0 auto; position:relative;
-  }
-  .hero-bg{
-    position:absolute; inset:-60px -20px auto -20px; height:260px; z-index:-1;
-    border-radius:28px;
-    background: radial-gradient(1200px 300px at 50% 0, #2563ebaa, transparent 70%),
-                linear-gradient(180deg,#2563eb,#4f46e5);
-    filter: saturate(110%);
   }
 
   /* أقسام المحتوى */
@@ -133,19 +136,11 @@
   .box h3{ margin:0 0 10px; color:#1d4ed8; font-size:20px; }
   .box p{ margin:0; color:var(--ink); opacity:.92; }
 
-  footer{ text-align:center; padding:34px 18px 46px; }
-  .signature{
-    font-family:"Amiri", serif; font-size: clamp(22px, 3.6vw, 30px);
-    font-weight:700; letter-spacing:.5px;
-    display:inline-block; padding:8px 16px; border-radius:12px;
-    background:linear-gradient(90deg,#fef3c7,#e9d5ff);
-    color:#1f2937; box-shadow:0 10px 30px rgba(0,0,0,.10);
-  }
-  .dark .signature{
-    background:linear-gradient(90deg,#4b5563,#111827);
-    color:#e5e7eb;
-  }
-
+  /* ذيل بسيط مثل النسخة الأصلية */
+  footer{ text-align:center; padding:34px 18px 46px; color:var(--muted) }
+  .tagline{ margin:0 0 6px; font-size:15px; }
+  .signature{ margin:0; font-size:14px; } /* يبقى Cairo افتراضي */
+  
   /* روابط */
   a.link{ color:#2563eb; text-decoration:none; font-weight:700 }
   a.link:hover{ text-decoration:underline }
@@ -168,7 +163,7 @@
     </div>
   </div>
 
-  <!-- هيدر ثلاثي الأبعاد خفيف -->
+  <!-- هيدر -->
   <header>
     <div class="hero-wrap">
       <div class="hero-bg"></div>
@@ -180,7 +175,7 @@
   <main>
     <div class="container">
 
-      <!-- كيف وُلد أثر؟ -->
+      <!-- 1) كيف وُلد أثر؟ -->
       <section class="card" style="margin-top:-20px">
         <h2 class="title">كيف وُلد «أثــر»؟</h2>
         <p class="lead">
@@ -192,23 +187,22 @@
         </p>
       </section>
 
-      <!-- نبذة + صندوق تعريف -->
+      <!-- 2 و 3) ما هو أثر؟ + كيف يفيدني أثر كمعلم/ة؟ -->
       <section class="grid">
         <div class="box">
-          <h3>نبذة مختصرة</h3>
+          <h3>ما هو «أثــر»؟</h3>
           <p>
-            «أثــر» منصة تعليمية ذكية تُولِّد استراتيجيات وأنشطة وأسئلة قابلة للتخصيص،
-            وتتكامل مع أساليب التقويم لتمنح الحصة عمقًا دون تعقيد. الهدف بسيط:
-            تعليمٌ واضح، ممتع، وفعّال.
+            منصة تعليمية ذكية تُولِّد استراتيجيات وأنشطة وأسئلة قابلة للتخصيص،
+            وتتوافق مع مستويات بلوم والتقويم، لتجعل الحصة عميقة وسلسة في آنٍ واحد.
           </p>
         </div>
 
         <div class="box">
-          <h3>ما «أثــر»؟</h3>
+          <h3>كيف يفيدني «أثــر» كمعلم/ة؟</h3>
           <p>
-            أداة تعليمية تدعم المعلم/ـة في تصميم خبرات تعلم ثرية عبر:
-            اقتراحات مهيكلة، أسئلة بمستويات بلوم، بطاقات أنشطة تفاعلية،
-            وضبط حصص تجريبية عبر أكواد محدودة. <a class="link" href="pricing.html">اطّلع على الخطط</a>.
+            يوفّر لك قوالب جاهزة قابلة للتعديل، أسئلة متدرجة، بطاقات أنشطة،
+            تتبعًا مبسّطًا، وتجارب محدودة عبر أكواد؛ لتصميم درس ثري في دقائق
+            بدل ساعات. <a class="link" href="pricing.html">اطّلع/ي على الخطط</a>.
           </p>
         </div>
       </section>
@@ -216,8 +210,10 @@
     </div>
   </main>
 
+  <!-- ذيل بسيط بخط Cairo مثل الموقع الأصلي -->
   <footer>
-    <span class="signature">ندى المجيرش</span>
+    <p class="tagline">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="signature">ندى المجيرش</p>
   </footer>
 
 <script>
