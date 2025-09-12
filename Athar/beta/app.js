@@ -56,6 +56,10 @@ $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
   const m = btn.closest('.modal'); if(m) m.classList.remove('show');
 }));
 
+/* ====== أدوات تحقق ====== */
+function isValidEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x); }
+function isValidPhone(x){ return !x || /^05\d{8}$/.test(x); } // يمرّر لو فاضي، أو 05XXXXXXXX
+
 /* ====== تسجيل جديد ====== */
 function handleRegister(e){
   e.preventDefault();
@@ -65,15 +69,20 @@ function handleRegister(e){
   const phone = f.phone.value.trim();
   const pass  = f.password.value.trim();
 
-  if(!name || !email || !pass){
-    return toast('أكملي الحقول المطلوبة.');
+  if(!name || !email || !pass) return toast('أكملي الحقول المطلوبة.');
+  if(!isValidEmail(email))     return toast('رجاءً اكتبي بريدًا صحيحًا.');
+  if(!isValidPhone(phone))     return toast('رقم الجوال يجب أن يبدأ بـ 05 ويكون 10 أرقام.');
+
+  // لو فيه مستخدم محفوظ من قبل بنفس البريد، امنعي الاستبدال بدون قصد
+  const old = store.user;
+  if(old && old.email && old.email !== email){
+    return toast('يوجد حساب محفوظ. سجّلي خروجًا أو امسحي البيانات قبل إنشاء حساب جديد.');
   }
-  // حفظ المستخدم محليًا
+
   store.user = { name, email, phone, createdAt: new Date().toISOString() };
   store.auth = true;
   closeModal('#modal-register');
   toast('تم إنشاء الحساب ✅');
-  // التحويل إلى أثر العادي
   location.href = ATHAR_APP_URL;
 }
 
@@ -81,13 +90,13 @@ function handleRegister(e){
 function handleLogin(e){
   e.preventDefault();
   const f = e.target;
-  const emailOrPhone = f.identity.value.trim();
-  const pass = f.password.value.trim();
+  const identity = f.identity.value.trim();
+  const pass      = f.password.value.trim();
   const u = store.user;
 
-  if(!u){ return toast('لا يوجد حساب مسجل. أنشئي حسابًا أولًا.'); }
-  const ok = (emailOrPhone === u.email || emailOrPhone === (u.phone||'')); // تماثل مبسط
-  if(!ok || !pass){ return toast('بيانات الدخول غير صحيحة.'); }
+  if(!u) return toast('لا يوجد حساب مسجل. أنشئي حسابًا أولًا.');
+  const ok = (identity === u.email || identity === (u.phone||'')) && !!pass;
+  if(!ok)  return toast('بيانات الدخول غير صحيحة.');
 
   store.auth = true;
   closeModal('#modal-login');
@@ -121,7 +130,7 @@ function subscribe(planKey){
   location.href = ATHAR_APP_URL;
 }
 
-/* ربط الأزرار (إن وُجدت في الصفحة) */
+/* ====== ربط الأزرار (إن وُجدت في الصفحة) ====== */
 function wire(){
   const regForm = $('#register-form');
   if(regForm) regForm.addEventListener('submit', handleRegister);
@@ -138,11 +147,14 @@ function wire(){
 }
 document.addEventListener('DOMContentLoaded', wire);
 
-/* ====== التوست ====== */
+/* ====== التوست (رسائل صغيرة) ====== */
 function toast(msg){
   let t = $('.toast'); if(!t){
-    t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t);
+    t = document.createElement('div'); 
+    t.className = 'toast'; 
+    document.body.appendChild(t);
   }
-  t.textContent = msg; t.classList.add('show');
+  t.textContent = msg; 
+  t.classList.add('show');
   setTimeout(()=> t.classList.remove('show'), 1800);
 }
