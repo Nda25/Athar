@@ -3,113 +3,100 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>منصة أثـر - منطقة التجربة</title>
+  <title>أثــر</title>
   <style>
     body {
-      font-family: system-ui, Tahoma, Arial;
       margin: 0;
-      padding: 0;
+      font-family: "Cairo", Tahoma, sans-serif;
       background: #f9fafb;
       color: #111;
-      line-height: 1.6;
+      line-height: 1.8;
     }
     header {
-      background: #2563eb;
+      text-align: center;
+      padding: 60px 20px 30px;
+      background: linear-gradient(135deg,#2563eb,#60a5fa);
       color: white;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
-    header h1 { margin: 0; font-size: 1.3rem; }
-    nav a {
-      color: white;
-      text-decoration: none;
-      margin-right: 16px;
-      font-weight: bold;
+    header h1 {
+      font-size: 60px;
+      margin: 0;
+      letter-spacing: 3px;
     }
-    .hero {
-      padding: 40px 24px;
+    header p {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+    section {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    section h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: #2563eb;
       text-align: center;
     }
-    .hero h2 {
-      font-size: 1.5rem;
-      margin-bottom: 12px;
+    section p {
+      font-size: 18px;
+      text-align: center;
     }
-    .plans {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
-      gap: 16px;
-      padding: 24px;
-    }
-    .plan {
+    .box {
       background: white;
-      border: 1px solid #ddd;
       border-radius: 12px;
-      padding: 20px;
-      text-align: center;
+      padding: 25px;
+      margin-top: 30px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
-    .plan h3 { margin-top: 0; }
-    .price { font-size: 1.3rem; color: #2563eb; margin: 12px 0; }
-    .btn {
-      display: inline-block;
-      padding: 10px 14px;
-      background: #2563eb;
-      color: white;
-      border-radius: 8px;
-      text-decoration: none;
+    .box h3 {
+      margin-top: 0;
+      color: #1d4ed8;
+      text-align: center;
     }
     footer {
       text-align: center;
-      padding: 20px;
-      margin-top: 30px;
-      font-size: 0.9rem;
+      padding: 30px;
       background: #f1f5f9;
+      margin-top: 50px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #111;
     }
   </style>
 </head>
 <body>
+  <!-- رأس الصفحة -->
+  <header>
+    <h1>أثــر</h1>
+    <p>حين يلتقي الشغف بالمعرفة .. يُصنعُ الأثــر ✨</p>
+  </header>
 
-<header>
-  <h1>منصة أثـر (تجربة)</h1>
-  <nav>
-    <a href="register.html">تسجيل</a>
-    <a href="login.html">دخول</a>
-    <a href="pricing.html">الخطط</a>
-  </nav>
-</header>
+  <!-- كيف وُلد أثر -->
+  <section>
+    <h2>كيف وُلد أثر ؟</h2>
+    <p>
+      كل شيء جميل خلفه قصة، ومشكلتي كانت في طرق التدريس التقليدية 
+      التي لم تُشبع حاجات الطالبات. من هنا بدأت رحلتي لبناء "أثــر" حتى يصبح بين أيديكم اليوم.
+    </p>
+  </section>
 
-<section class="hero">
-  <h2>مرحبًا بك في النسخة التجريبية ✨</h2>
-  <p>هذه نسخة للتجارب فقط، لا تؤثر على موقع أثر الأصلي.</p>
-</section>
+  <!-- نبذة عن أثر -->
+  <section>
+    <h2>نبذة عن أثــر</h2>
+    <div class="box">
+      <h3>أثــر .. أداة تعليمية مبتكرة</h3>
+      <p>
+        "أثــر" منصة تعليمية ذكية، تهدف إلى جعل العملية التعليمية أكثر 
+        تفاعلاً وعمقًا، عبر استراتيجيات مبتكرة تجمع بين التقنية والإبداع،
+        لتترك بصمة حقيقية في عقول الطلاب والمعلمين على حد سواء.
+      </p>
+    </div>
+  </section>
 
-<section class="plans">
-  <div class="plan">
-    <h3>أسبوعي</h3>
-    <div class="price">10 ر.س</div>
-    <a href="register.html" class="btn">اشترك الآن</a>
-  </div>
-  <div class="plan">
-    <h3>شهري</h3>
-    <div class="price">30 ر.س</div>
-    <a href="register.html" class="btn">اشترك الآن</a>
-  </div>
-  <div class="plan">
-    <h3>نصف سنوي</h3>
-    <div class="price">170 ر.س</div>
-    <a href="register.html" class="btn">اشترك الآن</a>
-  </div>
-  <div class="plan">
-    <h3>سنوي</h3>
-    <div class="price">340 ر.س</div>
-    <a href="register.html" class="btn">اشترك الآن</a>
-  </div>
-</section>
-
-<footer>
-  نسخة تجريبية من مشروع أثـر 🚀
-</footer>
-
+  <!-- ذيل -->
+  <footer>
+    ندى المجيرش
+  </footer>
 </body>
 </html>
