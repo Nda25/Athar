@@ -1,19 +1,20 @@
 /* ====== إعدادات عامة ====== */
-const ATHAR_APP_URL = "https://n-athar.co"; // رابط "أثر" الأساسي بعد الدخول/الاشتراك
-const PRICING_URL   = "pricing.html";       // صفحة الخطط
+const ATHAR_APP_URL = "https://n-athar.co";
+const PRICING_URL   = "pricing.html";
 
-/* ====== وصول المالك (دخول بلا قيود) ======
-   ضعي بريدك/جوالك هنا ليتم منحك وصولًا دائمًا.
-   أو عيّني مفتاحًا سريًّا (OWNER_KEY)؛ إذا أُدخل ككود تسجيل يفعّل وضع "مالك" لهذا الجهاز.
-*/
-const OWNER_EMAILS = [/* "you@example.com" */];
-const OWNER_PHONES = [/* "05xxxxxxxxx"  */];
-const OWNER_KEY    = ""; // مثال: "ATHAR-SECRET-2025" (اتركيه فارغًا لتعطيله)
+/* سكربت Google — الصقي القيم من نشر الـ Web App */
+const GAS_ENDPOINT = "PUT_YOUR_WEB_APP_URL_HERE"; // مثل: https://script.google.com/macros/s/AKfycbx.../exec
+const GAS_API_KEY  = "PUT_A_STRONG_SECRET_KEY_HERE"; // نفسه الموجود في Apps Script
+
+/* وصول المالك (دخول بلا قيود) */
+const OWNER_EMAILS = [];
+const OWNER_PHONES = [];
+const OWNER_KEY    = ""; // مفتاح اختياري يمنح وضع المالك عند إدخاله ككود
 
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-/* ====== إدارة الوضع الداكن/الفاتح ====== */
+/* ====== الوضع الداكن ====== */
 (function themeInit(){
   const root = document.documentElement;
   const saved = localStorage.getItem('athar:theme');
@@ -39,25 +40,21 @@ const store = {
   set auth(v){ localStorage.setItem('athar:auth', v ? '1' : '0'); },
   get owner(){ return localStorage.getItem('athar:owner') === '1'; },
   set owner(v){ localStorage.setItem('athar:owner', v ? '1' : '0'); },
-  // استخدام محلي لعدد المستفيدين من كل كود (للجهاز الحالي)
   get codesUsers(){ try{ return JSON.parse(localStorage.getItem('athar:codes-users')||'{}'); }catch{return {}; } },
   set codesUsers(obj){ localStorage.setItem('athar:codes-users', JSON.stringify(obj)); },
-
   clear(){
     localStorage.removeItem('athar:user');
     localStorage.removeItem('athar:sub');
     localStorage.removeItem('athar:trial');
     localStorage.removeItem('athar:auth');
-    // لا نحذف athar:owner عمداً
   }
 };
 
-/* ====== تهيئة الشريط العلوي ====== */
+/* ====== تهيئة الشريط ====== */
 (function navbarState(){
   const navAuth = $('#nav-auth');
   const profileLink = $('#nav-profile');
   if(!navAuth || !profileLink) return;
-
   if(store.auth && store.user){
     navAuth.style.display = 'none';
     profileLink.style.display = 'inline-flex';
@@ -68,7 +65,7 @@ const store = {
   }
 })();
 
-/* ====== نافذة منبثقة عامة ====== */
+/* ====== نافذة منبثقة ====== */
 function openModal(id){ $(id).classList.add('show'); }
 function closeModal(id){ $(id).classList.remove('show'); }
 $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
@@ -76,28 +73,24 @@ $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
   const m = btn.closest('.modal'); if(m) m.classList.remove('show');
 }));
 
-/* ====== التحقق من الإدخالات ====== */
+/* ====== تحقق إدخال ====== */
 function isValidEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x); }
-function isValidPhone(x){ return /^05\d{8}$/.test(x); } // 05XXXXXXXX
+function isValidPhone(x){ return /^05\d{8}$/.test(x); }
 
-/* ====== أكواد التجربة (إعدادات) ======
-   maxUsers: أقصى عدد مستفيدين من الكود (محليًا على هذا الجهاز فقط هنا)
-   perUserGenerations: عدد التوليدات لكل مستخدم
-   expiresAt: تاريخ الانتهاء (توقيت الرياض +03:00)
-*/
+/* ====== أكواد التجربة ====== */
 const CODES = {
   "IBNROSHD": { maxUsers: 100, perUserGenerations: 10, expiresAt: "2026-01-31T23:59:59+03:00" },
   "TNS":      { maxUsers: 100, perUserGenerations: 20, expiresAt: "2026-01-31T23:59:59+03:00" }
 };
 const PLAN_NAMES = { weekly:"أسبوعي", monthly:"شهري", semi:"نصف سنوي", annual:"سنوي" };
 
-/* ====== صلاحيات الوصول ====== */
+/* ====== الصلاحيات ====== */
 function isOwner(){
   const u = store.user;
   if(!u) return false;
   if(OWNER_EMAILS.includes(u.email)) return true;
   if(OWNER_PHONES.includes(u.phone)) return true;
-  return store.owner; // مفعّل عبر OWNER_KEY لهذا الجهاز
+  return store.owner;
 }
 function isSubActive(){
   const s = store.sub; if(!s) return false;
@@ -114,24 +107,29 @@ function hasAccess(){
   return store.auth && (isOwner() || isSubActive() || isTrialActive());
 }
 
-/* ====== تفعيل كود تجربة للمستخدم ====== */
+/* ====== الإرسال إلى Google Sheets ====== */
+async function logToCRM(payload){
+  if(!GAS_ENDPOINT || !GAS_API_KEY) return; // لو ما ضبطناه، نتجاهل الإرسال
+  const body = { apiKey: GAS_API_KEY, ua: navigator.userAgent, ...payload };
+  try{
+    await fetch(GAS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(body)
+    });
+  }catch(_){}
+}
+
+/* ====== تفعيل كود تجربة ====== */
 function redeemCode(codeRaw){
   const code = (codeRaw||"").trim().toUpperCase();
   if(!code) return { ok:false, msg:"أدخلي الكود." };
-
-  // مفتاح المالك
-  if(OWNER_KEY && code === OWNER_KEY){
-    store.owner = true;
-    return { ok:true, owner:true, msg:"تم منحك صلاحيات المالك." };
-  }
+  if(OWNER_KEY && code === OWNER_KEY){ store.owner = true; return { ok:true, owner:true, msg:"تم منحك صلاحيات المالك." }; }
 
   const cfg = CODES[code];
   if(!cfg) return { ok:false, msg:"الكود غير معروف." };
-
-  // انتهاء الصلاحية؟
   if(new Date() > new Date(cfg.expiresAt)) return { ok:false, msg:"انتهت صلاحية هذا الكود." };
 
-  // تحقق "محلي" لعدد المستفيدين
   const usage = store.codesUsers;
   const usedList = Array.isArray(usage[code]) ? usage[code] : [];
   const email = store.user?.email || "";
@@ -140,13 +138,11 @@ function redeemCode(codeRaw){
     return { ok:false, msg:"اكتمل عدد المستفيدين من هذا الكود." };
   }
 
-  // لا تمنح مرتين لنفس المستخدم
   const cur = store.trial;
   if(cur && cur.code === code && isTrialActive()){
     return { ok:true, msg:"الكود مفعّل لديك مسبقًا." };
   }
 
-  // منح التجربة
   store.trial = {
     code,
     remaining: cfg.perUserGenerations,
@@ -154,25 +150,40 @@ function redeemCode(codeRaw){
     expiresAt: cfg.expiresAt
   };
 
-  // حدّث قائمة المستفيدين "محليًا"
   if(!usedList.includes(email)) usedList.push(email);
   usage[code] = usedList;
   store.codesUsers = usage;
 
+  // سجلّ في الـ CRM
+  logToCRM({
+    action: 'trial_redeem',
+    userId: email,
+    email, phone: store.user?.phone || '', school: store.user?.school || '',
+    promo: code, trialCode: code, trialRemaining: cfg.perUserGenerations, trialExpiresAt: cfg.expiresAt
+  });
+
   return { ok:true, msg:"تم تفعيل الكود بنجاح." };
 }
 
-/* ====== استهلاك توليدة من التجربة ====== */
+/* استهلاك توليدة */
 function consumeGeneration(n=1){
   const t = store.trial;
-  if(!t) return toast('لا توجد تجربة مفعّلة.');
-  if(!isTrialActive()) return toast('انتهت صلاحية التجربة.');
+  if(!t){ toast('لا توجد تجربة مفعّلة.'); return; }
+  if(!isTrialActive()){ toast('انتهت صلاحية التجربة.'); return; }
   t.remaining = Math.max(0, (t.remaining||0) - n);
   store.trial = t;
   toast(`تم استخدام ${n} توليدة. المتبقّي: ${t.remaining}`);
-  // تحديث حي في صفحة الملف الشخصي
+
+  // تحديث ملف شخصي
   const leftEl = $('#t-left'); if(leftEl) leftEl.textContent = t.remaining;
   if(t.remaining === 0){ const ss = $('#sub-state'); if(ss){ ss.textContent = 'منتهي'; ss.style.background='#fee2e2'; ss.style.color='#991b1b'; ss.style.borderColor='#fecaca'; } }
+
+  logToCRM({
+    action: 'generation_consume',
+    userId: store.user?.email || '',
+    email: store.user?.email || '', phone: store.user?.phone || '', school: store.user?.school || '',
+    code: t.code, used: n, remaining: t.remaining, trialExpiresAt: t.expiresAt
+  });
 }
 
 /* ====== التسجيل ====== */
@@ -185,6 +196,7 @@ function handleRegister(e){
   const school  = f.school.value.trim();
   const pass    = f.password.value.trim();
   const promo   = (f.promo?.value || "").trim();
+  const consent = !!f.consent?.checked;
 
   if(!name || !email || !phone || !school || !pass) return toast('كل الحقول مطلوبة.');
   if(!isValidEmail(email)) return toast('رجاءً اكتبي بريدًا صحيحًا.');
@@ -195,25 +207,40 @@ function handleRegister(e){
     return toast('يوجد حساب محفوظ. سجّلي خروجًا أو امسحي البيانات قبل إنشاء حساب جديد.');
   }
 
-  store.user = { name, email, phone, school, createdAt: new Date().toISOString() };
+  const createdAt = new Date().toISOString();
+  store.user = { name, email, phone, school, marketingConsent: consent, createdAt };
   store.auth = true;
 
-  // لو فيه كود
+  // كود
+  let trialInfo = null;
   if(promo){
     const r = redeemCode(promo);
-    if(!r.ok) { toast(r.msg); } else { toast(r.msg); }
+    trialInfo = r.ok ? store.trial : null;
+    toast(r.msg);
   }
 
   closeModal('#modal-register');
 
-  // توجيه بناءً على الصلاحية
+  // سجّل في الـ CRM
+  logToCRM({
+    action: 'register',
+    userId: email,
+    name, email, phone, school,
+    marketingConsent: consent,
+    promo,
+    trialCode: trialInfo?.code || '',
+    trialRemaining: trialInfo?.remaining ?? '',
+    trialExpiresAt: trialInfo?.expiresAt || '',
+    createdAt
+  });
+
   setTimeout(()=>{
     if(hasAccess()) location.href = ATHAR_APP_URL;
     else            location.href = PRICING_URL;
   }, 200);
 }
 
-/* ====== الدخول (إيميل + جوال + مرور) ====== */
+/* ====== الدخول ====== */
 function handleLogin(e){
   e.preventDefault();
   const f = e.target;
@@ -229,6 +256,8 @@ function handleLogin(e){
   store.auth = true;
   closeModal('#modal-login');
 
+  logToCRM({ action:'login', userId: email, email, phone, school: u.school || '' });
+
   if(hasAccess()){
     toast('تم تسجيل الدخول ✅');
     setTimeout(()=> location.href = ATHAR_APP_URL, 200);
@@ -238,12 +267,9 @@ function handleLogin(e){
   }
 }
 
-/* ====== الاشتراك (تنشيط خطة) ====== */
+/* ====== الاشتراك ====== */
 function subscribe(planKey){
-  if(!store.auth || !store.user){
-    openModal('#modal-register'); // لازم تسجيل
-    return;
-  }
+  if(!store.auth || !store.user){ openModal('#modal-register'); return; }
   const start = new Date();
   const end = new Date(start);
   if(planKey==='weekly')  end.setDate(end.getDate()+7);
@@ -253,38 +279,49 @@ function subscribe(planKey){
 
   store.sub = { plan: planKey, startedAt: start.toISOString(), endsAt: end.toISOString() };
 
+  // سجل اشتراك (amount: نضيفه لاحقًا عند ربط الدفع)
+  logToCRM({
+    action:'subscribe',
+    userId: store.user.email,
+    email: store.user.email,
+    phone: store.user.phone,
+    school: store.user.school,
+    plan: planKey,
+    amount: 0,
+    startAt: start.toISOString(),
+    endsAt: end.toISOString(),
+    note: 'local activation'
+  });
+
   toast('تم تفعيل الاشتراك ✅');
   setTimeout(()=> location.href = ATHAR_APP_URL, 250);
 }
 
 /* ====== خروج/حذف ====== */
 function logout(){
+  const email = store.user?.email || '';
   store.auth = false;
+  logToCRM({ action:'logout', userId: email, email });
   toast('تم تسجيل الخروج');
   setTimeout(()=>location.href='index.html', 400);
 }
 function deleteAccount(){
+  const email = store.user?.email || '';
   store.clear();
+  logToCRM({ action:'delete', userId: email, email });
   toast('تم حذف الحساب نهائيًا');
   setTimeout(()=>location.href='index.html', 500);
 }
 
-/* ====== ربط الأزرار ====== */
+/* ====== ربط ====== */
 function wire(){
   const regForm = $('#register-form'); if(regForm) regForm.addEventListener('submit', handleRegister);
   const loginForm = $('#login-form'); if(loginForm) loginForm.addEventListener('submit', handleLogin);
-
-  $$('#choose-plan [data-plan]').forEach(btn=>{
-    btn.addEventListener('click', ()=> subscribe(btn.getAttribute('data-plan')));
-  });
-
+  $$('#choose-plan [data-plan]').forEach(btn=> btn.addEventListener('click', ()=> subscribe(btn.getAttribute('data-plan'))));
   const lo = $('#logout'); if(lo) lo.addEventListener('click', logout);
   const del = $('#delete'); if(del) del.addEventListener('click', deleteAccount);
-
-  // زر استخدام توليدة (اختياري في الملف الشخصي)
   const useOne = $('#use-one'); if(useOne) useOne.addEventListener('click', ()=> consumeGeneration(1));
 
-  // شارة حالة الاشتراك/التجربة في الملف الشخصي
   const badge = $('#sub-state');
   if(badge){
     const active = (isSubActive() || isTrialActive() || isOwner());
@@ -300,7 +337,7 @@ function wire(){
 }
 document.addEventListener('DOMContentLoaded', wire);
 
-/* ====== توست رسائل صغيرة ====== */
+/* ====== توست ====== */
 function toast(msg){
   let t = $('.toast'); 
   if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
