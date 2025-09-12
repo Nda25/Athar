@@ -40,7 +40,7 @@
     <div class="container">
       <section class="card" style="margin-top:-14px">
         <h2 class="title">الخطط</h2>
-        <p class="lead">كل الخطط تمنحك وصولًا كاملًا للأدوات والمزايا، مع دعم فني ومواد إرشادية.</p>
+        <p class="lead">كل الخطط تمنحك وصولًا كاملًا للأدوات والمزايا.</p>
         <div id="choose-plan" class="plans" style="margin-top:22px">
           <div class="plan">
             <h4>أسبوعي</h4>
@@ -72,19 +72,18 @@
         </div>
         <div class="box">
           <h3>التفعيل الفوري</h3>
-          <p>بعد الاشتراك يتم التحويل مباشرة إلى منصة «أثــر». لاحقًا سنربط الدفع الفعلي بعملية تفعيل تلقائي.</p>
+          <p>بعد اختيار الخطة يتم التفعيل والتحويل مباشرة إلى منصة «أثــر».</p>
         </div>
       </section>
     </div>
   </main>
 
-  <!-- ذيل -->
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-  <!-- مودالات التسجيل/الدخول موجودة هنا أيضًا -->
+  <!-- نفس مودالات التسجيل/الدخول -->
   <div class="modal" id="modal-register" aria-hidden="true">
     <div class="sheet">
       <h3>تسجيل حساب جديد</h3>
@@ -95,15 +94,26 @@
             <input name="name" placeholder="مثال: ندى المجيرش" required>
           </div>
           <div>
-            <label>رقم الجوال (اختياري)</label>
-            <input name="phone" placeholder="05xxxxxxxx">
+            <label>رقم الجوال</label>
+            <input name="phone" placeholder="05xxxxxxxx" required>
           </div>
         </div>
-        <label>البريد الإلكتروني</label>
-        <input type="email" name="email" placeholder="name@example.com" required>
+        <div class="form-row">
+          <div>
+            <label>البريد الإلكتروني</label>
+            <input type="email" name="email" placeholder="name@example.com" required>
+          </div>
+          <div>
+            <label>اسم المدرسة</label>
+            <input name="school" placeholder="مدرستك" required>
+          </div>
+        </div>
         <label>كلمة المرور</label>
         <input type="password" name="password" placeholder="••••••••" required>
-        <div class="help">لأغراض التجربة فقط؛ سيُحفظ محليًا.</div>
+
+        <label style="margin-top:10px">الكود (اختياري)</label>
+        <input name="promo" placeholder="مثال: Ibnroshd أو TNS">
+
         <div class="actions-row">
           <a href="#" class="btn ghost" data-close>إغلاق</a>
           <button class="btn primary" type="submit">إنشاء حساب</button>
@@ -116,8 +126,16 @@
     <div class="sheet">
       <h3>تسجيل الدخول</h3>
       <form id="login-form">
-        <label>الإيميل أو الجوال</label>
-        <input name="identity" placeholder="name@example.com أو 05xxxxxxxx" required>
+        <div class="form-row">
+          <div>
+            <label>البريد الإلكتروني</label>
+            <input name="email" placeholder="name@example.com" required>
+          </div>
+          <div>
+            <label>رقم الجوال</label>
+            <input name="phone" placeholder="05xxxxxxxx" required>
+          </div>
+        </div>
         <label>كلمة المرور</label>
         <input type="password" name="password" placeholder="••••••••" required>
         <div class="actions-row">
@@ -129,7 +147,6 @@
   </div>
 
   <div class="toast"></div>
-
   <script src="app.js"></script>
 </body>
 </html>
