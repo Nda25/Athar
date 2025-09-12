@@ -2,156 +2,151 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>أثــر — النسخة التجريبية</title>
 
-<!-- الخطوط: العنوان (أثــر) = Amiri ، بقية النص = Cairo -->
+<!-- الخطوط: العنوان أميري فقط، الباقي كايرو -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
 <meta name="color-scheme" content="dark light">
 
 <style>
   :root{
-    --ink:#0f172a;           /* نص أساسي */
+    /* لوحة كلاسيكية أنيقة */
+    --ink:#0f172a;           /* نص */
     --muted:#64748b;         /* نص ثانوي */
-    --brand:#2563eb;         /* أزرق أساسي */
-    --brand-2:#4f46e5;       /* أزرق بنفسجي */
-    --bg:#f6f8fc;            /* خلفية فاتحة */
-    --card:#ffffff;          /* خلفية كرت */
+    --brand:#1d4ed8;         /* أزرق ملكي */
+    --brand-2:#0ea5e9;       /* أزرق سماوي */
+    --gold:#c8a84e;          /* لمسة ذهبية بسيطة */
+    --bg:#f7f8fc;            /* خلفية فاتحة */
+    --card:#ffffff;          /* كروت */
     --glass: rgba(255,255,255,.12);
     --radius: 16px;
-    --shadow: 0 20px 50px rgba(0,0,0,.12);
+    --shadow: 0 18px 44px rgba(0,0,0,.12);
   }
-  /* وضع داكن */
   .dark{
     --ink:#e5e7eb;
     --muted:#a5b4fc;
     --bg:#0b1220;
     --card:#0f1629;
-    --glass: rgba(255,255,255,.05);
-    --shadow: 0 20px 60px rgba(0,0,0,.5);
+    --glass: rgba(255,255,255,.06);
+    --shadow: 0 24px 60px rgba(0,0,0,.55);
   }
 
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
     margin:0; font-family:"Cairo",system-ui,Tahoma,Arial; color:var(--ink);
-    background-color:var(--bg);
-    overflow-x:hidden;
+    background-color:var(--bg); overflow-x:hidden;
   }
-  /* طبقة زخرفة خلفية (نقاط + نجوم خفيفة) */
-  body::before{
-    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-    background:
-      radial-gradient(1200px 800px at 100% -100%, #8ec5ff22, transparent 60%),
-      radial-gradient(1000px 700px at -10% 0%, #bda6ff22, transparent 60%),
-      conic-gradient(from 120deg at 50% -20%, #e0f2ff33, #f5f3ff33, #e0f2ff33),
-      radial-gradient(circle at 20% 30%, #ffffff55 1.2px, transparent 1.3px) 0 0/26px 26px,
-      radial-gradient(circle at 80% 70%, #ffffff55 1.2px, transparent 1.3px) 0 0/28px 28px;
-  }
-  .dark body::before{ opacity:.3 }
 
-  /* شريط علوي */
+  /* زخرفة خلفية: نمط نقاط + نجوم + تدرجات هادئة (تظهر في الفاتح والداكن) */
+  .backdrop{
+    position:fixed; inset:-2% -2% 0 -2%; z-index:-2; pointer-events:none;
+    background:
+      radial-gradient(1200px 800px at 100% -120%, #93c5fd33, transparent 60%),
+      radial-gradient(1100px 700px at -10% 0%, #c4b5fd33, transparent 60%),
+      conic-gradient(from 120deg at 50% -20%, #e0f2ff33, #f5f3ff33, #e0f2ff33);
+  }
+  .pattern{
+    position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.55;
+    background:
+      radial-gradient(circle at 20% 30%, #9fb3c44a 1.2px, transparent 1.3px) 0 0/26px 26px,
+      radial-gradient(circle at 80% 70%, #9fb3c44a 1.2px, transparent 1.3px) 0 0/28px 28px;
+    mix-blend-mode: soft-light;
+  }
+  .dark .pattern{ opacity:.28 }
+
+  /* الشريط العلوي */
   .topbar{
     position:sticky; top:0; z-index:50;
     display:flex; align-items:center; justify-content:space-between;
-    padding:14px 18px; backdrop-filter:saturate(160%) blur(12px);
+    padding:12px 18px; backdrop-filter:saturate(160%) blur(12px);
     background:linear-gradient(90deg, var(--glass), transparent);
     border-bottom:1px solid #ffffff18;
   }
-  .actions, .user{
-    display:flex; align-items:center; gap:10px;
-  }
+  .actions,.user{display:flex; align-items:center; gap:10px}
   .btn{
-    display:inline-flex; align-items:center; justify-content:center;
-    gap:8px; padding:10px 14px; border-radius:12px; text-decoration:none;
-    border:1px solid #ffffff22; background:linear-gradient(180deg,#ffffff22,#ffffff12);
-    color:var(--ink); font-weight:700; transition: transform .12s ease, box-shadow .12s ease;
-    box-shadow: 0 6px 20px rgba(0,0,0,.06);
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:10px 14px; border-radius:12px; text-decoration:none;
+    border:1px solid #ffffff22; background:linear-gradient(180deg,#ffffff22,#ffffff10);
+    color:var(--ink); font-weight:700; transition:transform .12s ease, box-shadow .12s ease;
+    box-shadow:0 6px 18px rgba(0,0,0,.06);
   }
-  .btn:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,0,0,.12); }
-  .btn.primary{ color:white; border-color:transparent; background:
-    linear-gradient(180deg, var(--brand), var(--brand-2));
-    box-shadow:0 14px 40px #2563eb55;
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,0,0,.14) }
+  .btn.primary{
+    color:#fff; border:0; background:linear-gradient(180deg, var(--brand), var(--brand-2));
+    box-shadow:0 14px 40px #1d4ed855;
   }
 
   /* الهيدر */
-  header{ position:relative; padding:62px 18px 36px; text-align:center; }
-  .hero-wrap{ max-width:1100px; margin:0 auto; position:relative; }
-  .hero-bg{
-    position:absolute; inset:-60px -20px auto -20px; height:260px; z-index:-1;
-    border-radius:28px;
-    background: radial-gradient(1200px 300px at 50% 0, #2563ebaa, transparent 70%),
-                linear-gradient(180deg,#2563eb,#4f46e5);
-    filter: saturate(110%);
+  header{ position:relative; padding:68px 18px 40px; text-align:center; }
+  .hero{
+    max-width:1100px; margin:0 auto; position:relative;
+  }
+  .hero-plate{
+    position:absolute; inset:-60px -20px auto -20px; height:260px; z-index:-1; border-radius:26px;
+    background:linear-gradient(180deg, #1e40af, #2563eb);
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,.25), 0 22px 60px rgba(29,78,216,.35);
   }
   .logo{
-    font-family:"Amiri", serif; /* العنوان فقط أميري */
-    font-size: clamp(44px, 6vw, 82px);
-    font-weight:700; letter-spacing:2px; margin:0; color:white;
-    text-shadow:
-      0 1px 0 #dbeafe,
-      0 8px 18px #2563eb66,
-      0 28px 60px #1e3a8a55;
-    transform: perspective(800px) translateZ(20px);
+    font-family:"Amiri",serif; font-weight:700;
+    font-size:clamp(46px, 6.4vw, 86px); margin:0;
+    color:#fbfdff; letter-spacing:2px;
+    text-shadow: 0 1px 0 #dbeafe, 0 10px 20px #1d4ed866, 0 30px 60px #1e3a8a55;
   }
-  .ribbon{
-    display:inline-block; margin-top:10px; padding:8px 14px; border-radius:999px;
-    background:linear-gradient(180deg,#ffffff33,#ffffff18);
-    border:1px solid #ffffff30; color:#eef2ff; font-weight:700;
+  .tag{
+    display:inline-flex; align-items:center; gap:8px;
+    margin-top:12px; padding:10px 16px; border-radius:999px;
+    background:linear-gradient(180deg,#ffffff38,#ffffff18);
+    border:1px solid #ffffff35; color:#eef2ff; font-weight:700;
     backdrop-filter: blur(6px) saturate(160%);
   }
+  .tag .dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 0 3px #fef9c3aa }
 
-  /* أقسام المحتوى */
-  main{ padding:18px; }
-  .container{ max-width:980px; margin:0 auto; }
+  /* المحتوى */
+  main{ padding:18px }
+  .container{ max-width:980px; margin:0 auto }
   .card{
-    background:var(--card); border:1px solid #ffffff15;
-    border-radius:var(--radius); padding:22px 22px;
-    box-shadow: var(--shadow);
-    transform: perspective(1200px) translateZ(0);
+    background:var(--card); border:1px solid #ffffff16; border-radius:var(--radius);
+    padding:24px; box-shadow:var(--shadow);
   }
   .title{
-    font-size: clamp(22px, 3.8vw, 30px);
-    margin:0 0 10px; color:#2563eb; text-align:center; font-weight:800;
+    text-align:center; margin:0 0 10px; color:var(--brand);
+    font-size:clamp(22px,3.6vw,30px); font-weight:800;
   }
-  .lead{ text-align:center; margin:0; color:var(--ink); opacity:.92; }
+  .lead{ text-align:center; margin:0; color:var(--ink); opacity:.95 }
 
-  .grid{
-    display:grid; gap:18px; margin-top:22px;
-    grid-template-columns: 1fr;
-  }
-  @media(min-width:800px){ .grid{ grid-template-columns: 1fr 1fr; } }
+  .grid{ display:grid; gap:18px; margin-top:22px; grid-template-columns:1fr }
+  @media(min-width:800px){ .grid{ grid-template-columns:1fr 1fr } }
 
   .box{
     background: linear-gradient(180deg, #ffffffcc, #ffffffaa);
-    border:1px solid #e5e7eb55; border-radius:16px; padding:22px;
-    box-shadow: 0 12px 30px rgba(0,0,0,.08);
-    transition: transform .18s ease, box-shadow .18s ease;
+    border:1px solid #e5e7eb66; border-radius:16px; padding:22px;
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+    transition:transform .18s ease, box-shadow .18s ease;
   }
-  .dark .box{
-    background:linear-gradient(180deg,#0f172a,#0b1220);
-    border-color:#ffffff10;
-  }
-  .box:hover{ transform:translateY(-6px) rotateX(1deg) rotateY(-1deg); box-shadow:0 26px 60px rgba(0,0,0,.18); }
+  .dark .box{ background:linear-gradient(180deg,#111827,#0f172a); border-color:#ffffff10 }
+  .box:hover{ transform:translateY(-6px) rotateX(1deg) rotateY(-1deg); box-shadow:0 26px 60px rgba(0,0,0,.20) }
   .box h3{ margin:0 0 10px; color:#1d4ed8; font-size:20px; }
-  .box p{ margin:0; color:var(--ink); opacity:.92; }
+  .box p{ margin:0; color:var(--ink); opacity:.92 }
 
-  /* ذيل بسيط مثل النسخة الأصلية */
+  /* ذيل بسيط */
   footer{ text-align:center; padding:34px 18px 46px; color:var(--muted) }
-  .tagline{ margin:0 0 6px; font-size:15px; }
-  .signature{ margin:0; font-size:14px; } /* يبقى Cairo افتراضي */
-  
-  /* روابط */
-  a.link{ color:#2563eb; text-decoration:none; font-weight:700 }
+  .foot-line{ margin:0 0 6px; font-size:15px }
+  .foot-name{ margin:0; font-size:14px } /* Cairo */
+
+  /* رابط */
+  a.link{ color:var(--brand); text-decoration:none; font-weight:700 }
   a.link:hover{ text-decoration:underline }
 
-  /* زر وضع داكن */
-  .switch{ cursor:pointer; }
+  .switch{ cursor:pointer }
 </style>
 </head>
 <body>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
 
-  <!-- شريط علوي -->
+  <!-- الشريط العلوي -->
   <div class="topbar">
     <div class="actions">
       <button class="btn switch" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
@@ -163,12 +158,12 @@
     </div>
   </div>
 
-  <!-- هيدر -->
+  <!-- الهيدر -->
   <header>
-    <div class="hero-wrap">
-      <div class="hero-bg"></div>
+    <div class="hero">
+      <div class="hero-plate"></div>
       <h1 class="logo">أثــر</h1>
-      <div class="ribbon">حين يلتقي الشغف بالمعرفة .. يُصنعُ الأثــر ✨</div>
+      <div class="tag"><span class="dot"></span>حين يلتقي الشغف بالمعرفة .. يُصنعُ الأثــر</div>
     </div>
   </header>
 
@@ -176,10 +171,10 @@
     <div class="container">
 
       <!-- 1) كيف وُلد أثر؟ -->
-      <section class="card" style="margin-top:-20px">
+      <section class="card" style="margin-top:-14px">
         <h2 class="title">كيف وُلد «أثــر»؟</h2>
         <p class="lead">
-          لم تكن الحكاية بحثًا عن “أداة” بقدر ما كانت مطاردةً لفكرة:  
+          لم تكن الحكاية بحثًا عن “أداة” بقدر ما كانت مطاردةً لفكرة:
           كيف نجعل الدرس ينبض بالحياة؟ حين اصطدمتُ بسقف الاستراتيجيات التقليدية،
           قررت أن أبني مساحةً تُشغِّل الفضول وتُهندس التجربة. من هنا خرج «أثــر»:
           مشروعٌ تعليميٌّ صُنع على مهل، ليحترم عقل المتعلمة ويُعطي المعلمة أدواتٍ
@@ -187,7 +182,7 @@
         </p>
       </section>
 
-      <!-- 2 و 3) ما هو أثر؟ + كيف يفيدني أثر كمعلم/ة؟ -->
+      <!-- 2) ما هو أثر؟ + 3) كيف يفيدني أثر كمعلم/ة؟ -->
       <section class="grid">
         <div class="box">
           <h3>ما هو «أثــر»؟</h3>
@@ -210,14 +205,14 @@
     </div>
   </main>
 
-  <!-- ذيل بسيط بخط Cairo مثل الموقع الأصلي -->
+  <!-- ذيل بسيط مثل النسخة الأصلية -->
   <footer>
-    <p class="tagline">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-    <p class="signature">ندى المجيرش</p>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
   </footer>
 
 <script>
-  // تخزين تفضيل الوضع (داكن/فاتح)
+  // حفظ واختيار الوضع (داكن/فاتح)
   const root = document.documentElement;
   const saved = localStorage.getItem('athar:theme');
   if(saved === 'dark'){ root.classList.add('dark'); }
