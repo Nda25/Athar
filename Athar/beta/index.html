@@ -157,14 +157,15 @@
   <script src="app.js"></script>
 
   <!-- إظهار زر "أثــر" فقط إذا كان المستخدم مسجل دخول -->
-  <script>
-  document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('nav-athar');
-    if(!btn) return;
-    try {
-      btn.style.display = (window.store && store.auth) ? 'inline-flex' : 'none';
-    } catch(_) {}
-  });
-  </script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('nav-athar');
+  if(!btn) return;
+  try {
+    // يكفي نفحص store.auth مباشرة
+    btn.style.display = (typeof store !== 'undefined' && store.auth) ? 'inline-flex' : 'none';
+  } catch(_) {}
+});
+</script>
 </body>
 </html>
