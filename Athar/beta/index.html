@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
-  <title>أثر</title>
+  <title>أثَـــر</title>
 
   <!-- أيقونة الموقع (صورة واحدة لكل شيء) -->
   <link rel="icon" type="image/png" href="assets/icon.png">
@@ -38,7 +38,7 @@
     <!-- روابط يسار الشريط -->
     <div class="left-actions">
       <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-      <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثر</a>
+      <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثـَـر</a>
     </div>
 
     <!-- حالة المستخدم -->
@@ -61,10 +61,10 @@
   <!-- الهيدر / الهيرو -->
   <header>
     <div class="hero">
-      <h1 class="logo">أثر</h1>
+      <h1 class="logo">أثـَــر</h1>
       <div class="tag">
         <span class="dot"></span>
-        حين يلتقي الشغف بالمعرفة .. يُصنع الأثر
+        حين يلتقي الشغف بالمعرفة .. يُصنع الأثـَـر
       </div>
     </div>
   </header>
@@ -185,49 +185,101 @@
   <div class="toast" id="toast"></div>
 
   <!-- ========= السكربتات ========= -->
-  <script src="app.js"></script>
-  <script>
-    // تبديل الوضع الداكن/الفاتح + توست سريع
-    (function(){
-      var btn = document.getElementById('themeToggle');
-      if(!btn) return;
-      btn.addEventListener('click', function(){
-        document.documentElement.classList.toggle('dark');
-        var t = document.getElementById('toast');
-        if(t){
-          t.textContent = document.documentElement.classList.contains('dark')
-            ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
-          t.classList.add('show');
-          setTimeout(function(){ t.classList.remove('show'); }, 1500);
-        }
-      });
-    })();
+<script src="app.js"></script>
+<script>
+/* -----------------------------------
+   1) تهيئة الوضع الداكن + الحفظ
+----------------------------------- */
+(function initTheme(){
+  // طبّقي تفضيل سابق إن وجد، وإلا اتّبعي تفضيل النظام
+  var saved = localStorage.getItem('theme');
+  var preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (saved === 'dark' || (!saved && preferDark)) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
 
-    // فتح/إغلاق المودالات
-    function openModal(sel){
-      var m = document.querySelector(sel);
-      if(m){ m.classList.add('show'); m.setAttribute('aria-hidden','false'); }
+  // حدّث أيقونة الزر
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌓';
+})();
+
+// ثبّتي عرض الشريط لمنع القفزة عند تغيّر شريط التمرير
+document.documentElement.style.setProperty('scrollbar-gutter', 'stable both-edges');
+
+/* -----------------------------------
+   2) تبديل الوضع الداكن + توست
+----------------------------------- */
+(function bindThemeToggle(){
+  var btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    var root = document.documentElement;
+    var dark = root.classList.toggle('dark');
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+
+    // غيّر الأيقونة
+    btn.textContent = dark ? '☀️' : '🌓';
+
+    // توست صغير
+    var t = document.getElementById('toast');
+    if (t){
+      t.textContent = dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
+      t.classList.add('show');
+      setTimeout(function(){ t.classList.remove('show'); }, 1400);
     }
-    document.addEventListener('click', function(e){
-      if(e.target.matches('[data-close]')){
-        e.preventDefault();
-        var m = e.target.closest('.modal');
-        if(m){ m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
-      }
-      if(e.target.classList.contains('modal')){
-        e.target.classList.remove('show');
-        e.target.setAttribute('aria-hidden','true');
-      }
-    });
+  });
+})();
 
-    // إظهار/إخفاء روابط حسب حالة الدخول (لو عندك store.auth)
-    document.addEventListener('DOMContentLoaded', function(){
-      var loggedIn  = (typeof store !== 'undefined' && !!store.auth);
-      var atharBtn  = document.getElementById('nav-athar');
-      var profileBtn= document.getElementById('nav-profile');
-      if(atharBtn)   atharBtn.style.display   = loggedIn ? 'inline-flex' : 'none';
-      if(profileBtn) profileBtn.style.display = loggedIn ? 'inline-flex' : 'none';
+/* -----------------------------------
+   3) لا تعيدي تحميل "الرئيسية" إذا كنا فيها
+----------------------------------- */
+(function preventIndexReload(){
+  var links = document.querySelectorAll('a[href="index.html"], a[href="/beta/index.html"]');
+  links.forEach(function(a){
+    a.addEventListener('click', function(e){
+      var path = location.pathname;
+      // اعتبري / و /index.html و /beta/ و /beta/index.html كلها "الرئيسية"
+      var onIndex = /(?:^|\/)(index\.html)?$/.test(path) || /\/beta\/(?:index\.html)?$/.test(path);
+      if (onIndex){
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     });
-  </script>
+  });
+})();
+
+/* -----------------------------------
+   4) فتح/إغلاق المودالات
+----------------------------------- */
+function openModal(sel){
+  var m = document.querySelector(sel);
+  if(m){ m.classList.add('show'); m.setAttribute('aria-hidden','false'); }
+}
+document.addEventListener('click', function(e){
+  if(e.target.matches('[data-close]')){
+    e.preventDefault();
+    var m = e.target.closest('.modal');
+    if(m){ m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
+  }
+  if(e.target.classList.contains('modal')){
+    e.target.classList.remove('show');
+    e.target.setAttribute('aria-hidden','true');
+  }
+});
+
+/* -----------------------------------
+   5) إظهار/إخفاء روابط حسب حالة الدخول (store.auth)
+----------------------------------- */
+document.addEventListener('DOMContentLoaded', function(){
+  var loggedIn  = (typeof store !== 'undefined' && !!store.auth);
+  var atharBtn  = document.getElementById('nav-athar');
+  var profileBtn= document.getElementById('nav-profile');
+  if(atharBtn)   atharBtn.style.display   = loggedIn ? 'inline-flex' : 'none';
+  if(profileBtn) profileBtn.style.display = loggedIn ? 'inline-flex' : 'none';
+});
+</script>
 </body>
 </html>
