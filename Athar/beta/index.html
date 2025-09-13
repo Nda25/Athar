@@ -241,31 +241,5 @@
 
   <!-- ========= السكربتات ========= -->
 <script src="app.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function(){
-  var btn = document.getElementById('themeToggle');
-  if(!btn) return;
-
-  // نخلي الأيقونة دايم 🌓
-  btn.textContent = '🌓';
-
-  btn.addEventListener('click', function(e){
-    e.preventDefault();
-    var root = document.documentElement;
-    var willBeDark = !root.classList.contains('dark');
-
-    root.classList.toggle('dark', willBeDark);
-    try { localStorage.setItem('theme', willBeDark ? 'dark' : 'light'); } catch(_) {}
-
-    // التوست
-    var t = document.getElementById('toast');
-    if(t){
-      t.textContent = willBeDark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
-      t.classList.add('show');
-      setTimeout(function(){ t.classList.remove('show'); }, 1400);
-    }
-  });
-});
-</script>
 </body>
 </html>
