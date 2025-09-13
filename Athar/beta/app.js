@@ -1,20 +1,20 @@
 /* =========================================
-   athar — app.js (نسخة منقحة)
+   athar — app.js (نسخة منقحة ونهائية)
    ========================================= */
 
-/* ==== إعدادات عامة (عدليها بما يناسبك) ==== */
-const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw-soThyqiUPgf3PmdyRg1u9IlkrfRmLdwQQc1_vZwH3kTpZaUZTkpEQfzD2UIyQ3Iv8Q/exec"; // رابط النشر (Deployment URL)
-const SHEET_API_KEY    = "NADA-ATHAR-2025!"; // مفتاح بسيط للتأكد (اختياري)
+/* ==== إعدادات عامة ==== */
+const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw-soThyqiUPgf3PmdyRg1u9IlkrfRmLdwQQc1_vZwH3kTpZaUZTkpEQfzD2UIyQ3Iv8Q/exec";
+const SHEET_API_KEY    = "NADA-ATHAR-2025!"; // نفس المفتاح في GAS
 
-const ATHAR_APP_URL = "athar.html";   // صفحة البوت الجديدة
-const PRICING_URL   = "pricing.html";  // صفحة الخطط
+const ATHAR_APP_URL = "athar.html";
+const PRICING_URL   = "pricing.html";
 
 /* وصول المالك (اختياري) */
-const OWNER_EMAILS = [];         // ضعي بريدك هنا لو تبين صلاحية مالك
-const OWNER_PHONES = [0556795993];         // أو رقم جوالك 05XXXXXXXX
-const OWNER_KEY    = "OWNER1201";         // كود يمنح المالك عند إدخاله كـ promo
+const OWNER_EMAILS = [];                 // لو حابة
+const OWNER_PHONES = ["0556795993"];     // لازم نص "05..."
+const OWNER_KEY    = "OWNER1201";        // كود يمنح وضع المالك
 
-/* ==== أدوات صغيرة ==== */
+/* أدوات صغيرة */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
@@ -55,11 +55,11 @@ const store = {
   }
 };
 
-/* ==== تهيئة الشريط (الأزرار) ==== */
+/* ==== تهيئة الشريط ==== */
 (function navbarState(){
   const navAuth    = $('#nav-auth');
   const profileBtn = $('#nav-profile');
-  const atharBtn   = $('#nav-athar');  // زر "أثــر" في النافبار (إن وُجد)
+  const atharBtn   = $('#nav-athar');
 
   const logged = store.auth && !!store.user;
 
@@ -72,7 +72,7 @@ const store = {
   }
 })();
 
-/* ==== نوافذ منبثقة ==== */
+/* ==== النوافذ ==== */
 function openModal(id){ $(id).classList.add('show'); }
 function closeModal(id){ $(id).classList.remove('show'); }
 $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
@@ -80,7 +80,7 @@ $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
   const m = btn.closest('.modal'); if(m) m.classList.remove('show');
 }));
 
-/* ==== تحققات سريعة ==== */
+/* ==== تحققات ==== */
 function isValidEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x); }
 function isValidPhone(x){ return /^05\d{8}$/.test(x); }
 
@@ -113,17 +113,14 @@ function isTrialActive(){
 function hasAccess(){ return store.auth && (isOwner() || isSubActive() || isTrialActive()); }
 
 /* ==== إرسال صف إلى Google Sheets ==== */
-/* ترتيب الحقول مطابق لرؤوس الأعمدة في الشيت لديك:
-   [تاريخ السجل, الاسم, البريد, الجوال, المدرسة, الكود, الخطة, بداية الاشتراك, نهاية الاشتراك, المبلغ, أوافق على الرسائل]
-*/
+/* ترتيب الحقول: [تاريخ السجل, الاسم, البريد, الجوال, المدرسة, الكود, الخطة, بداية الاشتراك, نهاية الاشتراك, المبلغ, أوافق على الرسائل] */
 async function sendRowToSheet(payload){
   try{
     await fetch(SHEET_WEBAPP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        apiKey: SHEET_API_KEY,
-        // نحافظ على نفس المفاتيح التالية:
+        key: SHEET_API_KEY,        // ← مهم: يتطابق مع body.key في GAS
         date:      payload.date      || new Date().toISOString(),
         name:      payload.name      || '',
         email:     payload.email     || '',
@@ -176,7 +173,7 @@ function redeemCode(codeRaw){
   usage[code] = usedList;
   store.codesUsers = usage;
 
-  // نسجل حدث تفعيل كود
+  // سجل الحدث
   sendRowToSheet({
     date: new Date().toISOString(),
     name: store.user?.name || '',
@@ -194,7 +191,7 @@ function redeemCode(codeRaw){
   return { ok:true, msg:"تم تفعيل الكود بنجاح." };
 }
 
-/* استهلاك توليدة من التجربة */
+/* استهلاك توليدة */
 function consumeGeneration(n=1){
   const t = store.trial;
   if(!t){ toast('لا توجد تجربة مفعّلة.'); return; }
@@ -245,7 +242,6 @@ function handleRegister(e){
   store.user = { name, email, phone, school, password: pass, marketingConsent: consent, promo, createdAt };
   store.auth = true;
 
-  // تفعيل كود (لو أدخلته)
   if(promo){
     const r = redeemCode(promo);
     toast(r.msg);
@@ -253,26 +249,24 @@ function handleRegister(e){
 
   closeModal('#modal-register');
 
-  // إرسال صف "تسجيل" (بنفس ترتيب الأعمدة)
   sendRowToSheet({
     date: createdAt,
     name, email, phone, school,
     promo,
-    plan: '',          // لا يوجد خطة عند التسجيل
+    plan: '',
     startsAt: '',
     endsAt: '',
     totalPaid: 0,
     consent
   });
 
-  // توجيه
   setTimeout(()=>{
     if(hasAccess()) location.href = ATHAR_APP_URL;
     else            location.href = PRICING_URL;
   }, 250);
 }
 
-/* ==== الدخول (حقّل واحد: إيميل أو جوال) ==== */
+/* ==== الدخول ==== */
 function handleLogin(e){
   e.preventDefault();
   const f   = e.target;
@@ -305,6 +299,8 @@ function handleLogin(e){
 }
 
 /* ==== الاشتراك ==== */
+/* حالياً يطلب Netlify Function اسمها create-checkout. إن ما كانت موجودة، سيظهر توست بخطأ.
+   بعد ربط مزوّد الدفع (ميسر)، سيعيد لك رابط الدفع ونجاح العملية يمر عبر afterPay أدناه. */
 async function subscribe(planKey){
   if(!store.auth || !store.user){ openModal('#modal-register'); return; }
 
@@ -326,53 +322,19 @@ async function subscribe(planKey){
     }
     const { checkout_url } = await res.json();
     if(!checkout_url) throw new Error('لم يتم استلام رابط الدفع');
-    location.href = checkout_url; // فتح صفحة الدفع (أو محاكاة النجاح)
+    location.href = checkout_url;
   }catch(err){
     console.error(err);
     toast('تعذّر فتح صفحة الدفع.');
   }
 }
-  // أسعار تقديرية (عدّليها)
-  const prices = { weekly:10, monthly:30, semi:170, annual:340 };
-  const amount = prices[planKey] ?? 0;
 
-  // سجل صف اشتراك
-  sendRowToSheet({
-    date: new Date().toISOString(),
-    name: store.user.name,
-    email: store.user.email,
-    phone: store.user.phone,
-    school: store.user.school,
-    promo: store.user.promo || '',
-    plan: planKey,
-    startsAt: start.toISOString(),
-    endsAt: end.toISOString(),
-    totalPaid: amount,
-    consent: store.user.marketingConsent ? true : false
-  });
-
-  toast('تم تفعيل الاشتراك ✅');
-  setTimeout(()=> location.href = ATHAR_APP_URL, 250);
-}
-
-/* ==== خروج/حذف ==== */
-function logout(){
-  store.auth = false;
-  toast('تم تسجيل الخروج');
-  setTimeout(()=>location.href='index.html', 400);
-}
-function deleteAccount(){
-  store.clear();
-  toast('تم حذف الحساب نهائيًا');
-  setTimeout(()=>location.href='index.html', 500);
-}
-
-/* ==== ربط كل شيء ==== */
+/* ==== ربط الأحداث ==== */
 function wire(){
   const regForm   = $('#register-form'); if(regForm)  regForm.addEventListener('submit', handleRegister);
   const loginForm = $('#login-form');    if(loginForm) loginForm.addEventListener('submit', handleLogin);
 
-  // أزرار باقات (لو موجودة في pricing.html)
+  // أزرار الباقات (في pricing.html)
   $$('#choose-plan [data-plan]').forEach(btn=>{
     btn.addEventListener('click', ()=> subscribe(btn.getAttribute('data-plan')));
   });
@@ -398,7 +360,8 @@ function wire(){
 }
 document.addEventListener('DOMContentLoaded', wire);
 
-/* ====== بعد الدفع ====== */
+/* ====== بعد الدفع (Callback) ====== */
+/* مثال: redirect إلى index.html?status=success&plan=monthly */
 (function afterPay(){
   const p = new URLSearchParams(location.search);
   if(p.get('status') !== 'success') return;
@@ -413,6 +376,7 @@ document.addEventListener('DOMContentLoaded', wire);
 
   store.sub = { plan, startedAt: start.toISOString(), endsAt: end.toISOString() };
 
+  // تسجيل عملية الدفع في الشيت
   sendRowToSheet({
     date: new Date().toISOString(),
     name: store.user?.name || '',
@@ -423,7 +387,7 @@ document.addEventListener('DOMContentLoaded', wire);
     plan,
     startsAt: start.toISOString(),
     endsAt: end.toISOString(),
-    totalPaid: { weekly:10, monthly:30, semi:170, annual:340 }[plan] ?? 0,
+    totalPaid: { weekly:10, monthly:30, semi:170, annual:340 }[plan] ?? 0, // عدّليها لاحقاً
     consent: store.user?.marketingConsent ? true : false
   });
 
@@ -431,7 +395,19 @@ document.addEventListener('DOMContentLoaded', wire);
   setTimeout(()=> location.href = 'athar.html', 900);
 })();
 
-/* ====== توست ====== */
+/* ==== خروج/حذف ==== */
+function logout(){
+  store.auth = false;
+  toast('تم تسجيل الخروج');
+  setTimeout(()=>location.href='index.html', 400);
+}
+function deleteAccount(){
+  store.clear();
+  toast('تم حذف الحساب نهائيًا');
+  setTimeout(()=>location.href='index.html', 500);
+}
+
+/* ==== توست (نسخة واحدة فقط) ==== */
 function toast(msg){
   let t = $('.toast'); 
   if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
@@ -439,11 +415,3 @@ function toast(msg){
   t.classList.add('show');
   setTimeout(()=> t.classList.remove('show'), 1800);
 }
-
-/* ==== توست ==== */
-function toast(msg){
-  let t = $('.toast');
-  if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), 1800);
