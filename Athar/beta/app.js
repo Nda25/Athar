@@ -1,8 +1,8 @@
 /* ====== إعداد عام ====== */
 const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzkBo_-YDkHskhhy2-ln4kMAyovIu1DQg4ogU5kG103WERjRG2UGjmT2n2uCTRqC6gWtg/exec";
 const GAS_API_KEY  = "NADA-ATHAR-2025!"; // غيريه لقيمة قوية
-const ATHAR_APP_URL = "https://n-athar.co";
-const PRICING_URL   = "pricing.html";
+const ATHAR_APP_URL = "athar.html";   // ← افتحي البوت الجديد داخل نفس الموقع
+const PRICING_URL   = "pricing.html"; // ← يظل محلي
 
 // عنوان Google Apps Script API (من نشر الـ Web App)
 const API_URL = "https://script.google.com/macros/s/AKfycbzkBo_-YDkHskhhy2-ln4kMAyovIu1DQg4ogU5kG103WERjRG2UGjmT2n2uCTRqC6gWtg/exec";
