@@ -12,20 +12,21 @@
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-<!-- الشريط العلوي -->
+<!-- الشريط العلوي (طبقًا لترتيب صفحة الخطط) -->
 <div class="topbar">
-  <!-- روابط التنقل -->
+  <!-- روابط التنقل (يسار) -->
   <div class="left-actions">
-    <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
+    <!-- بدّلنا "الرئيسية" إلى "الخطط" عشان تتقابل مع زر "الرئيسية" في صفحة الخطط -->
+    <a class="btn" href="pricing.html" title="الخطط">الخطط</a>
     <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثــر</a>
   </div>
 
-  <!-- أدوات إضافية -->
+  <!-- أدوات إضافية (الزر في الوسط وبنفس الإيموجي) -->
   <div class="actions">
     <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
   </div>
 
-  <!-- حالة المستخدم -->
+  <!-- حالة المستخدم (يمين) -->
   <div class="user">
     <span id="nav-auth" style="display:inline-flex; gap:10px">
       <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
