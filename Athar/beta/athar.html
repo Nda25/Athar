@@ -100,10 +100,10 @@
           <div class="select-wrap">
             <select id="stage" class="sel">
               <option value="" selected disabled>اختر المرحلة</option>
-              <option value="primary-lower">ابتدائي — دنيا (الأول–الثالث)</option>
-              <option value="primary-upper">ابتدائي — عليا (الرابع–السادس)</option>
-              <option value="middle">متوسط (الأول–الثالث)</option>
-              <option value="secondary">ثانوي (المسارات)</option>
+              <option value="primary-lower"> المرحلة الإبتدائي — دنيا </option>
+              <option value="primary-upper"> المرحلة الإبتدائية — عليا </option>
+              <option value="middle"> المرحلة المتوسطة </option>
+              <option value="secondary">المرحلة الثانوية </option>
             </select>
             <span class="sel-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg></span>
           </div>
@@ -132,13 +132,13 @@
           </div>
         </div>
         <div>
-          <label>اسم الدرس (اختياري)</label>
+          <label>اسم الدرس </label>
           <input id="lesson" placeholder="مثال: الاتزان الدوراني">
         </div>
       </div>
 
       <div class="flex" style="display:flex; align-items:center; gap:8px; margin-top:12px">
-        <button id="gen" class="btn primary">ساعدني على الإبداع</button>
+        <button id="gen" class="btn primary"> ✨ساعدني على الإبداع</button>
         <button id="regen" class="btn">أبدع باستراتيجية أخرى</button>
         <span id="status" class="muted"></span>
       </div>
@@ -374,7 +374,7 @@
       return;
     }
     $("#err").style.display = "none";
-    statusEl.textContent = "جاري الإبداع…";
+    statusEl.textContent = "جاري تحويل شغفك إلى استراتيجية ملموسة …✨";
     setLoading(true);
     try{
       const data = await callStrategy({
@@ -385,11 +385,11 @@
         variant: variant || Math.floor(Math.random()*1e9)
       });
       paintOutput(data, { stage, stageLabel: readStageLabel(stage), subject, bloomType: bloom, lesson });
-      statusEl.textContent = "تم ✨";
+      statusEl.textContent = "تـــم  ✨";
     }catch(err){
       console.error(err);
       statusEl.textContent = err.message || "تعذر التوليد.";
-      toast("تعذّر التوليد. جرّبي ثانية.");
+      toast("تعذّر التوليد. جرّب ثانية.");
     }finally{
       setLoading(false);
     }
