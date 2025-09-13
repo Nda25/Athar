@@ -1,79 +1,59 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="color-scheme" content="dark light">
-  <title>أثـَـر</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>أثر</title>
 
-  <!-- أيقونة المتصفح (Favicon + Apple Touch Icon) -->
-  <link rel="icon" type="image/png" href="/assets/icon.png">
-  <link rel="apple-touch-icon" href="/assets/icon.png">
+  <!-- الأيقونات -->
+  <link rel="icon" type="image/png" href="/beta/assets/icon.png">
+  <link rel="apple-touch-icon" href="/beta/assets/icon.png">
 
-  <!-- Open Graph (لمشاركة الرابط على واتساب وفيسبوك وتيليجرام) -->
-  <meta property="og:title" content="أثـَـر" />
-  <meta property="og:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر ✨" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://n-athar.co/" />
-  <meta property="og:image" content="https://n-athar.co/assets/icon.png" />
-  <meta property="og:image:alt" content="شعار أثر" />
-  <meta property="og:site_name" content="n-athar.co" />
+  <!-- OG/Twitter لصورة المشاركة -->
+  <meta property="og:image" content="https://n-athar.co/beta/assets/icon.png">
+  <meta name="twitter:image" content="https://n-athar.co/beta/assets/icon.png">
 
-  <!-- Twitter Card (مشاركة على تويتر/X) -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="أثـَـر" />
-  <meta name="twitter:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر ✨" />
-  <meta name="twitter:image" content="https://n-athar.co/assets/icon.png" />
-  <meta name="twitter:image:alt" content="شعار أثر" />
+  <!-- الخط والستايل -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/beta/style.css">
 
-  <!-- PWA manifest (اختياري إذا بتسوين تطبيق ويب تقدرين تحطينه بعدين) -->
-  <link rel="manifest" href="/manifest.json">
-
-  <!-- TailwindCSS -->
+  <!-- (اختياري) تايلويند لو تحتاجينه لبعض العناصر -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Google Fonts -->
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri:wght@400;700&display=swap');
-  </style>
 </head>
 <body>
+
+  <!-- طبقات الخلفية -->
   <div class="backdrop"></div>
   <div class="pattern"></div>
-<body>
-  <div class="backdrop"></div>
-  <div class="pattern"></div>
 
-<!-- الشريط العلوي -->
-<div class="topbar">
-  <!-- أزرار تسجيل / دخول (تختفي بعد الدخول) -->
-  <div class="user" id="nav-auth" style="display:inline-flex; gap:10px">
-    <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
-    <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
+  <!-- الشريط العلوي -->
+  <div class="topbar">
+    <div class="left-actions">
+      <a class="btn" href="/beta/index.html" title="الرئيسية">الرئيسية</a>
+      <a class="btn" id="nav-athar" href="/beta/athar.html" title="أثر" style="display:none">أثر</a>
+    </div>
+
+    <div class="user" id="nav-auth" style="display:inline-flex; gap:10px">
+      <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
+      <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
+      <a id="nav-profile" class="btn" href="/beta/profile.html" style="display:none">الملف الشخصي</a>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+      <a class="btn primary" href="/beta/pricing.html">الخطط</a>
+    </div>
   </div>
 
-  <!-- زر الملف الشخصي (يظهر فقط بعد الدخول) -->
-  <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
-
-  <!-- روابط التنقل -->
-  <div class="left-actions">
-    <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-    <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثــر</a>
-  </div>
-
-  <!-- أدوات إضافية -->
-  <div class="actions">
-    <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-    <a class="btn primary" href="pricing.html">الخطط</a>
-  </div>
-</div>
-
-  <!-- الهيدر -->
+  <!-- الهيدر / الهيرو -->
   <header>
     <div class="hero">
-      <div class="hero-plate"></div>
-      <h1 class="logo">أثــر</h1>
-      <div class="tag"><span class="dot"></span>حين يلتقي الشغف بالمعرفة .. يُصنعُ الأثــر</div>
+      <h1 class="logo">أثر</h1>
+      <div class="tag">
+        <span class="dot"></span>
+        حين يلتقي الشغف بالمعرفة .. يُصنع الأثر
+      </div>
     </div>
   </header>
 
@@ -81,11 +61,11 @@
     <div class="container">
       <!-- كيف وُلد أثر؟ -->
       <section class="card" style="margin-top:-14px">
-        <h2 class="title">كيف وُلد «أثــر»؟</h2>
+        <h2 class="title">كيف وُلد «أثر»؟</h2>
         <p class="lead">
           لم تكن الحكاية بحثًا عن “أداة” بقدر ما كانت مطاردةً لفكرة:
           كيف نجعل الدرس ينبض بالحياة؟ حين اصطدمتُ بسقف الاستراتيجيات التقليدية،
-          قررت أن أبني مساحةً تُشغِّل الفضول وتُهندس التجربة. من هنا خرج «أثــر»:
+          قررت أن أبني مساحةً تُشغِّل الفضول وتُهندس التجربة. من هنا خرج «أثر»:
           مشروعٌ تعليميٌّ صُنع على مهل، ليحترم عقل المتعلمة ويُعطي المعلمة أدواتٍ
           دقيقة، جميلة، وسهلة الاستخدام.
         </p>
@@ -94,7 +74,7 @@
       <!-- ما هو أثر؟ + كيف يفيدني أثر كمعلم/ة؟ -->
       <section class="grid">
         <div class="box">
-          <h3>ما هو «أثــر»؟</h3>
+          <h3>ما هو «أثر»؟</h3>
           <p>
             منصة تعليمية ذكية تُولِّد استراتيجيات وأنشطة وأسئلة قابلة للتخصيص،
             وتتوافق مع مستويات بلوم والتقويم، لتجعل الحصة عميقة وسلسة في آنٍ واحد.
@@ -102,102 +82,104 @@
         </div>
 
         <div class="box">
-          <h3>كيف يفيدني «أثــر» كمعلم/ة؟</h3>
+          <h3>كيف يفيدني «أثر» كمعلم/ة؟</h3>
           <p>
             يوفّر لك قوالب جاهزة قابلة للتعديل، أسئلة متدرجة، بطاقات أنشطة،
-            تتبعًا مبسّطًا، وتجارب مُثرية ؛ لتصميم درس ثري في دقائق
-            بدل ساعات. <a class="link" href="pricing.html">اطّلع/ي على الخطط</a>.
+            تتبعًا مبسّطًا، وتجارب مُثرية؛ لتصميم درس ثري في دقائق بدل ساعات.
+            <a class="link" href="/beta/pricing.html">اطّلع/ي على الخطط</a>.
           </p>
         </div>
       </section>
     </div>
   </main>
 
-  <!-- ذيل -->
+  <!-- الذيل -->
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
   <!-- مودال التسجيل -->
-<!-- مودال التسجيل -->
-<div class="modal" id="modal-register" aria-hidden="true">
-  <div class="sheet">
-    <h3>تسجيل حساب جديد</h3>
-    <form id="register-form">
-      <div class="form-row">
-        <div>
-          <label>الاسم الكامل</label>
-          <input name="name" placeholder="مثال: ندى المجيرش" required>
+  <div class="modal" id="modal-register" aria-hidden="true">
+    <div class="sheet">
+      <h3>تسجيل حساب جديد</h3>
+      <form id="register-form">
+        <div class="form-row">
+          <div>
+            <label>الاسم الكامل</label>
+            <input name="name" placeholder="مثال: ندى المجيرش" required>
+          </div>
+          <div>
+            <label>رقم الجوال</label>
+            <input name="phone" placeholder="05xxxxxxxx" required>
+          </div>
         </div>
-        <div>
-          <label>رقم الجوال</label>
-          <input name="phone" placeholder="05xxxxxxxx" required>
+        <div class="form-row">
+          <div>
+            <label>البريد الإلكتروني</label>
+            <input type="email" name="email" placeholder="name@example.com" required>
+          </div>
+          <div>
+            <label>اسم المدرسة</label>
+            <input name="school" placeholder="مدرستك" required>
+          </div>
         </div>
-      </div>
-      <div class="form-row">
-        <div>
-          <label>البريد الإلكتروني</label>
-          <input type="email" name="email" placeholder="name@example.com" required>
+
+        <label>كلمة المرور</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+
+        <label>رمز الدعوة (إن وجد)</label>
+        <input name="promo" placeholder="">
+
+        <label style="display:flex; align-items:center; gap:6px; font-size:12px; margin-top:10px">
+          <input type="checkbox" name="consent" style="width:16px; height:16px">
+          <span>أوافق على استلام التنبيهات والإشعارات من «أثر»</span>
+        </label>
+
+        <div class="actions-row">
+          <a href="#" class="btn ghost" data-close>إغلاق</a>
+          <button class="btn primary" type="submit">إنشاء حساب</button>
         </div>
-        <div>
-          <label>اسم المدرسة</label>
-          <input name="school" placeholder="مدرستك" required>
-        </div>
-      </div>
-
-      <label>كلمة المرور</label>
-      <input type="password" name="password" placeholder="••••••••" required>
-
-      <label>رمز الدعوة (إن وجد)</label>
-      <input name="promo" placeholder="">
-
-      <label style="display:flex; align-items:center; gap:6px; font-size:8px; margin-top:10px">
-        <input type="checkbox" name="consent" style="width:16px; height:16px">
-        <span>أوافق على استلام التنبيهات والإشعارات من «أثر»</span>
-      </label>
-
-      <div class="actions-row">
-        <a href="#" class="btn ghost" data-close>إغلاق</a>
-        <button class="btn primary" type="submit">إنشاء حساب</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
-</div>
 
+  <!-- مودال الدخول -->
+  <div class="modal" id="modal-login" aria-hidden="true">
+    <div class="sheet">
+      <h3>تسجيل الدخول</h3>
+      <form id="login-form">
+        <label>البريد الإلكتروني أو رقم الجوال</label>
+        <input name="identifier" placeholder="name@example.com أو 05xxxxxxxx" required>
 
-<!-- مودال الدخول -->
-<div class="modal" id="modal-login" aria-hidden="true">
-  <div class="sheet">
-    <h3>تسجيل الدخول</h3>
-    <form id="login-form">
-      <label>البريد الإلكتروني أو رقم الجوال</label>
-      <input name="identifier" placeholder="name@example.com أو 05xxxxxxxx" required>
+        <label>كلمة المرور</label>
+        <input type="password" name="password" placeholder="••••••••" required>
 
-      <label>كلمة المرور</label>
-      <input type="password" name="password" placeholder="••••••••" required>
-
-      <div class="actions-row">
-        <a href="#" class="btn ghost" data-close>إغلاق</a>
-        <button class="btn primary" type="submit">دخول</button>
-      </div>
-    </form>
+        <div class="actions-row">
+          <a href="#" class="btn ghost" data-close>إغلاق</a>
+          <button class="btn primary" type="submit">دخول</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
   <div class="toast"></div>
-  <script src="app.js"></script>
 
-  <!-- إظهار زر "أثــر" فقط إذا كان المستخدم مسجل دخول -->
-<script>
-document.addEventListener('DOMContentLoaded', function(){
-  var btn = document.getElementById('nav-athar');
-  if(!btn) return;
-  try {
-    // يكفي نفحص store.auth مباشرة
-    btn.style.display = (typeof store !== 'undefined' && store.auth) ? 'inline-flex' : 'none';
-  } catch(_) {}
-});
-</script>
+  <!-- سكربتات -->
+  <script src="/beta/app.js"></script>
+  <script>
+    // إظهار زر "أثر" و"الملف الشخصي" حسب حالة الدخول
+    document.addEventListener('DOMContentLoaded', function () {
+      var atharBtn = document.getElementById('nav-athar');
+      var profileBtn = document.getElementById('nav-profile');
+      var authBox   = document.getElementById('nav-auth');
+
+      var loggedIn = (typeof store !== 'undefined' && !!store.auth);
+
+      if (atharBtn)   atharBtn.style.display   = loggedIn ? 'inline-flex' : 'none';
+      if (profileBtn) profileBtn.style.display = loggedIn ? 'inline-flex' : 'none';
+      if (authBox)    authBox.style.display    = 'inline-flex'; // يحوي الكل، والأزرار نفسها تظهر/تختفي
+    });
+  </script>
 </body>
 </html>
