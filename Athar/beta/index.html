@@ -88,25 +88,33 @@
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-<!-- الشريط العلوي -->
+<!-- الشريط العلوي (موحّد) -->
 <div class="topbar">
-  <!-- روابط التنقل (يسار) -->
+  <!-- روابط التنقّل (يسار) -->
   <div class="left-actions">
-    <a class="btn" href="pricing.html" title="الخطط">الخطط</a>
+    <!-- في الرئيسية نحط "الخطط"، وفي الصفحات الثانية نخلي "الرئيسية" -->
+    <!-- في index.html: -->
+    <!-- <a class="btn" href="pricing.html" title="الخطط">الخطط</a> -->
+
+    <!-- في البرامج/أثر/درسي: -->
+    <!-- <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a> -->
+
     <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثــر</a>
   </div>
 
-  <!-- أدوات إضافية (الزر في الوسط) -->
+  <!-- أدوات إضافية (الزر في الوسط وبنفس الإيموجي دائماً 🌓) -->
   <div class="actions">
     <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
   </div>
 
-  <!-- حالة المستخدم (يمين) -->
+  <!-- حالة المستخدم + برامجنا (يمين) -->
   <div class="user">
     <span id="nav-auth" style="display:inline-flex; gap:10px">
       <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
       <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
     </span>
+
+    <a id="nav-programs" class="btn" href="programs.html" style="display:none">برامجنا</a>
     <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
   </div>
 </div>
