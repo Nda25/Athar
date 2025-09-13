@@ -188,52 +188,74 @@
 <script src="app.js"></script>
 <script>
 /* -----------------------------------
+   0) توحيد مكان كلاس dark
+----------------------------------- */
+(function unifyDarkClass(){
+  var root = document.documentElement;
+  var body = document.body;
+  // لو فيه dark على البودي ننقله للروت
+  if (body && body.classList.contains('dark') && !root.classList.contains('dark')) {
+    root.classList.add('dark');
+    body.classList.remove('dark');
+  }
+})();
+
+/* -----------------------------------
    1) تهيئة الوضع الداكن + الحفظ
 ----------------------------------- */
 (function initTheme(){
-  // طبّقي تفضيل سابق إن وجد، وإلا اتّبعي تفضيل النظام
+  var root = document.documentElement;
   var saved = null;
   try { saved = localStorage.getItem('theme'); } catch(_) {}
   var preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   if (saved === 'dark' || (!saved && preferDark)) {
-    document.documentElement.classList.add('dark');
+    root.classList.add('dark');
   } else {
-    document.documentElement.classList.remove('dark');
+    root.classList.remove('dark');
   }
 
-  // لا نغيّر الإيموجي — نخليه 🌓 ثابت
+  // حدّث أيقونة الزر بحسب الحالة الحالية
+  document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = root.classList.contains('dark') ? '☀️' : '🌓';
+  });
 })();
 
-// ثبّتي عرض الشريط لمنع القفزة عند تغيّر شريط التمرير
+// لمنع قفزة التمرير
 document.documentElement.style.setProperty('scrollbar-gutter', 'stable both-edges');
 
 /* -----------------------------------
-   2) ربط زر التبديل بعد جاهزية الـDOM
+   2) تبديل الوضع الداكن + توست + حفظ
 ----------------------------------- */
 document.addEventListener('DOMContentLoaded', function(){
-  var btn = document.getElementById('themeToggle');
-  if (btn) {
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      var root = document.documentElement;
-      var dark = !root.classList.contains('dark');
-      if (dark) {
-        root.classList.add('dark');
-        try { localStorage.setItem('theme','dark'); } catch(_) {}
-      } else {
-        root.classList.remove('dark');
-        try { localStorage.setItem('theme','light'); } catch(_) {}
-      }
-      // توست صغير (اختياري)
-      var t = document.getElementById('toast');
-      if (t){
-        t.textContent = dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
-        t.classList.add('show');
-        setTimeout(function(){ t.classList.remove('show'); }, 1400);
-      }
-    });
-  }
+  var btn  = document.getElementById('themeToggle');
+  if (!btn) return;
+
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    var root = document.documentElement;
+    var body = document.body;
+
+    var willBeDark = !root.classList.contains('dark');
+
+    // بدّلي على العنصرين (تنظيف)، وخلي الاعتماد الأساسي على <html>
+    root.classList.toggle('dark', willBeDark);
+    if (body) body.classList.toggle('dark', false);
+
+    try { localStorage.setItem('theme', willBeDark ? 'dark' : 'light'); } catch(_) {}
+
+    // الإيموجي
+    btn.textContent = willBeDark ? '☀️' : '🌓';
+
+    // التوست
+    var t = document.getElementById('toast');
+    if (t){
+      t.textContent = willBeDark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
+      t.classList.add('show');
+      setTimeout(function(){ t.classList.remove('show'); }, 1400);
+    }
+  });
 
   /* -----------------------------------
      3) لا تعيدي تحميل "الرئيسية" إذا كنا فيها
@@ -243,9 +265,9 @@ document.addEventListener('DOMContentLoaded', function(){
   );
   links.forEach(function(a){
     a.addEventListener('click', function(e){
-      var path = location.pathname.replace(/\/+$/,''); // يشيل السلاش الزائد
+      var path = location.pathname.replace(/\/+$/,'');
       var onRoot  = (path === '' || path === '/');
-      var onIndex = /(?:^|\/)(index\.html)$/.test(path);
+      var onIndex = /(?:^|\/)index\.html$/.test(path);
       var onBeta  = /^\/beta$/.test(path);
       var onBetaI = /^\/beta\/index\.html$/.test(path);
       if (onRoot || onIndex || onBeta || onBetaI){
@@ -258,15 +280,15 @@ document.addEventListener('DOMContentLoaded', function(){
   /* -----------------------------------
      4) إظهار/إخفاء روابط حسب حالة الدخول (store.auth)
   ----------------------------------- */
-  var loggedIn  = (typeof store !== 'undefined' && !!store.auth);
-  var atharBtn  = document.getElementById('nav-athar');
-  var profileBtn= document.getElementById('nav-profile');
-  if (atharBtn)    atharBtn.style.display    = loggedIn ? 'inline-flex' : 'none';
-  if (profileBtn)  profileBtn.style.display  = loggedIn ? 'inline-flex' : 'none';
+  var loggedIn   = (typeof store !== 'undefined' && !!store.auth);
+  var atharBtn   = document.getElementById('nav-athar');
+  var profileBtn = document.getElementById('nav-profile');
+  if (atharBtn)   atharBtn.style.display   = loggedIn ? 'inline-flex' : 'none';
+  if (profileBtn) profileBtn.style.display = loggedIn ? 'inline-flex' : 'none';
 });
 
 /* -----------------------------------
-   5) فتح/إغلاق المودالات (عام)
+   5) فتح/إغلاق المودالات
 ----------------------------------- */
 function openModal(sel){
   var m = document.querySelector(sel);
