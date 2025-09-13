@@ -1,15 +1,14 @@
-/* ====== إعدادات عامة ====== */
-const ATHAR_APP_URL = "https://n-athar.co";
-const PRICING_URL   = "pricing.html";
-
+/* ====== إعداد عام ====== */
+const ATHAR_APP_URL = "https://n-athar.co"; // رابط أثر العادي بعد تسجيل الدخول/الاشتراك
+const API_URL = "https://script.google.com/macros/s/AKfycbwQpsZduGPCQtES-rR0ENxDV4dre8JsjkQqLm3YSlWAymTrxCdCYMFPANoEhvap-uLfvg/exec"; // Google Apps Script API
 /* سكربت Google — الصقي القيم من نشر الـ Web App */
 const GAS_ENDPOINT = "PUT_YOUR_WEB_APP_URL_HERE"; // مثل: https://script.google.com/macros/s/AKfycbx.../exec
 const GAS_API_KEY  = "PUT_A_STRONG_SECRET_KEY_HERE"; // نفسه الموجود في Apps Script
 
 /* وصول المالك (دخول بلا قيود) */
-const OWNER_EMAILS = [];
-const OWNER_PHONES = [];
-const OWNER_KEY    = ""; // مفتاح اختياري يمنح وضع المالك عند إدخاله ككود
+const OWNER_EMAILS = [0556795993];
+const OWNER_PHONES = [e-alhabardi@trbyh.edu.sa];
+const OWNER_KEY    = "Nada055679"; // مفتاح اختياري يمنح وضع المالك عند إدخاله ككود
 
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
