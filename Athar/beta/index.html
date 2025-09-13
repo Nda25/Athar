@@ -13,19 +13,20 @@
   <div class="pattern"></div>
 
   <!-- الشريط العلوي -->
-  <div class="topbar">
-    <div class="actions">
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-      <a class="btn primary" href="pricing.html" title="الخطط والاشتراك">الخطط</a>
-    </div>
-    <div class="user">
-      <span id="nav-auth" style="display:inline-flex; gap:10px">
-        <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
-        <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
-      </span>
-      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
-    </div>
+<div class="topbar">
+  <div class="actions">
+    <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+    <a class="btn" href="athar.html" id="nav-athar" title="أثــر">أثــر</a>
+    <a class="btn primary" href="pricing.html" title="الخطط والاشتراك">الخطط</a>
   </div>
+  <div class="user">
+    <span id="nav-auth" style="display:inline-flex; gap:10px">
+      <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
+      <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
+    </span>
+    <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+  </div>
+</div>
 
   <!-- الهيدر -->
   <header>
@@ -146,5 +147,16 @@
 
   <div class="toast"></div>
   <script src="app.js"></script>
+
+  <!-- إظهار زر "أثــر" فقط إذا كان المستخدم مسجل دخول -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('nav-athar');
+    if(!btn) return;
+    try {
+      btn.style.display = (window.store && store.auth) ? 'inline-flex' : 'none';
+    } catch(_) {}
+  });
+  </script>
 </body>
 </html>
