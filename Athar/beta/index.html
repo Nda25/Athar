@@ -6,30 +6,30 @@
   <meta name="color-scheme" content="dark light" />
   <title>أثر</title>
 
-  <!-- الأيقونات (صورة واحدة لكل شيء) -->
-  <link rel="icon" type="image/png" href="/beta/assets/icon.png">
-  <link rel="apple-touch-icon" href="/beta/assets/icon.png">
+  <!-- أيقونة الموقع (صورة واحدة لكل شيء) -->
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="apple-touch-icon" href="assets/icon.png">
 
   <!-- OG/Twitter لصورة المشاركة -->
   <meta property="og:title" content="أثر">
   <meta property="og:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
-  <meta property="og:image" content="https://n-athar.co/beta/assets/icon.png">
+  <meta property="og:image" content="https://n-athar.co/assets/icon.png">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="أثر">
   <meta name="twitter:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
-  <meta name="twitter:image" content="https://n-athar.co/beta/assets/icon.png">
+  <meta name="twitter:image" content="https://n-athar.co/assets/icon.png">
 
   <!-- الخط والستايل -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/beta/style.css">
+  <link rel="stylesheet" href="style.css">
 
-  <!-- (اختياري) تايلويند لبعض العناصر -->
+  <!-- (اختياري) Tailwind لبعض العناصر -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
 
-  <!-- طبقات الخلفية (مهمّة للتنسيق) -->
+  <!-- طبقات الخلفية (لا تحذفينها) -->
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
@@ -37,24 +37,24 @@
   <div class="topbar">
     <!-- روابط يسار الشريط -->
     <div class="left-actions">
-      <a class="btn" href="/beta/index.html" title="الرئيسية">الرئيسية</a>
-      <a class="btn" id="nav-athar" href="/beta/athar.html" title="أثر" style="display:none">أثر</a>
+      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
+      <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثر</a>
     </div>
 
     <!-- حالة المستخدم -->
     <div class="user" id="nav-auth" style="display:inline-flex; gap:10px">
-      <!-- أزرار تظهر قبل الدخول -->
+      <!-- أزرار قبل الدخول -->
       <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
       <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
 
       <!-- يظهر بعد الدخول -->
-      <a id="nav-profile" class="btn" href="/beta/profile.html" style="display:none">الملف الشخصي</a>
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
     </div>
 
     <!-- إجراءات يمين الشريط -->
     <div class="actions">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-      <a class="btn primary" href="/beta/pricing.html">الخطط</a>
+      <a class="btn primary" href="pricing.html">الخطط</a>
     </div>
   </div>
 
@@ -99,7 +99,7 @@
           <p>
             يوفّر لك قوالب جاهزة قابلة للتعديل، أسئلة متدرجة، بطاقات أنشطة،
             تتبعًا مبسّطًا، وتجارب مُثرية؛ لتصميم درس ثري في دقائق بدل ساعات.
-            <a class="link" href="/beta/pricing.html">اطّلع/ي على الخطط</a>.
+            <a class="link" href="pricing.html">اطّلع/ي على الخطط</a>.
           </p>
         </div>
       </section>
@@ -110,6 +110,8 @@
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
+    <!-- سطر إضافي لاسم المدرسة (اختياري) -->
+    <!-- <p class="foot-name">مدرسة .........</p> -->
   </footer>
 
   <!-- ========= المودالات ========= -->
@@ -129,6 +131,7 @@
             <input name="phone" placeholder="05xxxxxxxx" required>
           </div>
         </div>
+
         <div class="form-row">
           <div>
             <label>البريد الإلكتروني</label>
@@ -181,19 +184,22 @@
   <!-- توست للإشعارات الصغيرة -->
   <div class="toast" id="toast"></div>
 
-  <!-- ========= سكربتات ========= -->
-  <script src="/beta/app.js"></script>
+  <!-- ========= السكربتات ========= -->
+  <script src="app.js"></script>
   <script>
-    // تبديل الوضع الداكن/الفاتح
+    // تبديل الوضع الداكن/الفاتح + توست سريع
     (function(){
       var btn = document.getElementById('themeToggle');
       if(!btn) return;
       btn.addEventListener('click', function(){
         document.documentElement.classList.toggle('dark');
-        // توست بسيط
         var t = document.getElementById('toast');
-        if(t){ t.textContent = document.documentElement.classList.contains('dark') ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
-               t.classList.add('show'); setTimeout(function(){t.classList.remove('show')}, 1500); }
+        if(t){
+          t.textContent = document.documentElement.classList.contains('dark')
+            ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
+          t.classList.add('show');
+          setTimeout(function(){ t.classList.remove('show'); }, 1500);
+        }
       });
     })();
 
@@ -203,20 +209,22 @@
       if(m){ m.classList.add('show'); m.setAttribute('aria-hidden','false'); }
     }
     document.addEventListener('click', function(e){
-      if(e.target.matches('[data-close]')){ e.preventDefault();
+      if(e.target.matches('[data-close]')){
+        e.preventDefault();
         var m = e.target.closest('.modal');
         if(m){ m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
       }
-      if(e.target.classList.contains('modal')){ // الضغط على الخلفية
-        e.target.classList.remove('show'); e.target.setAttribute('aria-hidden','true');
+      if(e.target.classList.contains('modal')){
+        e.target.classList.remove('show');
+        e.target.setAttribute('aria-hidden','true');
       }
     });
 
-    // إظهار زر "أثر" و"الملف الشخصي" بعد الدخول (اعتمادًا على store.auth لو موجود)
+    // إظهار/إخفاء روابط حسب حالة الدخول (لو عندك store.auth)
     document.addEventListener('DOMContentLoaded', function(){
-      var loggedIn = (typeof store !== 'undefined' && !!store.auth);
-      var atharBtn = document.getElementById('nav-athar');
-      var profileBtn = document.getElementById('nav-profile');
+      var loggedIn  = (typeof store !== 'undefined' && !!store.auth);
+      var atharBtn  = document.getElementById('nav-athar');
+      var profileBtn= document.getElementById('nav-profile');
       if(atharBtn)   atharBtn.style.display   = loggedIn ? 'inline-flex' : 'none';
       if(profileBtn) profileBtn.style.display = loggedIn ? 'inline-flex' : 'none';
     });
