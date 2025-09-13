@@ -1,11 +1,4 @@
 # netlify.toml
-
 [build]
-  publish   = "Athar/Athar/beta"                    # فيه index.html
-  functions = "Athar/Athar/beta/netlify/functions"  # فيه strategy.js
-
-# (اختياري) تحويلات عامة للـ API
-[[redirects]]
-  from = "/api/*"
-  to   = "/.netlify/functions/:splat"
-  status = 200
+  publish = "Athar/beta"
+  functions = "Athar/beta/netlify/functions"
