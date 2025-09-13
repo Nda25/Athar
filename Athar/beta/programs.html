@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>برامجنا — أثر</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<meta name="color-scheme" content="dark light">
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
+
+  <!-- الشريط العلوي (موحّد) -->
+  <div class="topbar">
+    <div class="left-actions">
+      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
+      <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثــر</a>
+    </div>
+    <div class="actions">
+      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+    </div>
+    <div class="user">
+      <span id="nav-auth" style="display:none; gap:10px">
+        <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
+        <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
+      </span>
+      <a id="nav-programs" class="btn" href="programs.html" style="display:inline-flex">برامجنا</a>
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+    </div>
+  </div>
+
+  <!-- الهيرو -->
+  <header>
+    <div class="hero">
+      <h1 class="logo">برامجنا</h1>
+      <div class="tag"><span class="dot"></span>حين يلتقي الشغف بالمعرفة .. يُصنع الأثر</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="grid" style="margin-top:10px">
+        <!-- بطاقة: أثــر -->
+        <a class="box" href="athar.html" style="text-decoration:none">
+          <h3>«أثــر»</h3>
+          <p>مساحة توليد الاستراتيجيات والأنشطة والأسئلة، متوافقة مع بلوم والتقويم.</p>
+        </a>
+
+        <!-- بطاقة: درسي -->
+        <a class="box" href="darsi.html" style="text-decoration:none">
+          <h3>«درسي»</h3>
+          <p>مُخطّط فوري: الدقيقة الواحدة، بطاقة أهداف قابلة للطباعة، ومصفوفة تقييم سريعة.</p>
+        </a>
+      </section>
+
+      <section class="card" style="margin-top:18px">
+        <h2 class="title">تذكير صغير</h2>
+        <p class="lead">«برامجنا» تظهر فقط بعد تسجيل الدخول — لاختصار التصفح وإبعاد التشتت. 🌿</p>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
