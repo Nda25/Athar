@@ -53,30 +53,35 @@ body{
 }
 
 /* خلفية ورود كبيرة فاتحة */
+./* خلفية ورود كبيرة سماوية فاتحة */
 .pattern{
-  position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.14;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .18;
+  background-repeat: repeat;
+  background-size: 220px 220px;
   background-image: url('data:image/svg+xml;utf8,\
-    <svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 100 100">\
-      <g fill="%2393c5fd" fill-opacity="0.18">\
-        <!-- بتلات كبيرة -->\
-        <circle cx="50" cy="15" r="14"/>\
-        <circle cx="50" cy="85" r="14"/>\
-        <circle cx="15" cy="50" r="14"/>\
-        <circle cx="85" cy="50" r="14"/>\
-        <!-- بتلات فرعية -->\
-        <circle cx="30" cy="30" r="10"/>\
-        <circle cx="70" cy="30" r="10"/>\
-        <circle cx="30" cy="70" r="10"/>\
-        <circle cx="70" cy="70" r="10"/>\
-        <!-- قلب الزهرة -->\
-        <circle cx="50" cy="50" r="16"/>\
-      </g>\
-    </svg>');
-  background-size:220px 220px;
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 100 100">\
+  <defs>\
+    <radialGradient id="g" cx="50%" cy="50%" r="50%">\
+      <stop offset="0%"  stop-color="%23bbe0ff"/>\
+      <stop offset="100%" stop-color="%2393c5fd" stop-opacity="0.65"/>\
+    </radialGradient>\
+  </defs>\
+  <!-- زهرة خماسية دوائر كبيرة -->\
+  <g fill="url(%23g)">\
+    <circle cx="50" cy="18" r="18"/>\
+    <circle cx="18" cy="50" r="18"/>\
+    <circle cx="82" cy="50" r="18"/>\
+    <circle cx="50" cy="82" r="18"/>\
+    <circle cx="50" cy="50" r="22"/>\
+  </g>\
+</svg>');
   mix-blend-mode: soft-light;
 }
-.dark .pattern{ opacity:.10 }
-
+.dark .pattern{ opacity:.12; }
 /* ===== الشريط العلوي (مُحسّن للجوال) ===== */
 .topbar{
   position:sticky; top:0; z-index:50;
