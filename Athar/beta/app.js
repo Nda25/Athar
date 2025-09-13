@@ -3,7 +3,7 @@
    ========================================= */
 
 /* ==== إعدادات عامة (عدليها بما يناسبك) ==== */
-const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzkBo_-YDkHskhhy2-ln4kMAyovIu1DQg4ogU5kG103WERjRG2UGjmT2n2uCTRqC6gWtg/exec"; // رابط النشر (Deployment URL)
+const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw-soThyqiUPgf3PmdyRg1u9IlkrfRmLdwQQc1_vZwH3kTpZaUZTkpEQfzD2UIyQ3Iv8Q/exec"; // رابط النشر (Deployment URL)
 const SHEET_API_KEY    = "NADA-ATHAR-2025!"; // مفتاح بسيط للتأكد (اختياري)
 
 const ATHAR_APP_URL = "athar.html";   // صفحة البوت الجديدة
@@ -11,8 +11,8 @@ const PRICING_URL   = "pricing.html";  // صفحة الخطط
 
 /* وصول المالك (اختياري) */
 const OWNER_EMAILS = [];         // ضعي بريدك هنا لو تبين صلاحية مالك
-const OWNER_PHONES = [];         // أو رقم جوالك 05XXXXXXXX
-const OWNER_KEY    = "";         // كود يمنح المالك عند إدخاله كـ promo
+const OWNER_PHONES = [0556795993];         // أو رقم جوالك 05XXXXXXXX
+const OWNER_KEY    = "OWNER1201";         // كود يمنح المالك عند إدخاله كـ promo
 
 /* ==== أدوات صغيرة ==== */
 const $  = (sel, root=document) => root.querySelector(sel);
