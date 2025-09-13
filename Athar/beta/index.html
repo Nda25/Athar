@@ -6,40 +6,52 @@
   <meta name="color-scheme" content="dark light" />
   <title>أثر</title>
 
-  <!-- الأيقونات -->
+  <!-- الأيقونات (صورة واحدة لكل شيء) -->
   <link rel="icon" type="image/png" href="/beta/assets/icon.png">
   <link rel="apple-touch-icon" href="/beta/assets/icon.png">
 
   <!-- OG/Twitter لصورة المشاركة -->
+  <meta property="og:title" content="أثر">
+  <meta property="og:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
   <meta property="og:image" content="https://n-athar.co/beta/assets/icon.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="أثر">
+  <meta name="twitter:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
   <meta name="twitter:image" content="https://n-athar.co/beta/assets/icon.png">
 
   <!-- الخط والستايل -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/beta/style.css">
 
-  <!-- (اختياري) تايلويند لو تحتاجينه لبعض العناصر -->
+  <!-- (اختياري) تايلويند لبعض العناصر -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
 
-  <!-- طبقات الخلفية -->
+  <!-- طبقات الخلفية (مهمّة للتنسيق) -->
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
   <!-- الشريط العلوي -->
   <div class="topbar">
+    <!-- روابط يسار الشريط -->
     <div class="left-actions">
       <a class="btn" href="/beta/index.html" title="الرئيسية">الرئيسية</a>
       <a class="btn" id="nav-athar" href="/beta/athar.html" title="أثر" style="display:none">أثر</a>
     </div>
 
+    <!-- حالة المستخدم -->
     <div class="user" id="nav-auth" style="display:inline-flex; gap:10px">
+      <!-- أزرار تظهر قبل الدخول -->
       <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
       <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
+
+      <!-- يظهر بعد الدخول -->
       <a id="nav-profile" class="btn" href="/beta/profile.html" style="display:none">الملف الشخصي</a>
     </div>
 
+    <!-- إجراءات يمين الشريط -->
     <div class="actions">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
       <a class="btn primary" href="/beta/pricing.html">الخطط</a>
@@ -57,6 +69,7 @@
     </div>
   </header>
 
+  <!-- المحتوى -->
   <main>
     <div class="container">
       <!-- كيف وُلد أثر؟ -->
@@ -77,7 +90,7 @@
           <h3>ما هو «أثر»؟</h3>
           <p>
             منصة تعليمية ذكية تُولِّد استراتيجيات وأنشطة وأسئلة قابلة للتخصيص،
-            وتتوافق مع مستويات بلوم والتقويم، لتجعل الحصة عميقة وسلسة في آنٍ واحد.
+            وتتوافق مع مستويات بلوم والتقويم؛ لتجعل الحصة عميقة وسلسة في آنٍ واحد.
           </p>
         </div>
 
@@ -98,6 +111,8 @@
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
+
+  <!-- ========= المودالات ========= -->
 
   <!-- مودال التسجيل -->
   <div class="modal" id="modal-register" aria-hidden="true">
@@ -163,22 +178,47 @@
     </div>
   </div>
 
-  <div class="toast"></div>
+  <!-- توست للإشعارات الصغيرة -->
+  <div class="toast" id="toast"></div>
 
-  <!-- سكربتات -->
+  <!-- ========= سكربتات ========= -->
   <script src="/beta/app.js"></script>
   <script>
-    // إظهار زر "أثر" و"الملف الشخصي" حسب حالة الدخول
-    document.addEventListener('DOMContentLoaded', function () {
+    // تبديل الوضع الداكن/الفاتح
+    (function(){
+      var btn = document.getElementById('themeToggle');
+      if(!btn) return;
+      btn.addEventListener('click', function(){
+        document.documentElement.classList.toggle('dark');
+        // توست بسيط
+        var t = document.getElementById('toast');
+        if(t){ t.textContent = document.documentElement.classList.contains('dark') ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
+               t.classList.add('show'); setTimeout(function(){t.classList.remove('show')}, 1500); }
+      });
+    })();
+
+    // فتح/إغلاق المودالات
+    function openModal(sel){
+      var m = document.querySelector(sel);
+      if(m){ m.classList.add('show'); m.setAttribute('aria-hidden','false'); }
+    }
+    document.addEventListener('click', function(e){
+      if(e.target.matches('[data-close]')){ e.preventDefault();
+        var m = e.target.closest('.modal');
+        if(m){ m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
+      }
+      if(e.target.classList.contains('modal')){ // الضغط على الخلفية
+        e.target.classList.remove('show'); e.target.setAttribute('aria-hidden','true');
+      }
+    });
+
+    // إظهار زر "أثر" و"الملف الشخصي" بعد الدخول (اعتمادًا على store.auth لو موجود)
+    document.addEventListener('DOMContentLoaded', function(){
+      var loggedIn = (typeof store !== 'undefined' && !!store.auth);
       var atharBtn = document.getElementById('nav-athar');
       var profileBtn = document.getElementById('nav-profile');
-      var authBox   = document.getElementById('nav-auth');
-
-      var loggedIn = (typeof store !== 'undefined' && !!store.auth);
-
-      if (atharBtn)   atharBtn.style.display   = loggedIn ? 'inline-flex' : 'none';
-      if (profileBtn) profileBtn.style.display = loggedIn ? 'inline-flex' : 'none';
-      if (authBox)    authBox.style.display    = 'inline-flex'; // يحوي الكل، والأزرار نفسها تظهر/تختفي
+      if(atharBtn)   atharBtn.style.display   = loggedIn ? 'inline-flex' : 'none';
+      if(profileBtn) profileBtn.style.display = loggedIn ? 'inline-flex' : 'none';
     });
   </script>
 </body>
