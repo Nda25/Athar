@@ -1,15 +1,14 @@
 /* ====== إعداد عام ====== */
-const ATHAR_APP_URL = "https://n-athar.co"; // رابط أثر العادي بعد تسجيل الدخول/الاشتراك
-// عنوان Google Apps Script API
-const API_URL = "https://script.google.com/macros/s/AKfycbyfFutNFSDO0MScqtpd6ACXkQU8kzAdtR6g9ZzQnoxs273Hmk7ctJiK1Prr4spGUem7/exec";
-/* سكربت Google — الصقي القيم من نشر الـ Web App */
-const GAS_ENDPOINT = "PUT_YOUR_WEB_APP_URL_HERE"; // مثل: https://script.google.com/macros/s/AKfycbx.../exec
-const GAS_API_KEY  = "PUT_A_STRONG_SECRET_KEY_HERE"; // نفسه الموجود في Apps Script
+const ATHAR_APP_URL = "https://n-athar.co";
+const PRICING_URL   = "pricing.html";
 
-/* وصول المالك (دخول بلا قيود) */
-const OWNER_EMAILS = [0556795993];
-const OWNER_PHONES = [e-alhabardi@trbyh.edu.sa];
-const OWNER_KEY    = "Nada055679"; // مفتاح اختياري يمنح وضع المالك عند إدخاله ككود
+// عنوان Google Apps Script API (من نشر الـ Web App)
+const API_URL = "https://script.google.com/macros/s/AKfycbyfFutNFSDO0MScqtpd6ACXkQU8kzAdtR6g9ZzQnoxs273Hmk7ctJiK1Prr4spGUem7/exec";
+
+/* وصول المالك (دخول بلا قيود) – اختياري */
+const OWNER_EMAILS = [];       // ضعي بريدك هنا إن رغبتِ
+const OWNER_PHONES = [];       // أو جوالك بصيغة 05XXXXXXXX
+const OWNER_KEY    = "";       // مفتاح يمنح وضع المالك عند إدخاله كـ “كود”
 
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -107,17 +106,16 @@ function hasAccess(){
   return store.auth && (isOwner() || isSubActive() || isTrialActive());
 }
 
-/* ====== الإرسال إلى Google Sheets ====== */
-async function logToCRM(payload){
-  if(!GAS_ENDPOINT || !GAS_API_KEY) return; // لو ما ضبطناه، نتجاهل الإرسال
-  const body = { apiKey: GAS_API_KEY, ua: navigator.userAgent, ...payload };
+/* ====== إرسال صف إلى Google Sheets ====== */
+async function sendRowToSheet(payload){
   try{
-    await fetch(GAS_ENDPOINT, {
+    await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify(payload)
     });
-  }catch(_){}
+  }catch(err){
+    console.error('Sheet API error:', err);
+  }
 }
 
 /* ====== تفعيل كود تجربة ====== */
@@ -154,12 +152,20 @@ function redeemCode(codeRaw){
   usage[code] = usedList;
   store.codesUsers = usage;
 
-  // سجلّ في الـ CRM
-  logToCRM({
-    action: 'trial_redeem',
-    userId: email,
-    email, phone: store.user?.phone || '', school: store.user?.school || '',
-    promo: code, trialCode: code, trialRemaining: cfg.perUserGenerations, trialExpiresAt: cfg.expiresAt
+  // سجل كحدث (trial_redeem)
+  sendRowToSheet({
+    // الترتيب يطابق سكربتك في الشيت
+    date: new Date().toISOString(),
+    name: store.user?.name || '',
+    email: email,
+    phone: store.user?.phone || '',
+    school: store.user?.school || '',
+    promo: code,
+    plan: '',           // لا شيء هنا
+    startsAt: '',       // لا شيء
+    endsAt: '',         // لا شيء
+    totalPaid: 0,
+    consent: store.user?.marketingConsent ? true : false
   });
 
   return { ok:true, msg:"تم تفعيل الكود بنجاح." };
@@ -174,15 +180,21 @@ function consumeGeneration(n=1){
   store.trial = t;
   toast(`تم استخدام ${n} توليدة. المتبقّي: ${t.remaining}`);
 
-  // تحديث ملف شخصي
   const leftEl = $('#t-left'); if(leftEl) leftEl.textContent = t.remaining;
-  if(t.remaining === 0){ const ss = $('#sub-state'); if(ss){ ss.textContent = 'منتهي'; ss.style.background='#fee2e2'; ss.style.color='#991b1b'; ss.style.borderColor='#fecaca'; } }
 
-  logToCRM({
-    action: 'generation_consume',
-    userId: store.user?.email || '',
-    email: store.user?.email || '', phone: store.user?.phone || '', school: store.user?.school || '',
-    code: t.code, used: n, remaining: t.remaining, trialExpiresAt: t.expiresAt
+  // يمكن تسجيل الاستهلاك كحدث (اختياري)
+  sendRowToSheet({
+    date: new Date().toISOString(),
+    name: store.user?.name || '',
+    email: store.user?.email || '',
+    phone: store.user?.phone || '',
+    school: store.user?.school || '',
+    promo: t.code,
+    plan: 'trial_consume',
+    startsAt: '',
+    endsAt: '',
+    totalPaid: n, // نستخدمه كعداد بسيط هنا
+    consent: store.user?.marketingConsent ? true : false
   });
 }
 
@@ -208,36 +220,33 @@ function handleRegister(e){
   }
 
   const createdAt = new Date().toISOString();
-  store.user = { name, email, phone, school, marketingConsent: consent, createdAt };
+  store.user = { name, email, phone, school, marketingConsent: consent, promo, createdAt };
   store.auth = true;
 
-  // كود
-  let trialInfo = null;
+  // لو فيه كود يفعّل
   if(promo){
     const r = redeemCode(promo);
-    trialInfo = r.ok ? store.trial : null;
     toast(r.msg);
   }
 
   closeModal('#modal-register');
 
-  // سجّل في الـ CRM
-  logToCRM({
-    action: 'register',
-    userId: email,
+  // إرسال صف "تسجيل"
+  sendRowToSheet({
+    date: createdAt,
     name, email, phone, school,
-    marketingConsent: consent,
     promo,
-    trialCode: trialInfo?.code || '',
-    trialRemaining: trialInfo?.remaining ?? '',
-    trialExpiresAt: trialInfo?.expiresAt || '',
-    createdAt
+    plan: null,
+    startsAt: null,
+    endsAt: null,
+    totalPaid: 0,
+    consent
   });
 
   setTimeout(()=>{
     if(hasAccess()) location.href = ATHAR_APP_URL;
     else            location.href = PRICING_URL;
-  }, 200);
+  }, 250);
 }
 
 /* ====== الدخول ====== */
@@ -255,21 +264,16 @@ function handleLogin(e){
 
   store.auth = true;
   closeModal('#modal-login');
+  toast('تم تسجيل الدخول ✅');
 
-  logToCRM({ action:'login', userId: email, email, phone, school: u.school || '' });
-
-  if(hasAccess()){
-    toast('تم تسجيل الدخول ✅');
-    setTimeout(()=> location.href = ATHAR_APP_URL, 200);
-  }else{
-    toast('بحاجة لاشتراك أو كود تجربة.');
-    setTimeout(()=> location.href = PRICING_URL, 400);
-  }
+  if(hasAccess()) setTimeout(()=> location.href = ATHAR_APP_URL, 200);
+  else            setTimeout(()=> location.href = PRICING_URL, 200);
 }
 
 /* ====== الاشتراك ====== */
 function subscribe(planKey){
   if(!store.auth || !store.user){ openModal('#modal-register'); return; }
+
   const start = new Date();
   const end = new Date(start);
   if(planKey==='weekly')  end.setDate(end.getDate()+7);
@@ -279,18 +283,23 @@ function subscribe(planKey){
 
   store.sub = { plan: planKey, startedAt: start.toISOString(), endsAt: end.toISOString() };
 
-  // سجل اشتراك (amount: نضيفه لاحقًا عند ربط الدفع)
-  logToCRM({
-    action:'subscribe',
-    userId: store.user.email,
+  // تقدير المبلغ (اختياري الآن – عدليه كما تشائين)
+  const prices = { weekly:10, monthly:30, semi:170, annual:340 };
+  const amount = prices[planKey] ?? 0;
+
+  // إرسال صف "اشتراك"
+  sendRowToSheet({
+    date: new Date().toISOString(),
+    name: store.user.name,
     email: store.user.email,
     phone: store.user.phone,
     school: store.user.school,
+    promo: store.user.promo || '',
     plan: planKey,
-    amount: 0,
-    startAt: start.toISOString(),
+    startsAt: start.toISOString(),
     endsAt: end.toISOString(),
-    note: 'local activation'
+    totalPaid: amount,
+    consent: store.user.marketingConsent ? true : false
   });
 
   toast('تم تفعيل الاشتراك ✅');
@@ -299,16 +308,12 @@ function subscribe(planKey){
 
 /* ====== خروج/حذف ====== */
 function logout(){
-  const email = store.user?.email || '';
   store.auth = false;
-  logToCRM({ action:'logout', userId: email, email });
   toast('تم تسجيل الخروج');
   setTimeout(()=>location.href='index.html', 400);
 }
 function deleteAccount(){
-  const email = store.user?.email || '';
   store.clear();
-  logToCRM({ action:'delete', userId: email, email });
   toast('تم حذف الحساب نهائيًا');
   setTimeout(()=>location.href='index.html', 500);
 }
