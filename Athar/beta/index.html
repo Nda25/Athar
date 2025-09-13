@@ -26,6 +26,61 @@
 
   <!-- (اختياري) Tailwind لبعض العناصر -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+(function(){
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('theme'); } catch(_) {}
+
+  // اجعل الافتراضي فاتح، ولا تلتفتي لتفضيل النظام هنا
+  if (saved === 'dark') {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+    try { localStorage.setItem('theme', 'light'); } catch(_) {}
+  }
+
+  // لو أحد الصفحات سبق وحطّ dark على <body> ننقله لـ <html> ونحذفه من البودي
+  if (document.body.classList.contains('dark')) {
+    root.classList.add('dark');
+    document.body.classList.remove('dark');
+  }
+})();
+</script>
+  <script>
+(function(){
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('theme'); } catch(_) {}
+  if (saved === 'dark') {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+    try { localStorage.setItem('theme','light'); } catch(_) {}
+  }
+  if (document.body.classList.contains('dark')) {
+    root.classList.add('dark');
+    document.body.classList.remove('dark');
+  }
+})();
+</script>
+  <script>
+(function(){
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('theme'); } catch(_) {}
+  if (saved === 'dark') {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+    try { localStorage.setItem('theme','light'); } catch(_) {}
+  }
+  if (document.body.classList.contains('dark')) {
+    root.classList.add('dark');
+    document.body.classList.remove('dark');
+  }
+})();
+</script>
 </head>
 <body>
 
@@ -187,102 +242,30 @@
   <!-- ========= السكربتات ========= -->
 <script src="app.js"></script>
 <script>
-/* 0) ضبطي مكان كلاس الداكن */
-(function unifyDarkClass(){
-  var root = document.documentElement, body = document.body;
-  if (body && body.classList.contains('dark')) {
-    body.classList.remove('dark');                // لا نستخدمه على الـ body
-    root.classList.add('dark');                   // نخليه على <html>
-  }
-})();
-
-/* 1) تهيئة حسب الحفظ/تفضيل النظام + ضبط رمز الزر */
-(function initTheme(){
-  var root = document.documentElement;
-  var saved = null;
-  try { saved = localStorage.getItem('theme'); } catch(_) {}
-  var preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-  if (saved === 'dark' || (!saved && preferDark)) root.classList.add('dark');
-  else root.classList.remove('dark');
-
-  document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('themeToggle');
-    if (btn) btn.textContent = root.classList.contains('dark') ? '🌓' : '🌓';
-  });
-})();
-
-/* ثبّتي عرض الشريط لمنع قفزة التمرير */
-document.documentElement.style.setProperty('scrollbar-gutter', 'stable both-edges');
-
-/* 2) التبديل + الحفظ + توست */
 document.addEventListener('DOMContentLoaded', function(){
   var btn = document.getElementById('themeToggle');
-  if (!btn) return;
+  if(!btn) return;
+
+  // نخلي الأيقونة دايم 🌓
+  btn.textContent = '🌓';
 
   btn.addEventListener('click', function(e){
     e.preventDefault();
     var root = document.documentElement;
+    var willBeDark = !root.classList.contains('dark');
 
-    var willBeDark = !root.classList.contains('dark');   // الحالة القادمة
-    root.classList.toggle('dark', willBeDark);           // نعدل على <html> فقط
+    root.classList.toggle('dark', willBeDark);
     try { localStorage.setItem('theme', willBeDark ? 'dark' : 'light'); } catch(_) {}
-
-    // الأيقونة (نصف قمر/شمس)
-    btn.textContent = willBeDark ? '🌓' : '🌓';
 
     // التوست
     var t = document.getElementById('toast');
-    if (t){
+    if(t){
       t.textContent = willBeDark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
       t.classList.add('show');
       setTimeout(function(){ t.classList.remove('show'); }, 1400);
     }
   });
-
-  /* 3) لا نعيد تحميل الرئيسية إذا نحن فيها */
-  var links = document.querySelectorAll(
-    'a[href="index.html"], a[href="/index.html"], a[href="/"], a[href="/beta/"], a[href="/beta/index.html"]'
-  );
-  links.forEach(function(a){
-    a.addEventListener('click', function(e){
-      var path = location.pathname.replace(/\/+$/,'');
-      var onRoot  = (path === '' || path === '/');
-      var onIndex = /(?:^|\/)index\.html$/.test(path);
-      var onBeta  = /^\/beta$/.test(path);
-      var onBetaI = /^\/beta\/index\.html$/.test(path);
-      if (onRoot || onIndex || onBeta || onBetaI){
-        e.preventDefault();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    });
-  });
-
-  /* 4) إظهار/إخفاء روابط بحسب حالة الدخول (store.auth إن وجد) */
-  var loggedIn   = (typeof store !== 'undefined' && !!store.auth);
-  var atharBtn   = document.getElementById('nav-athar');
-  var profileBtn = document.getElementById('nav-profile');
-  if (atharBtn)   atharBtn.style.display   = loggedIn ? 'inline-flex' : 'none';
-  if (profileBtn) profileBtn.style.display = loggedIn ? 'inline-flex' : 'none';
-});
-
-/* 5) فتح/إغلاق المودالات */
-function openModal(sel){
-  var m = document.querySelector(sel);
-  if(m){ m.classList.add('show'); m.setAttribute('aria-hidden','false'); }
-}
-document.addEventListener('click', function(e){
-  if(e.target.matches('[data-close]')){
-    e.preventDefault();
-    var m = e.target.closest('.modal');
-    if(m){ m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
-  }
-  if(e.target.classList.contains('modal')){
-    e.target.classList.remove('show');
-    e.target.setAttribute('aria-hidden','true');
-  }
 });
 </script>
-  <script src="app.js"></script>
 </body>
 </html>
