@@ -226,3 +226,73 @@ input::placeholder{ color:#64748b }
   display:none; box-shadow:0 10px 25px rgba(0,0,0,.25);
 }
 .toast.show{ display:block }
+
+/* === Athar Classic Skin (نفس القديمة) === */
+
+/* خلفية متدرّجة + نقاط */
+body{
+  background:
+    radial-gradient(1200px 700px at 100% -10%, #d7e9ff, transparent 60%),
+    radial-gradient(1200px 700px at -10% 100%, #e6f2ff, transparent 60%),
+    linear-gradient(180deg, #ffffff, #f0f9ff 85%);
+}
+.dark body{
+  background:
+    radial-gradient(1200px 700px at 100% -10%, rgba(59,130,246,.12), transparent 60%),
+    radial-gradient(1200px 700px at -10% 100%, rgba(59,130,246,.10), transparent 60%),
+    linear-gradient(180deg, #0b1220, #111827 85%);
+}
+/* نقاط منقطة رقيقة */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; opacity:.10;
+  background-image:url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBvcGFjaXR5PSIwLjg0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0IiBmaWxsPSIjMWUzYThhIi8+PHBhdGggZD0iTTIwIDEyYy0yIDMtNCAzLTYgMHMwLTQgMy02IDYgMCAzIDYiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii4yIi8+PGNpcmNsZSBjeD0iMzYiIGN5PSIzNiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjxwYXRoIGQ9Ik0yOCAzNmMyIDMgNCAzIDYgMHMwLTQtMy02LTYgMC0zIDYiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii4yIi8+PC9nPjwvc3ZnPg==');
+  background-size:48px 48px;
+}
+.dark body::before{ opacity:.07; }
+
+/* نخفي الخلفيتين القديمتين لو موجودة عناصرهما */
+.backdrop, .pattern{ display:none; }
+
+/* بطاقة التحكم بشكل زجاجي خفيف، مثل القديم */
+.controls.card{
+  border:1px solid rgba(59,130,246,.22);
+  border-radius:20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.12);
+}
+
+/* شعار "أثر" + القطرة */
+.brand-wrap{ text-align:center; padding:22px 0 10px; }
+.brand-row{ display:flex; align-items:center; justify-content:center; gap:.6rem }
+.brand-icon svg{ width:28px; height:28px; transform:translateY(2px); fill:var(--sea-500); }
+.brand-name{
+  font-family:"Amiri",serif; font-weight:700;
+  font-size:3rem; letter-spacing:.5px; margin:0;
+  color:#1e40af; text-shadow:0 1px 0 rgba(255,255,255,.55);
+}
+.dark .brand-name{ color:#93c5fd; text-shadow:none; }
+.brand-tag{ color:var(--muted); font-weight:700; margin-top:.18rem; }
+.dark .brand-tag{ color:#e2e8f0; }
+
+/* ألوان العناوين داخل النتائج باللون الأزرق مثل القديم */
+#out h2, #out h3{ color:#1e40af; }
+.dark #out h2, .dark #out h3{ color:#93c5fd; }
+
+/* المكوّنات (select/input) بنفس ستايل القديم */
+.select-wrap{ position:relative }
+.select-wrap .sel{
+  width:100%; background:#fff; color:#0f172a; border:1px solid rgba(59,130,246,.35);
+  border-radius:12px; padding:.9rem 1rem; padding-inline-start:2.2rem; outline:none; appearance:none;
+}
+.dark .select-wrap .sel{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6; }
+.select-wrap .sel-icon{
+  position:absolute; inset-inline-start:.7rem; top:50%; transform:translateY(-50%);
+  width:16px; height:16px; pointer-events:none; color:#3b82f6;
+}
+.dark .select-wrap .sel-icon{ color:#93c5fd; }
+
+/* زر أساسي بنفس درجة الأزرق */
+.btn.primary{
+  background:var(--sea-500); color:#fff; border-color: rgba(0,0,0,.05);
+  box-shadow:0 12px 30px rgba(59,130,246,.35);
+}
+.btn.primary:hover{ background:var(--sea-400); }
