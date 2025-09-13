@@ -142,23 +142,87 @@ header{ position:relative; padding:48px 18px 28px; text-align:center; }
 .hero-plate{ display:none; }
 
 /* شعار «أثــر» */
-.logo{
-font-family:"Cairo", sans-serif; font-weight:700;
+/* الشعار */
+.logo {
+  font-family:"Cairo", sans-serif;
+  font-weight:700;
   letter-spacing:.5px;
-  font-size:clamp(44px, 6.2vw, 84px); margin:0;
+  font-size:clamp(44px, 6.2vw, 84px);
+  margin:0;
   color:#1e40af;
   text-shadow:0 1px 0 rgba(255,255,255,.55);
+  display:block; /* يخلي النص كسطر منفصل */
+  text-align:center;
 }
-.dark .logo{ color:#93c5fd; text-shadow:none; }
+.dark .logo {
+  color:#93c5fd;
+  text-shadow:none;
+}
 
-.tag{
-  display:inline-flex; align-items:center; gap:8px;
-  margin-top:12px; padding:10px 16px; border-radius:999px;
+/* الوسم تحت الشعار */
+.tag {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:12px;
+  padding:10px 16px;
+  border-radius:999px;
   background:rgba(255,255,255,.6);
-  border:1px solid rgba(59,130,246,.25); color:#0c4a6e; font-weight:700;
+  border:1px solid rgba(59,130,246,.25);
+  color:#0c4a6e;
+  font-weight:700;
 }
-.dark .tag{ background:rgba(17,24,39,.55); color:#e2e8f0; border-color:#3b82f6; }
-.tag .dot{ width:8px; height:8px; border-radius:50%; background:var(--gold) }
+.dark .tag {
+  background:rgba(17,24,39,.55);
+  color:#e2e8f0;
+  border-color:#3b82f6;
+}
+.tag .dot {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--gold);
+}/* الشعار */
+.logo {
+  font-family:"Cairo", sans-serif;
+  font-weight:700;
+  letter-spacing:.5px;
+  font-size:clamp(44px, 6.2vw, 84px);
+  margin:0;
+  color:#1e40af;
+  text-shadow:0 1px 0 rgba(255,255,255,.55);
+  display:block; /* يخلي النص كسطر منفصل */
+  text-align:center;
+}
+.dark .logo {
+  color:#93c5fd;
+  text-shadow:none;
+}
+
+/* الوسم تحت الشعار */
+.tag {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:12px;
+  padding:10px 16px;
+  border-radius:999px;
+  background:rgba(255,255,255,.6);
+  border:1px solid rgba(59,130,246,.25);
+  color:#0c4a6e;
+  font-weight:700;
+}
+.dark .tag {
+  background:rgba(17,24,39,.55);
+  color:#e2e8f0;
+  border-color:#3b82f6;
+}
+.tag .dot {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--gold);
+}
 
 /* ===== المحتوى العام ===== */
 main{ padding:18px }
