@@ -324,10 +324,9 @@ function handleRegister(e){
     consent
   });
 
-  setTimeout(()=>{
-    if(hasAccess()) location.href = ATHAR_APP_URL;
-    else            location.href = PRICING_URL;
-  }, 250);
+setTimeout(()=>{
+  location.href = 'index.html';
+}, 250);
 }
 
 /* ==== الدخول ==== */
@@ -354,12 +353,14 @@ function handleLogin(e){
   const passOk = pass === (u.password || "");
   if(!(matchId && passOk)) return toast('بيانات الدخول غير صحيحة.');
 
-  store.auth = true;
-  closeModal('#modal-login');
-  toast('أهلًا وسهلًا بك في «أثــر» 🪄');
+store.auth = true;
+closeModal('#modal-login');
+toast('أهلًا وسهلًا بك في «أثــر» 🪄');
 
-  if(hasAccess()) setTimeout(()=> location.href = ATHAR_APP_URL, 200);
-  else            setTimeout(()=> location.href = PRICING_URL,   200);
+// بعد تسجيل الدخول → رجوع للرئيسية
+setTimeout(()=>{
+  location.href = 'index.html';
+}, 200);
 }
 
 /* ==== الاشتراك ==== */
