@@ -18,18 +18,62 @@ const OWNER_KEY    = "OWNER1201";        // كود يمنح وضع المالك
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-/* ==== الوضع الداكن ==== */
-(function themeInit(){
-  const root = document.documentElement;
-  const saved = localStorage.getItem('athar:theme');
-  if(saved === 'dark') root.classList.add('dark');
-  const t = $('#themeToggle');
-  if(t){
-    t.addEventListener('click', ()=>{
-      root.classList.toggle('dark');
-      localStorage.setItem('athar:theme', root.classList.contains('dark') ? 'dark' : 'light');
-    });
+/* ==============================
+   Theme: init + toggle (موحّد)
+   ============================== */
+
+// 0) توحيد مكان كلاس dark (لا يكون على <body>)
+(function unifyDarkClass(){
+  var root = document.documentElement;
+  var body = document.body;
+  if (body.classList.contains('dark')) {
+    body.classList.remove('dark');
+    root.classList.add('dark');
   }
+})();
+
+// 1) تهيئة الحالة اعتمادًا على التخزين أو نظام الجهاز
+(function themeInit(){
+  var root  = document.documentElement;
+  var key   = 'athar:theme';       // << استخدم نفس المفتاح بكل الصفحات
+  var saved = null;
+  try { saved = localStorage.getItem(key); } catch(_) {}
+
+  if (saved === 'dark') {
+    root.classList.add('dark');
+  } else if (saved === 'light') {
+    root.classList.remove('dark');
+  } else {
+    // أول مرة: اتّبعي تفضيل النظام (أو خليها فاتح لو تبين)
+    var preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.classList.toggle('dark', !!preferDark);
+    try { localStorage.setItem(key, preferDark ? 'dark' : 'light'); } catch(_) {}
+  }
+
+  // 2) ربط زر التبديل
+  var $ = function(sel){ return document.querySelector(sel); };
+  document.addEventListener('DOMContentLoaded', function(){
+    var btn = $('#themeToggle');
+    if (!btn) return;
+
+    // الإيموجي ثابت مثل رغبتك
+    btn.textContent = '🌓';
+
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      var willBeDark = !root.classList.contains('dark');
+      root.classList.toggle('dark', willBeDark);
+
+      try { localStorage.setItem(key, willBeDark ? 'dark' : 'light'); } catch(_) {}
+
+      var t = document.getElementById('toast');
+      if (t){
+        t.textContent = willBeDark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
+        t.classList.add('show');
+        setTimeout(function(){ t.classList.remove('show'); }, 1400);
+      }
+    });
+  });
 })();
 
 /* ==== التخزين المحلي ==== */
