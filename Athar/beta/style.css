@@ -68,6 +68,7 @@ body{
 .dark .pattern{ opacity:.12 }
 
 /* ===== الشريط العلوي ===== */
+/* ===== الشريط العلوي (مُحسّن للجوال) ===== */
 .topbar{
   position:sticky; top:0; z-index:50;
   display:flex; align-items:center; justify-content:space-between;
@@ -75,19 +76,32 @@ body{
   backdrop-filter: blur(8px);
   background: rgba(255,255,255,.7);
   border-bottom:1px solid rgba(59,130,246,.22);
+
+  /* مهم للجوال */
+  gap:10px;
+  flex-wrap: wrap;
 }
 .dark .topbar{
   background: rgba(17,24,39,.6);
   border-color:#3b82f6;
 }
-.actions,.user{display:flex; align-items:center; gap:10px}
 
+/* خلّي كل المجموعات flex (كانت actions,user فقط) */
+.topbar .left-actions,
+.topbar .actions,
+.topbar .user{
+  display:flex; align-items:center; gap:10px;
+  flex-wrap: wrap; /* عشان الأزرار نفسها ما تتزاحم */
+}
+
+/* الأزرار */
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
   padding:10px 14px; border-radius:12px; text-decoration:none; cursor:pointer;
   border:1px solid rgba(59,130,246,.25);
   background:linear-gradient(180deg, #ffffffd0, #ffffffb5);
   color:var(--ink); font-weight:800; transition:.2s; box-shadow:0 12px 30px rgba(59,130,246,.10);
+  white-space: nowrap; /* يمنع تكسير الكلمة في الجوال */
 }
 .btn:hover{ transform:translateY(-1px) }
 .btn:active{ transform:translateY(0) scale(.98) }
@@ -99,6 +113,34 @@ body{
 }
 .btn.primary:hover{ background:var(--sea-400) }
 .btn.ghost{ background:transparent }
+
+/* توزيع لطيف على الشاشات الصغيرة */
+@media (max-width: 640px){
+  .topbar{ padding:10px 12px; }
+
+  /* نخلي روابط التنقل (الرئيسية / أثــر) تأخذ سطر كامل وتكون بالبداية */
+  .topbar .left-actions{
+    order: 1;
+    flex: 1 1 100%;
+    justify-content: space-between; /* أو center حسب ذوقك */
+  }
+
+  /* أزرار المستخدم (تسجيل/دخول أو الملف الشخصي) */
+  .topbar .user{
+    order: 2;
+    flex: 1 1 auto;
+    justify-content: flex-start;
+  }
+
+  /* أدوات إضافية (الوضع الداكن / الخطط) */
+  .topbar .actions{
+    order: 3;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+
+  .btn{ padding:8px 10px; font-size:13px; }
+}
 
 /* ===== الهيدر ===== */
 header{ position:relative; padding:48px 18px 28px; text-align:center; }
