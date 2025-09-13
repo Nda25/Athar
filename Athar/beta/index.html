@@ -2,34 +2,40 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark light" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="dark light">
+  <title>أثـَـر</title>
 
-  <!-- Title أساسي يظهر فوق -->
-  <title>أثـَـــر</title>
+  <!-- أيقونة المتصفح (Favicon + Apple Touch Icon) -->
+  <link rel="icon" type="image/png" href="/assets/icon.png">
+  <link rel="apple-touch-icon" href="/assets/icon.png">
 
-  <!-- الوصف الأساسي -->
-  <meta name="description" content="حين يلتقي الشغفُ بالمعرفة .. يُصنعُ الأثر">
-
-  <!-- Open Graph (مشاركة روابط) -->
-  <meta property="og:title" content="أثـَـــر" />
-  <meta property="og:description" content="حين يلتقي الشغفُ بالمعرفة .. يُصنعُ الأثر" />
+  <!-- Open Graph (لمشاركة الرابط على واتساب وفيسبوك وتيليجرام) -->
+  <meta property="og:title" content="أثـَـر" />
+  <meta property="og:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر ✨" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://n-athar.co" />
-  <meta property="og:image" content="https://n-athar.co/assets/og-cover.png" />
+  <meta property="og:url" content="https://n-athar.co/" />
+  <meta property="og:image" content="https://n-athar.co/assets/icon.png" />
+  <meta property="og:image:alt" content="شعار أثر" />
+  <meta property="og:site_name" content="n-athar.co" />
 
-  <!-- Twitter card -->
+  <!-- Twitter Card (مشاركة على تويتر/X) -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="أثـَـــر" />
-  <meta name="twitter:description" content="حين يلتقي الشغفُ بالمعرفة .. يُصنعُ الأثر" />
-  <meta name="twitter:image" content="https://n-athar.co/assets/og-cover.png" />
+  <meta name="twitter:title" content="أثـَـر" />
+  <meta name="twitter:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر ✨" />
+  <meta name="twitter:image" content="https://n-athar.co/assets/icon.png" />
+  <meta name="twitter:image:alt" content="شعار أثر" />
 
-  <!-- أيقونة المتصفح -->
-  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <!-- PWA manifest (اختياري إذا بتسوين تطبيق ويب تقدرين تحطينه بعدين) -->
+  <link rel="manifest" href="/manifest.json">
 
-  <!-- الخطوط و CSS -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri:wght@400;700&display=swap');
+  </style>
 </head>
 <body>
   <div class="backdrop"></div>
