@@ -79,60 +79,60 @@
   </footer>
 
   <!-- مودال التسجيل -->
-  <div class="modal" id="modal-register" aria-hidden="true">
-    <div class="sheet">
-      <h3>تسجيل حساب جديد</h3>
-      <form id="register-form">
-        <div class="form-row">
-          <div>
-            <label>الاسم الكامل</label>
-            <input name="name" placeholder="مثال: ندى المجيرش" required>
-          </div>
-          <div>
-            <label>رقم الجوال</label>
-            <input name="phone" placeholder="05xxxxxxxx" required>
-          </div>
+<!-- مودال التسجيل -->
+<div class="modal" id="modal-register" aria-hidden="true">
+  <div class="sheet">
+    <h3>تسجيل حساب جديد</h3>
+    <form id="register-form">
+      <div class="form-row">
+        <div>
+          <label>الاسم الكامل</label>
+          <input name="name" placeholder="مثال: ندى المجيرش" required>
         </div>
-        <div class="form-row">
-          <div>
-            <label>البريد الإلكتروني</label>
-            <input type="email" name="email" placeholder="name@example.com" required>
-          </div>
-          <div>
-            <label>اسم المدرسة</label>
-            <input name="school" placeholder="مدرستك" required>
-          </div>
+        <div>
+          <label>رقم الجوال</label>
+          <input name="phone" placeholder="05xxxxxxxx" required>
         </div>
-        <label>كلمة المرور</label>
-        <input type="password" name="password" placeholder="••••••••" required>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>البريد الإلكتروني</label>
+          <input type="email" name="email" placeholder="name@example.com" required>
+        </div>
+        <div>
+          <label>اسم المدرسة</label>
+          <input name="school" placeholder="مدرستك" required>
+        </div>
+      </div>
 
-<label>الكود</label>
-<input name="promo" placeholder="">
-        
-<label style="display:flex; align-items:center; gap:6px; font-size:14px; margin-top:10px">
-  <input type="checkbox" name="consent" style="width:16px; height:16px">
-  <span>أوافق على استلام التنبيهات والإشعارات من «أثر»</span>
-</label>
-        <div class="actions-row">
-          <a href="#" class="btn ghost" data-close>إغلاق</a>
-          <button class="btn primary" type="submit">إنشاء حساب</button>
-        </div>
-      </form>
-    </div>
+      <label>كلمة المرور</label>
+      <input type="password" name="password" placeholder="••••••••" required>
+
+      <label>رمز الدعوة (إن وجد)</label>
+      <input name="promo" placeholder="">
+
+      <label style="display:flex; align-items:center; gap:6px; font-size:8px; margin-top:10px">
+        <input type="checkbox" name="consent" style="width:16px; height:16px">
+        <span>أوافق على استلام التنبيهات والإشعارات من «أثر»</span>
+      </label>
+
+      <div class="actions-row">
+        <a href="#" class="btn ghost" data-close>إغلاق</a>
+        <button class="btn primary" type="submit">إنشاء حساب</button>
+      </div>
+    </form>
   </div>
+</div>
 
-  <!-- مودال الدخول -->
+
+<!-- مودال الدخول -->
 <div class="modal" id="modal-login" aria-hidden="true">
   <div class="sheet">
     <h3>تسجيل الدخول</h3>
     <form id="login-form">
       <label>البريد الإلكتروني أو رقم الجوال</label>
-      <input 
-        name="identifier" 
-        placeholder="name@example.com أو 05xxxxxxxx" 
-        required 
-      >
-      
+      <input name="identifier" placeholder="name@example.com أو 05xxxxxxxx" required>
+
       <label>كلمة المرور</label>
       <input type="password" name="password" placeholder="••••••••" required>
 
