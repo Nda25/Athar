@@ -9,24 +9,23 @@
 <meta name="color-scheme" content="dark light">
 </head>
 <body>
+  <!-- خلفيات النمط -->
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- شريط علوي -->
+  <!-- الشريط العلوي الموحد -->
   <div class="topbar">
+    <div class="left-actions">
+      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
+      <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثــر</a>
+    </div>
     <div class="actions">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
       <a class="btn primary" href="pricing.html">الخطط</a>
     </div>
-    <div class="user">
-      <span id="nav-auth" style="display:inline-flex; gap:10px">
-        <a class="btn" href="index.html" onclick="openModal('#modal-register');return false;">تسجيل</a>
-        <a class="btn" href="index.html" onclick="openModal('#modal-login');return false;">دخول</a>
-      </span>
-      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
-    </div>
   </div>
 
+  <!-- الهيدر -->
   <header>
     <div class="hero">
       <div class="hero-plate"></div>
@@ -39,7 +38,9 @@
     <div class="container">
       <section class="card">
         <h2 class="title">بيانات الحساب</h2>
+
         <div class="grid">
+          <!-- بطاقة المعلومات الأساسية -->
           <div class="box">
             <h3>المعلومات الأساسية</h3>
             <p><strong>الاسم:</strong> <span class="js-user-name">—</span></p>
@@ -49,6 +50,7 @@
             <p><strong>تاريخ التسجيل:</strong> <span id="u-created">—</span></p>
           </div>
 
+          <!-- بطاقة الاشتراك -->
           <div class="box">
             <h3>الاشتراك</h3>
             <p id="sub-state" class="badge" style="display:none"></p>
@@ -57,13 +59,11 @@
             <p><strong>تاريخ الانتهاء:</strong> <span id="s-end">—</span></p>
 
             <hr style="margin:14px 0; border:none; border-top:1px solid #e5e7eb44">
-            <h3>التجربة عبر كود</h3>
-            <p><strong>الكود:</strong> <span id="t-code">—</span></p>
-            <p><strong>المتبقّي من التوليدات:</strong> <span id="t-left">—</span></p>
-            <p><strong>انتهاء الصلاحية:</strong> <span id="t-exp">—</span></p>
-            <div class="actions-row" style="margin-top:8px">
-              <button class="btn" id="use-one" type="button">استخدام توليدة</button>
-            </div>
+
+            <!-- المتبقي من اشتراكي -->
+            <h3>المتبقي من اشتراكي</h3>
+            <p><strong>عدد الاستراتيجيات المتبقية:</strong> <span id="t-left">—</span></p>
+            <p><strong>تاريخ الانتهاء:</strong> <span id="t-exp">—</span></p>
           </div>
         </div>
 
@@ -82,16 +82,19 @@
 
   <div class="toast"></div>
 
+  <!-- سكربتات -->
   <script src="app.js"></script>
   <script>
-    // تعبئة الملف الشخصي
+    // حماية الوصول: لو مو مسجلة دخول يرجّعك للرئيسية
     document.addEventListener('DOMContentLoaded', ()=>{
-      if(!localStorage.getItem('athar:auth')){ location.href = 'index.html'; return; }
-      try{
-        const u = JSON.parse(localStorage.getItem('athar:user')||'null');
-        const s = JSON.parse(localStorage.getItem('athar:sub')||'null');
-        const t = JSON.parse(localStorage.getItem('athar:trial')||'null');
+      if(localStorage.getItem('athar:auth') !== '1'){ location.href = 'index.html'; return; }
 
+      try{
+        const u = JSON.parse(localStorage.getItem('athar:user')   || 'null');
+        const s = JSON.parse(localStorage.getItem('athar:sub')    || 'null');
+        const t = JSON.parse(localStorage.getItem('athar:trial')  || 'null');
+
+        // تعبئة معلومات المستخدم
         if(u){
           document.querySelectorAll('.js-user-name').forEach(n=> n.textContent = u.name || '—');
           document.getElementById('u-email').textContent   = u.email  || '—';
@@ -99,20 +102,33 @@
           document.getElementById('u-school').textContent  = u.school || '—';
           document.getElementById('u-created').textContent = u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-SA') : '—';
         }
+
+        // الاشتراك
         if(s){
-          document.getElementById('sub-state').style.display='inline-block';
           const active = new Date() <= new Date(s.endsAt);
-          document.getElementById('sub-state').textContent = active ? 'نشط' : 'منتهي';
-          document.getElementById('s-plan').textContent  = ({weekly:'أسبوعي',monthly:'شهري',semi:'نصف سنوي',annual:'سنوي'})[s.plan] || '—';
-          document.getElementById('s-start').textContent = new Date(s.startedAt).toLocaleDateString('ar-SA');
-          document.getElementById('s-end').textContent   = new Date(s.endsAt).toLocaleDateString('ar-SA');
+          const badge = document.getElementById('sub-state');
+          badge.style.display = 'inline-block';
+          badge.textContent   = active ? 'نشط' : 'منتهي';
+          badge.style.background = active ? '#dcfce7' : '#fee2e2';
+          badge.style.color      = active ? '#166534' : '#991b1b';
+          badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+
+          document.getElementById('s-plan').textContent  =
+            ({weekly:'أسبوعي', monthly:'شهري', semi:'نصف سنوي', annual:'سنوي'})[s.plan] || '—';
+          document.getElementById('s-start').textContent = s.startedAt ? new Date(s.startedAt).toLocaleDateString('ar-SA') : '—';
+          document.getElementById('s-end').textContent   = s.endsAt    ? new Date(s.endsAt)   .toLocaleDateString('ar-SA') : '—';
         }
-        if(t){
-          document.getElementById('t-code').textContent = t.code || '—';
-          document.getElementById('t-left').textContent = (t.remaining ?? '—');
-          document.getElementById('t-exp').textContent  = t.expiresAt ? new Date(t.expiresAt).toLocaleDateString('ar-SA') : '—';
-        }
-      }catch(e){}
+
+        // المتبقي من اشتراكي:
+        // - عدد الاستراتيجيات المتبقية: من التجربة (trial.remaining) إن وجدت، وإلا "—"
+        // - تاريخ الانتهاء: من الاشتراك إن وجد؛ وإلا من صلاحية التجربة
+        const remaining = (t && typeof t.remaining === 'number') ? t.remaining : '—';
+        const expiry    = ( (s && s.endsAt) ? s.endsAt : (t && t.expiresAt ? t.expiresAt : '') );
+        document.getElementById('t-left').textContent = remaining;
+        document.getElementById('t-exp').textContent  = expiry ? new Date(expiry).toLocaleDateString('ar-SA') : '—';
+      }catch(e){
+        console.warn(e);
+      }
     });
   </script>
 </body>
