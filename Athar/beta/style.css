@@ -1,106 +1,152 @@
-/* ====== نمط موحّد لكل الصفحات (فاتح/داكن) ====== */
-/* الخطوط: Amiri للعناوين (كلمة "أثــر" فقط)، Cairo للباقي */
+/* =========================
+   نمط "أثــر" (ألوان وخلفية)
+   يحافظ على البنية الحالية وأزرار الوضع الداكن
+   ========================= */
 
+/* لوحة ألوان أثر (Sea) */
 :root{
-  --ink:#0f172a;           /* نص */
-  --muted:#64748b;         /* نص ثانوي */
-  --brand:#1d4ed8;         /* أزرق ملكي (قريب من أثر الأصلي) */
-  --brand-2:#0ea5e9;       /* أزرق سماوي */
-  --gold:#c8a84e;          /* لمسة ذهبية بسيطة */
-  --bg:#f7f8fc;            /* خلفية فاتحة */
-  --card:#ffffff;          /* بطاقات */
+  /* Sea Palette */
+  --sea-25:#f0f9ff; --sea-50:#e6f2ff; --sea-100:#d7e9ff; --sea-200:#b9d7ff;
+  --sea-300:#93c5fd; --sea-400:#60a5fa; --sea-500:#3b82f6; --sea-600:#1e40af;
+  --sea-700:#1e3a8a; --sea-800:#172554;
+
+  /* أساسيات الواجهة */
+  --ink:#1e293b;          /* لون النص */
+  --muted:#475569;        /* نص ثانوي */
+  --bg:#ffffff;           /* خلفية عامة في الفاتح */
+  --card:#ffffff;         /* بطاقات */
+  --radius:20px;
+  --shadow:0 18px 50px rgba(0,0,0,.12);
+
+  /* ألوان الأزرار الحالية تُ map إلى لوحة أثر */
+  --brand: var(--sea-600);     /* أزرق ملكي */
+  --brand-2: var(--sea-500);   /* أزرق ساطع */
+  --gold:#c8a84e;              /* لمسة ذهبية خفيفة */
   --glass: rgba(255,255,255,.12);
-  --radius: 16px;
-  --shadow: 0 18px 44px rgba(0,0,0,.12);
 }
+
+/* وضع داكن مطابق لروح أثر */
 .dark{
-  --ink:#e5e7eb;
-  --muted:#a5b4fc;
   --bg:#0b1220;
-  --card:#0f1629;
+  --card:#0f172a;
+  --ink:#e2e8f0;
+  --muted:#cbd5e1;
+  --shadow:0 22px 60px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.03) inset;
   --glass: rgba(255,255,255,.06);
-  --shadow: 0 24px 60px rgba(0,0,0,.55);
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
-  margin:0; font-family:"Cairo",system-ui,Tahoma,Arial; color:var(--ink);
-  background-color:var(--bg); overflow-x:hidden;
+  margin:0;
+  font-family:"Cairo",system-ui,Tahoma,Arial;
+  color:var(--ink);
+  background: /* خلفية أثر – فاتح */
+    radial-gradient(1200px 700px at 100% -10%, var(--sea-100), transparent 60%),
+    radial-gradient(1200px 700px at -10% 100%, var(--sea-50), transparent 60%),
+    linear-gradient(180deg, #fff, var(--sea-25) 85%);
+  overflow-x:hidden;
+  line-height:1.9;
+  font-size:17px;
+}
+/* الخلفية في الداكن */
+.dark body{
+  background:
+    radial-gradient(1200px 700px at 100% -10%, rgba(59,130,246,.12), transparent 60%),
+    radial-gradient(1200px 700px at -10% 100%, rgba(59,130,246,.10), transparent 60%),
+    linear-gradient(180deg, #0b1220, #111827 85%);
 }
 
-/* زخرفة خلفية عامة تظهر في الفاتح والداكن */
-.backdrop{
-  position:fixed; inset:-2% -2% 0 -2%; z-index:-2; pointer-events:none;
-  background:
-    radial-gradient(1200px 800px at 100% -120%, #93c5fd33, transparent 60%),
-    radial-gradient(1100px 700px at -10% 0%, #c4b5fd33, transparent 60%),
-    conic-gradient(from 120deg at 50% -20%, #e0f2ff33, #f5f3ff33, #e0f2ff33);
+/* نقشة نقط خفيفة مثل الأصل */
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; opacity:.10;
+  background-image:url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBvcGFjaXR5PSIwLjg0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0IiBmaWxsPSIjMWUzYThhIi8+PHBhdGggZD0iTTIwIDEyYy0yIDMtNCAzLTYgMHMwLTQgMy02IDYgMCAzIDYiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii4yIi8+PGNpcmNsZSBjeD0iMzYiIGN5PSIzNiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjxwYXRoIGQ9Ik0yOCAzNmMyIDMgNCAzIDYgMHMwLTQtMy02LTYgMC0zIDYiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii4yIi8+PC9nPjwvc3ZnPg==');
+  background-size:48px 48px;
 }
-.pattern{
-  position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.55;
-  background:
-    radial-gradient(circle at 20% 30%, #9fb3c44a 1.2px, transparent 1.3px) 0 0/26px 26px,
-    radial-gradient(circle at 80% 70%, #9fb3c44a 1.2px, transparent 1.3px) 0 0/28px 28px;
-  mix-blend-mode: soft-light;
-}
-.dark .pattern{ opacity:.28 }
+.dark body::before{ opacity:.07 }
 
-/* الشريط العلوي */
+/* نترك هاتين الخلفيتين (backdrop/pattern) إن وُجدتا في HTML
+   لكن نخففهما لتنسجم مع الخلفية الجديدة */
+.backdrop{ display:none } /* لم نعد بحاجة لها بعد تبني خلفية أثر */
+.pattern{ display:none }
+
+/* ===== الشريط العلوي ===== */
 .topbar{
   position:sticky; top:0; z-index:50;
   display:flex; align-items:center; justify-content:space-between;
-  padding:12px 18px; backdrop-filter:saturate(160%) blur(12px);
-  background:linear-gradient(90deg, var(--glass), transparent);
-  border-bottom:1px solid #ffffff18;
+  padding:12px 18px;
+  backdrop-filter: blur(8px);
+  background: rgba(255,255,255,.7);
+  border-bottom:1px solid rgba(59,130,246,.22);
+}
+.dark .topbar{
+  background: rgba(17,24,39,.6);
+  border-color:#3b82f6;
 }
 .actions,.user{display:flex; align-items:center; gap:10px}
+
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
   padding:10px 14px; border-radius:12px; text-decoration:none; cursor:pointer;
-  border:1px solid #ffffff22; background:linear-gradient(180deg,#ffffff22,#ffffff10);
-  color:var(--ink); font-weight:700; transition:transform .12s ease, box-shadow .12s ease;
-  box-shadow:0 6px 18px rgba(0,0,0,.06);
+  border:1px solid rgba(59,130,246,.25);
+  background:linear-gradient(180deg, #ffffffd0, #ffffffb5);
+  color:var(--ink); font-weight:800; transition:.2s; box-shadow:0 12px 30px rgba(59,130,246,.10);
 }
-.btn:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,0,0,.14) }
-.btn.primary{
-  color:#fff; border:0; background:linear-gradient(180deg, var(--brand), var(--brand-2));
-  box-shadow:0 14px 40px #1d4ed855;
-}
-.btn.ghost{ background:transparent; border:1px solid #ffffff22 }
+.btn:hover{ transform:translateY(-1px) }
+.btn:active{ transform:translateY(0) scale(.98) }
 
-/* الهيدر */
-header{ position:relative; padding:68px 18px 40px; text-align:center; }
+.btn.primary{
+  background: var(--sea-500);
+  color:#fff; border-color: rgba(0,0,0,.05);
+  box-shadow:0 12px 30px rgba(59,130,246,.35);
+}
+.btn.primary:hover{ background:var(--sea-400) }
+.btn.ghost{ background:transparent }
+
+/* ===== الهيدر ===== */
+header{ position:relative; padding:48px 18px 28px; text-align:center; }
 .hero{ max-width:1100px; margin:0 auto; position:relative; }
+
+/* لوح أزرق منسجم مع أثر */
 .hero-plate{
-  position:absolute; inset:-60px -20px auto -20px; height:260px; z-index:-1; border-radius:26px;
-  background:linear-gradient(180deg, #1e40af, #2563eb);
+  position:absolute; inset:-40px -20px auto -20px; height:240px; z-index:-1; border-radius:26px;
+  background:linear-gradient(180deg, var(--sea-600), var(--sea-500));
   box-shadow: inset 0 -1px 0 rgba(255,255,255,.25), 0 22px 60px rgba(29,78,216,.35);
 }
+
 .logo{
   font-family:"Amiri",serif; font-weight:700;
   font-size:clamp(46px, 6.4vw, 86px); margin:0;
   color:#fbfdff; letter-spacing:2px;
-  text-shadow: 0 1px 0 #dbeafe, 0 10px 20px #1d4ed866, 0 30px 60px #1e3a8a55;
+  text-shadow: 0 1px 0 rgba(255,255,255,.55);
 }
 .tag{
   display:inline-flex; align-items:center; gap:8px;
   margin-top:12px; padding:10px 16px; border-radius:999px;
-  background:linear-gradient(180deg,#ffffff38,#ffffff18);
-  border:1px solid #ffffff35; color:#eef2ff; font-weight:700;
-  backdrop-filter: blur(6px) saturate(160%);
+  background:rgba(255,255,255,.6);
+  border:1px solid rgba(59,130,246,.25); color:#0c4a6e; font-weight:700;
 }
-.tag .dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 0 3px #fef9c3aa }
+.dark .tag{
+  background:rgba(17,24,39,.55); color:#e2e8f0; border-color:#3b82f6;
+}
+.tag .dot{ width:8px; height:8px; border-radius:50%; background:var(--gold) }
 
-/* المحتوى العام */
+/* ===== المحتوى العام ===== */
 main{ padding:18px }
 .container{ max-width:980px; margin:0 auto }
+
 .card{
-  background:var(--card); border:1px solid #ffffff16; border-radius:var(--radius);
-  padding:24px; box-shadow:var(--shadow);
+  background:var(--card);
+  border:1px solid rgba(59,130,246,.22);
+  border-radius:var(--radius);
+  padding:24px;
+  box-shadow:var(--shadow);
 }
+.dark .card{ border-color:rgba(59,130,246,.32) }
+
 .title{
-  text-align:center; margin:0 0 10px; color:var(--brand);
+  text-align:center; margin:0 0 10px; color:var(--sea-600);
   font-size:clamp(22px,3.6vw,30px); font-weight:800;
 }
 .lead{ text-align:center; margin:0; color:var(--ink); opacity:.95 }
@@ -110,31 +156,37 @@ main{ padding:18px }
 
 .box{
   background: linear-gradient(180deg, #ffffffcc, #ffffffaa);
-  border:1px solid #e5e7eb66; border-radius:16px; padding:22px;
+  border:1px solid rgba(59,130,246,.22);
+  border-radius:16px; padding:22px;
   box-shadow:0 12px 30px rgba(0,0,0,.08);
   transition:transform .18s ease, box-shadow .18s ease;
 }
-.dark .box{ background:linear-gradient(180deg,#111827,#0f172a); border-color:#ffffff10 }
-.box:hover{ transform:translateY(-6px) rotateX(1deg) rotateY(-1deg); box-shadow:0 26px 60px rgba(0,0,0,.20) }
-.box h3{ margin:0 0 10px; color:#1d4ed8; font-size:20px; }
+.dark .box{
+  background:linear-gradient(180deg,#111827,#0f172a);
+  border-color:rgba(59,130,246,.32);
+}
+.box:hover{ transform:translateY(-6px); box-shadow:0 26px 60px rgba(0,0,0,.20) }
+.box h3{ margin:0 0 10px; color:var(--sea-600); font-size:20px; }
 .box p{ margin:0; color:var(--ink); opacity:.92 }
+.dark .box p{ color:var(--ink) }
 
-/* بطاقات التسعير */
+/* ===== بطاقات التسعير (إن وُجدت في pricing.html) ===== */
 .plans{ display:grid; gap:16px; margin-top:22px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)) }
 .plan{
-  background:var(--card); border:1px solid #e5e7eb66; border-radius:16px; padding:22px; text-align:center;
+  background:var(--card); border:1px solid rgba(59,130,246,.22); border-radius:16px; padding:22px; text-align:center;
   box-shadow:0 8px 24px rgba(0,0,0,.08); transition:transform .18s ease, box-shadow .18s ease;
 }
+.dark .plan{ border-color:rgba(59,130,246,.32) }
 .plan:hover{ transform:translateY(-6px); box-shadow:0 22px 50px rgba(0,0,0,.16) }
 .plan h4{ margin:0 0 8px }
-.price{ font-size:24px; color:var(--brand); margin:8px 0 16px; font-weight:800 }
+.price{ font-size:24px; color:var(--sea-600); margin:8px 0 16px; font-weight:800 }
 
-/* ذيل */
+/* ===== الذيل ===== */
 footer{ text-align:center; padding:34px 18px 46px; color:var(--muted) }
 .foot-line{ margin:0 0 6px; font-size:15px }
 .foot-name{ margin:0; font-size:14px }
 
-/* ====== المودالات (التسجيل/الدخول) ====== */
+/* ===== المودالات (التسجيل/الدخول) ===== */
 .modal{
   position:fixed; inset:0; display:none; align-items:center; justify-content:center;
   background:rgba(0,0,0,.45); z-index:80; padding:20px;
@@ -142,32 +194,36 @@ footer{ text-align:center; padding:34px 18px 46px; color:var(--muted) }
 .modal.show{ display:flex }
 .modal .sheet{
   width:min(520px, 96vw); background:var(--card); color:var(--ink);
-  border:1px solid #ffffff18; border-radius:18px; padding:20px; box-shadow:var(--shadow);
+  border:1px solid rgba(59,130,246,.22); border-radius:18px; padding:20px; box-shadow:var(--shadow);
   animation:pop .16s ease;
 }
+.dark .modal .sheet{ border-color:rgba(59,130,246,.32) }
 @keyframes pop{ from{ transform:scale(.98); opacity:.7 } to{ transform:scale(1); opacity:1 } }
-.sheet h3{ margin:0 0 10px; color:var(--brand) }
+.sheet h3{ margin:0 0 10px; color:var(--sea-600) }
 .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
 @media(max-width:520px){ .form-row{ grid-template-columns:1fr } }
 label{ display:block; font-weight:700; margin:10px 0 6px }
 input{
-  width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; color:#111
+  width:100%; padding:12px;
+  border:1px solid rgba(59,130,246,.35);
+  border-radius:12px; background:#fff; color:#0f172a;
 }
-.dark input{ background:#0b1220; color:#e5e7eb; border-color:#1f2937 }
-.help{ color:var(--muted); font-size:.9rem; margin-top:6px }
+input::placeholder{ color:#64748b }
+.dark input{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6 }
+.dark input::placeholder{ color:#cbd5e1; opacity:.85 }
+
 .actions-row{ display:flex; gap:10px; justify-content:flex-end; margin-top:14px }
 .badge{ display:inline-block; font-weight:800; color:#166534; background:#dcfce7; border:1px solid #bbf7d0; border-radius:999px; padding:4px 10px; }
 .dark .badge{ color:#a7f3d0; background:#052e1a; border-color:#064e3b }
 
-/* توست صغير */
-.toast{ position:fixed; bottom:18px; right:18px; z-index:90; background:#111827; color:#fff; padding:10px 14px; border-radius:10px; display:none }
-.toast.show{ display:block }
+/* تصغير خانة الموافقة في مودال التسجيل كما اتفقنا */
+#modal-register .sheet label[style*="align-items:center"] { font-size:13px; }
+#modal-register .sheet input[name="consent"] { width:15px; height:15px; }
 
-/* ====== تخصيص خانة الموافقة في مودال التسجيل ====== */
-#modal-register .sheet label[style*="align-items:center"] {
-  font-size: 13px;
+/* توست صغير */
+.toast{
+  position:fixed; bottom:18px; right:18px; z-index:90;
+  background:rgba(17,24,39,.9); color:#fff; padding:10px 14px; border-radius:10px;
+  display:none; box-shadow:0 10px 25px rgba(0,0,0,.25);
 }
-#modal-register .sheet input[name="consent"] {
-  width: 15px;
-  height: 15px;
-}
+.toast.show{ display:block }
