@@ -187,66 +187,49 @@
   <!-- ========= السكربتات ========= -->
 <script src="app.js"></script>
 <script>
-/* -----------------------------------
-   0) توحيد مكان كلاس dark
------------------------------------ */
+/* 0) ضبطي مكان كلاس الداكن */
 (function unifyDarkClass(){
-  var root = document.documentElement;
-  var body = document.body;
-  // لو فيه dark على البودي ننقله للروت
-  if (body && body.classList.contains('dark') && !root.classList.contains('dark')) {
-    root.classList.add('dark');
-    body.classList.remove('dark');
+  var root = document.documentElement, body = document.body;
+  if (body && body.classList.contains('dark')) {
+    body.classList.remove('dark');                // لا نستخدمه على الـ body
+    root.classList.add('dark');                   // نخليه على <html>
   }
 })();
 
-/* -----------------------------------
-   1) تهيئة الوضع الداكن + الحفظ
------------------------------------ */
+/* 1) تهيئة حسب الحفظ/تفضيل النظام + ضبط رمز الزر */
 (function initTheme(){
   var root = document.documentElement;
   var saved = null;
   try { saved = localStorage.getItem('theme'); } catch(_) {}
   var preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-  if (saved === 'dark' || (!saved && preferDark)) {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-  }
+  if (saved === 'dark' || (!saved && preferDark)) root.classList.add('dark');
+  else root.classList.remove('dark');
 
-  // حدّث أيقونة الزر بحسب الحالة الحالية
   document.addEventListener('DOMContentLoaded', function(){
     var btn = document.getElementById('themeToggle');
-    if (btn) btn.textContent = root.classList.contains('dark') ? '☀️' : '🌓';
+    if (btn) btn.textContent = root.classList.contains('dark') ? '🌓' : '🌓';
   });
 })();
 
-// لمنع قفزة التمرير
+/* ثبّتي عرض الشريط لمنع قفزة التمرير */
 document.documentElement.style.setProperty('scrollbar-gutter', 'stable both-edges');
 
-/* -----------------------------------
-   2) تبديل الوضع الداكن + توست + حفظ
------------------------------------ */
+/* 2) التبديل + الحفظ + توست */
 document.addEventListener('DOMContentLoaded', function(){
-  var btn  = document.getElementById('themeToggle');
+  var btn = document.getElementById('themeToggle');
   if (!btn) return;
 
   btn.addEventListener('click', function(e){
     e.preventDefault();
     var root = document.documentElement;
-    var body = document.body;
 
-    var willBeDark = !root.classList.contains('dark');
-
-    // بدّلي على العنصرين (تنظيف)، وخلي الاعتماد الأساسي على <html>
-    root.classList.toggle('dark', willBeDark);
-    if (body) body.classList.toggle('dark', false);
-
+    var willBeDark = !root.classList.contains('dark');   // الحالة القادمة
+    root.classList.toggle('dark', willBeDark);           // نعدل على <html> فقط
     try { localStorage.setItem('theme', willBeDark ? 'dark' : 'light'); } catch(_) {}
 
-    // الإيموجي
-    btn.textContent = willBeDark ? '☀️' : '🌓';
+    // الأيقونة (نصف قمر/شمس)
+    btn.textContent = willBeDark ? '🌓' : '🌓';
 
     // التوست
     var t = document.getElementById('toast');
@@ -257,9 +240,7 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   });
 
-  /* -----------------------------------
-     3) لا تعيدي تحميل "الرئيسية" إذا كنا فيها
-  ----------------------------------- */
+  /* 3) لا نعيد تحميل الرئيسية إذا نحن فيها */
   var links = document.querySelectorAll(
     'a[href="index.html"], a[href="/index.html"], a[href="/"], a[href="/beta/"], a[href="/beta/index.html"]'
   );
@@ -277,9 +258,7 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   });
 
-  /* -----------------------------------
-     4) إظهار/إخفاء روابط حسب حالة الدخول (store.auth)
-  ----------------------------------- */
+  /* 4) إظهار/إخفاء روابط بحسب حالة الدخول (store.auth إن وجد) */
   var loggedIn   = (typeof store !== 'undefined' && !!store.auth);
   var atharBtn   = document.getElementById('nav-athar');
   var profileBtn = document.getElementById('nav-profile');
@@ -287,9 +266,7 @@ document.addEventListener('DOMContentLoaded', function(){
   if (profileBtn) profileBtn.style.display = loggedIn ? 'inline-flex' : 'none';
 });
 
-/* -----------------------------------
-   5) فتح/إغلاق المودالات
------------------------------------ */
+/* 5) فتح/إغلاق المودالات */
 function openModal(sel){
   var m = document.querySelector(sel);
   if(m){ m.classList.add('show'); m.setAttribute('aria-hidden','false'); }
@@ -306,5 +283,6 @@ document.addEventListener('click', function(e){
   }
 });
 </script>
+  <script src="app.js"></script>
 </body>
 </html>
