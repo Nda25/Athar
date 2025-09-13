@@ -53,7 +53,7 @@ body{
 }
 
 /* خلفية ورود كبيرة فاتحة */
-./* خلفية ورود كبيرة سماوية فاتحة */
+/* خلفية ورود كبيرة سماوية فاتحة */
 .pattern{
   position: fixed;
   inset: 0;
@@ -643,3 +643,16 @@ input::placeholder{ color:#64748b }
 
 /* نص خافت مساعد */
 .muted{ color: var(--muted); }
+/* === Dark mode: اجعل نص أزرار الشريط العلوي أسود === */
+.dark .topbar .btn,
+.dark .topbar .btn:hover,
+.dark .topbar .btn:active{
+  color:#000 !important;
+  text-shadow:none;
+}
+
+/* لو في أزرار عليها primary/ghost – خلّي نصها برضه أسود */
+.dark .topbar .btn.primary,
+.dark .topbar .btn.ghost{
+  color:#000 !important;
+}
