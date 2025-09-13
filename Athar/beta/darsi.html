@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>درسي — خطة درس ذكية (تكيف + تحليل محتوى)</title>
+<title>درسي — خطة درس ذكية</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
 <style>
-  /* تحسينات خفيفة فوق style.css */
+  /* تحسينات خفيفة فوق style.css — كلها متوافقة مع متغيراتك */
   .field{ margin:10px 0 }
   .field label{ display:block; font-weight:700; margin:6px 0 }
   .field input,.field textarea,.field select{
@@ -25,6 +25,9 @@
     .cols-2{ grid-template-columns:1fr 1fr }
     .cols-3{ grid-template-columns:1fr 1fr 1fr }
   }
+  .row-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-start; margin-top:8px }
+  .row-actions .btn{ min-width:180px }
+
   .printable{
     border:1px dashed rgba(59,130,246,.35); border-radius:12px; padding:14px; margin-top:8px;
     background:rgba(255,255,255,.5)
@@ -34,21 +37,31 @@
   .hl{ background:linear-gradient(90deg,#e6f2ff80,#ffffff00); border-radius:8px; padding:6px 8px }
   .pill{ display:inline-block; padding:.28rem .65rem; border-radius:999px; background:var(--sea-100); color:#0c4a6e; border:1px solid rgba(59,130,246,.25); font-size:.82rem }
   .dark .pill{ background:#0f172a; color:#e2e8f0; border-color:#3b82f6 }
-  table.rubric{ width:100%; border-collapse:collapse; margin-top:8px }
-  table.rubric td,table.rubric th{ border:1px solid rgba(59,130,246,.25); padding:10px; text-align:center }
-  .actions-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px }
 
-  /* اختبار قبلي صغير */
-  .quiz-quick{ display:grid; gap:10px; grid-template-columns:1fr }
-  @media(min-width:800px){ .quiz-quick{ grid-template-columns:1fr 1fr 1fr } }
-  .quiz-box{ border:1px solid rgba(59,130,246,.22); border-radius:12px; padding:12px; background:var(--card) }
-  .quiz-box h4{ margin:0 0 6px; font-size:16px; color:var(--sea-600) }
-  .quiz-box input{ width:100%; padding:10px; border-radius:10px; border:1px solid rgba(59,130,246,.35) }
+  /* “سلم تقدير مبسّط” بدل المصفوفة التقليدية */
+  .ladder{ display:grid; gap:8px; margin-top:10px }
+  .ladder .step{
+    display:grid; gap:8px; grid-template-columns:120px 1fr;
+    border:1px solid rgba(59,130,246,.22); border-radius:12px; padding:10px; background:var(--card);
+  }
+  .ladder .tag{ font-weight:800; text-align:center; align-self:center; padding:6px 10px; border-radius:999px; border:1px solid rgba(59,130,246,.25) }
+  .ladder .ok{ background:#dcfce7; color:#166534; border-color:#bbf7d0 }
+  .ladder .mid{ background:#fffbeb; color:#92400e; border-color:#fde68a }
+  .ladder .need{ background:#fee2e2; color:#991b1b; border-color:#fecaca }
 
-  /* للطباعة: أظهر فقط المحتوى */
+  /* “مدخلاتي” (قابل للطيّ) */
+  .inputs-wrap.collapsed .inputs-body{ display:none }
+  .inputs-wrap .inputs-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border-bottom:1px solid rgba(59,130,246,.15); padding-bottom:8px; margin-bottom:10px
+  }
+
+  /* للطباعة: أخفي عناصر التحكم وكل ما لا يلزم */
   @media print{
-    .topbar,.tag,.actions-row,.quiz-quick,.field,.btn{ display:none !important }
+    .topbar,.tag,.row-actions,.inputs-wrap,.btn,.toast{ display:none !important }
     header{ padding-bottom:0 }
+    main{ padding-top:0 }
+    .card{ box-shadow:none; border:none }
   }
 </style>
 </head>
@@ -80,140 +93,151 @@
   <header>
     <div class="hero">
       <h1 class="logo">درسي</h1>
-      <div class="tag"><span class="dot"></span>حين يلتقي التخطيط الذكي بالتحليل العميق… يتكوّن «أثر» الدرس.</div>
+      <div class="tag"><span class="dot"></span>الفكرة عندما تُصاغ بوعي… تتحوّل في الصف إلى أثرٍ يبقى.</div>
     </div>
   </header>
 
   <main>
     <div class="container">
 
-      <!-- الإدخالات -->
-      <section class="card">
-        <h2 class="title">مدخلات الخطة</h2>
-
-        <!-- اختيار نمط الإدخال: موضوع أو نص للتحليل -->
-        <div class="cols-3">
-          <div class="field">
-            <label>نمط الإدخال</label>
-            <select id="f-mode">
-              <option value="topic" selected>موضوع مختصر</option>
-              <option value="text">نص للتحليل (فقرة من الكتاب/مذكرة)</option>
-            </select>
-            <div class="muted-mini">عند اختيار “نص للتحليل” سنستنتج أفعال بلوم تلقائيًا.</div>
-          </div>
-
-          <div class="field">
-            <label>الفئة العُمريّة</label>
-            <select id="f-age">
-              <option value="p1">ابتدائي دُنيا (1–3)</option>
-              <option value="p2" selected>ابتدائي عُليا (4–6)</option>
-              <option value="m">متوسط</option>
-              <option value="h">ثانوي</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>زمن الحصة (دقيقة)</label>
-            <input id="f-duration" type="number" min="15" max="90" step="5" value="45">
-          </div>
+      <!-- المدخلات (قابلة للطي) -->
+      <section class="card inputs-wrap" id="inputs">
+        <div class="inputs-head">
+          <h2 class="title" style="margin:0">مدخلات الخطة</h2>
+          <button class="btn" id="toggleInputs">إخفاء المدخلات</button>
         </div>
 
-        <div class="cols-2" id="mode-topic">
-          <div class="field">
-            <label>المادة</label>
-            <input id="f-subject" placeholder="رياضيات / علوم / لغة عربية …">
+        <div class="inputs-body">
+          <div class="cols-3">
+            <div class="field">
+              <label>نمط الإدخال</label>
+              <select id="f-mode">
+                <option value="topic" selected>موضوع مختصر</option>
+                <option value="text">نص للتحليل</option>
+              </select>
+              <div class="muted-mini">“نص للتحليل” يستنتج مستوى بلوم تلقائيًا.</div>
+            </div>
+
+            <div class="field">
+              <label>الفئة العُمريّة</label>
+              <select id="f-age">
+                <option value="p1">ابتدائي دُنيا (1–3)</option>
+                <option value="p2" selected>ابتدائي عُليا (4–6)</option>
+                <option value="m">متوسط</option>
+                <option value="h">ثانوي</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>زمن الحصة (دقيقة)</label>
+              <input id="f-duration" type="number" min="15" max="90" step="5" value="45">
+            </div>
           </div>
-          <div class="field">
-            <label>الموضوع</label>
-            <input id="f-topic" placeholder="الكسور / دورة حياة النبات / المبتدأ والخبر …">
+
+          <div class="cols-2" id="mode-topic">
+            <div class="field">
+              <label>المادة</label>
+              <input id="f-subject" placeholder="رياضيات / علوم / لغة عربية …">
+            </div>
+            <div class="field">
+              <label>الموضوع</label>
+              <input id="f-topic" placeholder="الكسور / دورة حياة النبات / المبتدأ والخبر …">
+            </div>
+          </div>
+
+          <div class="field" id="mode-text" style="display:none">
+            <label>النص للتحليل</label>
+            <textarea id="f-text" rows="5" placeholder="ألصقي فقرة من المصدر… (سنستنتج الأهداف ومستوى بلوم)"></textarea>
+          </div>
+
+          <div class="cols-2">
+            <div class="field">
+              <label>مستوى بلوم الأساسي</label>
+              <select id="f-bloom-main">
+                <option value="remember">تذكر</option>
+                <option value="understand" selected>فهم</option>
+                <option value="apply">تطبيق</option>
+                <option value="analyze">تحليل</option>
+                <option value="evaluate">تقويم</option>
+                <option value="create">إبداع</option>
+              </select>
+              <div class="muted-mini">قد يتغيّر تلقائيًا بعد التحليل.</div>
+            </div>
+            <div class="field">
+              <label>مستوى بلوم الداعم (+2)</label>
+              <select id="f-bloom-support">
+                <option value="">(اختياري)</option>
+                <option value="remember">تذكر</option>
+                <option value="understand">فهم</option>
+                <option value="apply" selected>تطبيق</option>
+                <option value="analyze">تحليل</option>
+                <option value="evaluate">تقويم</option>
+                <option value="create">إبداع</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="cols-2">
+            <div class="field">
+              <label>عدد الأهداف</label>
+              <select id="f-goal-count"><option>1</option><option selected>2</option><option>3</option></select>
+            </div>
+            <div class="field">
+              <label>ملاحظات خاصة (اختياري)</label>
+              <input id="f-notes" placeholder="قيود صفية، أدوات متاحة…">
+            </div>
+          </div>
+
+          <div class="cols-2">
+            <div class="field">
+              <label>التعلم التكيفي</label>
+              <select id="f-adapt">
+                <option value="off" selected>بدون اختبار قبلي</option>
+                <option value="on">فعّل اختبار قبلي (3 أسئلة)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>تقدير أولي لمستوى الصف</label>
+              <select id="f-level">
+                <option value="mixed" selected>متفاوت</option>
+                <option value="low">يحتاج دعم</option>
+                <option value="high">متقدم</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- صف الأزرار الأساسي (تحليل + توليد) -->
+          <div class="row-actions">
+            <button class="btn" id="btn-analyze">تحليل المحتوى</button>
+            <button class="btn primary" id="btn-generate">ولّدي الخطة ✨</button>
           </div>
         </div>
+      </section>
 
-        <div class="field" id="mode-text" style="display:none">
-          <label>النص للتحليل</label>
-          <textarea id="f-text" rows="5" placeholder="ألصقي فقرة من المصدر… سنقترح أهدافًا ومستوى بلوم بناءً على الأفعال الظاهرة (حلّل/قارن/طبّق/اذكر)…"></textarea>
+      <!-- الاختبار القبلي (يظهر فقط عند التفعيل) -->
+      <section class="card" id="pre-quiz" style="display:none">
+        <h2 class="title">اختبار قبلي سريع (3 أسئلة)</h2>
+        <p class="lead">أدخلي **عدد المخطئين** (من أصل عدد الطالبات) لكل سؤال، ثم اضغطي “تطبيق التكيّف”.</p>
+        <div class="cols-3" id="quizWrap"></div>
+        <div class="row-actions">
+          <button class="btn primary" id="btn-adapt-apply">تطبيق التكيّف</button>
         </div>
+      </section>
 
-        <div class="cols-2">
-          <div class="field">
-            <label>مستوى بلوم الأساسي</label>
-            <select id="f-bloom-main">
-              <option value="remember">تذكر</option>
-              <option value="understand" selected>فهم</option>
-              <option value="apply">تطبيق</option>
-              <option value="analyze">تحليل</option>
-              <option value="evaluate">تقويم</option>
-              <option value="create">إبداع</option>
-            </select>
-            <div class="muted-mini">يمكن أن يُستبدل تلقائيًا عند تحليل النص.</div>
-          </div>
-          <div class="field">
-            <label>مستوى بلوم الداعم (+2)</label>
-            <select id="f-bloom-support">
-              <option value="">(اختياري)</option>
-              <option value="remember">تذكر</option>
-              <option value="understand">فهم</option>
-              <option value="apply" selected>تطبيق</option>
-              <option value="analyze">تحليل</option>
-              <option value="evaluate">تقويم</option>
-              <option value="create">إبداع</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="cols-2">
-          <div class="field">
-            <label>عدد الأهداف</label>
-            <select id="f-goal-count"><option>1</option><option selected>2</option><option>3</option></select>
-          </div>
-          <div class="field">
-            <label>ملاحظات خاصة (اختياري)</label>
-            <input id="f-notes" placeholder="قيود صفية، أدوات متاحة…">
-          </div>
-        </div>
-
-        <div class="cols-2">
-          <div class="field">
-            <label>التعلم التكيفي</label>
-            <select id="f-adapt">
-              <option value="off" selected>بدون اختبار قبلي</option>
-              <option value="on">فعّل اختبار قبلي (3 أسئلة)</option>
-            </select>
-            <div class="muted-mini">إذا فعّلتِه سنولّد 3 أسئلة + مدخل نتائج سريع لتعديل الخطة.</div>
-          </div>
-          <div class="field">
-            <label>تقدير أولي لمستوى الصف</label>
-            <select id="f-level">
-              <option value="mixed" selected>متفاوت</option>
-              <option value="low">يحتاج دعم</option>
-              <option value="high">متقدم</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="actions-row">
-          <button class="btn primary" id="btn-analyze">تحليل المحتوى (اختياري)</button>
-          <button class="btn" id="btn-generate">توليد الخطة الآن</button>
+      <!-- أزرار ما بعد التوليد -->
+      <section class="card" id="post-actions" style="display:none">
+        <div class="row-actions">
           <button class="btn" id="btn-copy-full">نسخ الخطة كاملة</button>
           <button class="btn" id="btn-classroom">نسخ كقالب Google Classroom</button>
           <button class="btn" id="btn-teams">نسخ لقالب Microsoft Teams</button>
           <button class="btn" id="btn-print">طباعة</button>
-        </div>
-      </section>
-
-      <!-- عند تفعيل الاختبار القبلي -->
-      <section class="card" id="pre-quiz" style="display:none">
-        <h2 class="title">اختبار قبلي (3 أسئلة)</h2>
-        <p class="lead">قيّمي بسرعة: اكتبي **عدد الطالبات اللواتي أخفقن** في كل سؤال (من أصل العدد الكلي).</p>
-        <div class="quiz-quick" id="quizWrap"></div>
-        <div class="actions-row">
-          <button class="btn primary" id="btn-adapt-apply">تطبيق التعديل على الخطة</button>
+          <button class="btn" id="toggleInputs2">إظهار/إخفاء مدخلاتي</button>
         </div>
       </section>
 
       <!-- المخرجات -->
       <section class="card" id="out-summary" style="display:none">
-        <h2 class="title">ملخص الخطة</h2>
+        <h2 class="title">ملخص سريع</h2>
         <p class="lead" id="out-head">—</p>
         <div id="out-adapt" class="hl" style="display:none; margin-top:8px"></div>
         <ul class="list" id="out-bullets" style="margin-top:8px"></ul>
@@ -226,7 +250,7 @@
 
       <section class="grid" id="out-grid" style="display:none">
         <div class="box">
-          <h3>مخطط الدرس (قبل/أثناء/بعد)</h3>
+          <h3>مخطط الدرس (قبل / أثناء / بعد)</h3>
           <ul class="list" id="out-structure"></ul>
         </div>
         <div class="box">
@@ -243,23 +267,8 @@
         </div>
       </section>
 
-      <section class="card" id="out-onemin" style="display:none">
-        <h2 class="title">خطة الدقيقة الواحدة</h2>
-        <div class="actions-row">
-          <button class="btn" onclick="copyEl('#oneMinText')">نسخ</button>
-          <button class="btn primary" onclick="window.print()">طباعة</button>
-        </div>
-        <div class="printable" id="oneMinCard">
-          <h3 style="margin:0 0 6px">الدقيقة الواحدة</h3>
-          <div id="oneMinText" class="muted">—</div>
-        </div>
-      </section>
-
       <section class="card" id="out-goals" style="display:none">
-        <h2 class="title">بطاقة أهداف للطباعة</h2>
-        <div class="actions-row">
-          <button class="btn primary" onclick="window.print()">طباعة</button>
-        </div>
+        <h2 class="title">بطاقة أهداف (جاهزة للطباعة)</h2>
         <div class="printable" id="goalsCard">
           <h3 style="margin:0 0 6px">أهداف الدرس: <span id="goalsTitleOut">—</span></h3>
           <ul id="goalsList" class="list" style="margin:0"></ul>
@@ -267,18 +276,18 @@
         </div>
       </section>
 
-      <section class="card" id="out-rubric" style="display:none">
-        <h2 class="title">مصفوفة تقييم سريعة (قابلة للتعديل)</h2>
-        <table class="rubric" contenteditable="true">
-          <thead><tr><th>المعيار</th><th>ممتاز</th><th>جيد</th><th>بحاجة دعم</th></tr></thead>
-          <tbody>
-            <tr><td>الفهم</td><td></td><td></td><td></td></tr>
-            <tr><td>التطبيق</td><td></td><td></td><td></td></tr>
-            <tr><td>التواصل</td><td></td><td></td><td></td></tr>
-          </tbody>
-        </table>
-        <div class="actions-row">
-          <button class="btn primary" onclick="window.print()">طباعة</button>
+      <section class="card" id="out-onemin" style="display:none">
+        <h2 class="title">خطة الدقيقة الواحدة</h2>
+        <div class="printable" id="oneMinCard">
+          <h3 style="margin:0 0 6px">الدقيقة الواحدة</h3>
+          <div id="oneMinText" class="muted">—</div>
+        </div>
+      </section>
+
+      <section class="card" id="out-ladder" style="display:none">
+        <h2 class="title">سلم تقدير مبسّط (للطلاب)</h2>
+        <div class="ladder" id="ladderWrap">
+          <!-- يُعبّأ تلقائيًا -->
         </div>
       </section>
 
@@ -293,7 +302,7 @@
   <div class="toast" id="toast"></div>
   <script src="app.js"></script>
   <script>
-    // ====== قواميس بلوم + مفاتيح التحليل ======
+    /* ===== قواميس ومعينات ===== */
     const BLOOM_VERBS = {
       remember:['يعدّد','يسمّي','يذكر','يتعرّف'],
       understand:['يشرح','يلخّص','يعطي مثالًا','يفسّر','يصنّف'],
@@ -324,14 +333,15 @@
           during:['نقاش منظّم','مهمة أدائية مصغرة','قراءة موجهة وتحليل'],
           after:['سلم تقدير ذاتي','تذكرة خروج نقدية','تدوين انعكاس + هدف شخصي']}
     };
+    const AGE_NAME = { p1:'ابتدائي دُنيا', p2:'ابتدائي عُليا', m:'متوسط', h:'ثانوي' };
+
     function pick(a){ return a[Math.floor(Math.random()*a.length)] || '' }
     function bullets(el, arr){ el.innerHTML=''; arr.filter(Boolean).forEach(t=>{const li=document.createElement('li'); li.textContent=t; el.appendChild(li);});}
-    function showToast(msg){ const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
-    function copyText(txt){ navigator.clipboard.writeText(txt).then(()=>showToast('تم النسخ ✅')); }
-    function copyEl(sel){ const el=document.querySelector(sel); if(!el) return; copyText(el.innerText||el.textContent||''); }
+    function toastMsg(msg){ const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
+    function copyText(txt){ navigator.clipboard.writeText(txt).then(()=>toastMsg('تم النسخ ✅')); }
 
-    // ====== تبديل “نمط الإدخال” ======
-    const modeSel = document.getElementById('f-mode');
+    /* ===== تبديل “نمط الإدخال” ===== */
+    const modeSel   = document.getElementById('f-mode');
     const modeTopic = document.getElementById('mode-topic');
     const modeText  = document.getElementById('mode-text');
     modeSel.addEventListener('change', ()=>{
@@ -340,13 +350,12 @@
       modeTopic.style.display = isText ? 'none' : '';
     });
 
-    // ====== تحليل المحتوى (يستنتج بلوم + أهداف) ======
+    /* ===== أدوات التوليد ===== */
     function inferBloomFrom(text){
       text = (text||'').replace(/[^\u0600-\u06FF\s]/g,' ');
-      const ranks=['create','evaluate','analyze','apply','understand','remember']; // نعطي أولوية للأعلى
-      for(const lvl of ranks){
-        const keys = BLOOM_HINTS[lvl]||[];
-        if(keys.some(k => text.includes(k))) return lvl;
+      const rank=['create','evaluate','analyze','apply','understand','remember'];
+      for(const lvl of rank){
+        if((BLOOM_HINTS[lvl]||[]).some(k => text.includes(k))) return lvl;
       }
       return 'understand';
     }
@@ -402,8 +411,6 @@
     function genOneMinute(topic){
       return `في دقيقة: لخّصي "${topic}" في جملة، ثم أعطي مثالًا من حياتك يدعم الفكرة.`;
     }
-
-    // ====== توليد أسئلة اختبار قبلي ======
     function makePreQuiz(topic, mainBloom, supportBloom){
       const q1 = `س١ تمهيدي: اذكري (أو عرّفي) فكرة أساسية عن "${topic}".`;
       const q2 = `س٢ ${pick(BLOOM_VERBS[mainBloom]||['اشرح'])}: اشرحي "${topic}" بمثال مبسّط.`;
@@ -411,7 +418,7 @@
       return [q1,q2,q3];
     }
 
-    // ====== ربط الأزرار ======
+    /* ===== عناصر DOM ===== */
     const fAge = document.getElementById('f-age');
     const fDur = document.getElementById('f-duration');
     const fMain = document.getElementById('f-bloom-main');
@@ -420,6 +427,7 @@
     const fNotes= document.getElementById('f-notes');
     const fAdapt= document.getElementById('f-adapt');
     const fLevel= document.getElementById('f-level');
+    const inputsWrap = document.getElementById('inputs');
 
     const btnAnalyze = document.getElementById('btn-analyze');
     const btnGen     = document.getElementById('btn-generate');
@@ -427,12 +435,15 @@
     const btnClass   = document.getElementById('btn-classroom');
     const btnTeams   = document.getElementById('btn-teams');
     const btnPrint   = document.getElementById('btn-print');
+    const toggleInputs = document.getElementById('toggleInputs');
+    const toggleInputs2= document.getElementById('toggleInputs2');
 
     const outSummary = document.getElementById('out-summary');
     const outGrid    = document.getElementById('out-grid');
     const outOneMin  = document.getElementById('out-onemin');
     const outGoals   = document.getElementById('out-goals');
-    const outRubric  = document.getElementById('out-rubric');
+    const outLadder  = document.getElementById('out-ladder');
+    const postActions= document.getElementById('post-actions');
 
     const pillMain = document.getElementById('pill-main');
     const pillSup  = document.getElementById('pill-sup');
@@ -440,19 +451,28 @@
 
     let CURRENT = { subject:'', topic:'', main:'understand', sup:'', age:'p2', duration:45, goals:[], success:'', activities:[], assessment:[], structure:[], oneMin:'', notes:'', adaptMsg:'' };
 
-    // تحليل المحتوى
+    /* ===== إظهار/إخفاء المدخلات ===== */
+    function toggleInputsView(){
+      inputsWrap.classList.toggle('collapsed');
+      const collapsed = inputsWrap.classList.contains('collapsed');
+      toggleInputs.textContent  = collapsed ? 'إظهار المدخلات' : 'إخفاء المدخلات';
+      if(toggleInputs2) toggleInputs2.textContent = collapsed ? 'إظهار مدخلاتي' : 'إخفاء مدخلاتي';
+    }
+    toggleInputs.addEventListener('click', toggleInputsView);
+    if(toggleInputs2) toggleInputs2.addEventListener('click', toggleInputsView);
+
+    /* ===== تحليل المحتوى ===== */
     btnAnalyze.addEventListener('click', ()=>{
       const mode = document.getElementById('f-mode').value;
-      if(mode!=='text'){ showToast('اختاري: نص للتحليل أولًا'); return; }
+      if(mode!=='text'){ toastMsg('اختاري: نص للتحليل أولًا'); return; }
       const text = document.getElementById('f-text').value || '';
-      if(!text.trim()){ showToast('الصقِي فقرة للتحليل'); return; }
-
+      if(!text.trim()){ toastMsg('الصقي فقرة للتحليل'); return; }
       const inferred = inferBloomFrom(text);
-      fMain.value = inferred; // نحدّث بلوم الأساسي
-      showToast(`تم الاستدلال على مستوى بلوم: ${inferred}`);
+      fMain.value = inferred;
+      toastMsg(`تم الاستدلال على مستوى بلوم: ${inferred}`);
     });
 
-    // توليد الخطة
+    /* ===== توليد الخطة ===== */
     btnGen.addEventListener('click', ()=>{
       const mode = document.getElementById('f-mode').value;
       const subject = (document.getElementById('f-subject')?.value||'').trim() || '—';
@@ -464,14 +484,12 @@
       const goalCount = +fGoal.value||2; const notes = fNotes.value.trim();
       const level = fLevel.value; const adapt = fAdapt.value==='on';
 
-      if(mode==='topic' && !topic){ showToast('اكتبي الموضوع…'); return; }
+      if(mode==='topic' && !topic){ toastMsg('اكتبي الموضوع…'); return; }
       if(mode==='text'){
-        if(!sourceText){ showToast('الصقي نصًا أولًا…'); return; }
-        // لو ما كتبت موضوع، نقتبس عنوانًا بسيطًا من أول جملة
+        if(!sourceText){ toastMsg('الصقي نصًا أولًا…'); return; }
         topic = topic || (sourceText.split(/[.!؟\n]/)[0].slice(0,60)+'…');
       }
 
-      // توليد
       const goals = genGoals(topic, goalCount, main, sup);
       const structure = genStructure(age, duration);
       const activities = genActivities(age, main, sup, topic);
@@ -479,10 +497,8 @@
       const oneMin = genOneMinute(topic);
       const success = genSuccessCriteria(main);
 
-      // حفظ الحالة
       CURRENT = { subject, topic, main, sup, age, duration, goals, success, activities, assessment, structure, oneMin, notes, adaptMsg:'' };
 
-      // تعبئة الواجهة
       document.getElementById('out-head').textContent = `المادة: ${subject} — الموضوع: "${topic}" — الزمن: ${duration} دقيقة`;
       bullets(document.getElementById('out-bullets'), [
         notes ? `ملاحظة المعلم: ${notes}` : null,
@@ -492,7 +508,7 @@
       pillMain.textContent = 'بلوم (أساسي): '+main;
       pillSup.style.display = sup? 'inline-block':'none';
       if(sup) pillSup.textContent = 'بلوم (+2): '+sup;
-      pillAge.textContent = 'العمر: '+({p1:'ابتدائي دُنيا',p2:'ابتدائي عُليا',m:'متوسط',h:'ثانوي'}[age]||age);
+      pillAge.textContent = 'العمر: '+(AGE_NAME[age]||age);
 
       bullets(document.getElementById('out-structure'), structure);
       bullets(document.getElementById('out-activities'), activities);
@@ -504,57 +520,76 @@
       const gl = document.getElementById('goalsList'); gl.innerHTML=''; goals.forEach(g=>{ const li=document.createElement('li'); li.textContent=g; gl.appendChild(li); });
       document.getElementById('successOut').textContent = success;
 
-      // إظهار الأقسام
-      outSummary.style.display=''; outGrid.style.display=''; outOneMin.style.display=''; outGoals.style.display=''; outRubric.style.display='';
+      // سلّم تقدير مبسّط واضح
+      const ladder = document.getElementById('ladderWrap');
+      ladder.innerHTML = `
+        <div class="step">
+          <div class="tag ok">أتقن ✔︎</div>
+          <div>يحقق الهدف بدقة ويطبق المفهوم في مثال جديد دون مساعدة.</div>
+        </div>
+        <div class="step">
+          <div class="tag mid">متوسط ◉</div>
+          <div>يفهم الفكرة الأساسية ويحتاج توجيهًا بسيطًا عند التطبيق.</div>
+        </div>
+        <div class="step">
+          <div class="tag need">بحاجة دعم ✳︎</div>
+          <div>يواجه صعوبة في الفهم/التطبيق — يُقدَّم له مثال إضافي أو تبسيط.</div>
+        </div>
+      `;
 
-      // تفعيل/إخفاء الاختبار القبلي
+      // إظهار النتائج + الأزرار اللاحقة
+      outSummary.style.display=''; outGrid.style.display='';
+      outGoals.style.display=''; outOneMin.style.display='';
+      outLadder.style.display=''; postActions.style.display='';
+
+      // إظهار الاختبار القبلي إن طُلِب
       const pq = document.getElementById('pre-quiz');
       if(adapt){
         pq.style.display='';
-        // بناء أسئلة
         const qs = makePreQuiz(topic, main, sup);
         const wrap = document.getElementById('quizWrap'); wrap.innerHTML='';
         qs.forEach((q,i)=>{
-          const box = document.createElement('div'); box.className='quiz-box';
+          const box = document.createElement('div');
+          box.className='field';
           box.innerHTML = `
-            <h4>سؤال ${i+1}</h4>
-            <div class="muted-mini">${q}</div>
-            <label style="display:block; margin-top:8px">عدد المخطِئين</label>
-            <input type="number" min="0" value="0" data-q="${i}">
-          `;
+            <div class="printable" style="border-style:solid">
+              <div class="muted" style="margin-bottom:6px">سؤال ${i+1}:</div>
+              <div>${q}</div>
+              <label style="display:block; margin-top:8px">عدد المخطِئين</label>
+              <input type="number" min="0" value="0" data-q="${i}">
+            </div>`;
           wrap.appendChild(box);
         });
       }else{
         pq.style.display='none';
       }
 
-      showToast('تم توليد الخطة 🎉');
+      // طيّ المدخلات بعد التوليد (زر "إظهار/إخفاء مدخلاتي" يبقى)
+      if(!inputsWrap.classList.contains('collapsed')) toggleInputsView();
+
+      toastMsg('تم توليد الخطة 🎉');
       window.scrollTo({ top: outSummary.offsetTop - 10, behavior: 'smooth' });
     });
 
-    // تطبيق التكيف بناءً على نتائج الاختبار القبلي
+    /* ===== تطبيق التكيّف بناء على الاختبار القبلي ===== */
     document.getElementById('btn-adapt-apply').addEventListener('click', ()=>{
       const inputs = Array.from(document.querySelectorAll('#quizWrap input[type="number"]'));
-      if(!inputs.length){ showToast('ولّدي الخطة أولاً'); return; }
+      if(!inputs.length){ toastMsg('ولّدي الخطة أولاً'); return; }
       const wrong = inputs.map(i => +i.value||0);
       const totalWrong = wrong.reduce((a,b)=>a+b,0);
 
-      // قاعدة بسيطة: إذا الخطأ الأكبر في س1 → نعزز "التذكر/الفهم"
-      // إذا في س2 → نعزز المستوى الأساسي
-      // إذا في س3 → نعزز المستوى الداعم/التطبيقي
       let focus='';
       const maxIdx = wrong.indexOf(Math.max(...wrong));
       if(maxIdx===0) focus = 'تعزيز التهيئة والمفاهيم الأساسية (تذكّر/فهم).';
       else if(maxIdx===1) focus = 'تقوية النشاط الرئيسي وفق بلوم الأساسي.';
       else focus = 'زيادة مهام التطبيق/التوسيع (المستوى الداعم).';
 
-      CURRENT.adaptMsg = `تكييف تلقائي بناء على نتائج الاختبار القبلي: ${focus} (إجمالي إجابات خاطئة: ${totalWrong}).`;
+      CURRENT.adaptMsg = `تكييف تلقائي: ${focus} (إجمالي أخطاء: ${totalWrong}).`;
       const outAdapt = document.getElementById('out-adapt');
       outAdapt.textContent = CURRENT.adaptMsg;
       outAdapt.style.display = '';
 
-      // تعديل خفيف في الأنشطة
-      const extra = (maxIdx===0) ? `إضافة أمثلة ملموسة أكثر في التهيئة.` :
+      const extra = (maxIdx===0) ? `إضافة أمثلة محسوسة أكثر في التهيئة.` :
                     (maxIdx===1) ? `تقسيم المهمة الرئيسية إلى خطوات أوضح.` :
                                    `تمرين تطبيقي إضافي بوقت قصير.`;
 
@@ -562,27 +597,15 @@
       acts.push(`🔧 تعديل تكيفي: ${extra}`);
       bullets(document.getElementById('out-activities'), acts);
 
-      showToast('تم تطبيق التكيّف ✅');
+      toastMsg('تم تطبيق التكيّف ✅');
     });
 
-    // نسخ الخطة كاملة
-    btnCopy.addEventListener('click', ()=>{
-      const txt = exportFullText(CURRENT);
-      copyText(txt);
-    });
-
-    // نسخ لقوالب Classroom/Teams
-    btnClass.addEventListener('click', ()=> copyText(exportClassroom(CURRENT)));
-    btnTeams.addEventListener('click',  ()=> copyText(exportTeams(CURRENT)));
-
-    // طباعة
-    btnPrint.addEventListener('click', ()=> window.print());
-
+    /* ===== نسخ/طباعة/تصدير ===== */
     function exportFullText(S){
       const lines = [];
       lines.push(`العنوان: ${S.topic} — (${S.subject})`);
       if(S.adaptMsg) lines.push(S.adaptMsg);
-      lines.push(`الزمن: ${S.duration} دقيقة — العمر: ${({p1:'ابتدائي دُنيا',p2:'ابتدائي عُليا',m:'متوسط',h:'ثانوي'}[S.age]||S.age)}`);
+      lines.push(`الزمن: ${S.duration} دقيقة — العمر: ${(AGE_NAME[S.age]||S.age)}`);
       lines.push(`بلوم (أساسي): ${S.main}${S.sup?(' + '+S.sup):''}`);
       if(S.notes) lines.push(`ملاحظات المعلم: ${S.notes}`);
       lines.push('\nالأهداف:'); S.goals.forEach((g,i)=>lines.push(`- ${g}`));
@@ -624,6 +647,18 @@ Rubric: (paste from page)
 Due: (set by teacher)`
       ].join('\n');
     }
+
+    document.getElementById('btn-copy-full').addEventListener('click', ()=> {
+      const txt = exportFullText(CURRENT);
+      copyText(txt);
+    });
+    document.getElementById('btn-classroom').addEventListener('click', ()=> {
+      copyText(exportClassroom(CURRENT));
+    });
+    document.getElementById('btn-teams').addEventListener('click', ()=> {
+      copyText(exportTeams(CURRENT));
+    });
+    document.getElementById('btn-print').addEventListener('click', ()=> window.print());
   </script>
 </body>
 </html>
