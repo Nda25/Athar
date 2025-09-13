@@ -1,4 +1,4 @@
-/* =========================================
+ /* =========================================
    athar — app.js (نسخة منقحة ونهائية)
    ========================================= */
 
@@ -95,21 +95,29 @@ const store = {
   }
 };
 
+// تحديث الشريط حسب حالة الدخول (عام)
+function refreshNav(){
+  const logged      = store.auth && !!store.user;
+  const authSpan    = document.getElementById('nav-auth');
+  const profileBtn  = document.getElementById('nav-profile');
+  const programsBtn = document.getElementById('nav-programs');
+  const atharBtn    = document.getElementById('nav-athar');
+
+  if (authSpan)    authSpan.style.display    = logged ? 'none'        : 'inline-flex';
+  if (profileBtn)  profileBtn.style.display  = logged ? 'inline-flex' : 'none';
+  if (programsBtn) programsBtn.style.display = logged ? 'inline-flex' : 'none';
+  if (atharBtn)    atharBtn.style.display    = logged ? 'inline-flex' : 'none';
+
+  if (logged){
+    $$('.js-user-name').forEach(s => {
+      s.textContent = store.user?.name || store.user?.email || store.user?.phone || 'مستخدم';
+    });
+  }
+}
+
 /* ==== تهيئة الشريط ==== */
 (function navbarState(){
-  const navAuth    = $('#nav-auth');
-  const profileBtn = $('#nav-profile');
-  const atharBtn   = $('#nav-athar');
-
-  const logged = store.auth && !!store.user;
-
-  if(navAuth)    navAuth.style.display    = logged ? 'none'       : 'inline-flex';
-  if(profileBtn) profileBtn.style.display = logged ? 'inline-flex': 'none';
-  if(atharBtn)   atharBtn.style.display   = logged ? 'inline-flex': 'none';
-
-  if(logged){
-    $$('.js-user-name').forEach(s => s.textContent = store.user.name || store.user.email || store.user.phone || 'مستخدم');
-  }
+  refreshNav(); // استدعاء واحد بدل التكرار
 })();
 
 /* ==== النوافذ ==== */
@@ -451,14 +459,24 @@ document.addEventListener('DOMContentLoaded', wire);
   setTimeout(()=> location.href = 'athar.html', 900);
 })();
 /* ==== خروج/حذف ==== */
-function logout(){
-  store.auth = false;
-  toast('تم تسجيل الخروج');
-  setTimeout(()=>location.href='index.html', 400);
+function closeAnyOpenModal(){
+  const open = document.querySelector('.modal.show');
+  if(open){ open.classList.remove('show'); open.setAttribute('aria-hidden','true'); }
 }
+
+function logout(){
+  store.auth = false;           // خروج فعلي
+  toast('تم تسجيل الخروج');
+  refreshNav();                 // حدّث الشريط
+  closeAnyOpenModal();          // أقفل أي مودال
+  setTimeout(()=>location.href='index.html', 400); // رجوع للرئيسية
+}
+
 function deleteAccount(){
-  store.clear();
+  store.clear();                // حذف كل بيانات المستخدم المحلية
   toast('تم حذف الحساب نهائيًا');
+  refreshNav();
+  closeAnyOpenModal();
   setTimeout(()=>location.href='index.html', 500);
 }
 
