@@ -1,6 +1,7 @@
 /* ====== إعداد عام ====== */
 const ATHAR_APP_URL = "https://n-athar.co"; // رابط أثر العادي بعد تسجيل الدخول/الاشتراك
-const API_URL = "https://script.google.com/macros/s/AKfycbwQpsZduGPCQtES-rR0ENxDV4dre8JsjkQqLm3YSlWAymTrxCdCYMFPANoEhvap-uLfvg/exec"; // Google Apps Script API
+// عنوان Google Apps Script API
+const API_URL = "https://script.google.com/macros/s/AKfycbyfFutNFSDO0MScqtpd6ACXkQU8kzAdtR6g9ZzQnoxs273Hmk7ctJiK1Prr4spGUem7/exec";
 /* سكربت Google — الصقي القيم من نشر الـ Web App */
 const GAS_ENDPOINT = "PUT_YOUR_WEB_APP_URL_HERE"; // مثل: https://script.google.com/macros/s/AKfycbx.../exec
 const GAS_API_KEY  = "PUT_A_STRONG_SECRET_KEY_HERE"; // نفسه الموجود في Apps Script
