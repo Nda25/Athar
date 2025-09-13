@@ -1,31 +1,27 @@
 /* =========================
-   نمط "أثــر" (ألوان وخلفية)
-   يحافظ على البنية الحالية وأزرار الوضع الداكن
+   نمط "أثــر" (ألوان وخلفية بالورود الكبيرة)
    ========================= */
 
 /* لوحة ألوان أثر (Sea) */
 :root{
-  /* Sea Palette */
   --sea-25:#f0f9ff; --sea-50:#e6f2ff; --sea-100:#d7e9ff; --sea-200:#b9d7ff;
   --sea-300:#93c5fd; --sea-400:#60a5fa; --sea-500:#3b82f6; --sea-600:#1e40af;
   --sea-700:#1e3a8a; --sea-800:#172554;
 
-  /* أساسيات الواجهة */
-  --ink:#1e293b;          /* لون النص */
-  --muted:#475569;        /* نص ثانوي */
-  --bg:#ffffff;           /* خلفية عامة في الفاتح */
-  --card:#ffffff;         /* بطاقات */
+  --ink:#1e293b;
+  --muted:#475569;
+  --bg:#ffffff;
+  --card:#ffffff;
   --radius:20px;
   --shadow:0 18px 50px rgba(0,0,0,.12);
 
-  /* ألوان الأزرار الحالية تُ map إلى لوحة أثر */
-  --brand: var(--sea-600);     /* أزرق ملكي */
-  --brand-2: var(--sea-500);   /* أزرق ساطع */
-  --gold:#c8a84e;              /* لمسة ذهبية خفيفة */
+  --brand: var(--sea-600);
+  --brand-2: var(--sea-500);
+  --gold:#c8a84e;
   --glass: rgba(255,255,255,.12);
 }
 
-/* وضع داكن مطابق لروح أثر */
+/* وضع داكن */
 .dark{
   --bg:#0b1220;
   --card:#0f172a;
@@ -41,14 +37,13 @@ body{
   margin:0;
   font-family:"Cairo",system-ui,Tahoma,Arial;
   color:var(--ink);
-  /* نخلي الخلفية الأساسية بسيطة لأن التدرجات جايه من .backdrop/.pattern */
   background-color: var(--bg);
   overflow-x:hidden;
   line-height:1.9;
   font-size:17px;
 }
 
-/* خلفية ناعمة بتدرج لوني */
+/* خلفية متدرجة */
 .backdrop{
   position:fixed; inset:0; z-index:-2; pointer-events:none;
   background: linear-gradient(160deg, #f0f9ff 0%, #e6f2ff 40%, #fdfdfd 100%);
@@ -57,15 +52,24 @@ body{
   background: linear-gradient(160deg, #0b1220 0%, #111827 50%, #1e293b 100%);
 }
 
-/* نقاط خفيفة للتزيين */
+/* خلفية ورود كبيرة فاتحة */
 .pattern{
-  position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.18;
-  background:
-    radial-gradient(circle at 20% 30%, #93c5fd55 1px, transparent 1.2px) 0 0/28px 28px,
-    radial-gradient(circle at 80% 70%, #a5b4fc55 1px, transparent 1.2px) 0 0/32px 32px;
+  position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.14;
+  background-image: url('data:image/svg+xml;utf8,
+    <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 100 100">
+      <g fill="%2393c5fd" fill-opacity="0.18">
+        <circle cx="50" cy="20" r="18"/>
+        <circle cx="20" cy="50" r="18"/>
+        <circle cx="80" cy="50" r="18"/>
+        <circle cx="50" cy="80" r="18"/>
+        <circle cx="50" cy="50" r="20"/>
+      </g>
+    </svg>');
+  background-size:180px 180px;
   mix-blend-mode: soft-light;
 }
-.dark .pattern{ opacity:.12 }
+.dark .pattern{ opacity:.10 }
+
 
 /* ===== الشريط العلوي ===== */
 /* ===== الشريط العلوي (مُحسّن للجوال) ===== */
