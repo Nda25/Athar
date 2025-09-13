@@ -32,47 +32,43 @@ const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   }
 })();
 
-// 1) تهيئة الحالة اعتمادًا على التخزين أو نظام الجهاز
-(function themeInit(){
+/* ===== 1) تفعيل الوضع الداكن/الفاتح (🌓 ثابت) مع حفظ في localStorage ===== */
+(function initTheme(){
   var root  = document.documentElement;
-  var key   = 'athar:theme';       // << استخدم نفس المفتاح بكل الصفحات
   var saved = null;
-  try { saved = localStorage.getItem(key); } catch(_) {}
+  try { saved = localStorage.getItem('theme'); } catch(_) {}
+  if (saved === 'dark') { root.classList.add('dark'); }
+  else { root.classList.remove('dark'); }
 
-  if (saved === 'dark') {
-    root.classList.add('dark');
-  } else if (saved === 'light') {
-    root.classList.remove('dark');
-  } else {
-    // أول مرة: اتّبعي تفضيل النظام (أو خليها فاتح لو تبين)
-    var preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    root.classList.toggle('dark', !!preferDark);
-    try { localStorage.setItem(key, preferDark ? 'dark' : 'light'); } catch(_) {}
-  }
-
-  // 2) ربط زر التبديل
-  var $ = function(sel){ return document.querySelector(sel); };
   document.addEventListener('DOMContentLoaded', function(){
-    var btn = $('#themeToggle');
-    if (!btn) return;
-
-    // الإيموجي ثابت مثل رغبتك
-    btn.textContent = '🌓';
-
+    var btn = document.getElementById('themeToggle');
+    if(!btn) return;
     btn.addEventListener('click', function(e){
       e.preventDefault();
-      var willBeDark = !root.classList.contains('dark');
-      root.classList.toggle('dark', willBeDark);
-
-      try { localStorage.setItem(key, willBeDark ? 'dark' : 'light'); } catch(_) {}
-
+      var dark = root.classList.toggle('dark');
+      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(_) {}
       var t = document.getElementById('toast');
-      if (t){
-        t.textContent = willBeDark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
-        t.classList.add('show');
-        setTimeout(function(){ t.classList.remove('show'); }, 1400);
+      if(t){
+        t.textContent = dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
+        t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 1200);
       }
     });
+  });
+})();
+
+/* ===== 2) إظهار/إخفاء الأزرار حسب حالة الدخول ===== */
+(function navByAuth(){
+  document.addEventListener('DOMContentLoaded', function(){
+    var loggedIn    = (typeof store !== 'undefined' && !!store.auth);
+    var authSpan    = document.getElementById('nav-auth');
+    var profileBtn  = document.getElementById('nav-profile');
+    var programsBtn = document.getElementById('nav-programs');
+    var atharBtn    = document.getElementById('nav-athar');
+
+    if(authSpan)    authSpan.style.display    = loggedIn ? 'none'       : 'inline-flex';
+    if(profileBtn)  profileBtn.style.display  = loggedIn ? 'inline-flex': 'none';
+    if(programsBtn) programsBtn.style.display = loggedIn ? 'inline-flex': 'none';
+    if(atharBtn)    atharBtn.style.display    = loggedIn ? 'inline-flex': 'none';
   });
 })();
 
