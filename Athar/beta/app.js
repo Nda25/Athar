@@ -401,7 +401,6 @@ document.addEventListener('DOMContentLoaded', wire);
   toast('تم الدفع وتفعيل الاشتراك ✅');
   setTimeout(()=> location.href = 'athar.html', 900);
 })();
-
 /* ==== خروج/حذف ==== */
 function logout(){
   store.auth = false;
