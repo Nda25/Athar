@@ -12,12 +12,24 @@
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط العلوي -->
+<!-- الشريط العلوي -->
 <div class="topbar">
+  <!-- أزرار تسجيل / دخول (تختفي بعد الدخول) -->
+  <div class="user" id="nav-auth" style="display:inline-flex; gap:10px">
+    <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
+    <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
+  </div>
+
+  <!-- زر الملف الشخصي (يظهر فقط بعد الدخول) -->
+  <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+
+  <!-- روابط التنقل -->
   <div class="left-actions">
     <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
     <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثــر</a>
   </div>
+
+  <!-- أدوات إضافية -->
   <div class="actions">
     <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
     <a class="btn primary" href="pricing.html">الخطط</a>
