@@ -88,30 +88,29 @@
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط العلوي -->
-  <div class="topbar">
-    <!-- روابط يسار الشريط -->
-    <div class="left-actions">
-      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-      <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثـَـر</a>
-    </div>
-
-    <!-- حالة المستخدم -->
-    <div class="user" id="nav-auth" style="display:inline-flex; gap:10px">
-      <!-- أزرار قبل الدخول -->
-      <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
-      <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
-
-      <!-- يظهر بعد الدخول -->
-      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
-    </div>
-
-    <!-- إجراءات يمين الشريط -->
-    <div class="actions">
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-      <a class="btn primary" href="pricing.html">الخطط</a>
-    </div>
+<!-- الشريط العلوي -->
+<div class="topbar">
+  <!-- روابط يسار الشريط -->
+  <div class="left-actions">
+    <!-- شلنا زر الرئيسية هنا -->
+    <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثـَـر</a>
   </div>
+
+  <!-- أدوات إضافية -->
+  <div class="actions">
+    <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+  </div>
+
+  <!-- حالة المستخدم -->
+  <div class="user" id="nav-auth" style="display:inline-flex; gap:10px">
+    <!-- أزرار قبل الدخول -->
+    <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
+    <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
+
+    <!-- يظهر بعد الدخول -->
+    <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+  </div>
+</div>
 
   <!-- الهيدر / الهيرو -->
   <header>
