@@ -1,25 +1,28 @@
-/* ====== إعداد عام ====== */
-const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzkBo_-YDkHskhhy2-ln4kMAyovIu1DQg4ogU5kG103WERjRG2UGjmT2n2uCTRqC6gWtg/exec";
-const GAS_API_KEY  = "NADA-ATHAR-2025!"; // غيريه لقيمة قوية
-const ATHAR_APP_URL = "athar.html";   // ← افتحي البوت الجديد داخل نفس الموقع
-const PRICING_URL   = "pricing.html"; // ← يظل محلي
+/* =========================================
+   athar — app.js (نسخة منقحة)
+   ========================================= */
 
-// عنوان Google Apps Script API (من نشر الـ Web App)
-const API_URL = "https://script.google.com/macros/s/AKfycbzkBo_-YDkHskhhy2-ln4kMAyovIu1DQg4ogU5kG103WERjRG2UGjmT2n2uCTRqC6gWtg/exec";
+/* ==== إعدادات عامة (عدليها بما يناسبك) ==== */
+const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzkBo_-YDkHskhhy2-ln4kMAyovIu1DQg4ogU5kG103WERjRG2UGjmT2n2uCTRqC6gWtg/exec"; // رابط النشر (Deployment URL)
+const SHEET_API_KEY    = "NADA-ATHAR-2025!"; // مفتاح بسيط للتأكد (اختياري)
 
-/* وصول المالك (دخول بلا قيود) – اختياري */
-const OWNER_EMAILS = [];       // ضعي بريدك هنا إن رغبتِ
-const OWNER_PHONES = [];       // أو جوالك بصيغة 05XXXXXXXX
-const OWNER_KEY    = "";       // مفتاح يمنح وضع المالك عند إدخاله كـ “كود”
+const ATHAR_APP_URL = "athar.html";   // صفحة البوت الجديدة
+const PRICING_URL   = "pricing.html";  // صفحة الخطط
 
+/* وصول المالك (اختياري) */
+const OWNER_EMAILS = [];         // ضعي بريدك هنا لو تبين صلاحية مالك
+const OWNER_PHONES = [];         // أو رقم جوالك 05XXXXXXXX
+const OWNER_KEY    = "";         // كود يمنح المالك عند إدخاله كـ promo
+
+/* ==== أدوات صغيرة ==== */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-/* ====== الوضع الداكن ====== */
+/* ==== الوضع الداكن ==== */
 (function themeInit(){
   const root = document.documentElement;
   const saved = localStorage.getItem('athar:theme');
-  if(saved === 'dark'){ root.classList.add('dark'); }
+  if(saved === 'dark') root.classList.add('dark');
   const t = $('#themeToggle');
   if(t){
     t.addEventListener('click', ()=>{
@@ -29,7 +32,7 @@ const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   }
 })();
 
-/* ====== التخزين المحلي ====== */
+/* ==== التخزين المحلي ==== */
 const store = {
   get user(){ try{ return JSON.parse(localStorage.getItem('athar:user')||'null'); }catch{return null} },
   set user(u){ localStorage.setItem('athar:user', JSON.stringify(u)); },
@@ -48,25 +51,28 @@ const store = {
     localStorage.removeItem('athar:sub');
     localStorage.removeItem('athar:trial');
     localStorage.removeItem('athar:auth');
+    localStorage.removeItem('athar:owner');
   }
 };
 
-/* ====== تهيئة الشريط ====== */
+/* ==== تهيئة الشريط (الأزرار) ==== */
 (function navbarState(){
-  const navAuth = $('#nav-auth');
-  const profileLink = $('#nav-profile');
-  if(!navAuth || !profileLink) return;
-  if(store.auth && store.user){
-    navAuth.style.display = 'none';
-    profileLink.style.display = 'inline-flex';
+  const navAuth    = $('#nav-auth');
+  const profileBtn = $('#nav-profile');
+  const atharBtn   = $('#nav-athar');  // زر "أثــر" في النافبار (إن وُجد)
+
+  const logged = store.auth && !!store.user;
+
+  if(navAuth)    navAuth.style.display    = logged ? 'none'       : 'inline-flex';
+  if(profileBtn) profileBtn.style.display = logged ? 'inline-flex': 'none';
+  if(atharBtn)   atharBtn.style.display   = logged ? 'inline-flex': 'none';
+
+  if(logged){
     $$('.js-user-name').forEach(s => s.textContent = store.user.name || store.user.email || store.user.phone || 'مستخدم');
-  }else{
-    navAuth.style.display = 'inline-flex';
-    profileLink.style.display = 'none';
   }
 })();
 
-/* ====== نافذة منبثقة ====== */
+/* ==== نوافذ منبثقة ==== */
 function openModal(id){ $(id).classList.add('show'); }
 function closeModal(id){ $(id).classList.remove('show'); }
 $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
@@ -74,18 +80,18 @@ $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
   const m = btn.closest('.modal'); if(m) m.classList.remove('show');
 }));
 
-/* ====== تحقق إدخال ====== */
+/* ==== تحققات سريعة ==== */
 function isValidEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x); }
 function isValidPhone(x){ return /^05\d{8}$/.test(x); }
 
-/* ====== أكواد التجربة ====== */
+/* ==== أكواد التجربة (اختياري) ==== */
 const CODES = {
   "IBNROSHD": { maxUsers: 100, perUserGenerations: 10, expiresAt: "2026-01-31T23:59:59+03:00" },
   "TNS":      { maxUsers: 100, perUserGenerations: 20, expiresAt: "2026-01-31T23:59:59+03:00" }
 };
 const PLAN_NAMES = { weekly:"أسبوعي", monthly:"شهري", semi:"نصف سنوي", annual:"سنوي" };
 
-/* ====== الصلاحيات ====== */
+/* ==== الصلاحيات ==== */
 function isOwner(){
   const u = store.user;
   if(!u) return false;
@@ -104,19 +110,31 @@ function isTrialActive(){
     return notExpired && (t.remaining||0) > 0;
   }catch(_){ return false; }
 }
-function hasAccess(){
-  return store.auth && (isOwner() || isSubActive() || isTrialActive());
-}
+function hasAccess(){ return store.auth && (isOwner() || isSubActive() || isTrialActive()); }
 
-/* ====== إرسال صف إلى Google Sheets ====== */
+/* ==== إرسال صف إلى Google Sheets ==== */
+/* ترتيب الحقول مطابق لرؤوس الأعمدة في الشيت لديك:
+   [تاريخ السجل, الاسم, البريد, الجوال, المدرسة, الكود, الخطة, بداية الاشتراك, نهاية الاشتراك, المبلغ, أوافق على الرسائل]
+*/
 async function sendRowToSheet(payload){
   try{
-    await fetch(GAS_ENDPOINT, {
+    await fetch(SHEET_WEBAPP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        key: GAS_API_KEY,   // المفتاح يُرسل داخل الـJSON
-        ...payload
+        apiKey: SHEET_API_KEY,
+        // نحافظ على نفس المفاتيح التالية:
+        date:      payload.date      || new Date().toISOString(),
+        name:      payload.name      || '',
+        email:     payload.email     || '',
+        phone:     payload.phone     || '',
+        school:    payload.school    || '',
+        promo:     payload.promo     || '',
+        plan:      payload.plan      || '',
+        startsAt:  payload.startsAt  || '',
+        endsAt:    payload.endsAt    || '',
+        totalPaid: payload.totalPaid || 0,
+        consent:   !!payload.consent
       })
     });
   }catch(err){
@@ -124,7 +142,7 @@ async function sendRowToSheet(payload){
   }
 }
 
-/* ====== تفعيل كود تجربة ====== */
+/* ==== تفعيل كود تجربة ==== */
 function redeemCode(codeRaw){
   const code = (codeRaw||"").trim().toUpperCase();
   if(!code) return { ok:false, msg:"أدخلي الكود." };
@@ -158,18 +176,17 @@ function redeemCode(codeRaw){
   usage[code] = usedList;
   store.codesUsers = usage;
 
-  // سجل كحدث (trial_redeem)
+  // نسجل حدث تفعيل كود
   sendRowToSheet({
-    // الترتيب يطابق سكربتك في الشيت
     date: new Date().toISOString(),
     name: store.user?.name || '',
     email: email,
     phone: store.user?.phone || '',
     school: store.user?.school || '',
     promo: code,
-    plan: '',           // لا شيء هنا
-    startsAt: '',       // لا شيء
-    endsAt: '',         // لا شيء
+    plan: 'trial_redeem',
+    startsAt: '',
+    endsAt: '',
     totalPaid: 0,
     consent: store.user?.marketingConsent ? true : false
   });
@@ -177,7 +194,7 @@ function redeemCode(codeRaw){
   return { ok:true, msg:"تم تفعيل الكود بنجاح." };
 }
 
-/* استهلاك توليدة */
+/* استهلاك توليدة من التجربة */
 function consumeGeneration(n=1){
   const t = store.trial;
   if(!t){ toast('لا توجد تجربة مفعّلة.'); return; }
@@ -188,7 +205,6 @@ function consumeGeneration(n=1){
 
   const leftEl = $('#t-left'); if(leftEl) leftEl.textContent = t.remaining;
 
-  // يمكن تسجيل الاستهلاك كحدث (اختياري)
   sendRowToSheet({
     date: new Date().toISOString(),
     name: store.user?.name || '',
@@ -199,25 +215,25 @@ function consumeGeneration(n=1){
     plan: 'trial_consume',
     startsAt: '',
     endsAt: '',
-    totalPaid: n, // نستخدمه كعداد بسيط هنا
+    totalPaid: n,
     consent: store.user?.marketingConsent ? true : false
   });
 }
 
-/* ====== التسجيل ====== */
+/* ==== التسجيل ==== */
 function handleRegister(e){
   e.preventDefault();
   const f = e.target;
-  const name    = f.name.value.trim();
-  const email   = f.email.value.trim();
-  const phone   = f.phone.value.trim();
-  const school  = f.school.value.trim();
-  const pass    = f.password.value.trim();
-  const promo   = (f.promo?.value || "").trim();
+  const name    = (f.name?.value   || "").trim();
+  const email   = (f.email?.value  || "").trim();
+  const phone   = (f.phone?.value  || "").trim();
+  const school  = (f.school?.value || "").trim();
+  const pass    = (f.password?.value || "").trim();
+  const promo   = (f.promo?.value  || "").trim();
   const consent = !!f.consent?.checked;
 
   if(!name || !email || !phone || !school || !pass) return toast('كل الحقول مطلوبة.');
-  if(!isValidEmail(email)) return toast('رجاءً اكتبي بريدًا صحيحًا.');
+  if(!isValidEmail(email)) return toast('اكتبي بريدًا صحيحًا.');
   if(!isValidPhone(phone)) return toast('رقم الجوال يجب أن يبدأ بـ 05 ويكون 10 أرقام.');
 
   const old = store.user;
@@ -226,10 +242,10 @@ function handleRegister(e){
   }
 
   const createdAt = new Date().toISOString();
-  store.user = { name, email, phone, school, marketingConsent: consent, promo, createdAt };
+  store.user = { name, email, phone, school, password: pass, marketingConsent: consent, promo, createdAt };
   store.auth = true;
 
-  // لو فيه كود يفعّل
+  // تفعيل كود (لو أدخلته)
   if(promo){
     const r = redeemCode(promo);
     toast(r.msg);
@@ -237,46 +253,48 @@ function handleRegister(e){
 
   closeModal('#modal-register');
 
-  // إرسال صف "تسجيل"
+  // إرسال صف "تسجيل" (بنفس ترتيب الأعمدة)
   sendRowToSheet({
     date: createdAt,
     name, email, phone, school,
     promo,
-    plan: null,
-    startsAt: null,
-    endsAt: null,
+    plan: '',          // لا يوجد خطة عند التسجيل
+    startsAt: '',
+    endsAt: '',
     totalPaid: 0,
     consent
   });
 
+  // توجيه
   setTimeout(()=>{
     if(hasAccess()) location.href = ATHAR_APP_URL;
     else            location.href = PRICING_URL;
   }, 250);
 }
 
-/* ====== الدخول ====== */
+/* ==== الدخول (حقّل واحد: إيميل أو جوال) ==== */
 function handleLogin(e){
   e.preventDefault();
   const f   = e.target;
-  const id  = (f.identifier?.value || "").trim();   // خانة واحدة
-  const pass= (f.password?.value || "").trim();
+  const id  = (f.identifier?.value || "").trim();   // إيميل أو 05xxxxxxxx
+  const pass= (f.password?.value   || "").trim();
   const u   = store.user;
 
-  if(!u)                 return toast('لا يوجد حساب مسجل. أنشئي حسابًا أولًا.');
-  if(!id || !pass)       return toast('كل الحقول مطلوبة.');
+  if(!u)           return toast('لا يوجد حساب مسجل. أنشئي حسابًا أولًا.');
+  if(!id || !pass) return toast('كل الحقول مطلوبة.');
 
   const isPhone = /^05\d{8}$/.test(id);
   const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id);
   if(!isPhone && !isEmail){
-    return toast('اكتبي بريدًا صحيحًا أو رقمًا يبدأ بـ 05 (10 أرقام).');
+    return toast('أدخلي بريدًا صحيحًا أو رقمًا يبدأ بـ 05 (10 أرقام).');
   }
 
-  const ok = isPhone
+  const matchId = isPhone
     ? id === (u.phone || "")
     : id.toLowerCase() === (u.email || "").toLowerCase();
 
-  if(!ok) return toast('بيانات الدخول غير صحيحة.');
+  const passOk = pass === (u.password || "");
+  if(!(matchId && passOk)) return toast('بيانات الدخول غير صحيحة.');
 
   store.auth = true;
   closeModal('#modal-login');
@@ -285,24 +303,25 @@ function handleLogin(e){
   if(hasAccess()) setTimeout(()=> location.href = ATHAR_APP_URL, 200);
   else            setTimeout(()=> location.href = PRICING_URL,   200);
 }
-/* ====== الاشتراك ====== */
+
+/* ==== الاشتراك ==== */
 function subscribe(planKey){
   if(!store.auth || !store.user){ openModal('#modal-register'); return; }
 
   const start = new Date();
   const end = new Date(start);
-  if(planKey==='weekly')  end.setDate(end.getDate()+7);
-  else if(planKey==='monthly') end.setMonth(end.getMonth()+1);
-  else if(planKey==='semi')    end.setMonth(end.getMonth()+6);
-  else if(planKey==='annual')  end.setFullYear(end.getFullYear()+1);
+  if(planKey === 'weekly')   end.setDate(end.getDate()+7);
+  else if(planKey === 'monthly') end.setMonth(end.getMonth()+1);
+  else if(planKey === 'semi')    end.setMonth(end.getMonth()+6);
+  else if(planKey === 'annual')  end.setFullYear(end.getFullYear()+1);
 
   store.sub = { plan: planKey, startedAt: start.toISOString(), endsAt: end.toISOString() };
 
-  // تقدير المبلغ (اختياري الآن – عدليه كما تشائين)
+  // أسعار تقديرية (عدّليها)
   const prices = { weekly:10, monthly:30, semi:170, annual:340 };
   const amount = prices[planKey] ?? 0;
 
-  // إرسال صف "اشتراك"
+  // سجل صف اشتراك
   sendRowToSheet({
     date: new Date().toISOString(),
     name: store.user.name,
@@ -321,7 +340,7 @@ function subscribe(planKey){
   setTimeout(()=> location.href = ATHAR_APP_URL, 250);
 }
 
-/* ====== خروج/حذف ====== */
+/* ==== خروج/حذف ==== */
 function logout(){
   store.auth = false;
   toast('تم تسجيل الخروج');
@@ -333,15 +352,22 @@ function deleteAccount(){
   setTimeout(()=>location.href='index.html', 500);
 }
 
-/* ====== ربط ====== */
+/* ==== ربط كل شيء ==== */
 function wire(){
-  const regForm = $('#register-form'); if(regForm) regForm.addEventListener('submit', handleRegister);
-  const loginForm = $('#login-form'); if(loginForm) loginForm.addEventListener('submit', handleLogin);
-  $$('#choose-plan [data-plan]').forEach(btn=> btn.addEventListener('click', ()=> subscribe(btn.getAttribute('data-plan'))));
-  const lo = $('#logout'); if(lo) lo.addEventListener('click', logout);
+  const regForm   = $('#register-form'); if(regForm)  regForm.addEventListener('submit', handleRegister);
+  const loginForm = $('#login-form');    if(loginForm) loginForm.addEventListener('submit', handleLogin);
+
+  // أزرار باقات (لو موجودة في pricing.html)
+  $$('#choose-plan [data-plan]').forEach(btn=>{
+    btn.addEventListener('click', ()=> subscribe(btn.getAttribute('data-plan')));
+  });
+
+  const lo  = $('#logout'); if(lo)  lo.addEventListener('click', logout);
   const del = $('#delete'); if(del) del.addEventListener('click', deleteAccount);
+
   const useOne = $('#use-one'); if(useOne) useOne.addEventListener('click', ()=> consumeGeneration(1));
 
+  // شارة الحالة + المتبقي من التجربة
   const badge = $('#sub-state');
   if(badge){
     const active = (isSubActive() || isTrialActive() || isOwner());
@@ -357,11 +383,10 @@ function wire(){
 }
 document.addEventListener('DOMContentLoaded', wire);
 
-/* ====== توست ====== */
+/* ==== توست ==== */
 function toast(msg){
-  let t = $('.toast'); 
+  let t = $('.toast');
   if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
-  t.textContent = msg; 
+  t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=> t.classList.remove('show'), 1800);
-}
