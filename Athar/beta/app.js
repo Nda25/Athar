@@ -1,9 +1,11 @@
 /* ====== إعداد عام ====== */
+const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzkBo_-YDkHskhhy2-ln4kMAyovIu1DQg4ogU5kG103WERjRG2UGjmT2n2uCTRqC6gWtg/exec";
+const GAS_API_KEY  = "NADA-ATHAR-2025!"; // غيريه لقيمة قوية
 const ATHAR_APP_URL = "https://n-athar.co";
 const PRICING_URL   = "pricing.html";
 
 // عنوان Google Apps Script API (من نشر الـ Web App)
-const API_URL = "https://script.google.com/macros/s/AKfycbyfFutNFSDO0MScqtpd6ACXkQU8kzAdtR6g9ZzQnoxs273Hmk7ctJiK1Prr4spGUem7/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzkBo_-YDkHskhhy2-ln4kMAyovIu1DQg4ogU5kG103WERjRG2UGjmT2n2uCTRqC6gWtg/exec";
 
 /* وصول المالك (دخول بلا قيود) – اختياري */
 const OWNER_EMAILS = [];       // ضعي بريدك هنا إن رغبتِ
@@ -109,9 +111,13 @@ function hasAccess(){
 /* ====== إرسال صف إلى Google Sheets ====== */
 async function sendRowToSheet(payload){
   try{
-    await fetch(API_URL, {
+    await fetch(GAS_ENDPOINT, {
       method: 'POST',
-      body: JSON.stringify(payload)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        key: GAS_API_KEY,   // المفتاح يُرسل داخل الـJSON
+        ...payload
+      })
     });
   }catch(err){
     console.error('Sheet API error:', err);
