@@ -88,31 +88,29 @@
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-<!-- الشريط العلوي (مطابق لترتيب صفحة الخطط) -->
+<!-- الشريط العلوي -->
 <div class="topbar">
-  <!-- روابط التنقل -->
+  <!-- روابط التنقل (يسار) -->
   <div class="left-actions">
-    <!-- لا نضع رابط "الرئيسية" هنا لأننا بالفعل في الصفحة الرئيسية -->
+    <a class="btn" href="pricing.html" title="الخطط">الخطط</a>
     <a class="btn" id="nav-athar" href="athar.html" title="أثر" style="display:none">أثــر</a>
   </div>
 
-  <!-- أدوات إضافية (الزر في الوسط وبنفس الإيموجي 🌓) -->
+  <!-- أدوات إضافية (الزر في الوسط) -->
   <div class="actions">
     <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
   </div>
 
-  <!-- حالة المستخدم + زر الخطط في أقصى اليمين -->
+  <!-- حالة المستخدم (يمين) -->
   <div class="user">
     <span id="nav-auth" style="display:inline-flex; gap:10px">
       <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
       <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
     </span>
     <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
-
-    <!-- زر الخطط (يرجع يمين الشريط) -->
-    <a class="btn primary" href="pricing.html">الخطط</a>
   </div>
 </div>
+  
   <!-- الهيدر / الهيرو -->
   <header>
     <div class="hero">
