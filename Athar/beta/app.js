@@ -87,7 +87,14 @@ function isValidPhone(x){ return /^05\d{8}$/.test(x); }
 /* ==== أكواد التجربة (اختياري) ==== */
 const CODES = {
   "IBNROSHD": { maxUsers: 100, perUserGenerations: 10, expiresAt: "2026-01-31T23:59:59+03:00" },
-  "TNS":      { maxUsers: 100, perUserGenerations: 20, expiresAt: "2026-01-31T23:59:59+03:00" }
+  "TNS":      { maxUsers: 100, perUserGenerations: 20, expiresAt: "2026-01-31T23:59:59+03:00" },
+
+  // === كود فاميلي (15 مستخدم، توليد مفتوح) ===
+  "FAMILY":   { maxUsers: 15, perUserGenerations: Infinity, expiresAt: "2026-12-31T23:59:59+03:00" },
+
+  // === كود دندونه (مستخدم واحد فقط، 5 توليدات) ===
+  "دندونه":   { maxUsers: 1,   perUserGenerations: 5,  expiresAt: "2026-12-31T23:59:59+03:00" },
+  "DANDONAH": { maxUsers: 1,   perUserGenerations: 5,  expiresAt: "2026-12-31T23:59:59+03:00" }
 };
 const PLAN_NAMES = { weekly:"أسبوعي", monthly:"شهري", semi:"نصف سنوي", annual:"سنوي" };
 
