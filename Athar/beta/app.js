@@ -3,7 +3,7 @@
    ========================================= */
 
 /* ==== إعدادات عامة ==== */
-const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxFsagOaYxo3Zs1JYsJq5l8qRCl1rXfanEa6yhxnT6PE3t4bbJaAK7VWgHS5FmFaZjg0g/exec";
+const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyt5CGffq0xt1xIr5fYH8KH3AFBHjobzBGmK9Wtlb7cHpOuQFjaSvh0ex7o4oHJJc-h/exec";
 const SHEET_API_KEY    = "NADA-ATHAR-2025!"; // نفس المفتاح في GAS
 
 const ATHAR_APP_URL = "athar.html";
@@ -123,11 +123,11 @@ function hasAccess(){ return store.auth && (isOwner() || isSubActive() || isTria
 /* ترتيب الحقول: [تاريخ السجل, الاسم, البريد, الجوال, المدرسة, الكود, الخطة, بداية الاشتراك, نهاية الاشتراك, المبلغ, أوافق على الرسائل] */
 async function sendRowToSheet(payload){
   try{
-    await fetch(SHEET_WEBAPP_URL, {
+    const res = await fetch(SHEET_WEBAPP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        key: SHEET_API_KEY,        // ← مهم: يتطابق مع body.key في GAS
+        key: SHEET_API_KEY,
         date:      payload.date      || new Date().toISOString(),
         name:      payload.name      || '',
         email:     payload.email     || '',
@@ -141,8 +141,17 @@ async function sendRowToSheet(payload){
         consent:   !!payload.consent
       })
     });
+
+    let json = {};
+    try { json = await res.json(); } catch(_){}
+    console.log('Sheet response:', json);
+    if (!json.ok) {
+      console.error('Sheet API error:', json);
+      if (typeof toast === 'function') toast('تعذّر الحفظ في الشيت.');
+    }
   }catch(err){
-    console.error('Sheet API error:', err);
+    console.error('Sheet API fetch error:', err);
+    if (typeof toast === 'function') toast('تعذّر الاتصال بالشيت.');
   }
 }
 
