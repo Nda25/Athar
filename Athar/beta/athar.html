@@ -1,202 +1,403 @@
-// netlify/functions/strategy.js
-exports.handler = async (event) => {
-  // نسمح فقط بـ POST
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>أثر — المساعد الإبداعي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<meta name="color-scheme" content="dark light">
+<style>
+  /* خصوصيات بسيطة لهذه الصفحة فوق style.css */
+
+  .topbar .left-actions { display:flex; align-items:center; gap:10px; }
+  .emoji-toggle { font-size:18px; line-height:1; }
+
+  .controls.card { padding:20px; }
+  .select-wrap{ position:relative }
+  .select-wrap .sel{
+    width:100%; background:#fff; color:#0f172a; border:1px solid rgba(59,130,246,.35);
+    border-radius:12px; padding:.9rem 1rem; padding-inline-start:2.2rem; outline:none; appearance:none;
   }
+  .dark .select-wrap .sel{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6; }
+  .select-wrap .sel-icon{
+    position:absolute; inset-inline-start:.7rem; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; pointer-events:none; color:var(--sea-500);
+  }
+  .select-wrap .sel-icon svg{ width:16px; height:16px; display:block; fill:currentColor }
+  .dark .select-wrap .sel-icon{ color:#93c5fd }
 
-  // نقرأ جسم الطلب بأمان
-  let payload = {};
-  try { payload = JSON.parse(event.body || "{}"); }
-  catch { return { statusCode: 400, body: "Bad JSON body" }; }
+  .muted { color: var(--muted); font-size:.95rem; }
 
-  const { subject, bloomType, lesson } = payload;
+  /* العناوين بالأزرق مثل طلبك */
+  #out h2, #out h3 { color: var(--sea-600); margin: 0 0 8px; }
+  .dark #out h2, .dark #out h3 { color: #93c5fd; }
 
-  // إعدادات من متغيّرات البيئة
-  const API_KEY    = process.env.GEMINI_API_KEY;
-  const MODEL      = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
-  const RETRIES    = +(process.env.RETRIES || 2);
-  const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
+  #chips .chip{
+    display:inline-block; padding:.28rem .65rem; border-radius:999px; background:var(--sea-100); color:#0c4a6e; font-size:.82rem; border:1px solid rgba(59,130,246,.25); margin-inline-start:6px;
+  }
+  .dark #chips .chip{ background:#0f172a; color:#e2e8f0; border-color:#3b82f6; }
 
-  if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+  #regen{ display:none; }
 
-  // نص البرومبت
-  const typePart   = (bloomType && bloomType !== "الكل") ? `(تصنيف بلوم: "${bloomType}")` : "";
-  const lessonPart = lesson ? `ومناسبة لدرس "${lesson}"` : "";
+  /* شعار «أثــر» كما في الأصل */
+  .brand-wrap{ text-align:center; padding:36px 0 8px; }
+  .brand-name{
+    font-family:"Amiri",serif; font-weight:700; letter-spacing:.5px;
+    font-size:clamp(44px, 6.2vw, 84px); margin:0;
+    color:#1e40af; text-shadow:0 1px 0 rgba(255,255,255,.55);
+  }
+  .dark .brand-name{ color:#93c5fd; text-shadow:none; }
+  .brand-tag{ color:var(--muted); font-weight:700; margin-top:.4rem; }
+</style>
+</head>
+<body>
+  <!-- الخلفيات جاهزة من style.css -->
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
 
-  const BASE_PROMPT =
-`أنا معلمة ثانوي. أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
-أرسلي **فقط** JSON وفق المخطط التالي واملئي كل الحقول بمحتوى كافٍ (لا تتركي أي حقل فارغاً):
-- goals: 3 إلى 6 عناصر
-- steps: 4 إلى 8 عناصر
-- examples: 2 إلى 4 عناصر
-اكتبي بلغة عربية واضحة مختصرة ودقيقة، بدون أي مقدمات خارج JSON.`;
+  <!-- الشريط العلوي -->
+  <div class="topbar">
+    <div class="left-actions">
+      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
+      <a class="btn" href="profile.html" title="الملف الشخصي">الملف الشخصي</a>
+    </div>
+    <div class="actions">
+      <button class="btn emoji-toggle" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+    </div>
+  </div>
 
-  // مخطط الاستجابة + required
-  const responseSchema = {
-    type: "OBJECT",
-    required: [
-      "strategy_name","bloom","importance","materials","goals","steps",
-      "examples","assessment","diff_support","diff_core","diff_challenge",
-      "expected_impact","citations"
-    ],
-    properties: {
-      strategy_name: { type: "STRING" },
-      bloom:         { type: "STRING" },
-      importance:    { type: "STRING" },
-      materials:     { type: "STRING" },
-      goals:         { type: "ARRAY", items: { type: "STRING" }, minItems: 3 },
-      steps:         { type: "ARRAY", items: { type: "STRING" }, minItems: 4 },
-      examples:      { type: "ARRAY", items: { type: "STRING" }, minItems: 2 },
-      assessment:    { type: "STRING" },
-      diff_support:  { type: "STRING" },
-      diff_core:     { type: "STRING" },
-      diff_challenge:{ type: "STRING" },
-      expected_impact:{ type:"STRING" },
-      citations:     { type: "ARRAY", items: { type: "OBJECT", required:["title","benefit"], properties: {
-        title:   { type: "STRING" },
-        benefit: { type: "STRING" }
-      }}}
-    }
-  };
+  <!-- الهوية -->
+  <header class="brand-wrap">
+    <h1 class="brand-name">أثَـــــر</h1>
+    <div class="brand-tag">حين يلتقي الشغف بالمعرفة… يُصنع الأثر</div>
+  </header>
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+  <main class="container">
+    <!-- بوابة بسيطة: لو ما عنده وصول يتحوّل للخطط -->
+    <section class="card" id="gate" style="display:none; margin-bottom:14px">
+      <div class="muted">نقوم بالتحقق من حالة اشتراكك…</div>
+    </section>
 
-  // جسم الطلب الأساسي
-  function makeReqBody(promptText){
-    return {
-      contents: [{ role: "user", parts: [{ text: promptText }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema,
-        candidateCount: 1,
-        maxOutputTokens: 2048,
-        temperature: 0.6
-      }
+    <!-- عناصر التحكم -->
+    <section class="card controls">
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:14px">
+        <div>
+          <label>المرحلة الدراسية</label>
+          <div class="select-wrap">
+            <select id="stage" class="sel">
+              <option value="" selected disabled>اختر المرحلة</option>
+              <option value="primary-lower">ابتدائي — دنيا (الأول–الثالث)</option>
+              <option value="primary-upper">ابتدائي — عليا (الرابع–السادس)</option>
+              <option value="middle">متوسط (الأول–الثالث)</option>
+              <option value="secondary">ثانوي (المسارات)</option>
+            </select>
+            <span class="sel-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg></span>
+          </div>
+        </div>
+        <div>
+          <label>المادة</label>
+          <div class="select-wrap">
+            <select id="subject" class="sel">
+              <option value="" selected disabled>اختر المادة</option>
+            </select>
+            <span class="sel-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:14px; margin-top:12px">
+        <div>
+          <label>تصنيف بلوم</label>
+          <div class="select-wrap">
+            <select id="type" class="sel">
+              <option>الكل</option>
+              <option>تذكّر</option><option>فهم</option><option>تطبيق</option>
+              <option>تحليل</option><option>تقييم</option><option>إبداع</option>
+            </select>
+            <span class="sel-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg></span>
+          </div>
+        </div>
+        <div>
+          <label>اسم الدرس (اختياري)</label>
+          <input id="lesson" placeholder="مثال: الاتزان الدوراني">
+        </div>
+      </div>
+
+      <div class="flex" style="display:flex; align-items:center; gap:8px; margin-top:12px">
+        <button id="gen" class="btn primary">ساعدني على الإبداع</button>
+        <button id="regen" class="btn">أبدع باستراتيجية أخرى</button>
+        <span id="status" class="muted"></span>
+      </div>
+    </section>
+
+    <!-- المخرجات -->
+    <section id="out" class="card" style="display:none">
+      <div class="flex" style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+        <h2 id="title" class="text-2xl" style="margin:0"></h2>
+        <div id="chips"></div>
+      </div>
+      <div class="divider" style="height:12px; opacity:.25; margin:8px 0 12px; background:
+        radial-gradient(circle at 6px 6px, var(--sea-500) 3px, transparent 4px) repeat-x left/26px 12px,
+        radial-gradient(circle at 18px 6px, var(--sea-300) 2.2px, transparent 3.2px) repeat-x left/26px 12px;"></div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px">
+        <div>
+          <h3>الأهمية</h3>
+          <p id="importance"></p>
+        </div>
+        <div>
+          <h3>مواد/أدوات</h3>
+          <p id="materials"></p>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px; margin-top:8px">
+        <div>
+          <h3>الأهداف</h3>
+          <ul id="goals" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:disc"></ul>
+        </div>
+        <div>
+          <h3>خطوات التطبيق</h3>
+          <ol id="steps" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:decimal"></ol>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <h3>أمثلة عملية</h3>
+        <ul id="examples" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:disc"></ul>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px; margin-top:8px">
+        <div>
+          <h3>التقويم</h3>
+          <p id="assessment"></p>
+        </div>
+        <div>
+          <h3>تفريق التعليم</h3>
+          <ul id="diff" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:disc"></ul>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <h3>الأثر المتوقع</h3>
+        <p id="impact"></p>
+      </div>
+
+      <div style="margin-top:10px">
+        <h3>مراجع/مصادر</h3>
+        <ul id="cites" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:disc"></ul>
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:8px">
+        <button id="copy" class="btn">نسخ</button>
+      </div>
+    </section>
+
+    <p id="err" class="muted" style="text-align:center; display:none">رجاءً اختاري المرحلة والمادة.</p>
+  </main>
+
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
+  </footer>
+
+  <div class="toast"></div>
+
+  <!-- يعتمد على app.js (الوصول/الثيم/التوست …) -->
+  <script src="app.js"></script>
+
+  <script>
+    // تأكيد الوصول: لو ما فيه اشتراك/تجربة → تحويل للخطط
+    document.addEventListener('DOMContentLoaded', ()=>{
+      try{
+        if(typeof hasAccess === 'function'){
+          const ok = hasAccess();
+          if(!ok){ location.href = 'pricing.html'; }
+          else { const g=document.getElementById('gate'); if(g) g.style.display='none'; }
+        }
+      }catch(_){}
+    });
+
+    // المواد حسب المرحلة (منهج السعودية 2025 — تبسيط عملي)
+    const SUBJECTS = {
+      "primary-lower": [ // 1-3
+        "اللغة العربية","الرياضيات","العلوم","مهارات رقمية","اللغة الإنجليزية",
+        "الدراسات الإسلامية","التربية الفنية","التربية البدنية والدفاع عن النفس","مهارات حياتية وأسرية"
+      ],
+      "primary-upper": [ // 4-6
+        "اللغة العربية","الرياضيات","العلوم","المهارات الرقمية","اللغة الإنجليزية",
+        "الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد","التربية الفنية","التربية البدنية والدفاع عن النفس"
+      ],
+      "middle": [ // 1-3 متوسط
+        "اللغة العربية","الرياضيات","العلوم","اللغة الإنجليزية","الدراسات الإجتماعية",
+        "الدراسات الإسلامية","التفكير الناقد والمنطق","مهارات رقمية","التربية الفنية","التربية البدنية والدفاع عن النفس"
+      ],
+      "secondary": [ // ثانوي مسارات (عامة)
+        "الفيزياء","الكيمياء","الأحياء","الرياضيات","اللغة العربية","اللغة الإنجليزية",
+        "التاريخ","الدراسات الإسلامية","مهارات رقمية","علم الأرض والفضاء","التفكير الناقد"
+      ]
     };
-  }
 
-  // أدوات مساعدة
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const $  = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-  const MIN = { goals:3, steps:4, examples:2 };
-  function isEmptyStr(s){ return !s || !String(s).trim(); }
-  function isComplete(d){
-    if (!d) return false;
-    const mustStrings = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
-    for (const k of mustStrings) if (isEmptyStr(d[k])) return false;
-    for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
-    if ((d.goals||[]).length < MIN.goals) return false;
-    if ((d.steps||[]).length < MIN.steps) return false;
-    if ((d.examples||[]).length < MIN.examples) return false;
-    // تأكد من وجود عنوان وفائدة في الـ citations
-    for (const c of d.citations) {
-      if (!c) return false;
-      if (isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false;
+    const stageSel   = $('#stage');
+    const subjectSel = $('#subject');
+    const bloomSel   = $('#type');
+    const lessonInp  = $('#lesson');
+    const genBtn     = $('#gen');
+    const regenBtn   = $('#regen');
+    const statusEl   = $('#status');
+
+    // تحميل مواد المرحلة
+    stageSel.addEventListener('change', ()=>{
+      const s = stageSel.value;
+      subjectSel.innerHTML = '<option value="" selected disabled>اختر المادة</option>';
+      (SUBJECTS[s]||[]).forEach(m=>{
+        const opt = document.createElement('option'); opt.value = m; opt.textContent = m;
+        subjectSel.appendChild(opt);
+      });
+    });
+
+    function listTo(el, arr){
+      el.innerHTML = "";
+      (arr||[]).forEach(v=>{
+        const t = (v||"").toString().trim();
+        if(!t) return;
+        const li = document.createElement('li'); li.textContent = t;
+        el.appendChild(li);
+      });
     }
-    return true;
-  }
+    function toast(msg){
+      let t = document.querySelector('.toast'); 
+      if(!t){ t=document.createElement('div'); t.className='toast'; document.body.appendChild(t); }
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'), 2000);
+    }
+    function setLoading(isLoading){
+      if(isLoading){
+        genBtn.dataset._label = genBtn.textContent;
+        genBtn.textContent = "نحوّل شغفك لاستراتيجية… ✨";
+        genBtn.disabled = true; regenBtn.disabled = true;
+      }else{
+        genBtn.textContent = genBtn.dataset._label || "ساعدني على الإبداع";
+        genBtn.disabled = false; regenBtn.disabled = false;
+      }
+    }
+    function readStageLabel(val){
+      return {
+        "primary-lower":"ابتدائي — دنيا",
+        "primary-upper":"ابتدائي — عليا",
+        "middle":"متوسط",
+        "secondary":"ثانوي"
+      }[val] || val;
+    }
 
-  // استدعاء مرة واحدة مع timeout
-  async function callOnce(promptText){
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
-
-    try {
-      const res = await fetch(url, {
+    // نداء الـ Function
+    async function callStrategy({stage, subject, bloomType, lesson, variant}){
+      const res = await fetch("/.netlify/functions/strategy", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(makeReqBody(promptText)),
-        signal: controller.signal
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ stage, subject, bloomType, lesson, variant })
+      });
+      if(!res.ok){
+        const txt = await res.text();
+        throw new Error("خطأ من الخادم: "+res.status+" | "+txt);
+      }
+      return res.json();
+    }
+
+    function paintOutput(data, meta){
+      $("#title").textContent = data.strategy_name || "—";
+      // Chips
+      const chips=[];
+      if(meta.stage)   chips.push(meta.stageLabel || meta.stage);
+      if(meta.subject) chips.push(meta.subject);
+      if(data.bloom || meta.bloomType) chips.push(data.bloom || meta.bloomType);
+      if(meta.lesson)  chips.push("الدرس: "+meta.lesson);
+      $("#chips").innerHTML = chips.map(t=>`<span class="chip">${t}</span>`).join("");
+
+      $("#importance").textContent = data.importance || "—";
+      $("#materials").textContent  = data.materials  || "—";
+      $("#assessment").textContent = data.assessment || "—";
+      $("#impact").textContent     = data.expected_impact || "—";
+
+      const diffUl = $("#diff"); diffUl.innerHTML = "";
+      [["دعم: ",data.diff_support],["أساسي: ",data.diff_core],["تحدّي: ",data.diff_challenge]].forEach(([k,v])=>{
+        if(v){ const li=document.createElement('li'); li.textContent = k+v; diffUl.appendChild(li); }
       });
 
-      const text = await res.text();
-      if (!res.ok) {
-        const err = new Error(`HTTP ${res.status}`);
-        err.status = res.status;
-        err.body = text;
-        throw err;
-      }
+      listTo($("#goals"),    data.goals);
+      listTo($("#steps"),    data.steps);
+      listTo($("#examples"), data.examples);
 
-      let json;
-      try { json = JSON.parse(text); }
-      catch {
-        const err = new Error("Bad JSON from API");
-        err.status = 502;
-        err.body = text.slice(0,300);
-        throw err;
-      }
+      const citesUl = $("#cites"); citesUl.innerHTML = "";
+      (data.citations||[]).forEach(c=>{
+        if(!c || !c.title) return;
+        const li = document.createElement('li');
+        const strong = document.createElement('strong'); strong.textContent = c.title;
+        li.appendChild(strong);
+        if(c.benefit){
+          const p = document.createElement('p'); p.style.margin = "4px 0 0 0"; p.className = "muted"; p.textContent = c.benefit;
+          li.appendChild(p);
+        }
+        citesUl.appendChild(li);
+      });
 
-      const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-      let data;
-      try { data = JSON.parse(raw); }
-      catch {
-        const err = new Error("Bad model JSON");
-        err.status = 502;
-        err.body = raw.slice(0,300);
-        throw err;
-      }
-
-      return data;
-    } finally {
-      clearTimeout(timer);
+      $("#out").style.display = "block";
+      $("#err").style.display = "none";
+      $("#regen").style.display = "inline-flex";
     }
-  }
 
-  // إعادة محاولات + إعادة صياغة إذا كانت الاستجابة ناقصة
-  let attempt = 0;
-  let promptText = BASE_PROMPT;
+    async function generate(variant=null){
+      const stage   = stageSel.value;
+      const subject = subjectSel.value;
+      const bloom   = bloomSel.value;
+      const lesson  = lessonInp.value.trim();
 
-  while (true) {
-    try {
-      let data = await callOnce(promptText);
-
-      // لو ناقصة نعيد التوجيه مرة واحدة بإلزام صريح
-      if (!isComplete(data) && attempt <= RETRIES) {
-        attempt++;
-        await sleep(BACKOFF_MS * attempt);
-        promptText =
-`${BASE_PROMPT}
-
-الاستجابة السابقة كانت ناقصة. أَعِد إرسال **JSON مكتمل** يملأ كل الحقول بنصوص غير فارغة،
-وبحد أدنى (${MIN.goals}) أهداف، (${MIN.steps}) خطوات، (${MIN.examples}) أمثلة.
-لا تضِف أي نص خارج JSON.`;
-        continue;
+      if(!stage || !subject){
+        $("#err").style.display = "block";
+        toast("اختاري المرحلة والمادة أولاً.");
+        return;
       }
-
-      if (!isComplete(data)) {
-        const err = new Error("Incomplete response from model after retries");
-        err.status = 502;
-        throw err;
+      $("#err").style.display = "none";
+      statusEl.textContent = "جاري الإبداع…";
+      setLoading(true);
+      try{
+        const data = await callStrategy({
+          stage,
+          subject,
+          bloomType: bloom,
+          lesson,
+          variant: variant || Math.floor(Math.random()*1e9) // لضمان تنويع مختلف
+        });
+        paintOutput(data, { stage, stageLabel: readStageLabel(stage), subject, bloomType: bloom, lesson });
+        statusEl.textContent = "تم ✨";
+      }catch(err){
+        console.error(err);
+        statusEl.textContent = err.message || "تعذر التوليد.";
+        toast("تعذّر التوليد. جرّبي ثانية.");
+      }finally{
+        setLoading(false);
       }
-
-      data._meta = { subject, bloomType: bloomType || "", lesson: lesson || "" };
-
-      return {
-        statusCode: 200,
-        headers: { "content-type": "application/json; charset=utf-8" },
-        body: JSON.stringify(data)
-      };
-
-    } catch (err) {
-      attempt++;
-      const status = err.status || 0;
-      const isTimeout = /timeout|AbortError/i.test(String(err?.message));
-      const retriable = isTimeout || [429,500,502,503,504].includes(status);
-
-      if (retriable && attempt <= RETRIES) {
-        await sleep(BACKOFF_MS * attempt);
-        continue;
-      }
-
-      if (isTimeout) {
-        return { statusCode: 504, body: "Gateway Timeout: model did not respond in time" };
-      }
-      const code = status || 500;
-      const body = err.body || String(err.message || err);
-      return { statusCode: code, body };
     }
-  }
-};
 
+    $("#gen").addEventListener("click", ()=> generate(null));
+    $("#regen").addEventListener("click", ()=> generate(Date.now()));
+
+    // نسخ الناتج
+    $("#copy").addEventListener("click", ()=>{
+      const text = document.querySelector("#out").innerText;
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(()=> toast("تم النسخ ✓"));
+      }else{
+        const ta=document.createElement("textarea"); ta.value=text;
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand("copy"); toast("تم النسخ ✓"); }
+        finally{ document.body.removeChild(ta); }
+      }
+    });
+  </script>
+</body>
+</html>
