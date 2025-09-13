@@ -513,14 +513,6 @@ header{ position:relative; padding:48px 18px 28px; text-align:center; }
   gap:.35rem;                    /* مسافة بسيطة بين النص والرمز */
 }
 
-.logo::after{
-  content:"";
-  width:28px; height:28px;
-  display:inline-block;
-  background-repeat:no-repeat;
-  background-size:contain;
-  vertical-align:middle;
-
   /* نسخة الفاتح */
   background-image:url('data:image/svg+xml;utf8,\
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6">\
