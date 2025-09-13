@@ -3,7 +3,7 @@
    ========================================= */
 
 /* ==== إعدادات عامة ==== */
-const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw-soThyqiUPgf3PmdyRg1u9IlkrfRmLdwQQc1_vZwH3kTpZaUZTkpEQfzD2UIyQ3Iv8Q/exec";
+const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxFsagOaYxo3Zs1JYsJq5l8qRCl1rXfanEa6yhxnT6PE3t4bbJaAK7VWgHS5FmFaZjg0g/exec";
 const SHEET_API_KEY    = "NADA-ATHAR-2025!"; // نفس المفتاح في GAS
 
 const ATHAR_APP_URL = "athar.html";
