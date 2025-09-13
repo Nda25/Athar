@@ -305,18 +305,33 @@ function handleLogin(e){
 }
 
 /* ==== الاشتراك ==== */
-function subscribe(planKey){
+async function subscribe(planKey){
   if(!store.auth || !store.user){ openModal('#modal-register'); return; }
 
-  const start = new Date();
-  const end = new Date(start);
-  if(planKey === 'weekly')   end.setDate(end.getDate()+7);
-  else if(planKey === 'monthly') end.setMonth(end.getMonth()+1);
-  else if(planKey === 'semi')    end.setMonth(end.getMonth()+6);
-  else if(planKey === 'annual')  end.setFullYear(end.getFullYear()+1);
-
-  store.sub = { plan: planKey, startedAt: start.toISOString(), endsAt: end.toISOString() };
-
+  try{
+    const res = await fetch('/.netlify/functions/create-checkout', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        provider: 'moyasar',
+        plan: planKey,
+        email: store.user.email,
+        phone: store.user.phone,
+        name: store.user.name
+      })
+    });
+    if(!res.ok){
+      const txt = await res.text();
+      throw new Error('خطأ في إنشاء جلسة الدفع: ' + txt);
+    }
+    const { checkout_url } = await res.json();
+    if(!checkout_url) throw new Error('لم يتم استلام رابط الدفع');
+    location.href = checkout_url; // فتح صفحة الدفع (أو محاكاة النجاح)
+  }catch(err){
+    console.error(err);
+    toast('تعذّر فتح صفحة الدفع.');
+  }
+}
   // أسعار تقديرية (عدّليها)
   const prices = { weekly:10, monthly:30, semi:170, annual:340 };
   const amount = prices[planKey] ?? 0;
@@ -382,6 +397,48 @@ function wire(){
   }
 }
 document.addEventListener('DOMContentLoaded', wire);
+
+/* ====== بعد الدفع ====== */
+(function afterPay(){
+  const p = new URLSearchParams(location.search);
+  if(p.get('status') !== 'success') return;
+
+  const plan = p.get('plan') || 'monthly';
+  const start = new Date();
+  const end = new Date(start);
+  if(plan==='weekly')       end.setDate(end.getDate()+7);
+  else if(plan==='monthly') end.setMonth(end.getMonth()+1);
+  else if(plan==='semi')    end.setMonth(end.getMonth()+6);
+  else if(plan==='annual')  end.setFullYear(end.getFullYear()+1);
+
+  store.sub = { plan, startedAt: start.toISOString(), endsAt: end.toISOString() };
+
+  sendRowToSheet({
+    date: new Date().toISOString(),
+    name: store.user?.name || '',
+    email: store.user?.email || '',
+    phone: store.user?.phone || '',
+    school: store.user?.school || '',
+    promo: store.user?.promo || '',
+    plan,
+    startsAt: start.toISOString(),
+    endsAt: end.toISOString(),
+    totalPaid: { weekly:10, monthly:30, semi:170, annual:340 }[plan] ?? 0,
+    consent: store.user?.marketingConsent ? true : false
+  });
+
+  toast('تم الدفع وتفعيل الاشتراك ✅');
+  setTimeout(()=> location.href = 'athar.html', 900);
+})();
+
+/* ====== توست ====== */
+function toast(msg){
+  let t = $('.toast'); 
+  if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg; 
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 1800);
+}
 
 /* ==== توست ==== */
 function toast(msg){
