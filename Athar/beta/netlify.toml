@@ -1,6 +1,11 @@
-[build]
-  publish = "."
-  functions = "netlify/functions"
+# netlify.toml
 
-[functions]
-  node_bundler = "esbuild"
+[build]
+  publish   = "Athar/Athar/beta"                    # فيه index.html
+  functions = "Athar/Athar/beta/netlify/functions"  # فيه strategy.js
+
+# (اختياري) تحويلات عامة للـ API
+[[redirects]]
+  from = "/api/*"
+  to   = "/.netlify/functions/:splat"
+  status = 200
