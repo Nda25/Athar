@@ -258,24 +258,33 @@ function handleRegister(e){
 /* ====== الدخول ====== */
 function handleLogin(e){
   e.preventDefault();
-  const f = e.target;
-  const email = f.email.value.trim();
-  const phone = f.phone.value.trim();
-  const pass  = f.password.value.trim();
-  const u = store.user;
+  const f   = e.target;
+  const id  = (f.identifier?.value || "").trim();   // خانة واحدة
+  const pass= (f.password?.value || "").trim();
+  const u   = store.user;
 
-  if(!u) return toast('لا يوجد حساب مسجل. أنشئي حسابًا أولًا.');
-  if(!email || !phone || !pass) return toast('كل الحقول مطلوبة.');
-  if(email !== u.email || phone !== (u.phone||'')) return toast('بيانات الدخول غير صحيحة.');
+  if(!u)                 return toast('لا يوجد حساب مسجل. أنشئي حسابًا أولًا.');
+  if(!id || !pass)       return toast('كل الحقول مطلوبة.');
+
+  const isPhone = /^05\d{8}$/.test(id);
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id);
+  if(!isPhone && !isEmail){
+    return toast('اكتبي بريدًا صحيحًا أو رقمًا يبدأ بـ 05 (10 أرقام).');
+  }
+
+  const ok = isPhone
+    ? id === (u.phone || "")
+    : id.toLowerCase() === (u.email || "").toLowerCase();
+
+  if(!ok) return toast('بيانات الدخول غير صحيحة.');
 
   store.auth = true;
   closeModal('#modal-login');
-  toast('تم تسجيل الدخول ✅');
+  toast('أهلًا وسهلًا بك في «أثــر» 🪄');
 
   if(hasAccess()) setTimeout(()=> location.href = ATHAR_APP_URL, 200);
-  else            setTimeout(()=> location.href = PRICING_URL, 200);
+  else            setTimeout(()=> location.href = PRICING_URL,   200);
 }
-
 /* ====== الاشتراك ====== */
 function subscribe(planKey){
   if(!store.auth || !store.user){ openModal('#modal-register'); return; }
