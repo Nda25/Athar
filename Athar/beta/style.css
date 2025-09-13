@@ -41,35 +41,31 @@ body{
   margin:0;
   font-family:"Cairo",system-ui,Tahoma,Arial;
   color:var(--ink);
-  background: /* خلفية أثر – فاتح */
-    radial-gradient(1200px 700px at 100% -10%, var(--sea-100), transparent 60%),
-    radial-gradient(1200px 700px at -10% 100%, var(--sea-50), transparent 60%),
-    linear-gradient(180deg, #fff, var(--sea-25) 85%);
+  /* نخلي الخلفية الأساسية بسيطة لأن التدرجات جايه من .backdrop/.pattern */
+  background-color: var(--bg);
   overflow-x:hidden;
   line-height:1.9;
   font-size:17px;
 }
-/* الخلفية في الداكن */
-.dark body{
+
+/* خلفية ناعمة بتدرج لوني */
+.backdrop{
+  position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background: linear-gradient(160deg, #f0f9ff 0%, #e6f2ff 40%, #fdfdfd 100%);
+}
+.dark .backdrop{
+  background: linear-gradient(160deg, #0b1220 0%, #111827 50%, #1e293b 100%);
+}
+
+/* نقاط خفيفة للتزيين */
+.pattern{
+  position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.18;
   background:
-    radial-gradient(1200px 700px at 100% -10%, rgba(59,130,246,.12), transparent 60%),
-    radial-gradient(1200px 700px at -10% 100%, rgba(59,130,246,.10), transparent 60%),
-    linear-gradient(180deg, #0b1220, #111827 85%);
+    radial-gradient(circle at 20% 30%, #93c5fd55 1px, transparent 1.2px) 0 0/28px 28px,
+    radial-gradient(circle at 80% 70%, #a5b4fc55 1px, transparent 1.2px) 0 0/32px 32px;
+  mix-blend-mode: soft-light;
 }
-
-/* نقشة نقط خفيفة مثل الأصل */
-body::before{
-  content:"";
-  position:fixed; inset:0; pointer-events:none; opacity:.10;
-  background-image:url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBvcGFjaXR5PSIwLjg0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0IiBmaWxsPSIjMWUzYThhIi8+PHBhdGggZD0iTTIwIDEyYy0yIDMtNCAzLTYgMHMwLTQgMy02IDYgMCAzIDYiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii4yIi8+PGNpcmNsZSBjeD0iMzYiIGN5PSIzNiIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPjxwYXRoIGQ9Ik0yOCAzNmMyIDMgNCAzIDYgMHMwLTQtMy02LTYgMC0zIDYiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii4yIi8+PC9nPjwvc3ZnPg==');
-  background-size:48px 48px;
-}
-.dark body::before{ opacity:.07 }
-
-/* نترك هاتين الخلفيتين (backdrop/pattern) إن وُجدتا في HTML
-   لكن نخففهما لتنسجم مع الخلفية الجديدة */
-.backdrop{ display:none } /* لم نعد بحاجة لها بعد تبني خلفية أثر */
-.pattern{ display:none }
+.dark .pattern{ opacity:.12 }
 
 /* ===== الشريط العلوي ===== */
 .topbar{
@@ -108,19 +104,22 @@ body::before{
 header{ position:relative; padding:48px 18px 28px; text-align:center; }
 .hero{ max-width:1100px; margin:0 auto; position:relative; }
 
-/* لوح أزرق منسجم مع أثر */
-.hero-plate{
-  position:absolute; inset:-40px -20px auto -20px; height:240px; z-index:-1; border-radius:26px;
-  background:linear-gradient(180deg, var(--sea-600), var(--sea-500));
-  box-shadow: inset 0 -1px 0 rgba(255,255,255,.25), 0 22px 60px rgba(29,78,216,.35);
-}
+/* إلغاء اللوح الأزرق خلف الشعار ليطابق أثر الأصلي */
+.hero-plate{ display:none; }
 
+/* اسم «أثــر» مثل النسخة الأصلية */
 .logo{
   font-family:"Amiri",serif; font-weight:700;
-  font-size:clamp(46px, 6.4vw, 86px); margin:0;
-  color:#fbfdff; letter-spacing:2px;
-  text-shadow: 0 1px 0 rgba(255,255,255,.55);
+  letter-spacing:.5px;
+  font-size:clamp(44px, 6.2vw, 84px); margin:0;
+  color:#1e40af;                 /* أزرق أثر في الفاتح */
+  text-shadow:0 1px 0 rgba(255,255,255,.55);
 }
+.dark .logo{
+  color:#93c5fd;                 /* أزرق فاتح في الداكن */
+  text-shadow:none;
+}
+
 .tag{
   display:inline-flex; align-items:center; gap:8px;
   margin-top:12px; padding:10px 16px; border-radius:999px;
@@ -217,7 +216,7 @@ input::placeholder{ color:#64748b }
 .dark .badge{ color:#a7f3d0; background:#052e1a; border-color:#064e3b }
 
 /* تصغير خانة الموافقة في مودال التسجيل كما اتفقنا */
-#modal-register .sheet label[style*="align-items:center"] { font-size:13px; }
+#modal-register .sheet label[style*="align-items:center"] { font-size:12px; }
 #modal-register .sheet input[name="consent"] { width:15px; height:15px; }
 
 /* توست صغير */
