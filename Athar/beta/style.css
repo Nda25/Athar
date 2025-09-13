@@ -314,3 +314,8 @@ input::placeholder{ color:#64748b }
 
 /* ===== نص خافت مساعد ===== */
 .muted{ color:var(--muted) }
+
+@keyframes pop {
+  from { transform: scale(.98); opacity: .7; }
+  to   { transform: scale(1);   opacity: 1;  }
+}
