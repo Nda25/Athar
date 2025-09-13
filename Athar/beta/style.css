@@ -162,3 +162,12 @@ input{
 /* توست صغير */
 .toast{ position:fixed; bottom:18px; right:18px; z-index:90; background:#111827; color:#fff; padding:10px 14px; border-radius:10px; display:none }
 .toast.show{ display:block }
+
+/* ====== تخصيص خانة الموافقة في مودال التسجيل ====== */
+#modal-register .sheet label[style*="align-items:center"] {
+  font-size: 13px;
+}
+#modal-register .sheet input[name="consent"] {
+  width: 15px;
+  height: 15px;
+}
