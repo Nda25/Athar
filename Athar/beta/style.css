@@ -206,6 +206,10 @@ main{ padding:18px }
   box-shadow:0 12px 30px rgba(0,0,0,.08);
   transition:transform .18s ease, box-shadow .18s ease;
 }
+.box.full {
+  grid-column: span 2;
+}
+
 .dark .box{ background:linear-gradient(180deg,#111827,#0f172a); border-color:rgba(59,130,246,.32) }
 .box:hover{ transform:translateY(-6px); box-shadow:0 26px 60px rgba(0,0,0,.20) }
 .box h3{ margin:0 0 10px; color:var(--sea-600); font-size:20px }
