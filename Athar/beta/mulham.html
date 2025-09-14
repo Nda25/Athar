@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>مُـلـهـم </title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<meta name="color-scheme" content="dark light">
+<style>
+  .field{ margin:10px 0 } .field label{ display:block; font-weight:700; margin:6px 0 }
+  .field input,.field select{ width:100%; padding:12px; border-radius:12px; border:1px solid rgba(59,130,246,.35) }
+  .cols-3{ display:grid; gap:12px; grid-template-columns:1fr } @media(min-width:900px){ .cols-3{ grid-template-columns:1fr 1fr 1fr } }
+  .printable{ border:1px dashed rgba(59,130,246,.35); border-radius:12px; padding:14px; margin-top:8px; background:rgba(255,255,255,.5) }
+  .dark .printable{ background:rgba(17,24,39,.35) }
+  .list{ margin:0; padding-inline-start:1.2rem }
+  @media print{ .topbar,.actions-row,.field,.btn{ display:none !important } }
+</style>
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
+
+  <div class="topbar">
+    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
+    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
+    <div class="user"><a class="btn" href="programs.html">مساحة إبداعي</a></div>
+  </div>
+
+  <header>
+    <div class="hero">
+      <h1 class="logo">مـُلـهـم</h1>
+      <div class="tag"><span class="dot"></span>كل دقيقة تحمل فكرة، وكل فكرة تُخلّد أثرًا </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="card">
+        <h2 class="title">مدخلات سريعة</h2>
+        <div class="cols-3">
+          <div class="field"><label>المادة</label><input id="s-subj" placeholder="مثال: رياضيات"></div>
+          <div class="field"><label>الوقت المتاح (دقيقة)</label><select id="s-time"><option>10</option><option selected>20</option><option>30</option></select></div>
+          <div class="field"><label>مستوى بلوم</label>
+            <select id="s-bloom"><option value="remember">تذكّر</option><option value="understand" selected>فهم</option><option value="apply">تطبيق</option><option value="analyze">تحليل</option></select>
+          </div>
+          <div class="field"><label>المرحلة</label>
+            <select id="s-age"><option value="p1">ابتدائي دُنيا</option><option value="p2" selected>ابتدائي عُليا</option><option value="m">متوسط</option><option value="h">ثانوي</option></select>
+          </div>
+          <div class="field" style="grid-column:1/-1"><label>الموضوع (اختياري)</label><input id="s-topic" placeholder="الكسور / التجوية / الفاعل …"></div>
+        </div>
+        <div class="actions-row">
+          <button class="btn primary" id="go">ولّدي النشاط الآن</button>
+          <button class="btn" id="copy">نسخ</button>
+          <button class="btn" id="print">طباعة</button>
+        </div>
+      </section>
+
+      <section class="card" id="out" style="display:none">
+        <h2 class="title">النشاط المقترح</h2>
+        <div class="printable">
+          <h3 style="margin:0 0 6px">وصف مختصر</h3>
+          <p id="o-desc" class="muted">—</p>
+          <h3 style="margin:10px 0 6px">الخطوات</h3>
+          <ol id="o-steps" class="list" style="margin:0"></ol>
+          <h3 style="margin:10px 0 6px">تذكرة خروج</h3>
+          <p id="o-exit">—</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p class="foot-line">أصغر فكرة، حين تُنفَّذ، تترك أثرًا أكبر.</p>
+    <p class="foot-name">ندى المجيرش</p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+  <script>
+  const TEMPLATES={
+    remember:{desc:t=>`نشاط تذكّر ${t}: استرجاع سريع للمفاهيم الأساسية.`, steps:(age)=>[
+      'اعرضي 6 بطاقات مصطلحات (1 دقيقة).','لعبة: ارفعي بطاقة واسألي: من يذكر التعريف؟ (8 دقائق).','سجلي 3 أهم مصطلحات على السبورة (3 دقائق).'
+    ], exit:t=>`اذكري مصطلحين أساسيين في "${t}".`},
+    understand:{desc:t=>`نشاط فهم ${t}: شرح بفهم شخصي.`, steps:(age)=>[
+      'زوجي الطالبات: شاركي مثالًا واقعيًا للموضوع (3 دقائق).','كل ثنائي يصوغ شرحًا مبسطًا (8 دقائق).','مشاركة سريعة لثلاث ثنائيات (5 دقائق).'
+    ], exit:t=>`اشرحي "${t}" بجملة من صياغتك.`},
+    apply:{desc:t=>`نشاط تطبيق ${t}: استخدام الفكرة في مهمة قصيرة.`, steps:(age)=>[
+      'قدّمي مسألة/موقف حقيقي (3 دقائق).','حل فردي ثم تبادل الحلول مع زميلة (10 دقائق).','نقاش من 3 نقاط قوة في حلّين مختلفين (5 دقائق).'
+    ], exit:t=>`طبّقي "${t}" في مثال من واقعك.`},
+    analyze:{desc:t=>`نشاط تحليل ${t}: تفكيك ومقارنة.`, steps:(age)=>[
+      'خريطة مفاهيم ثنائية (5 دقائق).','قارني بين جزأين/حالتين (10 دقائق).','تلخيص الفرق بنقطتين (5 دقائق).'
+    ], exit:t=>`قارني بين عنصرين في "${t}" بنقطتين.`}
+  };
+  function fillList(id, arr){ const el=document.getElementById(id); el.innerHTML=''; arr.forEach(x=>{ const li=document.createElement('li'); li.textContent=x; el.appendChild(li); }); }
+  function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
+
+  document.getElementById('go').addEventListener('click',()=>{
+    const subj=(document.getElementById('s-subj').value||'مادتك').trim();
+    const topic=(document.getElementById('s-topic').value||subj).trim();
+    const bloom=document.getElementById('s-bloom').value;
+    const tpl=TEMPLATES[bloom]||TEMPLATES.understand;
+    document.getElementById('o-desc').textContent = tpl.desc(topic);
+    fillList('o-steps', tpl.steps());
+    document.getElementById('o-exit').textContent = tpl.exit(topic);
+    document.getElementById('out').style.display='';
+    toast('نشاط مُلهم جاهز ✨');
+  });
+  document.getElementById('copy').addEventListener('click',()=>{
+    const txt = `وصف: ${document.getElementById('o-desc').innerText}\nالخطوات:\n- `+
+      [...document.querySelectorAll('#o-steps li')].map(li=>li.innerText).join('\n- ')+
+      `\nتذكرة خروج: ${document.getElementById('o-exit').innerText}`;
+    navigator.clipboard.writeText(txt).then(()=>toast('تم النسخ ✅'));
+  });
+  document.getElementById('print').addEventListener('click',()=>window.print());
+  </script>
+</body>
+</html>
