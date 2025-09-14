@@ -56,21 +56,6 @@ const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   });
 })();
 
-/* ===== 2) إظهار/إخفاء الأزرار حسب حالة الدخول ===== */
-(function navByAuth(){
-  document.addEventListener('DOMContentLoaded', function(){
-    var loggedIn    = (typeof store !== 'undefined' && !!store.auth);
-    var authSpan    = document.getElementById('nav-auth');
-    var profileBtn  = document.getElementById('nav-profile');
-    var programsBtn = document.getElementById('nav-programs');
-    var atharBtn    = document.getElementById('nav-athar');
-
-    if(authSpan)    authSpan.style.display    = loggedIn ? 'none'       : 'inline-flex';
-    if(profileBtn)  profileBtn.style.display  = loggedIn ? 'inline-flex': 'none';
-    if(programsBtn) programsBtn.style.display = loggedIn ? 'inline-flex': 'none';
-    if(atharBtn)    atharBtn.style.display    = loggedIn ? 'inline-flex': 'none';
-  });
-})();
 
 /* ==== التخزين المحلي ==== */
 const store = {
@@ -94,8 +79,139 @@ const store = {
     localStorage.removeItem('athar:owner');
   }
 };
+/* ==== قاعدة بيانات محلية لكل مستخدم (localStorage) ==== */
+// مفتاح تخزين خاص بكل مستخدم (بناءً على الإيميل أو guest)
+function userKey(){
+  const u = store.user;
+  const email = (u && u.email) ? u.email.trim().toLowerCase() : 'guest';
+  return `athar:data:${email}`;
+}
 
-// تحديث الشريط حسب حالة الدخول (عام)
+const userDB = {
+  getAll(){
+    try{ return JSON.parse(localStorage.getItem(userKey())||'{}'); }
+    catch(_){ return {}; }
+  },
+  setAll(obj){
+    localStorage.setItem(userKey(), JSON.stringify(obj||{}));
+  },
+  get(page, fallback={}){
+    const all = this.getAll();
+    return all[page] ?? fallback;
+  },
+  set(page, data){
+    const all = this.getAll();
+    all[page] = data;
+    this.setAll(all);
+  },
+  merge(page, partial){
+    const cur = this.get(page, {});
+    this.set(page, Object.assign({}, cur, partial));
+  },
+  remove(page){
+    const all = this.getAll();
+    delete all[page];
+    this.setAll(all);
+  },
+  clearThisUser(){
+    this.setAll({});
+  }
+};
+
+/* ==== أوتو-حفظ لأي صفحة فورم (نسخة محسّنة) ==== */
+// يجمع قيم input/textarea/select داخل عنصر معيّن
+function readForm(container){
+  const data = {};
+  const root = (typeof container === 'string') ? document.querySelector(container) : container;
+  if(!root) return data;
+
+  root.querySelectorAll('input, textarea, select').forEach(el=>{
+    const key = el.name || el.id;
+    if(!key) return;
+
+    if(el.tagName === 'SELECT'){
+      data[key] = el.multiple ? Array.from(el.selectedOptions).map(o=>o.value) : el.value;
+      return;
+    }
+    if(el.type === 'checkbox'){
+      const group = root.querySelectorAll(`input[type="checkbox"][name="${el.name}"]`);
+      if(group.length > 1){
+        data[key] = Array.from(group).filter(i=>i.checked).map(i=>i.value || true);
+      }else{
+        data[key] = !!el.checked;
+      }
+      return;
+    }
+    if(el.type === 'radio'){
+      if(el.checked) data[key] = el.value;
+      else if(!(key in data)) data[key] = '';
+      return;
+    }
+    if(el.type === 'number'){
+      data[key] = (el.value === '' ? '' : +el.value);
+      return;
+    }
+    data[key] = el.value;
+  });
+
+  return data;
+}
+
+// يملأ الحقول من كائن بيانات
+function fillForm(container, data){
+  const root = (typeof container === 'string') ? document.querySelector(container) : container;
+  if(!root || !data) return;
+
+  Object.entries(data).forEach(([k,v])=>{
+    const els = root.querySelectorAll(`[name="${k}"], #${CSS.escape(k)}`);
+    if(!els.length) return;
+
+    els.forEach(el=>{
+      if(el.tagName === 'SELECT'){
+        if(el.multiple && Array.isArray(v)){
+          Array.from(el.options).forEach(o=>o.selected = v.includes(o.value));
+        }else{
+          el.value = (v ?? '');
+        }
+        return;
+      }
+      if(el.type === 'checkbox'){
+        const group = root.querySelectorAll(`input[type="checkbox"][name="${el.name}"]`);
+        if(group.length > 1 && Array.isArray(v)){
+          el.checked = v.includes(el.value || true);
+        }else{
+          el.checked = !!v;
+        }
+        return;
+      }
+      if(el.type === 'radio'){
+        el.checked = (el.value == v);
+        return;
+      }
+      el.value = (v == null ? '' : v);
+    });
+  });
+}
+
+// يربط الأوتو-حفظ بصفحة محددة
+function bindAutoSave(pageKey, container){
+  const root = (typeof container === 'string') ? document.querySelector(container) : container;
+  if(!root) return;
+
+  // استرجاع قديم
+  fillForm(root, userDB.get(pageKey, {}));
+
+  // حفظ عند التغيير (بـ debounce خفيف)
+  let t=null;
+  const save = ()=>{
+    clearTimeout(t);
+    t = setTimeout(()=> userDB.set(pageKey, readForm(root)), 250);
+  };
+  root.addEventListener('input', save);
+  root.addEventListener('change', save);
+}
+
+/* ==== تحديث الشريط حسب حالة الدخول (عام) ==== */
 function refreshNav(){
   const logged      = store.auth && !!store.user;
   const authSpan    = document.getElementById('nav-auth');
@@ -109,12 +225,11 @@ function refreshNav(){
   if (atharBtn)    atharBtn.style.display    = logged ? 'inline-flex' : 'none';
 
   if (logged){
-    $$('.js-user-name').forEach(s => {
+    $$('.js-user-name').forEach(s=>{
       s.textContent = store.user?.name || store.user?.email || store.user?.phone || 'مستخدم';
     });
   }
 }
-
 /* ==== تهيئة الشريط ==== */
 (function navbarState(){
   refreshNav(); // استدعاء واحد بدل التكرار
