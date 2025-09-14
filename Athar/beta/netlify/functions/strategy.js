@@ -1,4 +1,4 @@
-// netlify/functions/strategy.js
+// netlify/functions /strategy.js
 exports.handler = async (event) => {
   // نسمح فقط بـ POST
   if (event.httpMethod !== "POST") {
