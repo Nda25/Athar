@@ -31,6 +31,102 @@ const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   }
 })();
 
+
+/* ==== Auth0 Integration ==== */
+async function initAuth0(){
+  // 1) تأكد أن مكتبة Auth0 محمّلة
+  if (typeof window.createAuth0Client !== 'function') {
+    console.warn('Auth0 SDK not loaded');
+    return;
+  }
+
+  // 2) إنشاء عميل Auth0
+  const auth0Client = await createAuth0Client({
+    domain: "dev-2f0fmbtj6u8o7en4.us.auth0.com",
+    client_id: "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU",
+    cacheLocation: "localstorage"
+  });
+
+  // 3) معالجة الرجوع من Auth0 (إن وُجد)
+  if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+    try {
+      await auth0Client.handleRedirectCallback();
+    } catch (err) {
+      console.error("Auth0 redirect error:", err);
+    }
+    // تنظيف الاستعلام من الرابط
+    window.history.replaceState({}, document.title, location.origin + location.pathname);
+  }
+
+  // 4) ربط الأزرار
+  const loginBtn  = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (loginBtn){
+    loginBtn.addEventListener("click", async () => {
+      try {
+        await auth0Client.loginWithRedirect({
+          authorizationParams: { redirect_uri: window.location.origin }
+        });
+      } catch (err) {
+        console.error("Auth0 login error:", err);
+      }
+    });
+  }
+
+  if (logoutBtn){
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        // نزّل الحالة المحلية أولاً
+        store.auth = false;
+        store.user = null;
+        refreshNav();
+      } catch (_) {}
+      // ثم خروج Auth0
+      try {
+        await auth0Client.logout({
+          logoutParams: { returnTo: window.location.origin }
+        });
+      } catch (err) {
+        console.error("Auth0 logout error:", err);
+      }
+    });
+  }
+
+  // 5) تحديث الحالة المحلية حسب مصادقة Auth0
+  let isAuth = false;
+  try {
+    isAuth = await auth0Client.isAuthenticated();
+  } catch (err) {
+    console.error("Auth0 isAuthenticated error:", err);
+  }
+
+  if (isAuth){
+    try {
+      const user = await auth0Client.getUser();
+      store.user = {
+        name:   user?.name || "",
+        email:  user?.email || "",
+        phone:  user?.phone_number || "",
+        school: user?.school || ""
+      };
+      store.auth = true;
+    } catch (err) {
+      console.error("Auth0 getUser error:", err);
+      store.auth = false;
+      store.user = null;
+    }
+  } else {
+    // غير مصدّق
+    store.auth = false;
+    // لا نلمس بيانات user لو عندك استخدامات أخرى، لكن الأفضل نوحّدها
+    if (!store.user) store.user = null;
+  }
+
+  // 6) حدثي الواجهة
+  refreshNav();
+}
+
 /* ===== 1) تفعيل الوضع الداكن/الفاتح (🌓 ثابت) مع حفظ في localStorage ===== */
 (function initTheme(){
   var root  = document.documentElement;
@@ -537,7 +633,10 @@ function wire(){
     const leftEl = $('#t-left'); if(leftEl && left !== null) leftEl.textContent = left;
   }
 }
-document.addEventListener('DOMContentLoaded', wire);
+document.addEventListener('DOMContentLoaded', () => {
+  wire();      // يربط أزرار ومودالات مشروعك
+  initAuth0(); // بعدها نفعل Auth0 بأمان
+});
 
 /* ====== بعد الدفع (Callback) ====== */
 /* مثال: redirect إلى index.html?status=success&plan=monthly */
