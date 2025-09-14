@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ميعاد — تقويم الترم الذكي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<meta name="color-scheme" content="dark light">
+<style>
+  .field{ margin:8px 0 } .field label{ display:block; font-weight:700; margin:4px 0 }
+  .field input,.field select{ width:100%; padding:10px; border-radius:10px; border:1px solid rgba(59,130,246,.35) }
+  .grid2{ display:grid; gap:12px; grid-template-columns:1fr } @media(min-width:900px){ .grid2{ grid-template-columns:1fr 1fr } }
+  .events{ margin-top:12px }
+  .ev{ background:var(--card); border:1px solid rgba(59,130,246,.22); border-radius:12px; padding:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px }
+  .ev .meta{ display:flex; gap:8px; flex-wrap:wrap; font-size:.9rem; opacity:.9 }
+  .color{ width:14px; height:14px; border-radius:4px; border:1px solid rgba(0,0,0,.1) }
+  .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:.9rem }
+  .legend .pill{ padding:.18rem .5rem; border-radius:999px; border:1px solid rgba(59,130,246,.25) }
+  .print-note{ text-align:center; margin-top:8px; opacity:.8 }
+  @media print{ .topbar,.actions-row,.controls,.btn,.toast{ display:none !important } .ev{ page-break-inside:avoid } }
+</style>
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
+
+  <div class="topbar">
+    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
+    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
+    <div class="user"><a class="btn" href="programs.html">مساحة إبداعي</a></div>
+  </div>
+
+  <header>
+    <div class="hero">
+      <h1 class="logo">مـِـيعـاد</h1>
+      <div class="tag"><span class="dot"></span>ميعادك مرآة التزامك… فاجعل له أثــرًا</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="card controls">
+        <h2 class="title">أضِف موعدًا إلى تقويم الترم</h2>
+        <div class="grid2">
+          <div class="field"><label>المادة</label><input id="m-subj" placeholder="مثال: علوم"></div>
+          <div class="field"><label>الفصل</label><input id="m-class" placeholder="مثال: 6/ب"></div>
+          <div class="field"><label>اليوم</label>
+            <select id="m-day">
+              <option>الأحد</option><option>الإثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option>
+            </select>
+          </div>
+          <div class="field"><label>الحصة رقم</label><input id="m-slot" type="number" min="1" max="10" value="1"></div>
+          <div class="field"><label>تاريخ (اختياري)</label><input id="m-date" type="date"></div>
+          <div class="field"><label>لون</label>
+            <select id="m-color">
+              <option value="#60a5fa">أزرق</option>
+              <option value="#22c55e">أخضر</option>
+              <option value="#f59e0b">برتقالي</option>
+              <option value="#ef4444">أحمر</option>
+              <option value="#a78bfa">بنفسجي</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions-row">
+          <button class="btn primary" id="add">إضافة للترم</button>
+          <button class="btn" id="export">نسخ قائمة المواعيد</button>
+          <button class="btn" id="print">طباعة</button>
+          <button class="btn ghost" id="clear">حذف الكل</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="title">مواعيد الترم</h2>
+        <div class="legend">
+          <span class="pill">رتّب حسب اليوم والحصة</span>
+          <span class="pill">كل موعد يظهر معه اللون + المادة + الفصل</span>
+        </div>
+        <div class="events" id="list"></div>
+        <p class="print-note">هذا اليوم سيمضي… وسيبقى منه الأثـر 🌿</p>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p class="foot-line">التخطيط هدية للوقت… والأثر ثمرته.</p>
+    <p class="foot-name">ندى المجيرش</p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+  <script>
+  const KEY='mi3ad:events';
+  function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(_){ return [] } }
+  function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
+  function render(){
+    const box=document.getElementById('list'); box.innerHTML='';
+    const daysOrder={'الأحد':1,'الإثنين':2,'الثلاثاء':3,'الأربعاء':4,'الخميس':5};
+    const items=load().sort((a,b)=> (daysOrder[a.day]-daysOrder[b.day]) || (a.slot-b.slot));
+    if(!items.length){ box.innerHTML='<p class="muted">لا توجد مواعيد بعد.</p>'; return; }
+    items.forEach((e,i)=>{
+      const d=document.createElement('div'); d.className='ev';
+      d.innerHTML=`
+        <div class="meta">
+          <span class="color" style="background:${e.color}"></span>
+          <strong>${e.subj}</strong>
+          <span>— فصل ${e.cls}</span>
+          <span>— ${e.day} (حصة ${e.slot})</span>
+          ${e.date?`<span>— ${e.date}</span>`:''}
+        </div>
+        <a href="#" data-i="${i}" class="btn ghost" style="padding:6px 10px">حذف</a>`;
+      box.appendChild(d);
+    });
+  }
+  document.getElementById('add').addEventListener('click', ()=>{
+    const subj=document.getElementById('m-subj').value.trim();
+    const cls =document.getElementById('m-class').value.trim();
+    const day =document.getElementById('m-day').value;
+    const slot=+document.getElementById('m-slot').value||1;
+    const date=document.getElementById('m-date').value;
+    const color=document.getElementById('m-color').value;
+    if(!subj||!cls){ toast('أدخلي المادة والفصل'); return; }
+    const list=load(); list.push({subj,cls,day,slot,date,color}); save(list); render(); toast('أُضيف للترم ✅');
+  });
+  document.getElementById('list').addEventListener('click', (e)=>{
+    const a=e.target.closest('a[data-i]'); if(!a) return; e.preventDefault();
+    const i=+a.getAttribute('data-i'); const list=load(); list.splice(i,1); save(list); render();
+  });
+  document.getElementById('export').addEventListener('click', ()=>{
+    const txt=load().map(e=>`${e.day} | حصة ${e.slot} | ${e.subj} — فصل ${e.cls}${e.date?(' — '+e.date):''}`).join('\n');
+    navigator.clipboard.writeText(txt||'').then(()=>toast('تم النسخ ✅'));
+  });
+  document.getElementById('print').addEventListener('click', ()=>window.print());
+  document.getElementById('clear').addEventListener('click', ()=>{
+    if(confirm('حذف جميع مواعيد الترم؟')){ localStorage.removeItem(KEY); render(); }
+  });
+  render();
+  </script>
+</body>
+</html>
