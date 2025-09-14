@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>إثراء — أفكار وبحوث حديثة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<meta name="color-scheme" content="dark light">
+<style>
+  .field{ margin:10px 0 }
+  .field label{ display:block; font-weight:700; margin:6px 0 }
+  .field input,.field select{ width:100%; padding:12px; border-radius:12px; border:1px solid rgba(59,130,246,.35) }
+  .cards{ display:grid; gap:14px; grid-template-columns:1fr }
+  @media(min-width:900px){ .cards{ grid-template-columns:1fr 1fr } }
+  .idea{ background:var(--card); border:1px solid rgba(59,130,246,.22); border-radius:16px; padding:16px; box-shadow:var(--shadow) }
+  .idea h4{ margin:0 0 8px; color:var(--sea-600) }
+  .idea p{ margin:.2rem 0 }
+  .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+  .tag{ font-size:.82rem; padding:.24rem .6rem; border-radius:999px; border:1px solid rgba(59,130,246,.25); background:var(--sea-100); color:#0c4a6e }
+  .dark .tag{ background:#0f172a; color:#e2e8f0; border-color:#3b82f6 }
+  @media print{ .topbar,.actions-row,.field,.btn{ display:none !important } }
+</style>
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
+
+  <!-- الشريط -->
+  <div class="topbar">
+    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
+    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
+    <div class="user"><a class="btn" href="programs.html">مساحة إبداعي</a></div>
+  </div>
+
+  <header>
+    <div class="hero">
+      <h1 class="logo">إثــراء</h1>
+      <div class="tag"><span class="dot"></span>أفكار مُلهمة… تسند الدرس وتُجدد الأثر.</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="card">
+        <h2 class="title">اختر مادّتك ومرحلتك</h2>
+        <div class="field">
+          <label>المادة</label>
+          <input id="subj" placeholder="علوم / رياضيات / لغة عربية / اجتماعيات …">
+        </div>
+        <div class="field">
+          <label>المرحلة</label>
+          <select id="stage">
+            <option value="p1">ابتدائي دُنيا </option>
+            <option value="p2" selected>ابتدائي عُليا</option>
+            <option value="m">متوسط</option>
+            <option value="h">ثانوي</option>
+          </select>
+        </div>
+        <div class="actions-row" style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn primary" id="gen">ولـّد لي البطاقات</button>
+          <button class="btn" id="copy">نسخ جميع البطاقات</button>
+          <button class="btn" id="print">طباعة</button>
+        </div>
+      </section>
+
+      <section class="card" id="out" style="display:none">
+        <h2 class="title">بطاقات الإثراء</h2>
+        <div class="cards" id="cards"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة</p>
+    <p class="foot-name">ندى المجيرش</p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+  <script>
+  const BANK = {
+    general: [
+      s => ({title:`لماذا ${s} مهمّة اليوم؟`, brief:`زاوية ارتباط ${s} بالحياة اليومية عبر مثال حقيقي وحديث.`, idea:`افتحي الدرس بصورة/موقف معاصر، ثم سؤال: أين يظهر ${s} حولنا؟`}),
+      s => ({title:`خرافة شائعة في ${s}`, brief:`فنّدِي اعتقادًا شائعًا خاطئًا عن ${s}.`, idea:`نشاط "صح/خطأ" تفاعلي، ثم تصحيح علمي مبسط.`}),
+      s => ({title:`لغز سريع في ${s}`, brief:`لغز/موقف قصير يثير التفكير.`, idea:`اشرحي الحل عبر خطوات، ثم اربطيه بهدف الدرس.`}),
+    ],
+    p1: [ s => ({title:`قصة مصوّرة عن ${s}`, brief:`سرد بسيط مع صور/بطاقات.`, idea:`ختمي بسؤال تذكّر: ماذا تعلّمنا؟`}) ],
+    p2: [ s => ({title:`بطاقات مطابقة ${s}`, brief:`لعبة مطابقة (مفهوم ↔ مثال).`, idea:`قسّمي الصف لمجموعات صغيرة وتحدّي الزمن.`}) ],
+    m:  [ s => ({title:`مقارنة مفاهيم في ${s}`, brief:`Venn Diagram صغير.`, idea:`سجلي نقاط التشابه/الاختلاف بخلاصة.`}) ],
+    h:  [ s => ({title:`نقاش نقدي في ${s}`, brief:`سؤال رأي مُعلّل بوّابة للدرس.`, idea:`دعم الآراء بأدلة علمية مختصرة.`}) ],
+  };
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+  function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
+
+  document.getElementById('gen').addEventListener('click',()=>{
+    const s=(document.getElementById('subj').value||'المادة').trim();
+    const st=document.getElementById('stage').value;
+    const cards=document.getElementById('cards'); cards.innerHTML='';
+    const pool=[...BANK.general, ...(BANK[st]||[])];
+    for(let i=0;i<6;i++){
+      const f=pick(pool); const c=f(s);
+      const div=document.createElement('div');
+      div.className='idea';
+      div.innerHTML=`
+        <h4>• ${c.title}</h4>
+        <p class="muted"><strong>لماذا؟</strong> ${c.brief}</p>
+        <p><strong>اقتراح:</strong> ${c.idea}</p>
+        <div class="tags">
+          <span class="tag">${s}</span>
+          <span class="tag">${({p1:'دُنيا',p2:'عُليا',m:'متوسط',h:'ثانوي'})[st]}</span>
+          <span class="tag">إثراء</span>
+        </div>`;
+      cards.appendChild(div);
+    }
+    document.getElementById('out').style.display='';
+    toast('تم توليد بطاقات الإثراء ✨');
+  });
+
+  document.getElementById('copy').addEventListener('click',()=>{
+    const text=[...document.querySelectorAll('.idea')].map(d=>d.innerText).join('\n\n---\n\n');
+    navigator.clipboard.writeText(text).then(()=>toast('تم النسخ ✅'));
+  });
+  document.getElementById('print').addEventListener('click',()=>window.print());
+  </script>
+</body>
+</html>
