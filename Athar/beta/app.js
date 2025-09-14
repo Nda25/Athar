@@ -636,6 +636,20 @@ function wire(){
 document.addEventListener('DOMContentLoaded', () => {
   wire();      // يربط أزرار ومودالات مشروعك
   initAuth0(); // بعدها نفعل Auth0 بأمان
+
+  // 🔽 زر "نسيت كلمة المرور"
+  const forgotLink = document.getElementById("forgotPasswordLink");
+  if (forgotLink) {
+    forgotLink.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      const domain = "dev-2f0fmbtj6u8o7en4.us.auth0.com"; // دومين Auth0
+      const clientId = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU"; // Client ID
+      const redirectUri = window.location.origin; // يرجع للموقع بعد الإعادة
+
+      window.location.href = `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
+    });
+  }
 });
 
 /* ====== بعد الدفع (Callback) ====== */
