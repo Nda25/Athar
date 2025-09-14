@@ -1,7 +1,6 @@
  /* =========================================
    athar — app.js (نسخة منقحة ونهائية)
    ========================================= */
-
 /* ==== إعدادات عامة ==== */
 const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyzjAlY2ilPYkxKGBdo2EsOLQZd1Zq7awfX3nc7bxIWWsQy3qlh8a8XyZFRMwrQ5cCyMg/exec";
 const SHEET_API_KEY    = "NADA-ATHAR-2025!"; // نفس المفتاح في GAS
