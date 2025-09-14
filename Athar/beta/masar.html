@@ -8,11 +8,11 @@
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
 
-<!-- (اختياري) لتصدير الجدول كصورة PNG — لو ما أردتِه احذفي هذا السطر -->
+<!-- (اختياري) لحفظ الجدول كصورة -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 
 <style>
-  /* تحسينات خفيفة فوق style.css — كلها تستخدم نفس متغيرات الهوية */
+  /* تحسينات خفيفة فوق style.css — كلها بنفس متغيرات الهوية */
   .field{ margin:10px 0 }
   .field label{ display:block; font-weight:700; margin:6px 0 }
   .field input,.field select{
@@ -37,9 +37,19 @@
   }
   .cell .row{ display:grid; grid-template-columns:1fr 1fr; gap:8px }
   .cell h4{ margin:0 0 6px; color:var(--sea-600); font-size:15px }
+  .dark .cell h4{ color:#93c5fd }
 
   .actions-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px }
   .actions-row .btn{ min-width:170px }
+
+  /* منطقة أوقات الحصص */
+  #timesGrid .time-row{
+    display:grid; grid-template-columns:110px 1fr 1fr; gap:8px; align-items:center
+  }
+  #timesGrid .time-tag{
+    font-weight:800; text-align:center; padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(59,130,246,.25); background:var(--card);
+  }
 
   /* الجدول الناتج */
   .tt-wrap{
@@ -47,7 +57,7 @@
     border-radius:16px; background:var(--card); box-shadow:var(--shadow);
   }
   table.timetable{
-    width:100%; border-collapse:separate; border-spacing:0; min-width:720px;
+    width:100%; border-collapse:separate; border-spacing:0; min-width:760px;
   }
   .timetable th,.timetable td{
     border-bottom:1px solid rgba(59,130,246,.18);
@@ -68,6 +78,8 @@
     white-space:nowrap;
   }
   .timetable td .cls{ display:block; font-size:12px; opacity:.85; margin-top:4px }
+  .timetable td .room{ display:block; font-size:12px; opacity:.8; }
+
   .legend{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
   .legend .chip{
     display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
@@ -94,7 +106,7 @@
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط العلوي (مطابق لترتيب صفحة الخطط) -->
+  <!-- الشريط العلوي (موحّد) -->
   <div class="topbar">
     <div class="left-actions">
       <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
@@ -103,12 +115,7 @@
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
     </div>
     <div class="user">
-      <span id="nav-auth" style="display:none; gap:10px">
-        <a class="btn" href="#" onclick="openModal('#modal-register');return false;">تسجيل</a>
-        <a class="btn" href="#" onclick="openModal('#modal-login');return false;">دخول</a>
-      </span>
-      <a id="nav-programs" class="btn" href="programs.html" style="display:inline-flex">برامجنا</a>
-      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+      <a id="nav-programs" class="btn" href="programs.html">مساحة إبداعي</a>
     </div>
   </div>
 
@@ -116,7 +123,7 @@
   <header>
     <div class="hero">
       <h1 class="logo">مســار</h1>
-      <div class="tag"><span class="dot"></span>رتّبي حصصك… واجعل التخطيط يمشي على مساره.</div>
+      <div class="tag"><span class="dot"></span>رتّب حصصك… ودع التخطيط يمضي في مساره.</div>
     </div>
   </header>
 
@@ -137,6 +144,7 @@
                 <option>5</option><option selected>6</option><option>7</option><option>8</option>
               </select>
             </div>
+
             <div class="field">
               <label>أيام الأسبوع</label>
               <select id="weekPreset">
@@ -145,24 +153,54 @@
                 <option value="custom">تخصيص…</option>
               </select>
             </div>
-            <div class="field" id="daysCustom" style="display:none">
-              <label>اختاري الأيام</label>
-              <div class="grid-mini" style="grid-template-columns:repeat(5,1fr)">
-                <label><input type="checkbox" class="day" value="الأحد" checked> الأحد</label>
-                <label><input type="checkbox" class="day" value="الإثنين" checked> الإثنين</label>
-                <label><input type="checkbox" class="day" value="الثلاثاء" checked> الثلاثاء</label>
-                <label><input type="checkbox" class="day" value="الأربعاء" checked> الأربعاء</label>
-                <label><input type="checkbox" class="day" value="الخميس" checked> الخميس</label>
+
+            <div class="field">
+              <label>أدوات سريعة</label>
+              <div class="cols-2">
+                <select id="copyFrom">
+                  <option value="" selected>انسخ من يوم…</option>
+                </select>
+                <select id="copyTo">
+                  <option value="">إلى يوم…</option>
+                </select>
               </div>
+              <div class="actions-row" style="margin-top:8px">
+                <button class="btn" id="copyDayBtn">نسخ اليوم المختار ↦</button>
+              </div>
+              <div class="muted-mini">انسخي محتوى يوم بالكامل إلى يوم آخر.</div>
             </div>
           </div>
 
+          <!-- اختيار أيام مخصّصة -->
+          <div class="field" id="daysCustom" style="display:none">
+            <label>اختاري الأيام</label>
+            <div class="grid-mini" style="grid-template-columns:repeat(5,1fr)">
+              <label><input type="checkbox" class="day" value="الأحد" checked> الأحد</label>
+              <label><input type="checkbox" class="day" value="الإثنين" checked> الإثنين</label>
+              <label><input type="checkbox" class="day" value="الثلاثاء" checked> الثلاثاء</label>
+              <label><input type="checkbox" class="day" value="الأربعاء" checked> الأربعاء</label>
+              <label><input type="checkbox" class="day" value="الخميس" checked> الخميس</label>
+            </div>
+          </div>
+
+          <!-- أوقات الحصص (اختياري) -->
+          <div class="field" id="periodTimes">
+            <label>أوقات الحصص (اختياري)</label>
+            <div id="timesGrid" class="grid-mini" style="grid-template-columns:1fr">
+              <!-- يُبنى تلقائيًا -->
+            </div>
+            <div class="muted-mini">اترك الخانات فارغة إذا لا تهمك الطباعة بالوقت.</div>
+          </div>
+
+          <!-- شبكة الإدخالات (اليوم ← حصص) -->
           <div id="inputsGrid" class="grid-mini" style="margin-top:14px"></div>
 
           <div class="actions-row">
             <button class="btn primary" id="build">ولّدي الجدول ✨</button>
             <button class="btn" id="reset">مسح المدخلات</button>
             <button class="btn" id="reload">استرجاع آخر حفظ</button>
+            <button class="btn" id="exportCsv">تصدير CSV</button>
+            <button class="btn" id="copyTextBtn">نسخ نصّي</button>
           </div>
         </div>
       </section>
@@ -202,7 +240,7 @@
       t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 1500);
     }
 
-    // حفظ/استرجاع
+    // حفظ/استرجاع (لهذه الصفحة)
     const KEY = 'athar:masar';
     function saveState(obj){ localStorage.setItem(KEY, JSON.stringify(obj)); }
     function loadState(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(_){ return null; } }
@@ -229,11 +267,16 @@
       'كل حصة فرصة لصناعة أثر جديد.'
     ];
 
-    // بناء شبكة المدخلات
+    // عناصر DOM
     const inputsGrid = $('#inputsGrid');
     const periodsSel = $('#periods');
     const weekPreset = $('#weekPreset');
     const daysCustom = $('#daysCustom');
+    const timesGrid  = $('#timesGrid');
+
+    const copyFrom   = $('#copyFrom');
+    const copyTo     = $('#copyTo');
+    const copyDayBtn = $('#copyDayBtn');
 
     function currentDays(){
       if(weekPreset.value === 'mon-fri') return ['الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
@@ -243,11 +286,39 @@
       return ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس']; // sun-thu
     }
 
+    // بناء خيارات نسخة-من/إلى
+    function rebuildCopyDaySelectors(days){
+      const make = (sel, title)=>{
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">'+title+'</option>' + days.map(d=>`<option value="${d}">${d}</option>`).join('');
+        if(days.includes(cur)) sel.value = cur; // استعادة
+      };
+      make(copyFrom, 'انسخ من يوم…');
+      make(copyTo,   'إلى يوم…');
+    }
+
+    // بناء نموذج أوقات الحصص
+    function rebuildTimes(){
+      const periods = parseInt(periodsSel.value,10) || 6;
+      timesGrid.innerHTML = '';
+      for(let p=1;p<=periods;p++){
+        const row = document.createElement('div');
+        row.className = 'time-row';
+        row.innerHTML = `
+          <div class="time-tag">الحصة ${p}</div>
+          <input type="time" placeholder="من" data-k="from" data-p="${p}">
+          <input type="time" placeholder="إلى" data-k="to"   data-p="${p}">
+        `;
+        timesGrid.appendChild(row);
+      }
+    }
+
+    // بناء شبكة المدخلات (يوم ← حصص ← مادة/فصل/غرفة)
     function rebuildInputs(){
       const days = currentDays();
       const periods = parseInt(periodsSel.value,10) || 6;
       inputsGrid.innerHTML = '';
-      // لكل يوم صندوق، وفيه صفوف بعدد الحصص
+
       days.forEach(day=>{
         const wrap = document.createElement('div');
         wrap.className = 'cell';
@@ -255,106 +326,186 @@
         for(let p=1; p<=periods; p++){
           const row = document.createElement('div');
           row.className='row';
+          row.style.gridTemplateColumns = '1fr 1fr 1fr';
           row.innerHTML = `
-            <input type="text" placeholder="المادة (حصة ${p})" data-k="sub" data-day="${day}" data-p="${p}">
-            <input type="text" placeholder="الفصل/الشعبة" data-k="cls" data-day="${day}" data-p="${p}">
+            <input type="text" placeholder="المادة (حصة ${p})" data-k="sub"  data-day="${day}" data-p="${p}">
+            <input type="text" placeholder="الفصل/الشعبة"       data-k="cls"  data-day="${day}" data-p="${p}">
+            <input type="text" placeholder="الغرفة/المعمل"      data-k="room" data-day="${day}" data-p="${p}">
           `;
           wrap.appendChild(row);
         }
         inputsGrid.appendChild(wrap);
       });
+
+      rebuildCopyDaySelectors(days);
     }
 
     // عرض/إخفاء أيام مخصّصة
     weekPreset.addEventListener('change', ()=>{
       daysCustom.style.display = (weekPreset.value==='custom') ? '' : 'none';
+      rebuildTimes();
       rebuildInputs();
+      restoreFromState(); // إعادة تعبئة لو فيه حفظ
     });
-    $$('.day').forEach(ch => ch.addEventListener('change', rebuildInputs));
-    periodsSel.addEventListener('change', rebuildInputs);
-
-    // مسح/استرجاع
-    $('#reset').addEventListener('click', ()=>{
-      localStorage.removeItem(KEY);
+    $$('.day').forEach(ch => ch.addEventListener('change', ()=>{
       rebuildInputs();
-      toast('تم مسح المدخلات.');
-    });
-    $('#reload').addEventListener('click', ()=>{
-      const st = loadState();
-      if(!st){ toast('لا يوجد حفظ سابق.'); return; }
-      // استرجاع الإعدادات
-      periodsSel.value = st.periods;
-      weekPreset.value = st.preset;
-      daysCustom.style.display = (st.preset==='custom') ? '' : 'none';
-      $$('.day').forEach(ch => ch.checked = st.days.includes(ch.value));
-
+      restoreFromState();
+    }));
+    periodsSel.addEventListener('change', ()=>{
+      rebuildTimes();
       rebuildInputs();
-      // استرجاع الخلايا
-      st.cells.forEach(c=>{
-        const inpSub = inputsGrid.querySelector(`input[data-k="sub"][data-day="${c.day}"][data-p="${c.p}"]`);
-        const inpCls = inputsGrid.querySelector(`input[data-k="cls"][data-day="${c.day}"][data-p="${c.p}"]`);
-        if(inpSub) inpSub.value = c.sub||'';
-        if(inpCls) inpCls.value = c.cls||'';
-      });
-      toast('تم الاسترجاع.');
+      restoreFromState();
     });
 
-    // حفظ تلقائي بعد أي إدخال
-    inputsGrid.addEventListener('input', debounce(saveInputs, 400));
-    function saveInputs(){
+    // حفظ/استرجاع حالة المدخلات
+    function collectState(){
       const days = currentDays();
       const periods = parseInt(periodsSel.value,10) || 6;
       const cells = [];
       days.forEach(day=>{
         for(let p=1;p<=periods;p++){
-          const sub = inputsGrid.querySelector(`input[data-k="sub"][data-day="${day}"][data-p="${p}"]`)?.value||'';
-          const cls = inputsGrid.querySelector(`input[data-k="cls"][data-day="${day}"][data-p="${p}"]`)?.value||'';
-          if(sub || cls) cells.push({day,p,sub,cls});
+          const sub  = inputsGrid.querySelector(`input[data-k="sub"][data-day="${day}"][data-p="${p}"]`)?.value||'';
+          const cls  = inputsGrid.querySelector(`input[data-k="cls"][data-day="${day}"][data-p="${p}"]`)?.value||'';
+          const room = inputsGrid.querySelector(`input[data-k="room"][data-day="${day}"][data-p="${p}"]`)?.value||'';
+          if(sub || cls || room) cells.push({day,p,sub,cls,room});
         }
       });
-      saveState({ preset:weekPreset.value, days, periods, cells });
+
+      const times = [];
+      for(let p=1;p<=periods;p++){
+        const from = timesGrid.querySelector(`input[data-k="from"][data-p="${p}"]`)?.value || '';
+        const to   = timesGrid.querySelector(`input[data-k="to"][data-p="${p}"]`)?.value   || '';
+        if(from || to) times.push({p, from, to});
+      }
+
+      return { preset:weekPreset.value, days, periods, cells, times };
     }
-    function debounce(fn, ms){
-      let t; return function(){ clearTimeout(t); t=setTimeout(fn, ms); }
+
+    function restoreFromState(){
+      const st = loadState();
+      if(!st) return;
+
+      // تعبئة الخلايا
+      (st.cells||[]).forEach(c=>{
+        const q = (k)=> inputsGrid.querySelector(`input[data-k="${k}"][data-day="${c.day}"][data-p="${c.p}"]`);
+        const s = q('sub'), cl = q('cls'), rm = q('room');
+        if(s)  s.value  = c.sub  || '';
+        if(cl) cl.value = c.cls  || '';
+        if(rm) rm.value = c.room || '';
+      });
+
+      // تعبئة الأوقات
+      (st.times||[]).forEach(t=>{
+        const from = timesGrid.querySelector(`input[data-k="from"][data-p="${t.p}"]`);
+        const to   = timesGrid.querySelector(`input[data-k="to"][data-p="${t.p}"]`);
+        if(from) from.value = t.from || '';
+        if(to)   to.value   = t.to   || '';
+      });
     }
+
+    // أوتو-حفظ
+    function debounce(fn, ms){ let t; return function(){ clearTimeout(t); t=setTimeout(fn, ms); } }
+    const autoSave = debounce(()=> saveState(collectState()), 400);
+    inputsGrid.addEventListener('input', autoSave);
+    timesGrid .addEventListener('input', autoSave);
+
+    // مسح/استرجاع
+    $('#reset').addEventListener('click', ()=>{
+      localStorage.removeItem(KEY);
+      rebuildTimes(); rebuildInputs();
+      toast('تم مسح المدخلات.');
+    });
+    $('#reload').addEventListener('click', ()=>{
+      const st = loadState();
+      if(!st){ toast('لا يوجد حفظ سابق.'); return; }
+      periodsSel.value = st.periods || '6';
+      weekPreset.value = st.preset  || 'sun-thu';
+      daysCustom.style.display = (weekPreset.value==='custom') ? '' : 'none';
+
+      rebuildTimes();
+      rebuildInputs();
+
+      // إذا custom: علم الأيام حسب الحفظ
+      if(st.preset==='custom'){
+        $$('.day').forEach(ch => ch.checked = (st.days||[]).includes(ch.value));
+      }
+      restoreFromState();
+      toast('تم الاسترجاع.');
+    });
+
+    // نسخ يوم ↦ يوم
+    copyDayBtn.addEventListener('click', ()=>{
+      const from = copyFrom.value, to = copyTo.value;
+      if(!from || !to){ toast('اختر يومي النسخ/اللزق أولًا.'); return; }
+      if(from === to){ toast('اليومان متشابهان.'); return; }
+
+      const st = collectState();
+      const periods = parseInt(periodsSel.value,10) || 6;
+      for(let p=1;p<=periods;p++){
+        const src = (st.cells||[]).find(c=> c.day===from && c.p===p) || {sub:'',cls:'',room:''};
+        const q = (k)=> inputsGrid.querySelector(`input[data-k="${k}"][data-day="${to}"][data-p="${p}"]`);
+        const s = q('sub'), cl = q('cls'), rm = q('room');
+        if(s)  s.value  = src.sub  || '';
+        if(cl) cl.value = src.cls  || '';
+        if(rm) rm.value = src.room || '';
+      }
+      saveState(collectState());
+      toast(`تم نسخ ${from} إلى ${to}.`);
+    });
 
     // توليد الجدول
     const outCard = $('#outCard');
     const tt = $('#tt'); const legend = $('#legend');
 
     $('#build').addEventListener('click', ()=>{
-      const st = loadState() || {};
+      const st = collectState(); saveState(st);
+
       const days = st.days || currentDays();
       const periods = st.periods || parseInt(periodsSel.value,10) || 6;
 
-      // أبسط فحص: لازم يكون في معلومة واحدة على الأقل
-      const filled = st.cells && st.cells.some(c=> (c.sub||'').trim());
-      if(!filled){ toast('املئي مادة واحدة على الأقل.'); return; }
+      const filled = st.cells && st.cells.some(c=> (c.sub||c.cls||c.room||'').trim());
+      if(!filled){ toast('املأ خانة واحدة على الأقل.'); return; }
 
-      // بناء الجدول
+      // جدول
       tt.innerHTML = '';
       const thead = document.createElement('thead');
       const trh = document.createElement('tr');
-      trh.innerHTML = '<th>الحصة \\ اليوم</th>' + days.map(d=>`<th>${d}</th>`).join('');
+      trh.innerHTML = '<th>الحصة</th><th>الوقت</th>' + days.map(d=>`<th>${d}</th>`).join('');
       thead.appendChild(trh); tt.appendChild(thead);
 
       const tbody = document.createElement('tbody');
       for(let p=1;p<=periods;p++){
         const tr = document.createElement('tr');
-        tr.innerHTML = `<th>الحصة ${p}</th>` + days.map(d=>{
-          const cell = (st.cells||[]).find(c=> c.day===d && c.p===p) || {sub:'',cls:''};
-          if(!cell.sub && !cell.cls) return '<td></td>';
-          const {bg,fg} = colorFor(cell.sub);
-          return `<td>
-            <div class="sub" style="background:${bg}; color:${fg}">${cell.sub||'—'}</div>
-            ${cell.cls? `<span class="cls">${cell.cls}</span>`:''}
-          </td>`;
-        }).join('');
+
+        // عمود: رقم الحصة
+        const thP = document.createElement('th'); thP.textContent = 'الحصة '+p; tr.appendChild(thP);
+
+        // عمود: الوقت
+        const timeCell = document.createElement('td');
+        const t = (st.times||[]).find(x=>x.p===p) || {};
+        timeCell.textContent = (t.from && t.to) ? `${t.from} – ${t.to}` : '—';
+        tr.appendChild(timeCell);
+
+        // الأعمدة: الأيام
+        days.forEach(d=>{
+          const cell = (st.cells||[]).find(c=> c.day===d && c.p===p) || {sub:'',cls:'',room:''};
+          const td = document.createElement('td');
+          if(cell.sub || cell.cls || cell.room){
+            const {bg,fg} = colorFor(cell.sub || d);
+            td.innerHTML = `
+              <div class="sub" style="background:${bg}; color:${fg}">${cell.sub||'—'}</div>
+              ${cell.cls? `<span class="cls">${cell.cls}</span>`:''}
+              ${cell.room? `<span class="room">📍 ${cell.room}</span>`:''}
+            `;
+          }
+          tr.appendChild(td);
+        });
+
         tbody.appendChild(tr);
       }
       tt.appendChild(tbody);
 
-      // وسيلة إيضاح (لكل مادة لون)
+      // وسيلة إيضاح
       legend.innerHTML = '';
       const subjects = Array.from(new Set((st.cells||[]).map(c=>(c.sub||'').trim()).filter(Boolean)));
       subjects.slice(0,15).forEach(s=>{
@@ -371,6 +522,61 @@
       outCard.style.display = '';
       window.scrollTo({ top: outCard.offsetTop - 10, behavior: 'smooth' });
       toast('تم توليد الجدول ✨');
+    });
+
+    // تصدير CSV
+    $('#exportCsv').addEventListener('click', ()=>{
+      const st = collectState();
+      const days = st.days || currentDays();
+      const periods = st.periods || parseInt(periodsSel.value,10) || 6;
+
+      // رأسية
+      let rows = [['الحصة','من','إلى', ...days]];
+      for(let p=1;p<=periods;p++){
+        const t = (st.times||[]).find(x=>x.p===p) || {};
+        const cols = days.map(d=>{
+          const c = (st.cells||[]).find(x=>x.day===d && x.p===p) || {};
+          const parts = [c.sub, c.cls, c.room].filter(Boolean);
+          return parts.join(' | ');
+        });
+        rows.push(['الحصة '+p, t.from||'', t.to||'', ...cols]);
+      }
+
+      const csv = rows.map(r=> r.map(x => `"${(x||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'masar.csv'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // نسخ نصّي
+    $('#copyTextBtn').addEventListener('click', ()=>{
+      const st = collectState();
+      const days = st.days || currentDays();
+      const periods = st.periods || parseInt(periodsSel.value,10) || 6;
+
+      const lines = [];
+      lines.push('جدول مسار — نسخة نصية');
+      for(let p=1;p<=periods;p++){
+        const t = (st.times||[]).find(x=>x.p===p) || {};
+        lines.push(`\nالحصة ${p} ${t.from&&t.to?`(${t.from}–${t.to})`:''}`);
+        days.forEach(d=>{
+          const c = (st.cells||[]).find(x=>x.day===d && x.p===p) || {};
+          if(c.sub || c.cls || c.room){
+            lines.push(`- ${d}: ${[c.sub,c.cls,c.room].filter(Boolean).join(' | ')}`);
+          }
+        });
+      }
+      const text = lines.join('\n');
+
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(()=> toast('تم النسخ ✓'));
+      }else{
+        const ta=document.createElement('textarea'); ta.value=text;
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); toast('تم النسخ ✓'); }
+        finally{ document.body.removeChild(ta); }
+      }
     });
 
     // حفظ كصورة
@@ -401,29 +607,20 @@
       const st = loadState();
       if(st){
         periodsSel.value = st.periods || '6';
-        weekPreset.value = st.preset || 'sun-thu';
+        weekPreset.value = st.preset  || 'sun-thu';
         daysCustom.style.display = (weekPreset.value==='custom') ? '' : 'none';
+        rebuildTimes();
         rebuildInputs();
+
         if(st.preset==='custom'){
-          $$('.day').forEach(ch => ch.checked = st.days.includes(ch.value));
+          $$('.day').forEach(ch => ch.checked = (st.days||[]).includes(ch.value));
         }
-        // تعبئة القيم
-        (st.cells||[]).forEach(c=>{
-          const inpSub = inputsGrid.querySelector(`input[data-k="sub"][data-day="${c.day}"][data-p="${c.p}"]`);
-          const inpCls = inputsGrid.querySelector(`input[data-k="cls"][data-day="${c.day}"][data-p="${c.p}"]`);
-          if(inpSub) inpSub.value = c.sub||'';
-          if(inpCls) inpCls.value = c.cls||'';
-        });
+        restoreFromState();
       }else{
+        rebuildTimes();
         rebuildInputs();
       }
     })();
   </script>
-  <script src="app.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', ()=>{
-  bindAutoSave('masar', '#masar-form');
-});
-</script>
 </body>
 </html>
