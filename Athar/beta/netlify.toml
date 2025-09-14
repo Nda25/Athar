@@ -1,7 +1,6 @@
 [build]
-  publish = "."                # لأن ملفاتك كلها في هذا المجلد
-  functions = "netlify/functions"
+  publish = "Athar/beta"                        # هنا صفحات HTML و CSS
+  functions = "Athar/beta/netlify/functions"    # هنا الفنكشنز
 
 [functions]
-  # خلي نتلايفي يضمّن مكتبة Gemini داخل الفنكشن
   external_node_modules = ["@google/generative-ai"]
