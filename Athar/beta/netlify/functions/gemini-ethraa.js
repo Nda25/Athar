@@ -53,10 +53,10 @@ exports.handler = async (event) => {
     });
 
     return {
-      statusCode: 200,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ ok:true, cards })
-    };
+  statusCode: 200,
+  headers: { "Access-Control-Allow-Origin": "*" },
+  body: JSON.stringify({ ok: true, cards }) // مصفوفة بطاقات
+};
   } catch (err) {
     console.error(err);
     return { statusCode: 500, body: JSON.stringify({ ok:false, msg: "Server error" }) };
