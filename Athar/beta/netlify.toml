@@ -1,7 +1,7 @@
-# netlify.toml
 [build]
-  publish = "Athar/beta"
-  functions = "Athar/beta/netlify/functions"
+  publish = "."                # لأن ملفاتك كلها في هذا المجلد
+  functions = "netlify/functions"
 
 [functions]
+  # خلي نتلايفي يضمّن مكتبة Gemini داخل الفنكشن
   external_node_modules = ["@google/generative-ai"]
