@@ -129,8 +129,8 @@
             <div class="field">
               <label>الفئة العُمريّة</label>
               <select id="f-age">
-                <option value="p1">ابتدائي دُنيا (1–3)</option>
-                <option value="p2" selected>ابتدائي عُليا (4–6)</option>
+                <option value="p1">ابتدائي دُنيا </option>
+                <option value="p2" selected>ابتدائي عُليا</option>
                 <option value="m">متوسط</option>
                 <option value="h">ثانوي</option>
               </select>
@@ -217,7 +217,7 @@
           <!-- صف الأزرار الأساسي (تحليل + توليد) -->
           <div class="row-actions">
             <button class="btn" id="btn-analyze">تحليل المحتوى</button>
-            <button class="btn primary" id="btn-generate">ولّدي الخطة ✨</button>
+            <button class="btn primary" id="btn-generate">ولّد لي الخطة ✨</button>
           </div>
         </div>
       </section>
@@ -225,7 +225,7 @@
       <!-- الاختبار القبلي (يظهر فقط عند التفعيل) -->
       <section class="card" id="pre-quiz" style="display:none">
         <h2 class="title">اختبار قبلي سريع (3 أسئلة)</h2>
-        <p class="lead">أدخلي **عدد المخطئين** (من أصل عدد الطالبات) لكل سؤال، ثم اضغطي “تطبيق التكيّف”.</p>
+        <p class="lead">أدخل **عدد المخطئين** (من أصل عدد الطلبة) لكل سؤال، ثم اضغط “تطبيق التكيّف”.</p>
         <div class="cols-3" id="quizWrap"></div>
         <div class="row-actions">
           <button class="btn primary" id="btn-adapt-apply">تطبيق التكيّف</button>
@@ -472,9 +472,9 @@
     /* ===== تحليل المحتوى ===== */
     btnAnalyze.addEventListener('click', ()=>{
       const mode = document.getElementById('f-mode').value;
-      if(mode!=='text'){ toastMsg('اختاري: نص للتحليل أولًا'); return; }
+      if(mode!=='text'){ toastMsg('اختر : نص للتحليل أولًا'); return; }
       const text = document.getElementById('f-text').value || '';
-      if(!text.trim()){ toastMsg('الصقي فقرة للتحليل'); return; }
+      if(!text.trim()){ toastMsg('الصق فقرة للتحليل'); return; }
       const inferred = inferBloomFrom(text);
       fMain.value = inferred;
       toastMsg(`تم الاستدلال على مستوى بلوم: ${inferred}`);
@@ -492,9 +492,9 @@
       const goalCount = +fGoal.value||2; const notes = fNotes.value.trim();
       const level = fLevel.value; const adapt = fAdapt.value==='on';
 
-      if(mode==='topic' && !topic){ toastMsg('اكتبي الموضوع…'); return; }
+      if(mode==='topic' && !topic){ toastMsg('اكتب الموضوع…'); return; }
       if(mode==='text'){
-        if(!sourceText){ toastMsg('الصقي نصًا أولًا…'); return; }
+        if(!sourceText){ toastMsg('الصق نصًا أولًا…'); return; }
         topic = topic || (sourceText.split(/[.!؟\n]/)[0].slice(0,60)+'…');
       }
 
