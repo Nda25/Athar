@@ -266,13 +266,14 @@
 
     // احترام عدد حصص اليوم
     function limitByCountToday(){
-      const d=daySel.value;
-      const want=parseInt(countSel.value,10)||0;
-      const ps=Object.keys(state.data[d]||{}).map(n=>+n).sort((a,b)=>a-b);
-      if(ps.length>want){
-        ps.slice(want).forEach(p=> delete state.data[d][p]);
-      }
-    }
+  const d = daySel.value;
+  const want = parseInt(countSel.value,10) || 0;
+  if (want === 0) return;                 // ← لا نقيّد لو القيمة 0
+  const ps = Object.keys(state.data[d]||{}).map(n=>+n).sort((a,b)=>a-b);
+  if (ps.length > want) {
+    ps.slice(want).forEach(p => delete state.data[d][p]);
+  }
+}
 
     // رسم حقول المادة/الفصل
     function drawInputs(){
