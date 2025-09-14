@@ -223,24 +223,29 @@
     </div>
   </div>
 
-  <!-- مودال الدخول -->
-  <div class="modal" id="modal-login" aria-hidden="true">
-    <div class="sheet">
-      <h3>تسجيل الدخول</h3>
-      <form id="login-form">
-        <label>البريد الإلكتروني أو رقم الجوال</label>
-        <input name="identifier" placeholder="name@example.com أو 05xxxxxxxx" required>
+<!-- مودال الدخول -->
+<div class="modal" id="modal-login" aria-hidden="true">
+  <div class="sheet">
+    <h3>تسجيل الدخول</h3>
+    <form id="login-form">
+      <label>البريد الإلكتروني أو رقم الجوال</label>
+      <input name="identifier" placeholder="name@example.com أو 05xxxxxxxx" required>
 
-        <label>كلمة المرور</label>
-        <input type="password" name="password" placeholder="••••••••" required>
+      <label>كلمة المرور</label>
+      <input type="password" name="password" placeholder="••••••••" required>
 
-        <div class="actions-row">
-          <a href="#" class="btn ghost" data-close>إغلاق</a>
-          <button class="btn primary" type="submit">دخول</button>
-        </div>
-      </form>
-    </div>
+      <!-- 🔽 هنا نضيف رابط نسيت كلمة المرور -->
+      <div class="forgot-password" style="margin:10px 0; font-size:14px; text-align:left">
+        <a href="#" id="forgotPasswordLink">نسيت كلمة المرور؟</a>
+      </div>
+
+      <div class="actions-row">
+        <a href="#" class="btn ghost" data-close>إغلاق</a>
+        <button class="btn primary" type="submit">دخول</button>
+      </div>
+    </form>
   </div>
+</div>
 
   <!-- توست للإشعارات الصغيرة -->
   <div class="toast" id="toast"></div>
