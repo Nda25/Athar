@@ -7,92 +7,67 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
-
-<!-- (اختياري) لحفظ الجدول كصورة -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
-
 <style>
-  /* تحسينات خفيفة فوق style.css — كلها بنفس متغيرات الهوية */
+  /* لمسات واجهة فوق style.css */
   .field{ margin:10px 0 }
   .field label{ display:block; font-weight:700; margin:6px 0 }
   .field input,.field select{
-    width:100%; padding:12px; border-radius:12px;
+    width:100%; padding:12px 14px; border-radius:12px;
     border:1px solid rgba(59,130,246,.35); background:#fff; color:#0f172a;
   }
-  .dark .field input,.dark .field select{
-    background:#0f172a; color:#f1f5f9; border-color:#3b82f6;
-  }
+  .dark .field input,.dark .field select{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6 }
 
-  .cols-3{ display:grid; gap:12px; grid-template-columns:1fr }
-  .cols-2{ display:grid; gap:12px; grid-template-columns:1fr }
-  @media(min-width:800px){
-    .cols-3{ grid-template-columns:1fr 1fr 1fr }
-    .cols-2{ grid-template-columns:1fr 1fr }
-  }
+  .row{ display:grid; gap:12px }
+  .row.cols-2{ grid-template-columns:1fr 1fr }
+  .row.cols-3{ grid-template-columns:1fr 1fr 1fr }
+  @media(max-width:800px){ .row.cols-2,.row.cols-3{ grid-template-columns:1fr } }
 
-  .grid-mini{ display:grid; gap:10px }
-  .grid-mini .cell{
-    background:var(--card); border:1px solid rgba(59,130,246,.22);
-    border-radius:12px; padding:10px;
-  }
-  .cell .row{ display:grid; grid-template-columns:1fr 1fr; gap:8px }
-  .cell h4{ margin:0 0 6px; color:var(--sea-600); font-size:15px }
-  .dark .cell h4{ color:#93c5fd }
+  .btn{ padding:12px 18px; font-weight:800; border-radius:12px }
+  .btn.primary{ padding:13px 22px }
+  .actions-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:12px }
 
-  .actions-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px }
-  .actions-row .btn{ min-width:170px }
+  .edit-cell{ display:grid; gap:8px; grid-template-columns:120px 1fr 1fr }
+  .edit-cell .tag{ font-weight:800; text-align:center; padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(59,130,246,.25); background:var(--card) }
 
-  /* منطقة أوقات الحصص */
-  #timesGrid .time-row{
-    display:grid; grid-template-columns:110px 1fr 1fr; gap:8px; align-items:center
-  }
-  #timesGrid .time-tag{
-    font-weight:800; text-align:center; padding:6px 10px; border-radius:999px;
-    border:1px solid rgba(59,130,246,.25); background:var(--card);
-  }
+  .wrap{ background:var(--card); border:1px solid rgba(59,130,246,.18); border-radius:16px; padding:14px }
 
-  /* الجدول الناتج */
+  /* جدول الناتج */
   .tt-wrap{
     overflow:auto; border:1px solid rgba(59,130,246,.22);
-    border-radius:16px; background:var(--card); box-shadow:var(--shadow);
+    border-radius:16px; background:
+      radial-gradient(18px 18px at 6% 14%, #e0f2fe33 10%, transparent 60%),
+      radial-gradient(20px 20px at 96% 88%, #ede9fe33 10%, transparent 60%),
+      var(--card);
+    box-shadow:var(--shadow);
   }
-  table.timetable{
-    width:100%; border-collapse:separate; border-spacing:0; min-width:760px;
-  }
+  table.timetable{ width:100%; border-collapse:separate; border-spacing:0; min-width:900px }
   .timetable th,.timetable td{
-    border-bottom:1px solid rgba(59,130,246,.18);
-    border-inline-end:1px solid rgba(59,130,246,.12);
+    border-bottom:1px solid rgba(59,130,246,.14);
+    border-inline-end:1px solid rgba(59,130,246,.10);
     padding:12px; text-align:center; vertical-align:middle;
   }
-  .timetable th{
+  .timetable thead th{
     position:sticky; top:0; background:linear-gradient(180deg,#ffffffcc,#ffffffaa);
     backdrop-filter:blur(4px); font-weight:800; color:var(--sea-700);
   }
-  .dark .timetable th{
-    background:linear-gradient(180deg,#0f172acc,#0f172aaa); color:#93c5fd;
-  }
-  .timetable td .sub{
+  .dark .timetable thead th{ background:linear-gradient(180deg,#0f172acc,#0f172aaa); color:#93c5fd }
+
+  .sub-chip{
     display:inline-flex; gap:8px; align-items:center; justify-content:center;
-    padding:8px 10px; border-radius:999px; font-weight:800; border:1px solid rgba(0,0,0,.06);
-    box-shadow:0 6px 18px rgba(0,0,0,.12);
-    white-space:nowrap;
+    padding:8px 12px; border-radius:999px; font-weight:800; border:1px solid rgba(0,0,0,.06);
+    box-shadow:0 6px 18px rgba(0,0,0,.10); white-space:nowrap;
   }
-  .timetable td .cls{ display:block; font-size:12px; opacity:.85; margin-top:4px }
-  .timetable td .room{ display:block; font-size:12px; opacity:.8; }
+  .meta{ display:block; font-size:12px; opacity:.85; margin-top:4px }
 
   .legend{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
-  .legend .chip{
-    display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
-    border:1px solid rgba(59,130,246,.22); background:var(--card);
-  }
+  .legend .chip{ display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(59,130,246,.22); background:var(--card) }
   .legend .dot{ width:12px; height:12px; border-radius:50% }
 
-  .quote{
-    margin-top:14px; text-align:center; color:var(--muted); font-weight:700;
-    border-top:1px dashed rgba(59,130,246,.25); padding-top:10px
-  }
+  .quote{ margin-top:14px; text-align:center; color:var(--muted); font-weight:700; border-top:1px dashed rgba(59,130,246,.25); padding-top:10px }
 
-  /* للطباعة: نظرة نظيفة */
   @media print{
     .topbar,.inputs-card,.actions-row,.toast{ display:none !important }
     header{ padding-bottom:0 }
@@ -102,24 +77,15 @@
 </style>
 </head>
 <body>
-  <!-- الخلفيات -->
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط العلوي (موحّد) -->
   <div class="topbar">
-    <div class="left-actions">
-      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-    </div>
-    <div class="actions">
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-    </div>
-    <div class="user">
-      <a id="nav-programs" class="btn" href="programs.html">مساحة إبداعي</a>
-    </div>
+    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
+    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
+    <div class="user"><a class="btn" href="programs.html">مساحة إبداعي</a></div>
   </div>
 
-  <!-- الهيدر -->
   <header>
     <div class="hero">
       <h1 class="logo">مســار</h1>
@@ -129,79 +95,50 @@
 
   <main>
     <div class="container">
-      <!-- المدخلات -->
-      <section class="card inputs-card inputs-wrap" id="inputsCard">
-        <div class="inputs-head">
-          <h2 class="title" style="margin:0">مدخلات الجدول</h2>
-          <button id="toggleInputs" class="btn ghost" title="طي/إظهار">طيّ</button>
+      <!-- لوحة الإدخال وفق تسلسل اليوم → اختيارات -->
+      <section class="card inputs-card" id="inputsCard">
+        <h2 class="title" style="margin-top:0">مدخلات الجدول</h2>
+
+        <div class="row cols-3">
+          <div class="field">
+            <label>عدد الحصص في اليوم</label>
+            <select id="dayCount">
+              <option value="7" selected>7</option>
+              <option value="8">8</option>
+              <option value="6">6</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>اختيار اليوم</label>
+            <select id="daySelect">
+              <option>الأحد</option><option>الإثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>عدد حصص هذا اليوم</label>
+            <select id="slotsCount">
+              <option value="0">لا يوجد</option>
+              <option value="1">حصة واحدة</option>
+              <option value="2">حصتان</option>
+              <option value="3">3 حصص</option>
+              <option value="4">4 حصص</option>
+              <option value="5">5 حصص</option>
+              <option value="6">6 حصص</option>
+              <option value="7">7 حصص</option>
+              <option value="8">8 حصص</option>
+            </select>
+          </div>
         </div>
 
-        <div class="inputs-body">
-          <div class="cols-3">
-            <div class="field">
-              <label>عدد الحصص اليومية</label>
-              <select id="periods">
-                <option>5</option><option selected>6</option><option>7</option><option>8</option>
-              </select>
-            </div>
+        <div id="dayEditor" class="wrap" style="margin-top:10px; display:none"></div>
 
-            <div class="field">
-              <label>أيام الأسبوع</label>
-              <select id="weekPreset">
-                <option value="sun-thu" selected>الأحد–الخميس</option>
-                <option value="mon-fri">الإثنين–الجمعة</option>
-                <option value="custom">تخصيص…</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>أدوات سريعة</label>
-              <div class="cols-2">
-                <select id="copyFrom">
-                  <option value="" selected>انسخ من يوم…</option>
-                </select>
-                <select id="copyTo">
-                  <option value="">إلى يوم…</option>
-                </select>
-              </div>
-              <div class="actions-row" style="margin-top:8px">
-                <button class="btn" id="copyDayBtn">نسخ اليوم المختار ↦</button>
-              </div>
-              <div class="muted-mini">انسخي محتوى يوم بالكامل إلى يوم آخر.</div>
-            </div>
-          </div>
-
-          <!-- اختيار أيام مخصّصة -->
-          <div class="field" id="daysCustom" style="display:none">
-            <label>اختاري الأيام</label>
-            <div class="grid-mini" style="grid-template-columns:repeat(5,1fr)">
-              <label><input type="checkbox" class="day" value="الأحد" checked> الأحد</label>
-              <label><input type="checkbox" class="day" value="الإثنين" checked> الإثنين</label>
-              <label><input type="checkbox" class="day" value="الثلاثاء" checked> الثلاثاء</label>
-              <label><input type="checkbox" class="day" value="الأربعاء" checked> الأربعاء</label>
-              <label><input type="checkbox" class="day" value="الخميس" checked> الخميس</label>
-            </div>
-          </div>
-
-          <!-- أوقات الحصص (اختياري) -->
-          <div class="field" id="periodTimes">
-            <label>أوقات الحصص (اختياري)</label>
-            <div id="timesGrid" class="grid-mini" style="grid-template-columns:1fr">
-              <!-- يُبنى تلقائيًا -->
-            </div>
-            <div class="muted-mini">اترك الخانات فارغة إذا لا تهمك الطباعة بالوقت.</div>
-          </div>
-
-          <!-- شبكة الإدخالات (اليوم ← حصص) -->
-          <div id="inputsGrid" class="grid-mini" style="margin-top:14px"></div>
-
-          <div class="actions-row">
-            <button class="btn primary" id="build">ولّدي الجدول ✨</button>
-            <button class="btn" id="reset">مسح المدخلات</button>
-            <button class="btn" id="reload">استرجاع آخر حفظ</button>
-            <button class="btn" id="exportCsv">تصدير CSV</button>
-            <button class="btn" id="copyTextBtn">نسخ نصّي</button>
-          </div>
+        <div class="actions-row">
+          <button class="btn" id="saveDay">حفظ هذا اليوم</button>
+          <button class="btn" id="nextDay">اليوم التالي ↦</button>
+          <button class="btn primary" id="build" title="ينشئ الجدول النهائي">ولّدي الجدول ✨</button>
         </div>
       </section>
 
@@ -213,9 +150,9 @@
         </div>
         <div class="legend" id="legend"></div>
 
-        <div class="actions-row">
+        <div class="actions-row" id="exportRow" style="display:none">
           <button class="btn primary" id="printBtn">طباعة</button>
-          <button class="btn" id="pngBtn">حفظ كـ PNG</button>
+          <button class="btn" id="pngBtn">حفظ كصورة PNG</button>
           <button class="btn" id="editBtn">تعديل المدخلات</button>
         </div>
 
@@ -232,395 +169,182 @@
   <div class="toast" id="toast"></div>
   <script src="app.js"></script>
   <script>
-    // —————— أدوات صغيرة ——————
-    const $ = (s, r=document)=>r.querySelector(s);
-    const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
-    function toast(msg){
-      let t = $('.toast'); if(!t){ t=document.createElement('div'); t.className='toast'; document.body.appendChild(t); }
-      t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 1500);
+  // صغار أدوات
+  const $  = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+  function toast(m){ let t=$('.toast'); if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);} t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400); }
+
+  // تكوين
+  const DAYS = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
+  const COLORS = [
+    ['#e0f2fe','#0369a1'],['#dbeafe','#1d4ed8'],['#e9d5ff','#7e22ce'],
+    ['#fee2e2','#b91c1c'],['#dcfce7','#166534'],['#fef9c3','#a16207'],
+    ['#ffe4e6','#be123c'],['#ede9fe','#6d28d9']
+  ];
+  const QUOTES = [
+    'هذا اليوم سيمضي كما مضى الأمس… ولن يبقى منه إلا الأثر. 🌿',
+    'خطة بسيطة اليوم… أثر عميق غدًا.',
+    'كل حصة فرصة لصناعة أثر جديد.',
+    'النظام سُلّم للوصول، لا قيد.',
+  ];
+  const KEY='athar:masar:v2';
+
+  // حالة داخلية: لكل يوم مصفوفة من العناصر {p,sub,cls}
+  let state = load() || { periods:7, days: Object.fromEntries(DAYS.map(d=>[d,[]])) };
+
+  // عناصر
+  const dayCount  = $('#dayCount');
+  const daySelect = $('#daySelect');
+  const slotsCount= $('#slotsCount');
+  const dayEditor = $('#dayEditor');
+  const buildBtn  = $('#build');
+  const saveDayBtn= $('#saveDay');
+  const nextDayBtn= $('#nextDay');
+
+  // تحميل الحالة الأولية
+  dayCount.value = state.periods;
+  renderDayEditor();
+
+  dayCount.addEventListener('change', ()=>{
+    state.periods = +dayCount.value || 7;
+    save(); renderDayEditor();
+  });
+
+  daySelect.addEventListener('change', ()=> renderDayEditor());
+  slotsCount.addEventListener('change', ()=> renderDayEditor());
+
+  saveDayBtn.addEventListener('click', ()=>{
+    const d = daySelect.value;
+    const items = readEditor();
+    if(!validate(items)){ toast('تحقّقي من أرقام الحصص وعدم التكرار.'); return; }
+    state.days[d] = items;
+    save(); toast(`حُفظ ${d}.`);
+  });
+
+  nextDayBtn.addEventListener('click', ()=>{
+    const idx = DAYS.indexOf(daySelect.value);
+    daySelect.value = DAYS[(idx+1)%DAYS.length];
+    renderDayEditor();
+  });
+
+  buildBtn.addEventListener('click', ()=>{
+    // بناء الجدول
+    const allEmpty = DAYS.every(d => (state.days[d]||[]).length===0);
+    if(allEmpty){ toast('أدخلي حصص يوم واحد على الأقل.'); return; }
+    paintTable();
+    $('#outCard').style.display = '';
+    $('#exportRow').style.display = 'flex';
+    window.scrollTo({ top: $('#outCard').offsetTop-10, behavior:'smooth' });
+  });
+
+  // بناء محرر اليوم
+  function renderDayEditor(){
+    const d = daySelect.value;
+    const count = +slotsCount.value || 0;
+    const maxP = +dayCount.value || 7;
+
+    // حمل الموجود لهذا اليوم
+    const prev = state.days[d] || [];
+    dayEditor.innerHTML = '';
+    dayEditor.style.display = count>0 ? '' : 'none';
+
+    for(let i=0;i<count;i++){
+      const row = document.createElement('div');
+      row.className='edit-cell';
+      const cur = prev[i] || {};
+      row.innerHTML = `
+        <div class="tag">الحصة</div>
+        <select data-k="p">
+          ${Array.from({length:maxP},(_,x)=>`<option value="${x+1}" ${cur.p==(x+1)?'selected':''}>${x+1}</option>`).join('')}
+        </select>
+        <input data-k="sub" placeholder="المادة" value="${cur.sub||''}">
+        <input data-k="cls" placeholder="الفصل/الشعبة" value="${cur.cls||''}">
+      `;
+      dayEditor.appendChild(row);
     }
+  }
 
-    // حفظ/استرجاع (لهذه الصفحة)
-    const KEY = 'athar:masar';
-    function saveState(obj){ localStorage.setItem(KEY, JSON.stringify(obj)); }
-    function loadState(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(_){ return null; } }
-
-    // ألوان ثابتة لكل مادة (هاش بسيط)
-    const PALETTE = [
-      ['#e0f2fe','#0284c7'], ['#dbeafe','#1d4ed8'], ['#e9d5ff','#7e22ce'],
-      ['#fee2e2','#b91c1c'], ['#dcfce7','#166534'], ['#fef9c3','#a16207'],
-      ['#ffe4e6','#be123c'], ['#ede9fe','#6d28d9'], ['#fce7f3','#be185d']
-    ];
-    function colorFor(subject){
-      subject = (subject||'').trim();
-      let h=0; for(let i=0;i<subject.length;i++) h = (h*31 + subject.charCodeAt(i))>>>0;
-      const [bg,fg] = PALETTE[h % PALETTE.length];
-      return { bg, fg };
-    }
-
-    // عبارات تحفيزية (تُعرض عشوائيًا)
-    const QUOTES = [
-      'هذا اليوم سيمضي كما مضى الأمس… ولن يبقى منه إلا الأثر. 🌿',
-      'رتّب وقتك، تزدك حرّيةً داخل الحصّة.',
-      'خطة بسيطة اليوم… أثر عميق غدًا.',
-      'النظام ليس تقييدًا… إنما سُلم للوصول إلى أبعد.',
-      'كل حصة فرصة لصناعة أثر جديد.'
-    ];
-
-    // عناصر DOM
-    const inputsGrid = $('#inputsGrid');
-    const periodsSel = $('#periods');
-    const weekPreset = $('#weekPreset');
-    const daysCustom = $('#daysCustom');
-    const timesGrid  = $('#timesGrid');
-
-    const copyFrom   = $('#copyFrom');
-    const copyTo     = $('#copyTo');
-    const copyDayBtn = $('#copyDayBtn');
-
-    function currentDays(){
-      if(weekPreset.value === 'mon-fri') return ['الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
-      if(weekPreset.value === 'custom'){
-        return $$('.day:checked', daysCustom).map(i=>i.value);
-      }
-      return ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس']; // sun-thu
-    }
-
-    // بناء خيارات نسخة-من/إلى
-    function rebuildCopyDaySelectors(days){
-      const make = (sel, title)=>{
-        const cur = sel.value;
-        sel.innerHTML = '<option value="">'+title+'</option>' + days.map(d=>`<option value="${d}">${d}</option>`).join('');
-        if(days.includes(cur)) sel.value = cur; // استعادة
+  function readEditor(){
+    return $$('.edit-cell', dayEditor).map(el=>{
+      return {
+        p: +$('select[data-k="p"]',el).value,
+        sub: $('input[data-k="sub"]',el).value.trim(),
+        cls: $('input[data-k="cls"]',el).value.trim()
       };
-      make(copyFrom, 'انسخ من يوم…');
-      make(copyTo,   'إلى يوم…');
-    }
+    }).filter(x=> x.sub || x.cls);
+  }
 
-    // بناء نموذج أوقات الحصص
-    function rebuildTimes(){
-      const periods = parseInt(periodsSel.value,10) || 6;
-      timesGrid.innerHTML = '';
-      for(let p=1;p<=periods;p++){
-        const row = document.createElement('div');
-        row.className = 'time-row';
-        row.innerHTML = `
-          <div class="time-tag">الحصة ${p}</div>
-          <input type="time" placeholder="من" data-k="from" data-p="${p}">
-          <input type="time" placeholder="إلى" data-k="to"   data-p="${p}">
-        `;
-        timesGrid.appendChild(row);
-      }
-    }
+  function validate(items){
+    // لا تكرار لنفس رقم الحصة
+    const ps = items.map(x=>x.p);
+    return (new Set(ps)).size === ps.length;
+  }
 
-    // بناء شبكة المدخلات (يوم ← حصص ← مادة/فصل/غرفة)
-    function rebuildInputs(){
-      const days = currentDays();
-      const periods = parseInt(periodsSel.value,10) || 6;
-      inputsGrid.innerHTML = '';
+  function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(_){ return null; } }
 
-      days.forEach(day=>{
-        const wrap = document.createElement('div');
-        wrap.className = 'cell';
-        wrap.innerHTML = '<h4>'+day+'</h4>';
-        for(let p=1; p<=periods; p++){
-          const row = document.createElement('div');
-          row.className='row';
-          row.style.gridTemplateColumns = '1fr 1fr 1fr';
-          row.innerHTML = `
-            <input type="text" placeholder="المادة (حصة ${p})" data-k="sub"  data-day="${day}" data-p="${p}">
-            <input type="text" placeholder="الفصل/الشعبة"       data-k="cls"  data-day="${day}" data-p="${p}">
-            <input type="text" placeholder="الغرفة/المعمل"      data-k="room" data-day="${day}" data-p="${p}">
-          `;
-          wrap.appendChild(row);
-        }
-        inputsGrid.appendChild(wrap);
-      });
+  // ألوان بحسب المادة
+  function colorFor(s){
+    s=(s||'').trim(); let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
+    const [bg,fg]=COLORS[h%COLORS.length]; return {bg,fg};
+  }
 
-      rebuildCopyDaySelectors(days);
-    }
-
-    // عرض/إخفاء أيام مخصّصة
-    weekPreset.addEventListener('change', ()=>{
-      daysCustom.style.display = (weekPreset.value==='custom') ? '' : 'none';
-      rebuildTimes();
-      rebuildInputs();
-      restoreFromState(); // إعادة تعبئة لو فيه حفظ
-    });
-    $$('.day').forEach(ch => ch.addEventListener('change', ()=>{
-      rebuildInputs();
-      restoreFromState();
-    }));
-    periodsSel.addEventListener('change', ()=>{
-      rebuildTimes();
-      rebuildInputs();
-      restoreFromState();
-    });
-
-    // حفظ/استرجاع حالة المدخلات
-    function collectState(){
-      const days = currentDays();
-      const periods = parseInt(periodsSel.value,10) || 6;
-      const cells = [];
-      days.forEach(day=>{
-        for(let p=1;p<=periods;p++){
-          const sub  = inputsGrid.querySelector(`input[data-k="sub"][data-day="${day}"][data-p="${p}"]`)?.value||'';
-          const cls  = inputsGrid.querySelector(`input[data-k="cls"][data-day="${day}"][data-p="${p}"]`)?.value||'';
-          const room = inputsGrid.querySelector(`input[data-k="room"][data-day="${day}"][data-p="${p}"]`)?.value||'';
-          if(sub || cls || room) cells.push({day,p,sub,cls,room});
-        }
-      });
-
-      const times = [];
-      for(let p=1;p<=periods;p++){
-        const from = timesGrid.querySelector(`input[data-k="from"][data-p="${p}"]`)?.value || '';
-        const to   = timesGrid.querySelector(`input[data-k="to"][data-p="${p}"]`)?.value   || '';
-        if(from || to) times.push({p, from, to});
-      }
-
-      return { preset:weekPreset.value, days, periods, cells, times };
-    }
-
-    function restoreFromState(){
-      const st = loadState();
-      if(!st) return;
-
-      // تعبئة الخلايا
-      (st.cells||[]).forEach(c=>{
-        const q = (k)=> inputsGrid.querySelector(`input[data-k="${k}"][data-day="${c.day}"][data-p="${c.p}"]`);
-        const s = q('sub'), cl = q('cls'), rm = q('room');
-        if(s)  s.value  = c.sub  || '';
-        if(cl) cl.value = c.cls  || '';
-        if(rm) rm.value = c.room || '';
-      });
-
-      // تعبئة الأوقات
-      (st.times||[]).forEach(t=>{
-        const from = timesGrid.querySelector(`input[data-k="from"][data-p="${t.p}"]`);
-        const to   = timesGrid.querySelector(`input[data-k="to"][data-p="${t.p}"]`);
-        if(from) from.value = t.from || '';
-        if(to)   to.value   = t.to   || '';
-      });
-    }
-
-    // أوتو-حفظ
-    function debounce(fn, ms){ let t; return function(){ clearTimeout(t); t=setTimeout(fn, ms); } }
-    const autoSave = debounce(()=> saveState(collectState()), 400);
-    inputsGrid.addEventListener('input', autoSave);
-    timesGrid .addEventListener('input', autoSave);
-
-    // مسح/استرجاع
-    $('#reset').addEventListener('click', ()=>{
-      localStorage.removeItem(KEY);
-      rebuildTimes(); rebuildInputs();
-      toast('تم مسح المدخلات.');
-    });
-    $('#reload').addEventListener('click', ()=>{
-      const st = loadState();
-      if(!st){ toast('لا يوجد حفظ سابق.'); return; }
-      periodsSel.value = st.periods || '6';
-      weekPreset.value = st.preset  || 'sun-thu';
-      daysCustom.style.display = (weekPreset.value==='custom') ? '' : 'none';
-
-      rebuildTimes();
-      rebuildInputs();
-
-      // إذا custom: علم الأيام حسب الحفظ
-      if(st.preset==='custom'){
-        $$('.day').forEach(ch => ch.checked = (st.days||[]).includes(ch.value));
-      }
-      restoreFromState();
-      toast('تم الاسترجاع.');
-    });
-
-    // نسخ يوم ↦ يوم
-    copyDayBtn.addEventListener('click', ()=>{
-      const from = copyFrom.value, to = copyTo.value;
-      if(!from || !to){ toast('اختر يومي النسخ/اللزق أولًا.'); return; }
-      if(from === to){ toast('اليومان متشابهان.'); return; }
-
-      const st = collectState();
-      const periods = parseInt(periodsSel.value,10) || 6;
-      for(let p=1;p<=periods;p++){
-        const src = (st.cells||[]).find(c=> c.day===from && c.p===p) || {sub:'',cls:'',room:''};
-        const q = (k)=> inputsGrid.querySelector(`input[data-k="${k}"][data-day="${to}"][data-p="${p}"]`);
-        const s = q('sub'), cl = q('cls'), rm = q('room');
-        if(s)  s.value  = src.sub  || '';
-        if(cl) cl.value = src.cls  || '';
-        if(rm) rm.value = src.room || '';
-      }
-      saveState(collectState());
-      toast(`تم نسخ ${from} إلى ${to}.`);
-    });
-
-    // توليد الجدول
-    const outCard = $('#outCard');
+  // رسم الجدول
+  function paintTable(){
     const tt = $('#tt'); const legend = $('#legend');
+    const periods = +state.periods || 7;
 
-    $('#build').addEventListener('click', ()=>{
-      const st = collectState(); saveState(st);
+    tt.innerHTML='';
+    const thead = document.createElement('thead');
+    thead.innerHTML = `<tr><th>الحصة</th>${DAYS.map(d=>`<th>${d}</th>`).join('')}</tr>`;
+    tt.appendChild(thead);
 
-      const days = st.days || currentDays();
-      const periods = st.periods || parseInt(periodsSel.value,10) || 6;
+    const tbody = document.createElement('tbody');
 
-      const filled = st.cells && st.cells.some(c=> (c.sub||c.cls||c.room||'').trim());
-      if(!filled){ toast('املأ خانة واحدة على الأقل.'); return; }
-
-      // جدول
-      tt.innerHTML = '';
-      const thead = document.createElement('thead');
-      const trh = document.createElement('tr');
-      trh.innerHTML = '<th>الحصة</th><th>الوقت</th>' + days.map(d=>`<th>${d}</th>`).join('');
-      thead.appendChild(trh); tt.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-      for(let p=1;p<=periods;p++){
-        const tr = document.createElement('tr');
-
-        // عمود: رقم الحصة
-        const thP = document.createElement('th'); thP.textContent = 'الحصة '+p; tr.appendChild(thP);
-
-        // عمود: الوقت
-        const timeCell = document.createElement('td');
-        const t = (st.times||[]).find(x=>x.p===p) || {};
-        timeCell.textContent = (t.from && t.to) ? `${t.from} – ${t.to}` : '—';
-        tr.appendChild(timeCell);
-
-        // الأعمدة: الأيام
-        days.forEach(d=>{
-          const cell = (st.cells||[]).find(c=> c.day===d && c.p===p) || {sub:'',cls:'',room:''};
-          const td = document.createElement('td');
-          if(cell.sub || cell.cls || cell.room){
-            const {bg,fg} = colorFor(cell.sub || d);
-            td.innerHTML = `
-              <div class="sub" style="background:${bg}; color:${fg}">${cell.sub||'—'}</div>
-              ${cell.cls? `<span class="cls">${cell.cls}</span>`:''}
-              ${cell.room? `<span class="room">📍 ${cell.room}</span>`:''}
-            `;
-          }
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      }
-      tt.appendChild(tbody);
-
-      // وسيلة إيضاح
-      legend.innerHTML = '';
-      const subjects = Array.from(new Set((st.cells||[]).map(c=>(c.sub||'').trim()).filter(Boolean)));
-      subjects.slice(0,15).forEach(s=>{
-        const {bg,fg} = colorFor(s);
-        const chip = document.createElement('div');
-        chip.className='chip';
-        chip.innerHTML = `<span class="dot" style="background:${bg}"></span><span style="color:${fg}; font-weight:800">${s}</span>`;
-        legend.appendChild(chip);
-      });
-
-      // اقتباس تحفيزي
-      $('#quote').textContent = QUOTES[Math.floor(Math.random()*QUOTES.length)];
-
-      outCard.style.display = '';
-      window.scrollTo({ top: outCard.offsetTop - 10, behavior: 'smooth' });
-      toast('تم توليد الجدول ✨');
-    });
-
-    // تصدير CSV
-    $('#exportCsv').addEventListener('click', ()=>{
-      const st = collectState();
-      const days = st.days || currentDays();
-      const periods = st.periods || parseInt(periodsSel.value,10) || 6;
-
-      // رأسية
-      let rows = [['الحصة','من','إلى', ...days]];
-      for(let p=1;p<=periods;p++){
-        const t = (st.times||[]).find(x=>x.p===p) || {};
-        const cols = days.map(d=>{
-          const c = (st.cells||[]).find(x=>x.day===d && x.p===p) || {};
-          const parts = [c.sub, c.cls, c.room].filter(Boolean);
-          return parts.join(' | ');
-        });
-        rows.push(['الحصة '+p, t.from||'', t.to||'', ...cols]);
-      }
-
-      const csv = rows.map(r=> r.map(x => `"${(x||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
-      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'masar.csv'; a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    // نسخ نصّي
-    $('#copyTextBtn').addEventListener('click', ()=>{
-      const st = collectState();
-      const days = st.days || currentDays();
-      const periods = st.periods || parseInt(periodsSel.value,10) || 6;
-
-      const lines = [];
-      lines.push('جدول مسار — نسخة نصية');
-      for(let p=1;p<=periods;p++){
-        const t = (st.times||[]).find(x=>x.p===p) || {};
-        lines.push(`\nالحصة ${p} ${t.from&&t.to?`(${t.from}–${t.to})`:''}`);
-        days.forEach(d=>{
-          const c = (st.cells||[]).find(x=>x.day===d && x.p===p) || {};
-          if(c.sub || c.cls || c.room){
-            lines.push(`- ${d}: ${[c.sub,c.cls,c.room].filter(Boolean).join(' | ')}`);
-          }
-        });
-      }
-      const text = lines.join('\n');
-
-      if(navigator.clipboard && window.isSecureContext){
-        navigator.clipboard.writeText(text).then(()=> toast('تم النسخ ✓'));
-      }else{
-        const ta=document.createElement('textarea'); ta.value=text;
-        document.body.appendChild(ta); ta.select();
-        try{ document.execCommand('copy'); toast('تم النسخ ✓'); }
-        finally{ document.body.removeChild(ta); }
-      }
-    });
-
-    // حفظ كصورة
-    $('#pngBtn').addEventListener('click', async ()=>{
-      const wrap = $('#ttWrap');
-      if(!window.html2canvas){ toast('مكتبة التحويل للصورة غير محملة.'); return; }
-      const canvas = await html2canvas(wrap, { scale:2, useCORS:true, backgroundColor:null });
-      const url = canvas.toDataURL('image/png');
-      const a = document.createElement('a'); a.href = url; a.download = 'masar.png'; a.click();
-    });
-
-    // طباعة
-    $('#printBtn').addEventListener('click', ()=> window.print());
-
-    // طيّ/إظهار المدخلات
-    const inputsCard = $('#inputsCard');
-    $('#toggleInputs').addEventListener('click', ()=>{
-      inputsCard.classList.toggle('collapsed');
-      $('#toggleInputs').textContent = inputsCard.classList.contains('collapsed') ? 'إظهار المدخلات' : 'طيّ';
-    });
-    $('#editBtn').addEventListener('click', ()=>{
-      inputsCard.classList.remove('collapsed');
-      window.scrollTo({ top: inputsCard.offsetTop - 10, behavior:'smooth' });
-    });
-
-    // تهيئة أولية
-    (function init(){
-      const st = loadState();
-      if(st){
-        periodsSel.value = st.periods || '6';
-        weekPreset.value = st.preset  || 'sun-thu';
-        daysCustom.style.display = (weekPreset.value==='custom') ? '' : 'none';
-        rebuildTimes();
-        rebuildInputs();
-
-        if(st.preset==='custom'){
-          $$('.day').forEach(ch => ch.checked = (st.days||[]).includes(ch.value));
+    for(let p=1;p<=periods;p++){
+      const tr = document.createElement('tr');
+      tr.appendChild(cellTh('الحصة '+p));
+      DAYS.forEach(d=>{
+        const it = (state.days[d]||[]).find(x=>x.p===p);
+        const td = document.createElement('td');
+        if(it){
+          const {bg,fg} = colorFor(it.sub || d);
+          td.innerHTML = `
+            <div class="sub-chip" style="background:${bg}; color:${fg}">${it.sub||'—'}</div>
+            ${it.cls? `<span class="meta">${it.cls}</span>`:''}
+          `;
         }
-        restoreFromState();
-      }else{
-        rebuildTimes();
-        rebuildInputs();
-      }
-    })();
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+    tt.appendChild(tbody);
+
+    // وسيلة إيضاح
+    legend.innerHTML = '';
+    const subs = new Set();
+    DAYS.forEach(d => (state.days[d]||[]).forEach(x=> subs.add(x.sub)));
+    [...subs].filter(Boolean).slice(0,15).forEach(s=>{
+      const {bg,fg}=colorFor(s);
+      const chip = document.createElement('div'); chip.className='chip';
+      chip.innerHTML = `<span class="dot" style="background:${bg}"></span><span style="color:${fg};font-weight:800">${s}</span>`;
+      legend.appendChild(chip);
+    });
+
+    $('#quote').textContent = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  }
+  function cellTh(t){ const th=document.createElement('th'); th.textContent=t; return th; }
+
+  // تصدير/طباعة
+  $('#printBtn').addEventListener('click', ()=>window.print());
+  $('#pngBtn').addEventListener('click', async ()=>{
+    const wrap = $('#ttWrap'); if(!window.html2canvas){ toast('لم تحمل مكتبة الصورة'); return; }
+    const canvas = await html2canvas(wrap, { scale:2, useCORS:true, backgroundColor:null });
+    const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download='masar.png'; a.click();
+  });
+  $('#editBtn').addEventListener('click', ()=>{
+    window.scrollTo({ top: $('#inputsCard').offsetTop-10, behavior:'smooth' });
+  });
   </script>
 </body>
 </html>
