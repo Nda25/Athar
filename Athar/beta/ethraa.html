@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>إثراء — أفكار وبحوث حديثة</title>
+<title>إثراء </title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
@@ -76,71 +76,66 @@
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
+
   <div class="toast" id="toast"></div>
   <script src="app.js"></script>
 
+  <!-- هذا هو السكربت الجديد كله -->
   <script>
-    async function fetchEthraa(subject, stage){
-      const res = await fetch('/.netlify/functions/gemini-ethraa', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ subject, stage })
+  const STAGES = { p1:'ابتدائي دُنيا', p2:'ابتدائي عُليا', m:'متوسط', h:'ثانوي' };
+  const cardsWrap = document.getElementById('cards');
+  const out = document.getElementById('out');
+
+  function clean(t){ return String(t||'').replace(/\*\*?|##+|^\s*-\s*/gm,'').trim(); }
+  function chip(t){ return `<span class="tag">${t}</span>`; }
+  function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
+
+  async function fetchEthraa(subject, stage){
+    const res = await fetch('/.netlify/functions/gemini-ethraa', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ subject, stage })
+    });
+    if(!res.ok) throw new Error('fn_error');
+    return res.json();
+  }
+
+  document.getElementById('gen').addEventListener('click', async ()=>{
+    const s  = (document.getElementById('subj').value||'').trim();
+    const st = document.getElementById('stage').value;
+    if(!s){ toast('اكتبي المادة أولًا'); return; }
+
+    cardsWrap.innerHTML = '<div class="muted">… جارِ الإثراء</div>'; out.style.display='none';
+    try{
+      const { ok, cards=[] } = await fetchEthraa(s, st);
+      cardsWrap.innerHTML = '';
+      (cards.length? cards : []).forEach(c=>{
+        const title = clean(c.title)||'— بطاقة —';
+        const brief = clean(c.brief)||'—';
+        const idea  = clean(c.idea)||'—';
+        const card = document.createElement('div');
+        card.className = 'idea';
+        card.innerHTML = `
+          <h4>• ${title}</h4>
+          <p class="muted"><strong>لماذا؟</strong> ${brief}</p>
+          <p><strong>اقتراح:</strong> ${idea}</p>
+          <div class="tags">
+            ${chip(s)} ${chip(STAGES[st]||st)} ${chip('إثراء')}
+          </div>`;
+        cardsWrap.appendChild(card);
       });
-      if(!res.ok) throw new Error('Function error');
-      return res.json();
+      out.style.display='';
+      toast(ok ? 'تم ✨' : 'عُرض بديل');
+    }catch(e){
+      console.error(e);
+      cardsWrap.innerHTML = '<div class="muted">تعذّر جلب الإثراء الآن.</div>';
     }
+  });
 
-    document.getElementById('gen').addEventListener('click', async ()=>{
-      const s  = (document.getElementById('subj').value || '').trim();
-      const st = document.getElementById('stage').value;
-      if(!s){ alert('اكتب اسم المادة'); return; }
-
-      const cardsWrap = document.getElementById('cards');
-      const out = document.getElementById('out');
-      cardsWrap.innerHTML = '<div class="muted">… جاري الإثراء من Gemini</div>';
-      out.style.display = 'none';
-
-      try{
-        const { ok, cards, error } = await fetchEthraa(s, st);
-        if(!ok || !Array.isArray(cards)){ throw new Error(error || 'no-cards'); }
-
-        cardsWrap.innerHTML = '';
-        cards.forEach(c=>{
-          const div = document.createElement('div');
-          div.className = 'idea';
-          div.innerHTML = `
-            <h4>• ${c.title||''}</h4>
-            ${c.brief ? `<p class="muted"><strong>لماذا؟</strong> ${c.brief}</p>` : ''}
-            ${c.idea  ? `<p><strong>اقتراح:</strong> ${c.idea}</p>` : ''}
-            ${Array.isArray(c.sources) && c.sources.length ? `
-              <ul class="muted" style="margin-top:6px">
-                ${c.sources.map(s=>`<li><strong>${s.title||''}</strong> — <span class="muted">${s.why||''}</span></li>`).join('')}
-              </ul>` : ''
-            }
-            <div class="tags" style="margin-top:8px">
-              <span class="tag">${s}</span>
-              <span class="tag">${({p1:'دُنيا',p2:'عُليا',m:'متوسط',h:'ثانوي'})[st]}</span>
-              <span class="tag">إثراء</span>
-            </div>`;
-          cardsWrap.appendChild(div);
-        });
-
-        out.style.display = '';
-      }catch(e){
-        console.error(e);
-        cardsWrap.innerHTML = '<div class="muted">تعذّر جلب الإثراء الآن.</div>';
-      }
-    });
-
-    // نسخ البطاقات
-    document.getElementById('copy').addEventListener('click', ()=>{
-      const text = [...document.querySelectorAll('.idea')]
-        .map(d=>d.innerText).join('\n\n— — —\n\n');
-      navigator.clipboard.writeText(text);
-    });
-
-    // طباعة
-    document.getElementById('print').addEventListener('click', ()=> window.print());
+  document.getElementById('copy').addEventListener('click',()=>{
+    const text=[...document.querySelectorAll('.idea')].map(d=>d.innerText).join('\n\n— — —\n\n');
+    navigator.clipboard.writeText(text).then(()=>toast('تم النسخ ✅'));
+  });
+  document.getElementById('print').addEventListener('click',()=>window.print());
   </script>
 </body>
 </html>
