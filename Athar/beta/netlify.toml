@@ -1,7 +1,6 @@
 [build]
-  base = "Athar/beta"
-  publish = "."
-  functions = "netlify/functions"
+  publish = "Athar/beta"
+  functions = "Athar/beta/netlify/functions"
 
 [functions]
   external_node_modules = ["@google/generative-ai"]
