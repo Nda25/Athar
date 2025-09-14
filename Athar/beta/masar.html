@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>مســار — جدولي للترم</title>
+<title>مســار </title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
@@ -13,55 +13,80 @@
 
 <style>
   /* أزرار أعرض شوي */
-  .btn{min-width:160px}
+  .btn{ min-width:170px }
 
-  .wizard{display:grid;gap:14px}
-  .field{margin:8px 0}
-  .field label{display:block;font-weight:700;margin:6px 0}
+  /* حقول أكبر ومريحة */
+  .wizard{ display:grid; gap:16px }
+  .field{ margin:10px 0 }
+  .field label{ display:block; font-weight:700; margin:6px 0 }
   .field input,.field select{
-    width:100%;padding:12px;border-radius:12px;
-    border:1px solid rgba(59,130,246,.35);background:#fff;color:#0f172a;
+    width:100%; padding:14px 12px; border-radius:14px; font-size:16px;
+    border:1px solid rgba(59,130,246,.35); background:#fff; color:#0f172a;
   }
-  .dark .field input,.dark .field select{background:#0f172a;color:#f1f5f9;border-color:#3b82f6}
+  .dark .field input,.dark .field select{
+    background:#0f172a; color:#f1f5f9; border-color:#3b82f6;
+  }
 
-  .slots{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+  /* أزرار أرقام الحصص */
+  .slots{ display:flex; flex-wrap:wrap; gap:8px }
   .slot{
-    padding:10px;border:1px solid rgba(59,130,246,.30);border-radius:10px;
-    text-align:center;font-weight:800;background:var(--card);cursor:pointer;
-    user-select:none;
+    border:1px solid rgba(59,130,246,.28); background:var(--card);
+    padding:10px 14px; border-radius:999px; cursor:pointer; user-select:none;
+    font-weight:700; font-size:15px;
   }
-  .slot.active{outline:2px solid var(--sea-500);background:var(--sea-100)}
-  .dark .slot.active{background:#0f172a}
+  .slot.active{
+    font-weight:800; border-color:#3b82f6; background:var(--sea-100);
+  }
+  .dark .slot.active{ background:#0f172a; border-color:#60a5fa }
 
-  .inputs{display:grid;gap:10px}
-  .row{display:grid;grid-template-columns:120px 1fr 1fr;gap:8px;align-items:center}
-  .pill{font-weight:800;text-align:center;padding:8px 10px;border-radius:999px;border:1px solid rgba(59,130,246,.25);background:var(--card)}
+  /* إدخالات المادة/الفصل */
+  .inputs{ display:grid; gap:10px }
+  .row{
+    display:grid; grid-template-columns:120px 1fr 1fr; gap:10px; align-items:center;
+  }
+  .row input{ padding:12px 10px; border-radius:12px; font-size:15px;
+    border:1px solid rgba(59,130,246,.35);
+  }
+  .pill{
+    font-weight:800; text-align:center; padding:10px 12px; border-radius:999px;
+    border:1px solid rgba(59,130,246,.25); background:var(--card)
+  }
 
   /* الجدول الناتج */
-  .tt-wrap{overflow:auto;border:1px solid rgba(59,130,246,.22);border-radius:16px;background:var(--card);box-shadow:var(--shadow)}
-  table.timetable{width:100%;border-collapse:separate;border-spacing:0;min-width:720px}
-  .timetable th,.timetable td{border-bottom:1px solid rgba(59,130,246,.18);border-inline-end:1px solid rgba(59,130,246,.12);padding:12px;text-align:center;vertical-align:middle}
-  .timetable th{position:sticky;top:0;background:linear-gradient(180deg,#ffffffcc,#ffffffaa);backdrop-filter:blur(4px);font-weight:800;color:var(--sea-700)}
-  .dark .timetable th{background:linear-gradient(180deg,#0f172acc,#0f172aaa);color:#93c5fd}
-  .timetable td .sub{
-    display:inline-flex;gap:8px;align-items:center;justify-content:center;
-    padding:8px 10px;border-radius:999px;font-weight:800;border:1px solid rgba(0,0,0,.06);
-    box-shadow:0 6px 18px rgba(0,0,0,.12);white-space:nowrap
+  .tt-wrap{ overflow:auto; border:1px solid rgba(59,130,246,.22);
+    border-radius:16px; background:var(--card); box-shadow:var(--shadow) }
+  table.timetable{ width:100%; border-collapse:separate; border-spacing:0; min-width:720px }
+  .timetable th,.timetable td{
+    border-bottom:1px solid rgba(59,130,246,.18);
+    border-inline-end:1px solid rgba(59,130,246,.12);
+    padding:12px; text-align:center; vertical-align:middle
   }
-  .timetable td .cls{display:block;font-size:12px;opacity:.85;margin-top:4px}
+  .timetable th{
+    position:sticky; top:0; background:linear-gradient(180deg,#ffffffcc,#ffffffaa);
+    backdrop-filter:blur(4px); font-weight:800; color:var(--sea-700)
+  }
+  .dark .timetable th{ background:linear-gradient(180deg,#0f172acc,#0f172aaa); color:#93c5fd }
+  .timetable td .sub{
+    display:inline-flex; gap:8px; align-items:center; justify-content:center;
+    padding:8px 10px; border-radius:999px; font-weight:800; border:1px solid rgba(0,0,0,.06);
+    box-shadow:0 6px 18px rgba(0,0,0,.12); white-space:nowrap
+  }
+  .timetable td .cls{ display:block; font-size:12px; opacity:.85; margin-top:4px }
 
-  .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .legend .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(59,130,246,.22);background:var(--card)}
-  .legend .dot{width:12px;height:12px;border-radius:50%}
+  .legend{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
+  .legend .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(59,130,246,.22); background:var(--card) }
+  .legend .dot{ width:12px; height:12px; border-radius:50% }
 
-  .quote{margin-top:14px;text-align:center;color:var(--muted);font-weight:700;border-top:1px dashed rgba(59,130,246,.25);padding-top:10px}
+  .quote{ margin-top:14px; text-align:center; color:var(--muted); font-weight:700;
+    border-top:1px dashed rgba(59,130,246,.25); padding-top:10px }
 
   /* للطباعة */
   @media print{
-    .topbar,.wizard-card,.toast{display:none!important}
-    header{padding-bottom:0}
-    .tt-wrap{box-shadow:none;border:none}
-    .quote{border:none;padding-top:0}
+    .topbar,.wizard-card,.toast{ display:none!important }
+    header{ padding-bottom:0 }
+    .tt-wrap{ box-shadow:none; border:none }
+    .quote{ border:none; padding-top:0 }
   }
 </style>
 </head>
@@ -80,7 +105,7 @@
   <header>
     <div class="hero">
       <h1 class="logo">مســار</h1>
-      <div class="tag"><span class="dot"></span>رتّب حصصك… حتى يتضح المسـار .</div>
+      <div class="tag"><span class="dot"></span>رتّب حصصك… حتى يتضح المسـار.</div>
     </div>
   </header>
 
@@ -107,7 +132,7 @@
             <select id="totalSlots">
               <option>6</option><option selected>8</option><option>7</option><option>5</option>
             </select>
-            <div class="muted-mini">يُستخدم لرسم الجدول النهائي (مثلاً 8 أعمدة للحصص).</div>
+            <div class="muted-mini">يُستخدم لرسم الجدول النهائي (مثلًا 8 أعمدة للحصص).</div>
           </div>
 
           <div class="field">
@@ -217,7 +242,7 @@
         const active = state.data?.[d]?.[p] ? true : false;
         const btn=document.createElement('div');
         btn.className='slot'+(active?' active':'');
-        btn.textContent='الحصة '+p;
+        btn.textContent=p; /* نعرض الرقم فقط */
         btn.dataset.p=p;
         btn.addEventListener('click',()=>{
           toggleSlot(p);
@@ -235,6 +260,18 @@
       state.data[d] = state.data[d]||{};
       if(state.data[d][p]) delete state.data[d][p];
       else state.data[d][p]={sub:'',cls:''};
+      // حدِّدي بعدد اليوم إن كان أقل
+      limitByCountToday();
+    }
+
+    // احترام عدد حصص اليوم
+    function limitByCountToday(){
+      const d=daySel.value;
+      const want=parseInt(countSel.value,10)||0;
+      const ps=Object.keys(state.data[d]||{}).map(n=>+n).sort((a,b)=>a-b);
+      if(ps.length>want){
+        ps.slice(want).forEach(p=> delete state.data[d][p]);
+      }
     }
 
     // رسم حقول المادة/الفصل
@@ -243,9 +280,8 @@
       const d=daySel.value;
       const dayData=state.data[d]||{};
       const ps=Object.keys(dayData).map(n=>+n).sort((a,b)=>a-b);
-      const want=parseInt(countSel.value,10)||0;
-      // لو اختارت عدد وفعّلت أكثر/أقل، نمشي على المفعّل فقط
-      ps.slice(0,want).forEach(p=>{
+
+      ps.forEach(p=>{
         const row=document.createElement('div');
         row.className='row';
         row.innerHTML=`
@@ -260,40 +296,28 @@
       });
 
       // حفظ مباشر
-      inputsWrap.addEventListener('input', (e)=>{
+      inputsWrap.oninput = (e)=>{
         const el=e.target; const p=+el.dataset.p; const k=el.dataset.k;
         if(!p||!k) return;
         state.data[d][p]=state.data[d][p]||{sub:'',cls:''};
         state.data[d][p][k]=el.value;
         save();
-      }, {once:true});
+      };
     }
 
     // حفظ اليوم الحالي
     $('#saveDay').addEventListener('click', ()=>{
-      // ضبط العدد الكلي + فلترة الزيادات
       state.totalSlots = parseInt(totalSel.value,10)||8;
-      const d=daySel.value;
-      const want=parseInt(countSel.value,10)||0;
-      const ps=Object.keys(state.data[d]||{}).map(n=>+n).sort((a,b)=>a-b);
-      // إذا فعّلت أكثر من المطلوب، نحتفظ بالأول فقط
-      (ps.slice(want)).forEach(p=> delete state.data[d][p]);
+      limitByCountToday();
       save();
       toast('تم حفظ اليوم ✓');
       updateNextBuildButtons();
     });
 
     // اليوم التالي
-    $('#nextDay').addEventListener('click', ()=>{
-      const idx=Math.max(0, DAYS.indexOf(daySel.value));
-      const next= idx< DAIYS_LEN-1 ? DAYS[idx+1] : null;
-    });
-
-    // زر اليوم التالي – صحيح
-    const DAIYS_LEN = DAYS.length;
     nextBtn.addEventListener('click', ()=>{
       const i = DAYS.indexOf(daySel.value);
-      if(i < DAIYS_LEN-1){
+      if(i < DAYS.length-1){
         daySel.value = DAYS[i+1];
         afterDayChange();
       }
@@ -303,12 +327,12 @@
     // تغيّر اليوم/العدد/الإجمالي
     daySel.addEventListener('change', afterDayChange);
     totalSel.addEventListener('change', ()=>{ state.totalSlots=parseInt(totalSel.value,10)||8; save(); drawSlots(); drawInputs(); });
-    countSel.addEventListener('change', drawInputs);
+    countSel.addEventListener('change', ()=>{ limitByCountToday(); drawSlots(); drawInputs(); save(); });
 
     function afterDayChange(){
       totalSel.value = state.totalSlots || 8;
       drawSlots();
-      // اقتراح عدد اليوم بحسب المفعّل
+      // اقترحي العدد حسب المفعّل
       const dayData=state.data[daySel.value]||{};
       countSel.value = String(Object.keys(dayData).length || 0);
       drawInputs();
@@ -328,7 +352,7 @@
     // توليد الجدول
     const tt=$('#tt'), legend=$('#legend'), outCard=$('#outCard');
     $('#build').addEventListener('click', ()=>{
-      // رسم الرأس
+      // رأس الجدول
       const N=state.totalSlots||8;
       tt.innerHTML='';
       const thead=document.createElement('thead');
@@ -336,6 +360,7 @@
       hr.innerHTML='<th>الحصة</th>'+DAYS.map(d=>`<th>${d}</th>`).join('');
       thead.appendChild(hr); tt.appendChild(thead);
 
+      // جسم الجدول
       const tbody=document.createElement('tbody');
       for(let p=1;p<=N;p++){
         const tr=document.createElement('tr');
@@ -365,6 +390,7 @@
         legend.appendChild(chip);
       });
 
+      // عبارة تحفيزية
       $('#quote').textContent = QUOTES[Math.floor(Math.random()*QUOTES.length)];
       outCard.style.display='';
       window.scrollTo({top:outCard.offsetTop-10,behavior:'smooth'});
@@ -390,7 +416,6 @@
 
     // تهيئة أولية
     (function init(){
-      // اقترحي أول يوم غير محفوظ
       const firstEmpty = DAYS.find(d=>!state.data[d] || Object.keys(state.data[d]).length===0) || 'الأحد';
       daySel.value = firstEmpty;
       totalSel.value = state.totalSlots || 8;
