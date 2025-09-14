@@ -1,6 +1,7 @@
 [build]
-  publish = "Athar/beta"                        # هنا صفحات HTML و CSS
-  functions = "Athar/beta/netlify/functions"    # هنا الفنكشنز
+  base = "Athar/beta"
+  publish = "."
+  functions = "netlify/functions"
 
 [functions]
   external_node_modules = ["@google/generative-ai"]
