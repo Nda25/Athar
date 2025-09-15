@@ -167,33 +167,6 @@ async function initAuth0(){
   if (saved === 'dark') { root.classList.add('dark'); }
   else { root.classList.remove('dark'); }
 
-  // اربطي زر الثيم هنا فقط
-  document.addEventListener('DOMContentLoaded', () => {
-  // أربطي بقية أزرار الموقع
-  wire();
-
-  // حمّلي مكتبة Auth0 دايمًا من CDN ثم ابدئي المصادقة
-  const s = document.createElement('script');
-  s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
-  s.onload = () => {
-    console.log('[Auth0] SDK loaded ✔️');
-    initAuth0(); // <-- هذا ينفّذ بعد ما نتأكد أن createAuth0Client موجود
-  };
-  s.onerror = () => {
-    console.error('[Auth0] failed to load from CDN');
-    alert('تعذّر تحميل مكتبة Auth0. تأكدي من اتصالك، ثم حدّثي الصفحة.');
-    // نخلي زر الدخول يعطي تنبيه بدل ما يسوّي لا شيء
-    const loginBtn = document.getElementById('loginBtn');
-    if (loginBtn) {
-      loginBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        alert('لا يمكن فتح تسجيل الدخول الآن لعدم تحميل مكتبة Auth0.');
-      });
-    }
-  };
-  document.head.appendChild(s);
-});
-
 /* ==== التخزين المحلي ==== */
 const store = {
   get user(){ try{ return JSON.parse(localStorage.getItem('athar:user')||'null'); }catch{return null} },
