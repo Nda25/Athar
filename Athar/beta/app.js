@@ -666,20 +666,35 @@ function wire(){
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
-  wire();      // يربط أزرار ومودالات مشروعك
-  initAuth0(); // بعدها نفعل Auth0 بأمان
+  wire();
 
-  // 🔽 زر "نسيت كلمة المرور"
+  const startAuth0 = () => initAuth0();
+
+  if (typeof window.createAuth0Client === 'function') {
+    // الـ SDK محمّل
+    startAuth0();
+  } else {
+    // نحاول نحمله ديناميكياً (حلّ لمشاكل الكاش/التحميل)
+    const s = document.createElement('script');
+    s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
+    s.onload = startAuth0;
+    s.onerror = () => {
+      console.error('[Auth0] failed to load from CDN');
+      alert('تعذّر تحميل مكتبة Auth0. تأكدي من اتصالك، ثم حدّثي الصفحة (سحبة للتحديث) أو جرّبي بعد قليل.');
+    };
+    document.head.appendChild(s);
+  }
+
+  // زر "نسيت كلمة المرور"
   const forgotLink = document.getElementById("forgotPasswordLink");
   if (forgotLink) {
     forgotLink.addEventListener("click", (e) => {
       e.preventDefault();
-
-      const domain = "dev-2f0fmbtj6u8o7en4.us.auth0.com"; // دومين Auth0
-      const clientId = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU"; // Client ID
-      const redirectUri = window.location.origin; // يرجع للموقع بعد الإعادة
-
-      window.location.href = `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
+      const domain = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+      const clientId = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+      const redirectUri = window.location.origin;
+      window.location.href =
+        `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
     });
   }
 });
