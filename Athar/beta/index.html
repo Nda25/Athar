@@ -251,8 +251,10 @@
   <div class="toast" id="toast"></div>
 
   <!-- ========= السكربتات ========= -->
-    <!-- Auth0 SDK (للدخول/الخروج) -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<!-- Auth0 SDK (للدخول/الخروج) -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<!-- تشخيص: لازم يطبع "function" -->
+<script>console.log('[Auth0] typeof createAuth0Client =', typeof window.createAuth0Client);</script>
 
     <!-- Supabase SDK + ملف الإعداد -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
