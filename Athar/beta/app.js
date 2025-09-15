@@ -41,11 +41,11 @@ async function initAuth0(){
   }
 
   // 2) إنشاء عميل Auth0
-  const auth0Client = await createAuth0Client({
-    domain: "dev-2f0fmbtj6u8o7en4.us.auth0.com",
-    client_id: "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU",
-    cacheLocation: "localstorage"
-  });
+const auth0Client = await createAuth0Client({
+  domain: "dev-2f0fmbtj6u8o7en4.us.auth0.com",
+  clientId: "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU",
+  cacheLocation: "localstorage"
+});
 
   // 3) معالجة الرجوع من Auth0 (إن وُجد)
   if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
@@ -93,7 +93,14 @@ async function initAuth0(){
     });
   }
 
-  // 5) تحديث الحالة المحلية حسب مصادقة Auth0
+
+ // 5) تحقّق هل المستخدم مصادَق أم لا
+let isAuth = false;
+try {
+  isAuth = await auth0Client.isAuthenticated();
+} catch (err) {
+  console.error("Auth0 isAuthenticated error:", err);
+}
   if (isAuth){
   try {
     const user = await auth0Client.getUser();
