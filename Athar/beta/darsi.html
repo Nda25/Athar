@@ -675,9 +675,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 </script>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase-client.js"></script>
-<script src="assets/js/require-auth.js"></script>
+  <<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script defer src="assets/js/supabase-client.js"></script>
+<script defer src="assets/js/require-auth.js"></script> <!-- الملف المصحح -->
+<script defer src="app.js"></script>
   <!-- darsi.html (درسي) -->
 <script>
 document.getElementById('gen')?.addEventListener('click', async () => {
