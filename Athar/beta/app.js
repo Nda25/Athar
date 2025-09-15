@@ -67,28 +67,21 @@ if (loginBtn){
 }
 
 // نحاول نلقط زر التسجيل حتى لو تأخر بالتحميل
-const findRegisterBtn = setInterval(() => {
-  const registerBtn = document.getElementById('registerBtn');
-  if (registerBtn) {
-    clearInterval(findRegisterBtn); // وقف البحث
-    console.log("✅ registerBtn found!");
-
-    registerBtn.setAttribute('type','button');
-    registerBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      console.log("Register button clicked!");
-      await auth0Client.loginWithRedirect({
-        authorizationParams: {
-          screen_hint: 'signup',
-          redirect_uri: window.location.origin
-        }
-      });
+// زر التسجيل
+const registerBtn = document.getElementById('registerBtn');
+if (registerBtn) {
+  registerBtn.setAttribute('type', 'button');
+  registerBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await auth0Client.loginWithRedirect({
+      authorizationParams: {
+        screen_hint: 'signup',
+        redirect_uri: window.location.origin
+      }
     });
-  } else {
-    console.log("... still looking for registerBtn");
-  }
-}, 500); // كل نص ثانية
-  
+  });
+}
+
   if (logoutBtn) {
     logoutBtn.setAttribute('type','button');
     logoutBtn.onclick = async (e) => {
