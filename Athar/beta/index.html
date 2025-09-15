@@ -47,40 +47,6 @@
   }
 })();
 </script>
-  <script>
-(function(){
-  var root = document.documentElement;
-  var saved = null;
-  try { saved = localStorage.getItem('theme'); } catch(_) {}
-  if (saved === 'dark') {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-    try { localStorage.setItem('theme','light'); } catch(_) {}
-  }
-  if (document.body.classList.contains('dark')) {
-    root.classList.add('dark');
-    document.body.classList.remove('dark');
-  }
-})();
-</script>
-  <script>
-(function(){
-  var root = document.documentElement;
-  var saved = null;
-  try { saved = localStorage.getItem('theme'); } catch(_) {}
-  if (saved === 'dark') {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-    try { localStorage.setItem('theme','light'); } catch(_) {}
-  }
-  if (document.body.classList.contains('dark')) {
-    root.classList.add('dark');
-    document.body.classList.remove('dark');
-  }
-})();
-</script>
 </head>
 <body>
 
@@ -252,12 +218,10 @@
   <!-- ========= السكربتات ========= -->
 <!-- Auth0 SDK -->
 <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-
 <!-- Supabase -->
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
-
+<script defer src="assets/js/supabase-client.js?v=1"></script>
 <!-- سكربت مشروعك -->
-<script defer src="app.js"></script>
+<script defer src="app.js?v=4"></script>
   </body>
 </html>
