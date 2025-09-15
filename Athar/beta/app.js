@@ -36,95 +36,59 @@ const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 async function initAuth0(){
   console.log('[Auth0] initAuth0: start');
 
-  // لو الـ SDK ما تحمل، اربطي الزر برسالة توضّح المشكلة بدل ما نسكت
   if (typeof window.createAuth0Client !== 'function') {
-    console.error('[Auth0] SDK not loaded. Check script tag URL/order.');
-    const loginBtn  = document.getElementById("loginBtn");
-    if (loginBtn) {
-      loginBtn.addEventListener('click', (e)=>{
-        e.preventDefault();
-        alert('تعذّر تحميل مكتبة Auth0. تأكدي من وسم السكربت بالشكل الصحيح ومن ترتيبه قبل app.js');
-      });
-    }
-    return; // نوقف هنا لأن ما نقدر ننشئ عميل
+    console.error('[Auth0] SDK not loaded.'); 
+    return;
   }
 
-  // أنشئي عميل Auth0 (مهم: المفتاح هنا اسمه clientId بالـ v2)
   const auth0Client = await createAuth0Client({
     domain: "dev-2f0fmbtj6u8o7en4.us.auth0.com",
     clientId: "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU",
     cacheLocation: "localstorage"
   });
-  window._auth0Client = auth0Client; // مفيد للتشخيص من الـ Console
+  window._auth0Client = auth0Client;
 
-  // معالجة الرجوع من Auth0
-  if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
-    try {
-      console.log('[Auth0] handleRedirectCallback');
-      await auth0Client.handleRedirectCallback();
-    } catch (err) {
-      console.error('[Auth0] redirect error:', err);
-    }
-    window.history.replaceState({}, document.title, location.origin + location.pathname);
+  // هاندل الرجوع من Auth0
+  if (location.search.includes('code=') && location.search.includes('state=')) {
+    try { await auth0Client.handleRedirectCallback(); } catch(e){ console.error(e); }
+    history.replaceState({}, document.title, location.origin + location.pathname);
   }
 
-  // ربط الأزرار + لوق
-  const loginBtn  = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
+  // ربط الأزرار
+  const loginBtn  = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
 
-  if (loginBtn){
-    console.log('[Auth0] loginBtn found, binding click');
-    loginBtn.setAttribute('type','button'); // يمنع أي submit
-    loginBtn.addEventListener("click", async (e) => {
+  if (loginBtn) {
+    loginBtn.setAttribute('type','button');
+    loginBtn.onclick = async (e) => {
       e.preventDefault();
       try {
-        console.log('[Auth0] loginWithRedirect → start');
-        await auth0Client.loginWithRedirect({
-          authorizationParams: { redirect_uri: window.location.origin }
-        });
+        await auth0Client.loginWithRedirect({ authorizationParams: { redirect_uri: window.location.origin } });
       } catch (err) {
-        console.error("[Auth0] login error:", err);
-        alert("تعذّر فتح صفحة تسجيل الدخول. شوفي Console للخطأ.");
+        console.error('[Auth0] login error:', err);
+        alert('تعذّر فتح صفحة تسجيل الدخول.');
       }
-    });
-  } else {
-    console.warn('[Auth0] loginBtn NOT found in DOM');
+    };
   }
 
-  if (logoutBtn){
-    console.log('[Auth0] logoutBtn found, binding click');
+  if (logoutBtn) {
     logoutBtn.setAttribute('type','button');
-    logoutBtn.addEventListener("click", async (e) => {
+    logoutBtn.onclick = async (e) => {
       e.preventDefault();
       try {
-        store.auth = false;
-        store.user = null;
-        refreshNav();
-      } catch (_) {}
-      try {
+        store.auth = false; store.user = null; refreshNav();
         await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
       } catch (err) {
-        console.error("[Auth0] logout error:", err);
+        console.error('[Auth0] logout error:', err);
       }
-    });
-  } else {
-    console.warn('[Auth0] logoutBtn NOT found in DOM');
+    };
   }
 
-  // التحقق من حالة المصادقة + جلب بيانات المستخدم
-  let isAuth = false;
+  // حالة المستخدم
   try {
-    isAuth = await auth0Client.isAuthenticated();
-    console.log('[Auth0] isAuthenticated =', isAuth);
-  } catch (err) {
-    console.error("[Auth0] isAuthenticated error:", err);
-  }
-
-  if (isAuth){
-    try {
+    const isAuth = await auth0Client.isAuthenticated();
+    if (isAuth) {
       const user = await auth0Client.getUser();
-      console.log('[Auth0] user:', user);
-
       store.user = {
         name:   user?.name || "",
         email:  user?.email || "",
@@ -132,27 +96,13 @@ async function initAuth0(){
         school: user?.school || ""
       };
       store.auth = true;
-
-      // ربط المستخدم في Supabase (لو ملف supabase-client.js محقون)
-      try {
-        if (typeof supaEnsureUser === "function" && store.user?.email) {
-          await supaEnsureUser({
-            email: store.user.email,
-            full_name: store.user.name || "",
-            role: "user"
-          });
-        }
-      } catch (e) {
-        console.error("supaEnsureUser error:", e);
-      }
-    } catch (err) {
-      console.error("[Auth0] getUser error:", err);
+    } else {
       store.auth = false;
-      store.user = null;
+      if (!store.user) store.user = null;
     }
-  } else {
+  } catch (e) {
+    console.error(e);
     store.auth = false;
-    if (!store.user) store.user = null;
   }
 
   refreshNav();
@@ -166,6 +116,7 @@ async function initAuth0(){
   try { saved = localStorage.getItem('theme'); } catch(_) {}
   if (saved === 'dark') { root.classList.add('dark'); }
   else { root.classList.remove('dark'); }
+})(); // ←← مهم جدًا إغلاق الدالة الذاتية
 
 /* ==== التخزين المحلي ==== */
 const store = {
@@ -648,30 +599,10 @@ function wire(){
     const leftEl = $('#t-left'); if(leftEl && left !== null) leftEl.textContent = left;
   }
 }
-document.addEventListener('DOMContentLoaded', () => {
-  wire();
-
-  const startAuth0 = () => initAuth0();
-
-  if (typeof window.createAuth0Client === 'function') {
-    // الـ SDK محمّل
-    startAuth0();
-  } else {
-    // نحاول نحمله ديناميكياً (حلّ لمشاكل الكاش/التحميل)
-    const s = document.createElement('script');
-    s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
-    s.onload = startAuth0;
-    s.onerror = () => {
-      console.error('[Auth0] failed to load from CDN');
-      alert('تعذّر تحميل مكتبة Auth0. تأكدي من اتصالك، ثم حدّثي الصفحة (سحبة للتحديث) أو جرّبي بعد قليل.');
-    };
-    document.head.appendChild(s);
-  }
-
-  // زر "نسيت كلمة المرور"
-  const forgotLink = document.getElementById("forgotPasswordLink");
+  // 3) زر "نسيت كلمة المرور"
+  const forgotLink = document.getElementById('forgotPasswordLink');
   if (forgotLink) {
-    forgotLink.addEventListener("click", (e) => {
+    forgotLink.addEventListener('click', (e) => {
       e.preventDefault();
       const domain = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
       const clientId = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
