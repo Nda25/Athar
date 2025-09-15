@@ -66,20 +66,24 @@ if (loginBtn){
   });
 }
 
-// زر إنشاء حساب → يفتح Auth0 على تبويب التسجيل مباشرة
-const registerBtn = document.getElementById('registerBtn');
-if (registerBtn){
-  registerBtn.setAttribute('type','button');
-  registerBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    await auth0Client.loginWithRedirect({
-      authorizationParams: {
-        screen_hint: 'signup',              // ← هذه أهم سطر
-        redirect_uri: window.location.origin
-      }
+document.addEventListener('DOMContentLoaded', () => {
+  const registerBtn = document.getElementById('registerBtn');
+  console.log("registerBtn exists?", !!registerBtn);
+
+  if (registerBtn) {
+    registerBtn.setAttribute('type','button');
+    registerBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      console.log("Register button clicked!");
+      await auth0Client.loginWithRedirect({
+        authorizationParams: {
+          screen_hint: 'signup',
+          redirect_uri: window.location.origin
+        }
+      });
     });
-  });
-}
+  }
+});
 
   if (logoutBtn) {
     logoutBtn.setAttribute('type','button');
