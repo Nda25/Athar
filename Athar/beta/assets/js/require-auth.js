@@ -35,7 +35,7 @@ const PUBLIC_PATHS = new Set([
   }
 
   // الصفحات المحمية: إن كان غير مسجّل → رجّعه للخطط (أو الرئيسية)
-  const REDIRECT_IF_UNAUTH = "/plans.html"; // عدّليها لـ "/" إذا ما عندك صفحة خطط
+  const REDIRECT_IF_UNAUTH = "/pricing.html"; // عدّليها لـ "/" إذا ما عندك صفحة خطط
 
   // ننشئ عميل Auth0 (لنلتقط العودة فقط لو رجع من تسجيل الدخول)
   const auth0Client = await auth0.createAuth0Client({
