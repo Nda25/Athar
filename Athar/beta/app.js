@@ -34,112 +34,129 @@ const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
 /* ==== Auth0 Integration ==== */
 async function initAuth0(){
-  // 1) تأكد أن مكتبة Auth0 محمّلة
+  console.log('[Auth0] initAuth0: start');
+
+  // لو الـ SDK ما تحمل، اربطي الزر برسالة توضّح المشكلة بدل ما نسكت
   if (typeof window.createAuth0Client !== 'function') {
-    console.warn('Auth0 SDK not loaded');
-    return;
+    console.error('[Auth0] SDK not loaded. Check script tag URL/order.');
+    const loginBtn  = document.getElementById("loginBtn");
+    if (loginBtn) {
+      loginBtn.addEventListener('click', (e)=>{
+        e.preventDefault();
+        alert('تعذّر تحميل مكتبة Auth0. تأكدي من وسم السكربت بالشكل الصحيح ومن ترتيبه قبل app.js');
+      });
+    }
+    return; // نوقف هنا لأن ما نقدر ننشئ عميل
   }
 
-  // 2) إنشاء عميل Auth0
-const auth0Client = await createAuth0Client({
-  domain: "dev-2f0fmbtj6u8o7en4.us.auth0.com",
-  clientId: "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU",
-  cacheLocation: "localstorage"
-});
+  // أنشئي عميل Auth0 (مهم: المفتاح هنا اسمه clientId بالـ v2)
+  const auth0Client = await createAuth0Client({
+    domain: "dev-2f0fmbtj6u8o7en4.us.auth0.com",
+    clientId: "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU",
+    cacheLocation: "localstorage"
+  });
+  window._auth0Client = auth0Client; // مفيد للتشخيص من الـ Console
 
-  // 3) معالجة الرجوع من Auth0 (إن وُجد)
+  // معالجة الرجوع من Auth0
   if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
     try {
+      console.log('[Auth0] handleRedirectCallback');
       await auth0Client.handleRedirectCallback();
     } catch (err) {
-      console.error("Auth0 redirect error:", err);
+      console.error('[Auth0] redirect error:', err);
     }
-    // تنظيف الاستعلام من الرابط
     window.history.replaceState({}, document.title, location.origin + location.pathname);
   }
 
-  // 4) ربط الأزرار
+  // ربط الأزرار + لوق
   const loginBtn  = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
 
   if (loginBtn){
-    loginBtn.addEventListener("click", async () => {
+    console.log('[Auth0] loginBtn found, binding click');
+    loginBtn.setAttribute('type','button'); // يمنع أي submit
+    loginBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
       try {
+        console.log('[Auth0] loginWithRedirect → start');
         await auth0Client.loginWithRedirect({
           authorizationParams: { redirect_uri: window.location.origin }
         });
       } catch (err) {
-        console.error("Auth0 login error:", err);
+        console.error("[Auth0] login error:", err);
+        alert("تعذّر فتح صفحة تسجيل الدخول. شوفي Console للخطأ.");
       }
     });
+  } else {
+    console.warn('[Auth0] loginBtn NOT found in DOM');
   }
 
   if (logoutBtn){
-    logoutBtn.addEventListener("click", async () => {
+    console.log('[Auth0] logoutBtn found, binding click');
+    logoutBtn.setAttribute('type','button');
+    logoutBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
       try {
-        // نزّل الحالة المحلية أولاً
         store.auth = false;
         store.user = null;
         refreshNav();
       } catch (_) {}
-      // ثم خروج Auth0
       try {
-        await auth0Client.logout({
-          logoutParams: { returnTo: window.location.origin }
-        });
+        await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
       } catch (err) {
-        console.error("Auth0 logout error:", err);
+        console.error("[Auth0] logout error:", err);
       }
     });
+  } else {
+    console.warn('[Auth0] logoutBtn NOT found in DOM');
   }
 
-
- // 5) تحقّق هل المستخدم مصادَق أم لا
-let isAuth = false;
-try {
-  isAuth = await auth0Client.isAuthenticated();
-} catch (err) {
-  console.error("Auth0 isAuthenticated error:", err);
-}
-  if (isAuth){
+  // التحقق من حالة المصادقة + جلب بيانات المستخدم
+  let isAuth = false;
   try {
-    const user = await auth0Client.getUser();
-
-    // خزّني بيانات المستخدم مرة وحدة
-    store.user = {
-      name:   user?.name || "",
-      email:  user?.email || "",
-      phone:  user?.phone_number || "",
-      school: user?.school || ""
-    };
-    store.auth = true;
-
-    // اربطي/حدّثي المستخدم في Supabase
-    try {
-      if (typeof supaEnsureUser === "function" && store.user?.email) {
-        await supaEnsureUser({
-          email: store.user.email,
-          full_name: store.user.name || "",
-          role: "user"
-        });
-      }
-    } catch (e) {
-      console.error("supaEnsureUser error:", e);
-    }
-
+    isAuth = await auth0Client.isAuthenticated();
+    console.log('[Auth0] isAuthenticated =', isAuth);
   } catch (err) {
-    console.error("Auth0 getUser error:", err);
-    store.auth = false;
-    store.user = null;
+    console.error("[Auth0] isAuthenticated error:", err);
   }
-} else {
-  // غير مصدّق
-  store.auth = false;
-  if (!store.user) store.user = null;
-}
 
-  // 6) حدثي الواجهة
+  if (isAuth){
+    try {
+      const user = await auth0Client.getUser();
+      console.log('[Auth0] user:', user);
+
+      store.user = {
+        name:   user?.name || "",
+        email:  user?.email || "",
+        phone:  user?.phone_number || "",
+        school: user?.school || ""
+      };
+      store.auth = true;
+
+      // ربط المستخدم في Supabase (لو ملف supabase-client.js محقون)
+      try {
+        if (typeof supaEnsureUser === "function" && store.user?.email) {
+          await supaEnsureUser({
+            email: store.user.email,
+            full_name: store.user.name || "",
+            role: "user"
+          });
+        }
+      } catch (e) {
+        console.error("supaEnsureUser error:", e);
+      }
+    } catch (err) {
+      console.error("[Auth0] getUser error:", err);
+      store.auth = false;
+      store.user = null;
+    }
+  } else {
+    store.auth = false;
+    if (!store.user) store.user = null;
+  }
+
   refreshNav();
+  console.log('[Auth0] initAuth0: done');
 }
 
 /* ===== 1) تفعيل الوضع الداكن/الفاتح (🌓 ثابت) مع حفظ في localStorage ===== */
