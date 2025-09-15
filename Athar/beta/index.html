@@ -26,24 +26,29 @@
 
   <!-- (اختياري) Tailwind لبعض العناصر -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
+<script>
 (function(){
   var root = document.documentElement;
   var saved = null;
   try { saved = localStorage.getItem('theme'); } catch(_) {}
 
-  // اجعل الافتراضي فاتح، ولا تلتفتي لتفضيل النظام هنا
-  if (saved === 'dark') {
-    root.classList.add('dark');
-  } else {
+  if (saved === 'dark') root.classList.add('dark');
+  else {
     root.classList.remove('dark');
-    try { localStorage.setItem('theme', 'light'); } catch(_) {}
+    try { localStorage.setItem('theme','light'); } catch(_) {}
   }
 
-  // لو أحد الصفحات سبق وحطّ dark على <body> ننقله لـ <html> ونحذفه من البودي
-  if (document.body.classList.contains('dark')) {
-    root.classList.add('dark');
-    document.body.classList.remove('dark');
+  // لو كان في صفحات ثانية حاطين .dark على <body> بالخطأ ننقله لـ <html> بعد ما يجهز البودي
+  function fixBodyDark(){
+    if (document.body && document.body.classList.contains('dark')) {
+      document.body.classList.remove('dark');
+      root.classList.add('dark');
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fixBodyDark);
+  } else {
+    fixBodyDark();
   }
 })();
 </script>
