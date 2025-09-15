@@ -66,11 +66,13 @@ if (loginBtn){
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// نحاول نلقط زر التسجيل حتى لو تأخر بالتحميل
+const findRegisterBtn = setInterval(() => {
   const registerBtn = document.getElementById('registerBtn');
-  console.log("registerBtn exists?", !!registerBtn);
-
   if (registerBtn) {
+    clearInterval(findRegisterBtn); // وقف البحث
+    console.log("✅ registerBtn found!");
+
     registerBtn.setAttribute('type','button');
     registerBtn.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -82,9 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+  } else {
+    console.log("... still looking for registerBtn");
   }
-});
-
+}, 500); // كل نص ثانية
+  
   if (logoutBtn) {
     logoutBtn.setAttribute('type','button');
     logoutBtn.onclick = async (e) => {
