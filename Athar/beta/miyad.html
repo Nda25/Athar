@@ -146,5 +146,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase-client.js"></script>
 <script src="assets/js/require-auth.js"></script>
+
+<script>
+document.getElementById('gen')?.addEventListener('click', async () => {
+  await supaLogUsage('miyad'); // يسجّل استخدام أداة ميعاد
+});
+</script>
 </body>
 </html>
