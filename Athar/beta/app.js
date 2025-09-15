@@ -773,42 +773,71 @@ function toast(msg){
   t.classList.add('show');
   setTimeout(()=> t.classList.remove('show'), 1800);
 }
-// ===== حمّل Auth0 بعد تحميل الصفحة واربط كل الأحداث =====
+// ===== ربط كل شيء بعد تحميل الصفحة (بلوك وحيد ونهائي) =====
 document.addEventListener('DOMContentLoaded', () => {
-  // أربطي أزرار ومودالات الموقع
+  // 1) الثيم: اربطي زر 🌓 دائمًا
+  (function bindThemeToggle(){
+    const root = document.documentElement;
+    const btn  = document.getElementById('themeToggle');
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const dark = root.classList.toggle('dark');
+      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(e){}
+      const t = document.getElementById('toast');
+      if (t) {
+        t.textContent = dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
+        t.classList.add('show'); setTimeout(()=> t.classList.remove('show'), 1200);
+      }
+    });
+  })();
+
+  // 2) أربطي مودالات/فورمات الموقع
   wire();
 
-  // تحميل مكتبة Auth0 من الـ CDN دائمًا
+  // 3) حمّلي مكتبة Auth0 من الـ CDN ثم اربطي زر الدخول
+  const loginBtn = document.getElementById('loginBtn');
+  const ensureLoginWired = () => {
+    if (!loginBtn) return;
+    // فك أي ربط قديم لتجنب تكرار الحدث
+    loginBtn.replaceWith(loginBtn.cloneNode(true));
+    const freshBtn = document.getElementById('loginBtn');
+
+    // لو المكتبة جاهزة → سجّلي الدخول عبر Auth0
+    if (typeof window.createAuth0Client === 'function') {
+      initAuth0(); // داخله حيتم ربط الحدث أيضًا (وحطّينا type="button")
+    } else {
+      // فallback مؤقت: افتحي مودال "تسجيل الدخول" المحلي
+      freshBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const m = document.querySelector('#modal-login');
+        if (m) m.classList.add('show'); else alert('نأسف.. زر الدخول غير جاهز بعد.');
+      });
+    }
+  };
+
+  // حمّل الـ SDK دائمًا (حتى لو كان محقون من <script> في index)
   const s = document.createElement('script');
   s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
   s.onload = () => {
     console.log('[Auth0] SDK loaded ✔️');
-    initAuth0();
+    ensureLoginWired();
   };
   s.onerror = () => {
     console.error('[Auth0] failed to load from CDN');
-    alert('تعذّر تحميل مكتبة Auth0. تأكدي من اتصالك ثم حدّثي الصفحة.');
-
-    const loginBtn = document.getElementById('loginBtn');
-    if (loginBtn) {
-      loginBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        alert('لا يمكن فتح تسجيل الدخول الآن لعدم تحميل مكتبة Auth0.');
-      });
-    }
+    ensureLoginWired(); // نفعل الفallback (المودال المحلي)
   };
   document.head.appendChild(s);
 
-  // زر "نسيت كلمة المرور"
-  const forgotLink = document.getElementById("forgotPasswordLink");
+  // 4) زر "نسيت كلمة المرور"
+  const forgotLink = document.getElementById('forgotPasswordLink');
   if (forgotLink) {
-    forgotLink.addEventListener("click", (e) => {
+    forgotLink.addEventListener('click', (e) => {
       e.preventDefault();
       const domain = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
       const clientId = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
       const redirectUri = window.location.origin;
-      window.location.href =
-        `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
+      window.location.href = `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
     });
   }
-}); 
+});
