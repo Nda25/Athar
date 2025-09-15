@@ -94,47 +94,42 @@ async function initAuth0(){
   }
 
   // 5) تحديث الحالة المحلية حسب مصادقة Auth0
-  let isAuth = false;
-  try {
-    isAuth = await auth0Client.isAuthenticated();
-  } catch (err) {
-    console.error("Auth0 isAuthenticated error:", err);
-  }
-
   if (isAuth){
+  try {
+    const user = await auth0Client.getUser();
+
+    // خزّني بيانات المستخدم مرة وحدة
+    store.user = {
+      name:   user?.name || "",
+      email:  user?.email || "",
+      phone:  user?.phone_number || "",
+      school: user?.school || ""
+    };
+    store.auth = true;
+
+    // اربطي/حدّثي المستخدم في Supabase
     try {
-      const user = await auth0Client.getUser();
-      store.user = {
-        name:   user?.name || "",
-        email:  user?.email || "",
-        phone:  user?.phone_number || "",
-        school: user?.school || ""
-      };
-     // داخل initAuth0() بعد:
-store.user = {
-  name: user.name || "",
-  email: user.email || "",
-  phone: user.phone_number || "",
-  school: user.school || ""
-};
-store.auth = true;
-
-// >>> أضيفي هذا السطر:
-supaEnsureUser({ email: store.user.email, full_name: store.user.name || "", role: "user" });
-
-refreshNav();
-      store.auth = true;
-    } catch (err) {
-      console.error("Auth0 getUser error:", err);
-      store.auth = false;
-      store.user = null;
+      if (typeof supaEnsureUser === "function" && store.user?.email) {
+        await supaEnsureUser({
+          email: store.user.email,
+          full_name: store.user.name || "",
+          role: "user"
+        });
+      }
+    } catch (e) {
+      console.error("supaEnsureUser error:", e);
     }
-  } else {
-    // غير مصدّق
+
+  } catch (err) {
+    console.error("Auth0 getUser error:", err);
     store.auth = false;
-    // لا نلمس بيانات user لو عندك استخدامات أخرى، لكن الأفضل نوحّدها
-    if (!store.user) store.user = null;
+    store.user = null;
   }
+} else {
+  // غير مصدّق
+  store.auth = false;
+  if (!store.user) store.user = null;
+}
 
   // 6) حدثي الواجهة
   refreshNav();
