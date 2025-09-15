@@ -167,21 +167,32 @@ async function initAuth0(){
   if (saved === 'dark') { root.classList.add('dark'); }
   else { root.classList.remove('dark'); }
 
-  document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('themeToggle');
-    if(!btn) return;
-    btn.addEventListener('click', function(e){
+document.addEventListener('DOMContentLoaded', () => {
+  wire(); // يربط أزرار ومودالات مشروعك
+
+  // ننتظر مكتبة Auth0 لين تجهز فعلاً، ثم نبدأ
+  (function waitForAuth0(){
+    if (typeof window.createAuth0Client === 'function') {
+      initAuth0();
+    } else {
+      // نطبع للتشخيص، ونحاول كل 80ms
+      console.log('[Auth0] SDK not ready yet, retrying...');
+      setTimeout(waitForAuth0, 80);
+    }
+  })();
+
+  // 🔽 زر "نسيت كلمة المرور"
+  const forgotLink = document.getElementById("forgotPasswordLink");
+  if (forgotLink) {
+    forgotLink.addEventListener("click", (e) => {
       e.preventDefault();
-      var dark = root.classList.toggle('dark');
-      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(_) {}
-      var t = document.getElementById('toast');
-      if(t){
-        t.textContent = dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح';
-        t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 1200);
-      }
+      const domain = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+      const clientId = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+      const redirectUri = window.location.origin;
+      window.location.href = `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
     });
-  });
-})();
+  }
+});
 
 
 /* ==== التخزين المحلي ==== */
