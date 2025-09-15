@@ -10,9 +10,12 @@
 
   // الصفحات العامة المسموح بها بدون تسجيل دخول
   // (الرئيسية فقط كما طلبتِ)
-  const PUBLIC_PATHS = new Set([
-    "/", "/index", "/index.html"
-  ]);
+const PUBLIC_PATHS = new Set([
+  "/", 
+  "/index.html", 
+  "/pricing.html",
+  "/programs.html"
+]);
 
   // لو الصفحة عامة، اتركي المستخدم
   const path = location.pathname.replace(/\/+$/, "") || "/"; // توحيد المسار
