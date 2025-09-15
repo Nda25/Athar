@@ -55,21 +55,31 @@ async function initAuth0(){
   }
 
   // ربط الأزرار
-  const loginBtn  = document.getElementById('loginBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
+// زر الدخول العادي
+if (loginBtn){
+  loginBtn.setAttribute('type','button');
+  loginBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await auth0Client.loginWithRedirect({
+      authorizationParams: { redirect_uri: window.location.origin }
+    });
+  });
+}
 
-  if (loginBtn) {
-    loginBtn.setAttribute('type','button');
-    loginBtn.onclick = async (e) => {
-      e.preventDefault();
-      try {
-        await auth0Client.loginWithRedirect({ authorizationParams: { redirect_uri: window.location.origin } });
-      } catch (err) {
-        console.error('[Auth0] login error:', err);
-        alert('تعذّر فتح صفحة تسجيل الدخول.');
+// زر إنشاء حساب → يفتح Auth0 على تبويب التسجيل مباشرة
+const registerBtn = document.getElementById('registerBtn');
+if (registerBtn){
+  registerBtn.setAttribute('type','button');
+  registerBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await auth0Client.loginWithRedirect({
+      authorizationParams: {
+        screen_hint: 'signup',              // ← هذه أهم سطر
+        redirect_uri: window.location.origin
       }
-    };
-  }
+    });
+  });
+}
 
   if (logoutBtn) {
     logoutBtn.setAttribute('type','button');
