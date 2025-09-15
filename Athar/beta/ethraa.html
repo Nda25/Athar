@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>إثراء </title>
+<title>إثراء</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
@@ -20,6 +20,9 @@
   .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
   .tag{ font-size:.82rem; padding:.24rem .6rem; border-radius:999px; border:1px solid rgba(59,130,246,.25); background:var(--sea-100); color:#0c4a6e }
   .dark .tag{ background:#0f172a; color:#e2e8f0; border-color:#3b82f6 }
+  .muted{opacity:.75}
+  .skeleton{border-radius:14px; height:110px; background:linear-gradient(90deg,#eee 0%,#f6f6f6 40%,#eee 80%); background-size:200% 100%; animation:sh 1.2s infinite}
+  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
   @media print{ .topbar,.actions-row,.field,.btn{ display:none !important } }
 </style>
 </head>
@@ -37,7 +40,7 @@
   <header>
     <div class="hero">
       <h1 class="logo">إثــراء</h1>
-      <div class="tag"><span class="dot"></span>أفكار مُلهمة… تسند الدرس وتُجدد الأثر.</div>
+      <div class="tag"><span class="dot"></span>أفكار مُلهمة… تُجدد الدرس وتُواكب الجديد.</div>
     </div>
   </header>
 
@@ -58,10 +61,20 @@
             <option value="h">ثانوي</option>
           </select>
         </div>
+        <div class="field">
+          <label>تركيز الإثراء</label>
+          <select id="focus">
+            <option value="auto" selected>تلقائي (أحدث أولاً ثم بدائل)</option>
+            <option value="latest">أحدث الأبحاث/الأخبار العلمية</option>
+            <option value="myth">خرافة شائعة + تصحيحها</option>
+            <option value="odd">معلومة غريبة/مدهشة</option>
+            <option value="ideas">أفكار نشاط/مشروع تطبيقي</option>
+          </select>
+        </div>
         <div class="actions-row" style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn primary" id="gen">ولّدي البطاقات</button>
-          <button class="btn" id="copy">نسخ جميع البطاقات</button>
-          <button class="btn" id="print">طباعة</button>
+          <button class="btn" id="copy" disabled>نسخ جميع البطاقات</button>
+          <button class="btn" id="print" disabled>طباعة</button>
         </div>
       </section>
 
@@ -80,20 +93,35 @@
   <div class="toast" id="toast"></div>
   <script src="app.js"></script>
 
-  <!-- هذا هو السكربت الجديد كله -->
   <script>
   const STAGES = { p1:'ابتدائي دُنيا', p2:'ابتدائي عُليا', m:'متوسط', h:'ثانوي' };
   const cardsWrap = document.getElementById('cards');
   const out = document.getElementById('out');
+  const copyBtn = document.getElementById('copy');
+  const printBtn = document.getElementById('print');
 
   function clean(t){ return String(t||'').replace(/\*\*?|##+|^\s*-\s*/gm,'').trim(); }
   function chip(t){ return `<span class="tag">${t}</span>`; }
-  function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
+  function toast(m){
+    const t=document.getElementById('toast'); t.textContent=m;
+    t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200);
+  }
 
-  async function fetchEthraa(subject, stage){
+  // هيكل عرض مؤقت (skeleton)
+  function showSkeleton(n=4){
+    cardsWrap.innerHTML = '';
+    for(let i=0;i<n;i++){
+      const sk = document.createElement('div');
+      sk.className='skeleton';
+      cardsWrap.appendChild(sk);
+    }
+  }
+
+  async function fetchEthraa(subject, stage, focus){
     const res = await fetch('/.netlify/functions/gemini-ethraa', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ subject, stage })
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ subject, stage, focus })
     });
     if(!res.ok) throw new Error('fn_error');
     return res.json();
@@ -102,28 +130,36 @@
   document.getElementById('gen').addEventListener('click', async ()=>{
     const s  = (document.getElementById('subj').value||'').trim();
     const st = document.getElementById('stage').value;
+    const fc = document.getElementById('focus').value;
     if(!s){ toast('اكتبي المادة أولًا'); return; }
 
-    cardsWrap.innerHTML = '<div class="muted">… جارِ الإثراء</div>'; out.style.display='none';
+    out.style.display='block';
+    showSkeleton(4);
+    copyBtn.disabled = true;
+    printBtn.disabled = true;
+
     try{
-      const { ok, cards=[] } = await fetchEthraa(s, st);
+      const { ok, cards=[] } = await fetchEthraa(s, st, fc);
       cardsWrap.innerHTML = '';
       (cards.length? cards : []).forEach(c=>{
         const title = clean(c.title)||'— بطاقة —';
         const brief = clean(c.brief)||'—';
         const idea  = clean(c.idea)||'—';
+        const source = c.source ? `<div class="muted" style="font-size:.82rem;margin-top:6px">مصدر/مرجع: <a href="${c.source}" target="_blank" rel="noopener" style="text-decoration:underline">${c.source}</a></div>` : '';
         const card = document.createElement('div');
         card.className = 'idea';
         card.innerHTML = `
           <h4>• ${title}</h4>
           <p class="muted"><strong>لماذا؟</strong> ${brief}</p>
           <p><strong>اقتراح:</strong> ${idea}</p>
+          ${source}
           <div class="tags">
             ${chip(s)} ${chip(STAGES[st]||st)} ${chip('إثراء')}
           </div>`;
         cardsWrap.appendChild(card);
       });
-      out.style.display='';
+      copyBtn.disabled = cards.length === 0;
+      printBtn.disabled = cards.length === 0;
       toast(ok ? 'تم ✨' : 'عُرض بديل');
     }catch(e){
       console.error(e);
@@ -131,12 +167,14 @@
     }
   });
 
-  document.getElementById('copy').addEventListener('click',()=>{
+  copyBtn.addEventListener('click',()=>{
     const text=[...document.querySelectorAll('.idea')].map(d=>d.innerText).join('\n\n— — —\n\n');
     navigator.clipboard.writeText(text).then(()=>toast('تم النسخ ✅'));
   });
-  document.getElementById('print').addEventListener('click',()=>window.print());
+  printBtn.addEventListener('click',()=>window.print());
   </script>
+
+  <!-- حماية الصفحة -->
   <script src="assets/js/require-auth.js"></script>
 </body>
 </html>
