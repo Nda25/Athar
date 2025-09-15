@@ -69,3 +69,9 @@ const PUBLIC_PATHS = new Set([
   // (اختياري) لو تحبين: بعد الدخول نرجّعه لنفس الصفحة التي حاول فتحها
   // نقدر نستخدم appState عند loginWithRedirect بأزرار الدخول عندك.
 })();
+// بعد ما تجيبي بيانات المستخدم من Auth0
+const email = user.email;           // من Auth0
+const name  = user.name || user.nickname || "";
+
+// خزّني/حدّثي المستخدم في Supabase
+supaEnsureUser({ email, full_name: name, role: "user" });
