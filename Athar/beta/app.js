@@ -110,6 +110,19 @@ async function initAuth0(){
         phone:  user?.phone_number || "",
         school: user?.school || ""
       };
+     // داخل initAuth0() بعد:
+store.user = {
+  name: user.name || "",
+  email: user.email || "",
+  phone: user.phone_number || "",
+  school: user.school || ""
+};
+store.auth = true;
+
+// >>> أضيفي هذا السطر:
+supaEnsureUser({ email: store.user.email, full_name: store.user.name || "", role: "user" });
+
+refreshNav();
       store.auth = true;
     } catch (err) {
       console.error("Auth0 getUser error:", err);
