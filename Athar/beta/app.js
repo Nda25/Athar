@@ -611,7 +611,6 @@ function wire(){
         `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
     });
   }
-});
 
 /* ====== بعد الدفع (Callback) ====== */
 /* مثال: redirect إلى index.html?status=success&plan=monthly */
