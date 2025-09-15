@@ -1,192 +1,157 @@
+<!-- masar.html — صفحة "مسار" لإنشاء الجداول -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>مســار — جدولي للترم</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet" />
+  <title>مَســار — جداول الحصص</title>
+  <meta name="color-scheme" content="dark light" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-  <meta name="color-scheme" content="dark light">
-
-  <!-- حفظ الجدول كصورة -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 
   <style>
-    /* أزرار أعرض شوي */
-    .btn{ min-width:170px }
-
-    /* حقول أكبر ومريحة */
-    .wizard{ display:grid; gap:16px }
-    .field{ margin:10px 0 }
-    .field label{ display:block; font-weight:700; margin:6px 0 }
-    .field input,.field select{
-      width:100%; padding:14px 12px; border-radius:14px; font-size:16px;
+    /* تحسينات خفيفة فوق style.css */
+    .controls .field{ margin:8px 0 }
+    .controls .field label{ display:block; font-weight:700; margin:6px 0 }
+    .controls .field input, .controls .field select{
+      width:100%; padding:10px; border-radius:12px;
       border:1px solid rgba(59,130,246,.35); background:#fff; color:#0f172a;
     }
-    .dark .field input,.dark .field select{
+    .dark .controls .field input, .dark .controls .field select{
       background:#0f172a; color:#f1f5f9; border-color:#3b82f6;
     }
+    .grid-4{ display:grid; gap:12px; grid-template-columns:repeat(4,1fr) }
+    .grid-3{ display:grid; gap:12px; grid-template-columns:repeat(3,1fr) }
+    .grid-2{ display:grid; gap:12px; grid-template-columns:repeat(2,1fr) }
+    @media(max-width:900px){ .grid-4{grid-template-columns:1fr 1fr} }
+    @media(max-width:640px){ .grid-4,.grid-3,.grid-2{grid-template-columns:1fr} }
 
-    /* أزرار أرقام الحصص */
-    .slots{ display:flex; flex-wrap:wrap; gap:8px }
-    .slot{
-      border:1px solid rgba(59,130,246,.28); background:var(--card);
-      padding:10px 14px; border-radius:999px; cursor:pointer; user-select:none;
-      font-weight:700; font-size:15px;
+    .table-wrap{ overflow:auto; }
+    table.schedule{ width:100%; border-collapse:separate; border-spacing:0; min-width:720px }
+    .schedule th,.schedule td{
+      border:1px solid rgba(59,130,246,.25); padding:8px; vertical-align:top; background:var(--card);
     }
-    .slot.active{
-      font-weight:800; border-color:#3b82f6; background:var(--sea-100);
-    }
-    .dark .slot.active{ background:#0f172a; border-color:#60a5fa }
+    .schedule th{ background:var(--sea-50); color:#0c4a6e; position:sticky; top:0; z-index:1 }
+    .dark .schedule th{ background:#0b1220; color:#c7d2fe }
+    .time-col{ width:120px; white-space:nowrap; text-align:center; font-weight:700 }
+    .day-col{ width:110px; text-align:center; font-weight:700 }
+    .cell{ min-height:62px; display:flex; flex-direction:column; gap:6px }
+    .cell input{ width:100%; padding:8px 10px; border-radius:10px; border:1px solid rgba(59,130,246,.3); background:#fff; color:#0f172a }
+    .dark .cell input{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6 }
+    .cell .mini{ display:flex; gap:6px }
+    .cell .mini input{ flex:1 }
 
-    /* إدخالات المادة/الفصل */
-    .inputs{ display:grid; gap:10px }
-    .row{
-      display:grid; grid-template-columns:120px 1fr 1fr; gap:10px; align-items:center;
-    }
-    .row input{ padding:12px 10px; border-radius:12px; font-size:15px;
-      border:1px solid rgba(59,130,246,.35);
-    }
-    .pill{
-      font-weight:800; text-align:center; padding:10px 12px; border-radius:999px;
-      border:1px solid rgba(59,130,246,.25); background:var(--card)
-    }
+    .row-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px }
+    .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:.9rem; color:var(--muted) }
+    .legend span{ display:inline-flex; align-items:center; gap:6px; }
+    .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
 
-    /* الجدول الناتج */
-    .tt-wrap{ overflow:auto; border:1px solid rgba(59,130,246,.22);
-      border-radius:16px; background:var(--card); box-shadow:var(--shadow) }
-    table.timetable{ width:100%; border-collapse:separate; border-spacing:0; min-width:720px }
-    .timetable th,.timetable td{
-      border-bottom:1px solid rgba(59,130,246,.18);
-      border-inline-end:1px solid rgba(59,130,246,.12);
-      padding:12px; text-align:center; vertical-align:middle
-    }
-    .timetable th{
-      position:sticky; top:0; background:linear-gradient(180deg,#ffffffcc,#ffffffaa);
-      backdrop-filter:blur(4px); font-weight:800; color:var(--sea-700)
-    }
-    .dark .timetable th{ background:linear-gradient(180deg,#0f172acc,#0f172aaa); color:#93c5fd }
-    .timetable td .sub{
-      display:inline-flex; gap:8px; align-items:center; justify-content:center;
-      padding:8px 10px; border-radius:999px; font-weight:800; border:1px solid rgba(0,0,0,.06);
-      box-shadow:0 6px 18px rgba(0,0,0,.12); white-space:nowrap
-    }
-    .timetable td .cls{ display:block; font-size:12px; opacity:.85; margin-top:4px }
-
-    .legend{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
-    .legend .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
-      border:1px solid rgba(59,130,246,.22); background:var(--card) }
-    .legend .dot{ width:12px; height:12px; border-radius:50% }
-
-    .quote{ margin-top:14px; text-align:center; color:var(--muted); font-weight:700;
-      border-top:1px dashed rgba(59,130,246,.25); padding-top:10px }
-
-    /* للطباعة */
     @media print{
-      .topbar,.wizard-card,.toast{ display:none!important }
-      header{ padding-bottom:0 }
-      .tt-wrap{ box-shadow:none; border:none }
-      .quote{ border:none; padding-top:0 }
+      .topbar,.controls,.row-actions,.toast{ display:none !important }
+      .card{ box-shadow:none; border:none }
+      body{ background:#fff }
     }
   </style>
 </head>
 <body>
+  <!-- خلفية -->
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط -->
+  <!-- الشريط العلوي -->
   <div class="topbar">
-    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
-    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
-    <div class="user"><a class="btn" href="programs.html">مساحة إبداعي</a></div>
+    <div class="left-actions">
+      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
+      <a class="btn" href="programs.html" title="مساحة إبداعي">مساحة إبداعي</a>
+    </div>
+    <div class="actions">
+      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+    </div>
+    <div class="user">
+      <span id="nav-auth" style="display:none; gap:10px"></span>
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+    </div>
   </div>
 
-  <!-- الهيدر -->
+  <!-- هيدر -->
   <header>
     <div class="hero">
-      <h1 class="logo">مســار</h1>
-      <div class="tag"><span class="dot"></span>رتّب حصصك… حتى يتضح المسـار.</div>
+      <h1 class="logo">مَســار</h1>
+      <div class="tag"><span class="dot"></span>جداول حصص مرنة — أنيقة — جاهزة للطباعة.</div>
     </div>
   </header>
 
-  <main>
-    <div class="container">
-      <!-- الساحر (خطوة بخطوة) -->
-      <section class="card wizard-card">
-        <h2 class="title" style="margin-top:0">مدخلات الجدول</h2>
+  <main class="container">
 
-        <div class="wizard">
-          <div class="field">
-            <label>اختر اليوم</label>
-            <select id="daySel">
-              <option value="الأحد">الأحد</option>
-              <option value="الإثنين">الإثنين</option>
-              <option value="الثلاثاء">الثلاثاء</option>
-              <option value="الأربعاء">الأربعاء</option>
-              <option value="الخميس">الخميس</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>عدد الحصص في الجدول (ثابت)</label>
-            <select id="totalSlots">
-              <option>5</option>
-              <option>6</option>
-              <option>7</option>
-              <option selected>8</option>
-            </select>
-            <div class="muted-mini">يُستخدم لرسم الجدول النهائي (مثلًا 8 أعمدة للحصص).</div>
-          </div>
-
-          <div class="field">
-            <label>عدد حصص هذا اليوم</label>
-            <select id="countToday">
-              <option value="0">لا يوجد</option>
-              <option value="1">حصة</option>
-              <option value="2">حصتان</option>
-              <option value="3">3 حصص</option>
-              <option value="4">4 حصص</option>
-              <option value="5">5 حصص</option>
-              <option value="6">6 حصص</option>
-              <option value="7">7 حصص</option>
-              <option value="8">8 حصص</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>اختاري أرقام الحصص لليوم</label>
-            <div id="slots" class="slots"></div>
-            <div class="muted-mini">اختاري مواقع الحصص من 1 إلى العدد الكلي.</div>
-          </div>
-
-          <div id="inputs" class="inputs"></div>
-
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
-            <button class="btn" id="saveDay">حفظ هذا اليوم</button>
-            <button class="btn" id="nextDay">اليوم التالي →</button>
-            <button class="btn primary" id="build" style="display:none">ولّد لي الجدول ✨</button>
-          </div>
+    <!-- الضوابط -->
+    <section class="card controls">
+      <h2 class="title" style="margin-top:0">إعداد الجدول</h2>
+      <div class="grid-4">
+        <div class="field">
+          <label>أيام الأسبوع</label>
+          <select id="days">
+            <option value="sun-thu" selected>الأحد → الخميس (5 أيام)</option>
+            <option value="sun-wed">الأحد → الأربعاء (4 أيام)</option>
+            <option value="custom">مخصّص…</option>
+          </select>
         </div>
-      </section>
-
-      <!-- الناتج -->
-      <section class="card" id="outCard" style="display:none">
-        <h2 class="title">جدول مســاري</h2>
-        <div class="tt-wrap" id="ttWrap">
-          <table class="timetable" id="tt"></table>
+        <div class="field">
+          <label>عدد الحصص/اليوم</label>
+          <select id="periods">
+            <option>5</option><option selected>6</option><option>7</option><option>8</option>
+          </select>
         </div>
-        <div class="legend" id="legend"></div>
-
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-          <button class="btn" id="printBtn">طباعة</button>
-          <button class="btn" id="pngBtn">حفظ كصورة PNG</button>
-          <button class="btn" id="editBtn">تعديل المدخلات</button>
+        <div class="field">
+          <label>بداية اليوم</label>
+          <input id="startTime" type="time" value="07:00">
         </div>
+        <div class="field">
+          <label>مدة الحصة (دقائق)</label>
+          <select id="slotMins"><option>35</option><option selected>45</option><option>50</option><option>55</option><option>60</option></select>
+        </div>
+      </div>
 
-        <div class="quote" id="quote"></div>
-      </section>
-    </div>
+      <div id="customDaysWrap" class="grid-2" style="display:none; margin-top:8px">
+        <div class="field">
+          <label>أدخل أسماء الأيام (مفصولة بفواصل)</label>
+          <input id="customDays" placeholder="الأحد, الإثنين, الثلاثاء, الأربعاء, الخميس">
+        </div>
+        <div class="field">
+          <label>إضافة فواصل/فراغات (اختياري)</label>
+          <input id="breakAfter" placeholder="مثال: بعد الحصة 2,5">
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn" id="rebuild">إعادة بناء الجدول</button>
+        <button class="btn" id="addRow">+ حصة إضافية</button>
+        <button class="btn" id="addCol">+ يوم إضافي</button>
+        <button class="btn" id="clearAll">مسح البيانات</button>
+
+        <!-- جديد -->
+        <button class="btn" id="toggleColors">تلوين المواد</button>
+        <button class="btn" id="exportCsv">تصدير CSV</button>
+        <button class="btn" id="savePng">حفظ كصورة PNG</button>
+
+        <button class="btn" id="print">طباعة</button>
+      </div>
+
+      <div class="legend">
+        <span><i></i> المربعات قابلة للتحرير: المادة، المعلم/ـة، القاعة</span>
+        <span><i style="background:#86efac"></i> يحفظ تلقائيًا لكل مستخدم</span>
+        <span><i style="background:#fde68a"></i> ألوان المواد تحفظ تلقائيًا</span>
+      </div>
+    </section>
+
+    <!-- الجدول -->
+    <section class="card">
+      <div class="table-wrap" id="tableWrap">
+        <table class="schedule" id="tbl">
+          <!-- يُبنى ديناميكيًا -->
+        </table>
+      </div>
+    </section>
+
   </main>
 
   <footer>
@@ -196,268 +161,353 @@
 
   <div class="toast" id="toast"></div>
 
-  <!-- لو عندك app.js (الثيم/التوست…) خليه هنا -->
-  <script src="app.js"></script>
+  <!-- سكربتات المشروع (الترتيب مهم) -->
+  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
+  <script defer src="assets/js/require-auth.js"></script>
+  <script defer src="app.js"></script>
+  <!-- حفظ كصورة -->
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <script>
-    // أدوات صغيرة
-    const $=(s,r=document)=>r.querySelector(s);
-    const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-    function toast(m){ let t=$('.toast'); if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);} t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500); }
+    // نعتمد على الأدوات الجاهزة من app.js: $, userDB, toast(), إلخ.
+    const tbl = document.getElementById('tbl');
+    const daysSel = $('#days');
+    const periodsSel = $('#periods');
+    const startTimeInp = $('#startTime');
+    const slotMinsSel = $('#slotMins');
+    const customWrap = $('#customDaysWrap');
+    const customDaysInp = $('#customDays');
+    const breakAfterInp = $('#breakAfter');
+    const tableWrap = document.getElementById('tableWrap');
 
-    // ثابت
-    const DAYS=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
-    const KEY='athar:masar2';
+    // مفتاح التخزين
+    const DB_KEY = 'masar';
 
-    // حالة
-    let state = load() || { totalSlots:8, data:{} }; // data[day][slot]={sub,cls}
+    // قيم افتراضية
+    const DEFAULT_DAYS = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
 
-    // عناصر
-    const daySel=$('#daySel');
-    const totalSel=$('#totalSlots');
-    const countSel=$('#countToday');
-    const slotsWrap=$('#slots');
-    const inputsWrap=$('#inputs');
-    const buildBtn=$('#build');
-    const nextBtn=$('#nextDay');
-
-    // ألوان للمواد
-    const PALETTE=[
-      ['#e0f2fe','#0284c7'],['#dbeafe','#1d4ed8'],['#e9d5ff','#7e22ce'],
-      ['#fee2e2','#b91c1c'],['#dcfce7','#166534'],['#fef9c3','#a16207'],
-      ['#ffe4e6','#be123c'],['#ede9fe','#6d28d9'],['#fce7f3','#be185d']
-    ];
-    function colorFor(s){
-      s=(s||'').trim();let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
-      const [bg,fg]=PALETTE[h%PALETTE.length];return{bg,fg};
+    /* ================== ألوان المواد (يحفظ لكل مستخدم) ================== */
+    function loadColorMap(){
+      const all = userDB.get(DB_KEY, {});
+      return all.__colors || {};
     }
-
-    const QUOTES=[
-      'هذا اليوم سيمضي كما مضى الأمس… ولن يبقى منه إلا الأثر. 🌿',
-      'خطة بسيطة اليوم… أثر عميق غدًا.',
-      'كل حصة فرصة لصناعة أثر جديد.'
-    ];
-
-    // تحميل/حفظ
-    function load(){ try{return JSON.parse(localStorage.getItem(KEY)||'null');}catch(_){return null;} }
-    function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
-
-    // رسم أزرار الحصص
-    function drawSlots(){
-      slotsWrap.innerHTML='';
-      const N=parseInt(totalSel.value,10)||8;
-      const d=daySel.value;
-      const dayData = state.data[d] || {};
-      for(let p=1;p<=N;p++){
-        const btn=document.createElement('div');
-        btn.className='slot' + (dayData[p] ? ' active' : '');
-        btn.textContent=p;
-        btn.dataset.p=p;
-        btn.addEventListener('click',()=>{
-          toggleSlot(p);
-          drawSlots();
-          drawInputs();
-          save();
-          updateCountTodayFromState();
-        });
-        slotsWrap.appendChild(btn);
-      }
+    function saveColorMap(map){
+      const all = userDB.get(DB_KEY, {});
+      all.__colors = map || {};
+      userDB.set(DB_KEY, all);
     }
-
-    // تفعيل/تعطيل فتحة
-    function toggleSlot(p){
-      const d=daySel.value;
-      if(!state.data[d]) state.data[d] = {};
-      if(state.data[d][p]) delete state.data[d][p];
-      else state.data[d][p]={sub:'',cls:''};
-      limitByCountToday();
+    function hashColor(name){
+      // HSL لطيف من نص المادة (خلفية فاتحة تقرأ كويس في الثيمين)
+      let h=0; for (let i=0;i<name.length;i++) h = (h*31 + name.charCodeAt(i)) % 360;
+      const s = 70, l = 88;
+      return `hsl(${h} ${s}% ${l}%)`;
     }
-
-    // احترام عدد حصص اليوم
-    function limitByCountToday(){
-      const d = daySel.value;
-      const want = parseInt(countSel.value,10) || 0;
-      if (want === 0) return;
-      const ps = Object.keys(state.data[d]||{}).map(n=>+n).sort((a,b)=>a-b);
-      if (ps.length > want) {
-        ps.slice(want).forEach(p => delete state.data[d][p]);
-      }
+    function getColorForSubject(subj){
+      if(!subj) return '';
+      const map = loadColorMap();
+      if(!map[subj]){ map[subj] = hashColor(subj); saveColorMap(map); }
+      return map[subj];
     }
-
-    // رسم حقول المادة/الفصل
-    function drawInputs(){
-      inputsWrap.innerHTML='';
-      const d=daySel.value;
-      const dayData=state.data[d]||{};
-      const ps=Object.keys(dayData).map(n=>+n).sort((a,b)=>a-b);
-
-      ps.forEach(p=>{
-        const row=document.createElement('div');
-        row.className='row';
-        row.innerHTML=`
-          <div class="pill">الحصة ${p}</div>
-          <input type="text" placeholder="المادة" data-p="\${p}" data-k="sub">
-          <input type="text" placeholder="الفصل/الشعبة" data-p="\${p}" data-k="cls">
-        `;
-        inputsWrap.appendChild(row);
-        // تعبئة محفوظ
-        row.querySelector('[data-k="sub"]').value = dayData[p]?.sub||'';
-        row.querySelector('[data-k="cls"]').value = dayData[p]?.cls||'';
+    function colorizeCells(){
+      const map = loadColorMap();
+      document.querySelectorAll('#tbl tbody tr td .cell').forEach(cell=>{
+        const subj = cell.querySelector('input[placeholder="المادة"]')?.value.trim();
+        cell.style.background = (window.__colorsOn && subj) ? (map[subj] || getColorForSubject(subj)) : '';
       });
-
-      // حفظ مباشر
-      inputsWrap.oninput = (e)=>{
-        const el=e.target; const p=+el.dataset.p; const k=el.dataset.k;
-        if(!p||!k) return;
-        if(!state.data[d]) state.data[d]={};
-        state.data[d][p]=state.data[d][p]||{sub:'',cls:''};
-        state.data[d][p][k]=el.value;
-        save();
-      };
     }
 
-    // تحديث عدد حصص اليوم من الحالة
-    function updateCountTodayFromState() {
-      const d = daySel.value;
-      const dayData = state.data[d] || {};
-      countSel.value = String(Object.keys(dayData).length || 0);
+    /* ================== أدوات الوقت ================== */
+    function timeToMinutes(t){
+      const [h,m] = t.split(':').map(Number);
+      return h*60+m;
+    }
+    function minutesToTime(m){
+      const h = Math.floor(m/60), mm = (m%60+'').padStart(2,'0');
+      return (h+'').padStart(2,'0')+':'+mm;
     }
 
-    // حفظ اليوم الحالي
-    $('#saveDay').addEventListener('click', ()=>{
-      state.totalSlots = parseInt(totalSel.value,10)||8;
-      limitByCountToday();
-      save();
-      drawSlots();
-      drawInputs();
-      toast('تم حفظ اليوم ✓');
-      updateNextBuildButtons();
-    });
+    function readDays(){
+      if(daysSel.value === 'sun-thu') return DEFAULT_DAYS.slice();
+      if(daysSel.value === 'sun-wed') return DEFAULT_DAYS.slice(0,4);
+      // custom
+      const raw = (customDaysInp.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      return raw.length ? raw : DEFAULT_DAYS.slice();
+    }
 
-    // اليوم التالي
-    nextBtn.addEventListener('click', ()=>{
-      const i = DAYS.indexOf(daySel.value);
-      if(i < DAYS.length-1){
-        daySel.value = DAYS[i+1];
-        afterDayChange();
+    function readBreaks(){
+      // مثال: "2,5" → بعد الحصة 2 و 5
+      const raw = (breakAfterInp.value||'').split(',').map(v=>parseInt(v.trim(),10)).filter(n=>!isNaN(n));
+      return new Set(raw);
+    }
+
+    function buildTimes(start, slot, count){
+      const out = [];
+      let m = timeToMinutes(start);
+      for(let i=0;i<count;i++){
+        const from = minutesToTime(m);
+        m += slot;
+        const to = minutesToTime(m);
+        out.push(from+'—'+to);
       }
-      updateNextBuildButtons();
-    });
-
-    // تغيّرات القيم
-    daySel.addEventListener('change', afterDayChange);
-    totalSel.addEventListener('change', ()=>{
-      state.totalSlots=parseInt(totalSel.value,10)||8; save(); drawSlots(); drawInputs();
-    });
-    countSel.addEventListener('change', ()=>{
-      limitByCountToday(); save(); drawSlots(); drawInputs();
-    });
-
-    function afterDayChange(){
-      totalSel.value = state.totalSlots || 8;
-      updateCountTodayFromState();
-      drawSlots();
-      drawInputs();
-      updateNextBuildButtons();
+      return out;
     }
 
-    function updateNextBuildButtons(){
-      if(daySel.value === 'الخميس'){
-        nextBtn.style.display='none';
-        buildBtn.style.display='';
-      }else{
-        nextBtn.style.display='';
-        buildBtn.style.display='none';
-      }
-    }
+    /* ================== بناء الجدول ================== */
+    function buildTable(){
+      const days = readDays();
+      const periods = parseInt(periodsSel.value,10)||6;
+      const startAt = startTimeInp.value || '07:00';
+      const slotMins = parseInt(slotMinsSel.value,10)||45;
+      const breaks = readBreaks();
 
-    // توليد الجدول النهائي
-    const tt=$('#tt'), legend=$('#legend'), outCard=$('#outCard');
-    $('#build').addEventListener('click', ()=>{
-      // رأس الجدول
-      const N=state.totalSlots||8;
-      tt.innerHTML='';
-      const thead=document.createElement('thead');
-      const hr=document.createElement('tr');
-      hr.innerHTML='<th>الحصة</th>'+DAYS.map(d=>`<th>${d}</th>`).join('');
-      thead.appendChild(hr); tt.appendChild(thead);
+      // حاول استرجاع بيانات قديمة لنفس الهيكل (بعدد أيام/حصص)
+      const saved = userDB.get(DB_KEY, {});
+      const times = buildTimes(startAt, slotMins, periods);
 
-      // جسم الجدول
-      const tbody=document.createElement('tbody');
-      for(let p=1;p<=N;p++){
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<th>الحصة ${p}</th>` + DAYS.map(d=>{
-          const item=state.data?.[d]?.[p];
-          if(!item || (!item.sub && !item.cls)) return '<td></td>';
-          const {bg,fg}=colorFor(item.sub||d);
-          return `<td>
-            <div class="sub" style="background:${bg};color:${fg}">${item.sub||'—'}</div>
-            ${item.cls? `<span class="cls">${item.cls}</span>`:''}
-          </td>`;
-        }).join('');
+      // بناء الرأس
+      const thead = document.createElement('thead');
+      const hr = document.createElement('tr');
+      const th0 = document.createElement('th');
+      th0.className='time-col';
+      th0.textContent = 'الوقت \\ اليوم';
+      hr.appendChild(th0);
+      days.forEach(d=>{
+        const th = document.createElement('th');
+        th.className='day-col';
+        th.textContent=d;
+        hr.appendChild(th);
+      });
+      thead.appendChild(hr);
+
+      // الجسم
+      const tbody = document.createElement('tbody');
+      for(let r=0;r<periods;r++){
+        const tr = document.createElement('tr');
+
+        const tdTime = document.createElement('td');
+        tdTime.className='time-col';
+        tdTime.textContent = times[r] || '';
+        tr.appendChild(tdTime);
+
+        for(let c=0;c<days.length;c++){
+          const key = `r${r}c${c}`;
+          const cellData = saved[key] || { subj:'', teacher:'', room:'' };
+
+          const td = document.createElement('td');
+          const wrap = document.createElement('div');
+          wrap.className='cell';
+
+          const inpSubj = document.createElement('input');
+          inpSubj.placeholder='المادة';
+          inpSubj.value = cellData.subj||'';
+
+          const mini = document.createElement('div');
+          mini.className='mini';
+
+          const inpTeacher = document.createElement('input');
+          inpTeacher.placeholder='المعلم/ـة';
+          inpTeacher.value = cellData.teacher||'';
+
+          const inpRoom = document.createElement('input');
+          inpRoom.placeholder='القاعة';
+          inpRoom.value = cellData.room||'';
+
+          mini.appendChild(inpTeacher);
+          mini.appendChild(inpRoom);
+
+          wrap.appendChild(inpSubj);
+          wrap.appendChild(mini);
+          td.appendChild(wrap);
+          tr.appendChild(td);
+
+          // حفظ تلقائي + تحديث اللون عند تغيير المادة
+          [inpSubj, inpTeacher, inpRoom].forEach(el=>{
+            el.addEventListener('input', ()=>{
+              const cur = userDB.get(DB_KEY, {});
+              cur[key] = {
+                subj: inpSubj.value,
+                teacher: inpTeacher.value,
+                room: inpRoom.value
+              };
+              userDB.set(DB_KEY, cur);
+              if(el === inpSubj) colorizeCells();
+            });
+          });
+        }
+
         tbody.appendChild(tr);
+
+        // صف فاصل (استراحة) إن كان محدد
+        if (breaks.has(r+1)){
+          const br = document.createElement('tr');
+          const bt = document.createElement('td');
+          bt.colSpan = days.length+1;
+          bt.style.background = 'rgba(59,130,246,.08)';
+          bt.style.textAlign = 'center';
+          bt.style.fontWeight = '700';
+          bt.textContent = 'استراحة';
+          br.appendChild(bt);
+          tbody.appendChild(br);
+        }
       }
-      tt.appendChild(tbody);
 
-      // وسيلة الإيضاح
-      legend.innerHTML='';
-      const subjects=new Set();
-      DAYS.forEach(d=>{
-        Object.values(state.data[d]||{}).forEach(v=>{ if(v?.sub) subjects.add(v.sub.trim()); });
-      });
-      Array.from(subjects).slice(0,15).forEach(s=>{
-        const {bg,fg}=colorFor(s);
-        const chip=document.createElement('div'); chip.className='chip';
-        chip.innerHTML=`<span class="dot" style="background:${bg}"></span><span style="color:${fg};font-weight:800">${s}</span>`;
-        legend.appendChild(chip);
-      });
+      // استبدال المحتوى
+      tbl.innerHTML='';
+      tbl.appendChild(thead);
+      tbl.appendChild(tbody);
 
-      // عبارة تحفيزية
-      $('#quote').textContent = QUOTES[Math.floor(Math.random()*QUOTES.length)];
-      outCard.style.display='';
-      window.scrollTo({top:outCard.offsetTop-10,behavior:'smooth'});
-      toast('تم توليد الجدول ✨');
+      // خزّن إعدادات البنية حتى نعيد استخدامها
+      const meta = userDB.get(DB_KEY, {});
+      meta.__meta = {
+        days, periods, startAt, slotMins,
+        breaks:[...readBreaks()],
+        colorsOn: !!window.__colorsOn
+      };
+      userDB.set(DB_KEY, meta);
+
+      // تلوين أولي (لو مفعّل)
+      colorizeCells();
+    }
+
+    /* ================== CSV ================== */
+    function tableToCsv(){
+      const meta = userDB.get(DB_KEY, {});
+      const days = (meta.__meta?.days) || ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
+      const periods = meta.__meta?.periods || (parseInt(periodsSel.value,10) || 6);
+      const startAt = meta.__meta?.startAt || (startTimeInp.value || '07:00');
+      const slotMins = meta.__meta?.slotMins || (parseInt(slotMinsSel.value,10) || 45);
+
+      const times = (function(){
+        const out=[]; let m=timeToMinutes(startAt);
+        for(let i=0;i<periods;i++){ const from=minutesToTime(m); m+=slotMins; const to=minutesToTime(m); out.push(`${from}-${to}`); }
+        return out;
+      })();
+
+      const rows = [];
+      rows.push(['الزمن','اليوم','المادة','المعلم/ـة','القاعة']);
+      for(let r=0;r<periods;r++){
+        for(let c=0;c<days.length;c++){
+          const key = `r${r}c${c}`;
+          const cellData = (meta[key]) || {subj:'', teacher:'', room:''};
+          rows.push([
+            times[r] || '',
+            days[c] || '',
+            (cellData.subj||''),
+            (cellData.teacher||''),
+            (cellData.room||'')
+          ]);
+        }
+      }
+      const bom = '\uFEFF';
+      const csv = rows.map(r => r.map(x => `"${(x||'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+      return bom + csv;
+    }
+    function downloadCsv(){
+      const csv = tableToCsv();
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      a.href = url;
+      a.download = `masar-schedule-${stamp}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    /* ================== حفظ كصورة ================== */
+    async function saveTableAsPng(){
+      try{
+        const node = tableWrap; // يشمل الترويسة والتظليل
+        const canvas = await html2canvas(node, {
+          backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') || null,
+          scale: window.devicePixelRatio || 2,
+          useCORS: true
+        });
+        const dataURL = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+        a.href = dataURL;
+        a.download = `masar-schedule-${stamp}.png`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }catch(e){
+        console.error(e);
+        if(typeof toast === 'function') toast('تعذّر حفظ الصورة.');
+      }
+    }
+
+    /* ================== أزرار ================== */
+    $('#rebuild').addEventListener('click', buildTable);
+    $('#addRow').addEventListener('click', ()=>{
+      periodsSel.value = (parseInt(periodsSel.value,10)+1).toString();
+      buildTable();
+    });
+    $('#addCol').addEventListener('click', ()=>{
+      if(daysSel.value !== 'custom'){
+        daysSel.value = 'custom';
+        customWrap.style.display='';
+        customDaysInp.value = DEFAULT_DAYS.join(', ');
+      }
+      const d = readDays(); d.push('يوم جديد');
+      customDaysInp.value = d.join(', ');
+      buildTable();
+    });
+    $('#clearAll').addEventListener('click', ()=>{
+      if(!confirm('مسح كل بيانات الجدول؟')) return;
+      userDB.remove(DB_KEY);
+      buildTable();
+      if(typeof toast === 'function') toast('تم المسح ✓');
+    });
+    $('#print').addEventListener('click', ()=> window.print());
+
+    // تبديل وضع الأيام
+    daysSel.addEventListener('change', ()=>{
+      customWrap.style.display = (daysSel.value==='custom') ? '' : 'none';
     });
 
-    // حفظ كصورة
-    $('#pngBtn').addEventListener('click', async ()=>{
-      const wrap=$('#ttWrap');
-      if(!window.html2canvas){ toast('مكتبة الصورة غير محمّلة.'); return; }
-      const canvas=await html2canvas(wrap,{scale:2,useCORS:true,backgroundColor:null});
-      const url=canvas.toDataURL('image/png'); const a=document.createElement('a');
-      a.href=url; a.download='masar.png'; a.click();
+    // تلوين المواد (تفعيل/إيقاف) + حفظ الحالة
+    document.getElementById('toggleColors').addEventListener('click', ()=>{
+      window.__colorsOn = !window.__colorsOn;
+      document.getElementById('toggleColors').textContent = window.__colorsOn ? 'إيقاف التلوين' : 'تلوين المواد';
+      const meta = userDB.get(DB_KEY, {}); meta.__meta = meta.__meta || {}; meta.__meta.colorsOn = !!window.__colorsOn; userDB.set(DB_KEY, meta);
+      colorizeCells();
     });
 
-    // طباعة
-    $('#printBtn').addEventListener('click', ()=>window.print());
+    // تصدير CSV
+    document.getElementById('exportCsv').addEventListener('click', downloadCsv);
 
-    // تعديل
-    $('#editBtn').addEventListener('click', ()=>{
-      document.querySelector('.wizard-card').scrollIntoView({behavior:'smooth',block:'start'});
+    // حفظ الصورة
+    document.getElementById('savePng').addEventListener('click', saveTableAsPng);
+
+    // تهيئة أول مرة: حاول استعادة الهيكل والقيم + حالة التلوين
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const saved = userDB.get(DB_KEY, {});
+      const m = saved.__meta;
+      if(m){
+        // أعد ملء الضوابط
+        startTimeInp.value = m.startAt || '07:00';
+        slotMinsSel.value = (m.slotMins||45).toString();
+        periodsSel.value = (m.periods||6).toString();
+
+        // أيام
+        if(m.days && m.days.length){
+          daysSel.value = 'custom';
+          customWrap.style.display='';
+          customDaysInp.value = m.days.join(', ');
+        }
+        if(m.breaks && m.breaks.length){
+          breakAfterInp.value = m.breaks.join(', ');
+        }
+        window.__colorsOn = (m.colorsOn !== undefined) ? !!m.colorsOn : true;
+      }else{
+        window.__colorsOn = true;
+      }
+      // نص زر التلوين حسب الحالة
+      document.getElementById('toggleColors').textContent = window.__colorsOn ? 'إيقاف التلوين' : 'تلوين المواد';
+
+      buildTable(); // سيستدعي colorizeCells() تلقائيًا
     });
-
-    // تهيئة أولية
-    (function init(){
-      const firstEmpty = DAYS.find(d=>!state.data[d] || Object.keys(state.data[d]).length===0) || 'الأحد';
-      daySel.value = firstEmpty;
-      totalSel.value = state.totalSlots || 8;
-      updateCountTodayFromState();
-      drawSlots();
-      drawInputs();
-      updateNextBuildButtons();
-    })();
   </script>
-
-  <!-- حماية الصفحات (سيحول غير الموثّقين للصفحة العامة بحسب إعداداتك) -->
-<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
-<script defer src="assets/js/require-auth.js"></script>
-<script defer src="app.js"></script>
-  script>
-  document.getElementById('gen')?.addEventListener('click', async () => {
-    await supaLogUsage('masar');
-  });
-</script>
 </body>
 </html>
