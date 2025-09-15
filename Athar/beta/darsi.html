@@ -675,11 +675,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 </script>
 
-  <<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
-<script defer src="assets/js/require-auth.js"></script> <!-- الملف المصحح -->
+<script defer src="assets/js/require-auth.js"></script>
 <script defer src="app.js"></script>
+  <script>
+document.addEventListener('DOMContentLoaded', ()=>{
+  try{
+    if (typeof hasAccess === 'function' && !hasAccess()) {
+      location.href = 'pricing.html';
+    }
+  }catch(_){}
+});
+</script>
   <!-- darsi.html (درسي) -->
 <script>
 document.getElementById('gen')?.addEventListener('click', async () => {
