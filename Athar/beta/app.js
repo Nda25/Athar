@@ -117,11 +117,11 @@ async function initAuth0(){
           email: u.email,
           full_name: u.name || u.nickname || null,
           role: 'user',
-          subscription_type: (u['https://athar.app/app_metadata']?.plan) || null
+          subscription_type: (u['https://n-athar.co/app_metadata']?.plan) || null
         });
       }
 
-      const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
+      const meta  = u?.['https://n-athar.co/app_metadata'] || u?.app_metadata || {};
       const active = !!meta.sub_active;
       const badge = document.getElementById('sub-state');
       if (badge){
@@ -266,9 +266,9 @@ async function handleRegister(e){
   await auth0Client.loginWithRedirect({
     authorizationParams: {
       screen_hint: 'signup',
-      redirect_uri: window.location.origin + '/pay'
+      redirect_uri: window.location.origin + '/pricing.html'
     },
-    appState: { returnTo: '/pay', coupon: promo || null }
+    appState: { returnTo: 'pricing.html', coupon: promo || null }
   });
 }
 
@@ -288,20 +288,20 @@ async function subscribe(planKey){
   const authed = await auth0Client.isAuthenticated();
   if (!authed) {
     return auth0Client.loginWithRedirect({
-      authorizationParams: { screen_hint:'signup', redirect_uri: location.origin + '/pay' },
-      appState: { returnTo: '/pay' }
+      authorizationParams: { screen_hint:'signup', redirect_uri: location.origin + 'pricing.html' },
+      appState: { returnTo: 'pricing.html' }
     });
   }
 
   // 2) نقرأ حالة الاشتراك من الكليم
   try { await auth0Client.checkSession(); } catch (e) {}
   const u = await auth0Client.getUser();
-  const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
+  const meta = u?.['https://n-athar.co/app_metadata'] || u?.app_metadata || {};
   const subscribed = !!meta.sub_active;
 
   if (subscribed) {
     // مستخدم مشترك: ودّيه لصفحة الحساب/الفواتير
-    return location.assign('/pay');
+    return location.assign('pricing.html');
   }
 
   // 3) غير مشترك: وجّهيه للخطط/مودال الكوبون
@@ -316,7 +316,7 @@ async function subscribe(planKey){
 async function isSubActiveAsync(){
   try { await auth0Client.checkSession(); } catch (e) {}
   const u = await auth0Client.getUser();
-  const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
+  const meta = u?.['https://n-athar.co/app_metadata'] || u?.app_metadata || {};
   return !!meta.sub_active;
 }
 
