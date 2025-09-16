@@ -59,54 +59,64 @@ async function initAuth0(){
   // 3) تحديث الجلسة لتحميل الـ claims
   try { await auth0Client.checkSession(); } catch {}
 
-  // 4) ربط الأزرار (هنا فقط)
-  const loginBtn    = document.getElementById('loginBtn');
-  const registerBtn = document.getElementById('registerBtn');
-  const logoutBtn   = document.getElementById('logout');
+// 4) ربط الأزرار (دخول/تسجيل/خروج)
+const loginBtn    = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+const logoutBtn   = document.getElementById('logout');
 
-  if (loginBtn){
-    loginBtn.type = 'button';
-    loginBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      console.log('[Auth0] login click');
-      try {
-        await auth0Client.loginWithPopup({ authorizationParams: { screen_hint: 'login' } });
-        await auth0Client.checkSession();
-
-        const u = await auth0Client.getUser();
-        if (u && typeof supaEnsureUser === 'function') {
-          await supaEnsureUser({ email: u.email, full_name: u.name || u.nickname || null });
-        }
-
-        location.reload();
-      } catch (err) {
-        console.error('[Auth0] login popup error:', err);
-        alert('خطأ في تسجيل الدخول: ' + (err?.message || err));
-      }
+if (loginBtn){
+  loginBtn.type = 'button';
+  loginBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    console.log('[Auth0] login click');
+    await auth0Client.loginWithPopup({
+      authorizationParams: { screen_hint: 'login' }
     });
-  }
+    // بعد نجاح البوب-أب: حمّلي السيشن واحفظي في Supabase
+    await auth0Client.checkSession();
+    const u = await auth0Client.getUser();
+    if (u && typeof supaEnsureUser === 'function') {
+      await supaEnsureUser({
+        email: u.email,
+        full_name: u.name || u.nickname || null
+      });
+    }
+    location.reload();
+  });
+}
 
-  if (registerBtn){
-    registerBtn.type = 'button';
-    registerBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      console.log('[Auth0] register click');
-      try {
-        await auth0Client.loginWithPopup({ authorizationParams: { screen_hint: 'signup' } });
-        await auth0Client.checkSession();
-
-        const u = await auth0Client.getUser();
-        if (u && typeof supaEnsureUser === 'function') {
-          await supaEnsureUser({ email: u.email, full_name: u.name || u.nickname || null });
-        }
-
-        location.reload();
-      } catch (err) {
-        console.error('[Auth0] signup popup error:', err);
-        alert('خطأ في إنشاء الحساب: ' + (err?.message || err));
-      }
+if (registerBtn){
+  registerBtn.type = 'button';
+  registerBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    console.log('[Auth0] register click');
+    await auth0Client.loginWithPopup({
+      authorizationParams: { screen_hint: 'signup' }
     });
-  }
+    await auth0Client.checkSession();
+    const u = await auth0Client.getUser();
+    if (u && typeof supaEnsureUser === 'function') {
+      await supaEnsureUser({
+        email: u.email,
+        full_name: u.name || u.nickname || null
+      });
+    }
+    location.reload();
+  });
+}
+
+if (logoutBtn){
+  logoutBtn.type = 'button';
+  logoutBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
+    } catch (err) {
+      console.warn('[Auth0] logout error:', err);
+      location.href = '/';
+    }
+  });
+}
 
   if (logoutBtn){
     logoutBtn.type = 'button';
@@ -349,22 +359,6 @@ function wire(){
   if (del && typeof deleteAccount === 'function') {
     del.addEventListener('click', deleteAccount);
   }
-
-  // 5) تحديث شارة الحالة + حفظ/تحديث المستخدم في Supabase
-  (async () => {
-    try {
-      const u = await auth0Client.getUser();
-
-      // 5.a) خزّني/حدّثي المستخدم في Supabase مرّة بعد تسجيل الدخول
-      if (u && typeof supaEnsureUser === 'function') {
-        await supaEnsureUser({
-          email: u.email,
-          full_name: u.name || u.nickname || null,
-          role: 'user',
-          subscription_type: (u['https://athar.app/app_metadata']?.plan) || null
-        });
-      }
-
       // 5.b) شارة الحالة (من app_metadata)
       const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
       const active = !!meta.sub_active;
