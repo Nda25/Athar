@@ -401,17 +401,32 @@ function bindThemeToggle(){
     toast(dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح');
   });
 }
-
-/* ===== تشغيل بعد تحميل الصفحة ===== */
+// يحمّل Auth0 SDK لو كان غير موجود
+function ensureAuth0SDK() {
+  return new Promise((resolve, reject) => {
+    if (typeof window.createAuth0Client === 'function') return resolve();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('[Auth0] failed to load SDK'));
+    document.head.appendChild(s);
+  });
+}
+// تشغيل بعد تحميل الصفحة (ويضمن تحميل Auth0 SDK أولاً)
 document.addEventListener('DOMContentLoaded', async () => {
-  // اربطي واجهة المستخدم
-  if (typeof bindThemeToggle === 'function') bindThemeToggle();
-  if (typeof wire === 'function') wire();
+  try {
+    if (typeof bindThemeToggle === 'function') bindThemeToggle();
+    if (typeof wire === 'function') wire();
 
-  // شغّلي Auth0 إذا الـ SDK موجود
-  if (typeof window.createAuth0Client === 'function' && typeof window.initAuth0 === 'function') {
-    await initAuth0();
-  } else {
-    console.error('[Auth0] SDK or initAuth0 missing');
+    await ensureAuth0SDK(); // هنا الضمان
+
+    if (typeof window.initAuth0 === 'function') {
+      await initAuth0();
+    } else {
+      console.error('[Auth0] initAuth0 missing');
+    }
+  } catch (e) {
+    console.error(e.message || e);
   }
 });
