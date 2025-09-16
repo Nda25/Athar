@@ -59,44 +59,6 @@
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-/* ===== Topbar layout override (الجديد) ===== */
-.topbar {
-  display: flex;
-  justify-content: space-between; /* يمين — وسط — يسار */
-  align-items: center;
-  padding: 10px 20px;
-  gap: 20px;
-}
-
-/* يسار: دخول + تسجيل فوق بعض */
-.left-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* وسط: زر 🌓 بالمنتصف */
-.center-actions {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-/* يمين: الخطط + مساحة إبداعي */
-.right-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-/* موبايل */
-@media (max-width: 640px){
-  .topbar{ flex-wrap: wrap; }
-  .left-actions{ order:1; flex:1 1 100%; align-items: flex-start; }
-  .center-actions{ order:2; flex:1 1 100%; justify-content: center; margin-top: 6px; }
-  .right-actions{ order:3; flex:1 1 100%; justify-content: flex-end; margin-top: 6px; }
-}
-  
   <!-- الهيدر / الهيرو -->
   <header>
     <div class="hero">
