@@ -139,6 +139,7 @@ if (logoutBtn){
     if (u && typeof supaEnsureUser === 'function') {
       await supaEnsureUser({ email: u.email, full_name: u.name || u.nickname || null });
     }
+// 5.b) شارة الحالة (من app_metadata)
     const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
     const active = !!meta.sub_active;
     const badge = document.getElementById('sub-state');
@@ -152,6 +153,21 @@ if (logoutBtn){
   } catch (err) {
     console.error('[Auth0→Supabase] sync error:', err);
   }
+})(); // ← // 5.b) شارة الحالة (من app_metadata)
+    const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
+    const active = !!meta.sub_active;
+    const badge = document.getElementById('sub-state');
+    if (badge){
+      badge.style.display    = 'inline-block';
+      badge.textContent      = active ? 'نشط' : 'غير مفعل';
+      badge.style.background = active ? '#dcfce7' : '#fee2e2';
+      badge.style.color      = active ? '#166534' : '#991b1b';
+      badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+    }
+  } catch (err) {
+    console.error('[Auth0→Supabase] sync error:', err);
+  }
+})(); 
 
   console.log('[Auth0] initAuth0: done');
 }
