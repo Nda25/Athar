@@ -29,6 +29,21 @@ const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   else { root.classList.remove('dark'); }
 })();
 
+
+// تحميل مكتبة Auth0 ديناميكيًا إذا ما كانت موجودة
+function ensureAuth0SDK() {
+  return new Promise((resolve, reject) => {
+    if (typeof window.createAuth0Client === "function") {
+      return resolve(); // جاهزة
+    }
+    const s = document.createElement("script");
+    s.src = "https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js";
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("فشل تحميل Auth0 SDK"));
+    document.head.appendChild(s);
+  });
+}
+   
 /* ==== Auth0 Integration (Popup) ==== */
 async function initAuth0(){
   console.log('[Auth0] initAuth0: start');
@@ -414,19 +429,21 @@ function ensureAuth0SDK() {
   });
 }
 // تشغيل بعد تحميل الصفحة (ويضمن تحميل Auth0 SDK أولاً)
+/* ===== تشغيل بعد تحميل الصفحة ===== */
 document.addEventListener('DOMContentLoaded', async () => {
+  // اربطي واجهة المستخدم
+  if (typeof bindThemeToggle === 'function') bindThemeToggle();
+  if (typeof wire === 'function') wire();
+
+  // تأكدي أن Auth0 SDK محمّل
   try {
-    if (typeof bindThemeToggle === 'function') bindThemeToggle();
-    if (typeof wire === 'function') wire();
-
-    await ensureAuth0SDK(); // هنا الضمان
-
+    await ensureAuth0SDK();
     if (typeof window.initAuth0 === 'function') {
       await initAuth0();
     } else {
-      console.error('[Auth0] initAuth0 missing');
+      console.error('[Auth0] initAuth0 function مفقودة');
     }
-  } catch (e) {
-    console.error(e.message || e);
+  } catch (err) {
+    console.error('[Auth0] فشل تحميل SDK:', err);
   }
 });
