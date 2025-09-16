@@ -268,7 +268,7 @@ async function handleRegister(e){
       screen_hint: 'signup',
       redirect_uri: window.location.origin + '/pricing.html'
     },
-    appState: { returnTo: 'pricing.html', coupon: promo || null }
+    appState: { returnTo: '/pricing.html', coupon: promo || null }
   });
 }
 
@@ -277,7 +277,7 @@ async function handleRegister(e){
 async function handleLogin(e){
   e?.preventDefault?.();
   await auth0Client.loginWithRedirect({
-    authorizationParams: { screen_hint: 'signup', redirect_uri: window.location.origin },
+    authorizationParams: { screen_hint: 'login', redirect_uri: window.location.origin },
 appState: { returnTo: '/' }
   });
 }
@@ -288,8 +288,9 @@ async function subscribe(planKey){
   const authed = await auth0Client.isAuthenticated();
   if (!authed) {
     return auth0Client.loginWithRedirect({
-      authorizationParams: { screen_hint:'signup', redirect_uri: location.origin + 'pricing.html' },
-      appState: { returnTo: 'pricing.html' }
+      // قبل: location.origin + 'pricing.html'
+authorizationParams: { screen_hint:'signup', redirect_uri: location.origin + '/pricing.html' },
+appState: { returnTo: '/pricing.html' }
     });
   }
 
@@ -301,7 +302,7 @@ async function subscribe(planKey){
 
   if (subscribed) {
     // مستخدم مشترك: ودّيه لصفحة الحساب/الفواتير
-    return location.assign('pricing.html');
+    return location.assign('/pricing.html');
   }
 
   // 3) غير مشترك: وجّهيه للخطط/مودال الكوبون
