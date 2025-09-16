@@ -133,14 +133,19 @@ if (logoutBtn){
     });
   }
 
- // 5) تحديث شارة الحالة + حفظ/تحديث المستخدم في Supabase
+// 5) حفظ المستخدم + شارة الحالة (مرة واحدة هنا)
 (async () => {
   try {
+    // 5.a) احضري المستخدم من Auth0
     const u = await auth0Client.getUser();
+
+    // خزّني/حدّثي المستخدم في Supabase
     if (u && typeof supaEnsureUser === 'function') {
       await supaEnsureUser({
         email: u.email,
-        full_name: u.name || u.nickname || null
+        full_name: u.name || u.nickname || null,
+        role: 'user',
+        subscription_type: (u['https://athar.app/app_metadata']?.plan) || null
       });
     }
 
@@ -158,22 +163,7 @@ if (logoutBtn){
   } catch (err) {
     console.error('[Auth0→Supabase] sync error:', err);
   }
-})(); // ← تأكدي من هذا القوس والنقطتين
-   
-    const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
-    const active = !!meta.sub_active;
-    const badge = document.getElementById('sub-state');
-    if (badge){
-      badge.style.display    = 'inline-block';
-      badge.textContent      = active ? 'نشط' : 'غير مفعل';
-      badge.style.background = active ? '#dcfce7' : '#fee2e2';
-      badge.style.color      = active ? '#166534' : '#991b1b';
-      badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
-    }
-  } catch (err) {
-    console.error('[Auth0→Supabase] sync error:', err);
-  }
-})(); 
+})();
 
   console.log('[Auth0] initAuth0: done');
 }
