@@ -262,39 +262,36 @@
     <!-- <p class="foot-name">مدرسة .........</p> -->
   </footer>
 
-<!-- Auth0 SDK أولاً وبدون defer -->
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-
 <!-- Supabase (عادي defer) -->
 <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
 <script src="assets/js/supabase-client.js?v=1" defer></script>
 
-<!-- ملف مشروعك في الأخير -->
-<script src="app.js?v=4" defer></script>
-
-<!-- لودر صغير لتشغيل wire() ثم initAuth0() بعد التأكد من جاهزية SDK -->
+<!-- لودر يضمن تحميل Auth0 SDK ثم تشغيل app.js -->
 <script>
-  function whenAuth0Ready(cb, tries = 20) {
-    if (typeof window.createAuth0Client === 'function') {
-      console.log('[Auth0] SDK ready');
-      return cb();
-    }
-    if (tries === 0) {
-      console.error('[Auth0] SDK not found after retries');
-      return;
-    }
-    setTimeout(() => whenAuth0Ready(cb, tries - 1), 200);
+  function loadAuth0SDK(cb){
+    if (typeof window.createAuth0Client === 'function') return cb();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
+    s.onload = cb;
+    s.onerror = () => console.error('[Auth0] failed to load SDK script');
+    document.head.appendChild(s);
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    if (typeof window.wire === 'function') wire();   // يربط أزرار الخطط/النماذج
+    // اربطي أحداث الواجهة العامة
+    if (typeof window.bindThemeToggle === 'function') bindThemeToggle();
+    if (typeof window.wire === 'function') wire();
 
-    whenAuth0Ready(async () => {                     // يبدأ Auth0 بعد جاهزية الـSDK
-      try { await initAuth0(); }
-      catch (e) { console.error('initAuth0 failed:', e); }
+    // حمّلي Auth0 SDK ثم شغّلي initAuth0
+    loadAuth0SDK(async () => {
+      if (typeof window.initAuth0 === 'function') {
+        await initAuth0();
+      } else {
+        console.error('[Auth0] initAuth0() not found');
+      }
     });
 
-    // زر "نسيت كلمة المرور" (اختياري)
+    // زر نسيان كلمة المرور (إن وُجد)
     const forgotLink = document.getElementById('forgotPasswordLink');
     if (forgotLink) {
       forgotLink.addEventListener('click', (e) => {
@@ -308,7 +305,8 @@
     }
   });
 </script>
-<!-- app.js في الأخير -->
+
+<!-- ملف مشروعك في الأخير (defer عادي) -->
 <script src="app.js?v=4" defer></script>
 </body>
 </html>
