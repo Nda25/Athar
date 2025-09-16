@@ -309,7 +309,7 @@ appState: { returnTo: '/pricing.html' }
   if (typeof openModal === 'function' && document.querySelector('#modal-coupon')) {
     openModal('#modal-coupon');
   } else {
-    location.assign('/plans');
+    location.assign('/pricing.html');
   }
 }
 
