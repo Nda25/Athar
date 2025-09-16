@@ -321,48 +321,21 @@ async function isSubActiveAsync(){
 }
 
 function wire(){
-  // 1) نماذج الدخول/التسجيل (لو عندك فورمات تقليدية)
+  // 1) نماذج تقليدية (إن وجدت)
   const regForm   = $('#register-form'); if (regForm)   regForm.addEventListener('submit', handleRegister);
   const loginForm = $('#login-form');    if (loginForm) loginForm.addEventListener('submit', handleLogin);
 
-  // 2) أزرار اختيار الباقات (ما تعتمد على auth0Client مباشرة)
+  // 2) أزرار اختيار الباقات
   $$('#choose-plan [data-plan]').forEach(btn=>{
     btn.addEventListener('click', ()=> subscribe(btn.getAttribute('data-plan')));
   });
 
-  // 3) حذف الحساب (لو عندك دالة خادمية جاهزة له)
+  // 3) حذف الحساب (لو فيه دالة جاهزة)
   const del = $('#delete');
   if (del && typeof deleteAccount === 'function') {
     del.addEventListener('click', deleteAccount);
   }
-
-  // ⚠️ لا تضيفي هنا أي try/catch أو IIFE تستدعي auth0Client.getUser()
-  // لأن auth0Client يتم تهيئته داخل initAuth0() فقط.
 }
-
-  // 4) حذف الحساب (إن عندك دالة خادمية له)
-  const del = $('#delete');
-  if (del && typeof deleteAccount === 'function') {
-    del.addEventListener('click', deleteAccount);
-  }
-      // 5.b) شارة الحالة (من app_metadata)
-      const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
-      const active = !!meta.sub_active;
-      const badge = document.getElementById('sub-state');
-      if (badge){
-        badge.style.display    = 'inline-block';
-        badge.textContent      = active ? 'نشط' : 'غير مفعل';
-        badge.style.background = active ? '#dcfce7' : '#fee2e2';
-        badge.style.color      = active ? '#166534' : '#991b1b';
-        badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
-      }
-    } catch (err) {
-      console.error('[Auth0→Supabase] sync error:', err);
-    }
-  })();
-
-  console.log('[Auth0] initAuth0: done');
-} // 👈 نهاية دالة initAuth0
    
 /* ==== النوافذ ==== */
 function openModal(id){ $(id).classList.add('show'); }
@@ -381,9 +354,7 @@ async function logout(e){
   e?.preventDefault?.();
   closeAnyOpenModal();
   try {
-    await auth0Client.logout({
-      logoutParams: { returnTo: window.location.origin }
-    });
+    await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
   } catch (err) {
     console.warn('logout failed:', err);
     location.href = '/';
@@ -408,7 +379,7 @@ async function deleteAccount(){
   }
 }
 
-/* ==== توست (نسخة واحدة فقط) ==== */
+/* ==== توست ==== */
 function toast(msg){
   let t = $('.toast'); 
   if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
@@ -419,7 +390,6 @@ function toast(msg){
 
 /* ===== ربط كل شيء بعد تحميل الصفحة ===== */
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1) زر الثيم
   (function bindThemeToggle(){
     const root = document.documentElement;
     const btn  = document.getElementById('themeToggle');
@@ -432,17 +402,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   })();
 
-  // 2) اربطي باقي الأحداث
   wire();
 
-  // 3) Auth0 init إذا المكتبة جاهزة
   if (typeof window.createAuth0Client === 'function') {
     await initAuth0();
   } else {
     console.error('[Auth0] SDK not found');
   }
 
-  // 4) زر "نسيت كلمة المرور"
   const forgotLink = document.getElementById('forgotPasswordLink');
   if (forgotLink) {
     forgotLink.addEventListener('click', (e) => {
