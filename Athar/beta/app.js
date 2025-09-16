@@ -57,7 +57,7 @@ async function initAuth0(){
   }
 
   // 3) تحديث الجلسة لتحميل الـ claims
-  try { await auth0Client.checkSession(); } catch {}
+  try { await auth0Client.checkSession(); } catch (e) {}
 
 // 4) ربط الأزرار (دخول/تسجيل/خروج)
 const loginBtn    = document.getElementById('loginBtn');
@@ -309,7 +309,7 @@ async function subscribe(planKey){
   }
 
   // 2) نقرأ حالة الاشتراك من الكليم
-  try { await auth0Client.checkSession(); } catch {}
+  try { await auth0Client.checkSession(); } catch (e) {}
   const u = await auth0Client.getUser();
   const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
   const subscribed = !!meta.sub_active;
@@ -329,7 +329,7 @@ async function subscribe(planKey){
 
 /* ==== ربط الأحداث (نسخة Auth0) ==== */
 async function isSubActiveAsync(){
-  try { await auth0Client.checkSession(); } catch {}
+  try { await auth0Client.checkSession(); } catch (e) {}
   const u = await auth0Client.getUser();
   const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
   return !!meta.sub_active;
