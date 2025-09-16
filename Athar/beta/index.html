@@ -6,11 +6,9 @@
   <meta name="color-scheme" content="dark light" />
   <title>أثَـــر</title>
 
-  <!-- أيقونة الموقع (صورة واحدة لكل شيء) -->
   <link rel="icon" type="image/png" href="assets/icon.png">
   <link rel="apple-touch-icon" href="assets/icon.png">
 
-  <!-- OG/Twitter لصورة المشاركة -->
   <meta property="og:title" content="أثـَـر">
   <meta property="og:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
   <meta property="og:image" content="https://n-athar.co/assets/icon.png">
@@ -20,61 +18,54 @@
   <meta name="twitter:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
   <meta name="twitter:image" content="https://n-athar.co/assets/icon.png">
 
-  <!-- الخط والستايل -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
-  <!-- (اختياري) Tailwind لبعض العناصر -->
   <script src="https://cdn.tailwindcss.com"></script>
-<script>
-(function(){
-  var root = document.documentElement;
-  var saved = null;
-  try { saved = localStorage.getItem('theme'); } catch(_) {}
 
-  if (saved === 'dark') root.classList.add('dark');
-  else {
-    root.classList.remove('dark');
-    try { localStorage.setItem('theme','light'); } catch(_) {}
-  }
-
-  // لو كان في صفحات ثانية حاطين .dark على <body> بالخطأ ننقله لـ <html> بعد ما يجهز البودي
-  function fixBodyDark(){
-    if (document.body && document.body.classList.contains('dark')) {
-      document.body.classList.remove('dark');
-      root.classList.add('dark');
+  <!-- تهيئة الثيم المبكرة -->
+  <script>
+  (function(){
+    var root = document.documentElement;
+    var saved = null;
+    try { saved = localStorage.getItem('theme'); } catch(_) {}
+    if (saved === 'dark') root.classList.add('dark');
+    else {
+      root.classList.remove('dark');
+      try { localStorage.setItem('theme','light'); } catch(_) {}
     }
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fixBodyDark);
-  } else {
-    fixBodyDark();
-  }
-})();
-</script>
+    function fixBodyDark(){
+      if (document.body && document.body.classList.contains('dark')) {
+        document.body.classList.remove('dark');
+        root.classList.add('dark');
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fixBodyDark);
+    } else {
+      fixBodyDark();
+    }
+  })();
+  </script>
 </head>
 <body>
-  <!-- طبقات الخلفية -->
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط العلوي -->
   <div class="topbar">
     <div class="tb-left">
       <button id="loginBtn" class="btn" type="button">دخول</button>
       <button id="registerBtn" class="btn" type="button">تسجيل</button>
     </div>
-
     <div class="tb-center">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
       <a class="btn" href="programs.html">مساحة إبداعي</a>
     </div>
-
     <div class="tb-right">
       <a class="btn" href="pricing.html">الخطط</a>
     </div>
   </div>
-  <!-- الهيدر / الهيرو -->
+
   <header>
     <div class="hero">
       <h1 class="logo">أثـَــر</h1>
@@ -85,10 +76,8 @@
     </div>
   </header>
 
-  <!-- المحتوى -->
   <main>
     <div class="container">
-      <!-- كيف وُلد أثر؟ -->
       <section class="card" style="margin-top:-14px">
         <h2 class="title">كيف وُلد «أثر»؟</h2>
         <p class="lead">
@@ -100,51 +89,41 @@
         </p>
       </section>
 
-      <!-- ما هو أثر؟ + كيف يفيدني أثر كمعلم/ة؟ -->
       <section class="grid">
         <div class="box">
           <h3>ما هو «أثر»؟</h3>
-          <p>
-            منصة تعليمية ذكية تُولِّد استراتيجيات وأنشطة وأسئلة قابلة للتخصيص،
-            وتتوافق مع مستويات بلوم والتقويم؛ لتجعل الحصة عميقة وسلسة في آنٍ واحد.
-          </p>
+          <p>منصة تعليمية ذكية تُولِّد استراتيجيات وأنشطة وأسئلة قابلة للتخصيص…</p>
         </div>
-
         <div class="box">
           <h3>كيف يفيدني «أثر» كمعلم/ة؟</h3>
-          <p>
-            يوفّر لك قوالب جاهزة قابلة للتعديل، أسئلة متدرجة، بطاقات أنشطة،
-            تتبعًا مبسّطًا، وتجارب مُثرية؛ لتصميم درس ثري في دقائق بدل ساعات.
-            <a class="link" href="pricing.html">اطّلع/ي على الخطط</a>.
-          </p>
+          <p>قوالب جاهزة قابلة للتعديل… <a class="link" href="pricing.html">اطّلع/ي على الخطط</a>.</p>
         </div>
       </section>
     </div>
   </main>
 
-  <!-- الذيل -->
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
-    <!-- سطر إضافي لاسم المدرسة (اختياري) -->
-    <!-- <p class="foot-name">مدرسة .........</p> -->
   </footer>
-<!-- Supabase -->
-<script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
-<script src="assets/js/supabase-client.js?v=1" defer></script>
 
-<!-- Auth0 SDK (من CDN) - بدون defer ليكون جاهز قبل ملفاتنا المؤجلة -->
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <!-- Supabase -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+  <script src="assets/js/supabase-client.js?v=1" defer></script>
 
-<!-- ملفات المشروع (كلها defer) -->
-<script src="assets/js/dom-helpers.js" defer></script>
-<script src="assets/js/theme.js" defer></script>
-<script src="assets/js/ui.js" defer></script>
-<script src="assets/js/storage.js" defer></script>
-<script src="assets/js/auth0.js" defer></script>
-<script src="app.js?v=4" defer></script>
+  <!-- Auth0 SDK من CDN (بدون defer) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-<!-- ملف مشروعك في الأخير (defer عادي) -->
-<script src="app.js?v=4" defer></script>
+  <!-- ملفات المشروع (اختر واحد لمسألة $/$$) -->
+  <!-- إذا كان dom-helpers.js يعرّف $ و $$ اتركيه واحذفي تعريفهم من app.js -->
+  <script src="assets/js/dom-helpers.js" defer></script>
+
+  <script src="assets/js/theme.js" defer></script>
+  <script src="assets/js/ui.js" defer></script>
+  <script src="assets/js/storage.js" defer></script>
+  <script src="assets/js/auth0.js" defer></script>
+
+  <!-- app.js مرّة واحدة فقط -->
+  <script src="app.js?v=4" defer></script>
 </body>
 </html>
