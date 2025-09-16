@@ -133,14 +133,18 @@ if (logoutBtn){
     });
   }
 
-  // 5) شارة الحالة + مزامنة Supabase لو فيه مستخدم
+ // 5) تحديث شارة الحالة + حفظ/تحديث المستخدم في Supabase
+(async () => {
   try {
     const u = await auth0Client.getUser();
     if (u && typeof supaEnsureUser === 'function') {
-      await supaEnsureUser({ email: u.email, full_name: u.name || u.nickname || null });
+      await supaEnsureUser({
+        email: u.email,
+        full_name: u.name || u.nickname || null
+      });
     }
-     
-// 5.b) شارة الحالة (من app_metadata)
+
+    // 5.b) شارة الحالة (من app_metadata)
     const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
     const active = !!meta.sub_active;
     const badge = document.getElementById('sub-state');
@@ -154,7 +158,8 @@ if (logoutBtn){
   } catch (err) {
     console.error('[Auth0→Supabase] sync error:', err);
   }
-}; // ← // 5.b) شارة الحالة (من app_metadata)
+})(); // ← تأكدي من هذا القوس والنقطتين
+   
     const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
     const active = !!meta.sub_active;
     const badge = document.getElementById('sub-state');
