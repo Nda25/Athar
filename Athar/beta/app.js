@@ -75,13 +75,19 @@ if (loginBtn){
   loginBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     console.log('[Auth0] login click');
-    await auth0Client.loginWithRedirect({
-      authorizationParams: {
-        screen_hint: 'login',
-        redirect_uri: window.location.origin  // يرجّع لصفحة الرئيسية
-      },
-      appState: { returnTo: '/' }
+    await auth0Client.loginWithPopup({
+      authorizationParams: { screen_hint: 'login' }
     });
+    // بعد نجاح البوب-أب: حدّثي الحالة واحفظي بسوبابيز
+    await auth0Client.checkSession();
+    const u = await auth0Client.getUser();
+    if (u && typeof supaEnsureUser === 'function') {
+      await supaEnsureUser({
+        email: u.email,
+        full_name: u.name || u.nickname || null
+      });
+    }
+    location.reload(); // عشان ينعكس تسجيل الدخول على الواجهة
   });
 }
 
@@ -90,13 +96,18 @@ if (registerBtn){
   registerBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     console.log('[Auth0] register click');
-    await auth0Client.loginWithRedirect({
-      authorizationParams: {
-        screen_hint: 'signup',
-        redirect_uri: window.location.origin
-      },
-      appState: { returnTo: '/' }
+    await auth0Client.loginWithPopup({
+      authorizationParams: { screen_hint: 'signup' }
     });
+    await auth0Client.checkSession();
+    const u = await auth0Client.getUser();
+    if (u && typeof supaEnsureUser === 'function') {
+      await supaEnsureUser({
+        email: u.email,
+        full_name: u.name || u.nickname || null
+      });
+    }
+    location.reload();
   });
 }
    
