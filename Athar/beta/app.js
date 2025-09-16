@@ -2,10 +2,6 @@
    athar — app.js (نسخة منقحة ونهائية)
    ========================================= */
 
-/* ==== إعدادات عامة ==== */
-const ATHAR_APP_URL = "athar.html";
-const PRICING_URL   = "pricing.html";
-
 /* أدوات صغيرة */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -71,43 +67,39 @@ async function initAuth0(){
   try { await auth0Client.checkSession(); } catch {}
 
   // 4) ربط الأزرار (دخول/تسجيل/خروج)
-  const loginBtn    = document.getElementById('loginBtn');
-  const logoutBtn   = document.getElementById('logout');
-  const registerBtn = document.getElementById('registerBtn');
+const loginBtn    = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
 
 if (loginBtn){
   loginBtn.type = 'button';
   loginBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     console.log('[Auth0] login click');
-    try {
-      await auth0Client.loginWithRedirect({
-        authorizationParams: { screen_hint: 'login', redirect_uri: window.location.origin },
-        appState: { returnTo: '/' }
-      });
-    } catch (err) {
-      console.error('[Auth0] login error:', err);
-      alert('Auth0 login error: ' + (err?.message || err));
-    }
+    await auth0Client.loginWithRedirect({
+      authorizationParams: {
+        screen_hint: 'login',
+        redirect_uri: window.location.origin  // يرجّع لصفحة الرئيسية
+      },
+      appState: { returnTo: '/' }
+    });
   });
 }
+
 if (registerBtn){
   registerBtn.type = 'button';
   registerBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     console.log('[Auth0] register click');
-    try {
-      await auth0Client.loginWithRedirect({
-        authorizationParams: { screen_hint: 'signup', redirect_uri: window.location.origin },
-        appState: { returnTo: '/' }
-      });
-    } catch (err) {
-      console.error('[Auth0] signup error:', err);
-      alert('Auth0 signup error: ' + (err?.message || err));
-    }
+    await auth0Client.loginWithRedirect({
+      authorizationParams: {
+        screen_hint: 'signup',
+        redirect_uri: window.location.origin
+      },
+      appState: { returnTo: '/' }
+    });
   });
 }
-
+   
   if (logoutBtn){
     logoutBtn.type = 'button';
     logoutBtn.addEventListener('click', async (e) => {
