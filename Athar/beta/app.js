@@ -75,27 +75,38 @@ async function initAuth0(){
   const logoutBtn   = document.getElementById('logout');
   const registerBtn = document.getElementById('registerBtn');
 
-  if (loginBtn){
-    loginBtn.type = 'button';
-    loginBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
+if (loginBtn){
+  loginBtn.type = 'button';
+  loginBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    console.log('[Auth0] login click');
+    try {
       await auth0Client.loginWithRedirect({
-        authorizationParams: { screen_hint: 'login', redirect_uri: window.location.origin + '/plans' },
-        appState: { returnTo: '/plans' }
+        authorizationParams: { screen_hint: 'login', redirect_uri: window.location.origin },
+        appState: { returnTo: '/' }
       });
-    });
-  }
-
-  if (registerBtn){
-    registerBtn.type = 'button';
-    registerBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
+    } catch (err) {
+      console.error('[Auth0] login error:', err);
+      alert('Auth0 login error: ' + (err?.message || err));
+    }
+  });
+}
+if (registerBtn){
+  registerBtn.type = 'button';
+  registerBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    console.log('[Auth0] register click');
+    try {
       await auth0Client.loginWithRedirect({
-        authorizationParams: { screen_hint: 'signup', redirect_uri: window.location.origin + '/plans' },
-        appState: { returnTo: '/plans' }
+        authorizationParams: { screen_hint: 'signup', redirect_uri: window.location.origin },
+        appState: { returnTo: '/' }
       });
-    });
-  }
+    } catch (err) {
+      console.error('[Auth0] signup error:', err);
+      alert('Auth0 signup error: ' + (err?.message || err));
+    }
+  });
+}
 
   if (logoutBtn){
     logoutBtn.type = 'button';
@@ -281,11 +292,8 @@ async function handleRegister(e){
 async function handleLogin(e){
   e?.preventDefault?.();
   await auth0Client.loginWithRedirect({
-    authorizationParams: {
-      screen_hint: 'login',
-      redirect_uri: window.location.origin + '/plans'
-    },
-    appState: { returnTo: '/plans' }
+    authorizationParams: { screen_hint: 'signup', redirect_uri: window.location.origin },
+appState: { returnTo: '/' }
   });
 }
 
