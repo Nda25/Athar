@@ -56,69 +56,43 @@ async function initAuth0(){
     }
   }
 
-  // 3) تحديث الجلسة لتحميل الـ claims
+  // 3) جدّدي الجلسة لتحميل الـ claims
   try { await auth0Client.checkSession(); } catch (e) {}
 
-// 4) ربط الأزرار (دخول/تسجيل/خروج)
-const loginBtn    = document.getElementById('loginBtn');
-const registerBtn = document.getElementById('registerBtn');
-const logoutBtn   = document.getElementById('logout');
+  // 4) ربط الأزرار (login / register / logout) — داخل نفس الدالة
+  const loginBtn    = document.getElementById('loginBtn');
+  const registerBtn = document.getElementById('registerBtn');
+  const logoutBtn   = document.getElementById('logout');
 
-if (loginBtn){
-  loginBtn.type = 'button';
-  loginBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    console.log('[Auth0] login click');
-    await auth0Client.loginWithPopup({
-      authorizationParams: { screen_hint: 'login' }
+  if (loginBtn){
+    loginBtn.type = 'button';
+    loginBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      console.log('[Auth0] login click');
+      await auth0Client.loginWithPopup({ authorizationParams: { screen_hint: 'login' } });
+      try { await auth0Client.checkSession(); } catch (e) {}
+      const u = await auth0Client.getUser();
+      if (u && typeof supaEnsureUser === 'function') {
+        await supaEnsureUser({ email: u.email, full_name: u.name || u.nickname || null });
+      }
+      location.reload();
     });
-    // بعد نجاح البوب-أب: حمّلي السيشن واحفظي في Supabase
-    await auth0Client.checkSession();
-    const u = await auth0Client.getUser();
-    if (u && typeof supaEnsureUser === 'function') {
-      await supaEnsureUser({
-        email: u.email,
-        full_name: u.name || u.nickname || null
-      });
-    }
-    location.reload();
-  });
-}
+  }
 
-if (registerBtn){
-  registerBtn.type = 'button';
-  registerBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    console.log('[Auth0] register click');
-    await auth0Client.loginWithPopup({
-      authorizationParams: { screen_hint: 'signup' }
+  if (registerBtn){
+    registerBtn.type = 'button';
+    registerBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      console.log('[Auth0] register click');
+      await auth0Client.loginWithPopup({ authorizationParams: { screen_hint: 'signup' } });
+      try { await auth0Client.checkSession(); } catch (e) {}
+      const u = await auth0Client.getUser();
+      if (u && typeof supaEnsureUser === 'function') {
+        await supaEnsureUser({ email: u.email, full_name: u.name || u.nickname || null });
+      }
+      location.reload();
     });
-    await auth0Client.checkSession();
-    const u = await auth0Client.getUser();
-    if (u && typeof supaEnsureUser === 'function') {
-      await supaEnsureUser({
-        email: u.email,
-        full_name: u.name || u.nickname || null
-      });
-    }
-    location.reload();
-  });
-}
-
-if (logoutBtn){
-  logoutBtn.type = 'button';
-  logoutBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    try {
-      await auth0Client.logout({
-        logoutParams: { returnTo: window.location.origin }
-      });
-    } catch (err) {
-      console.warn('[Auth0] logout error:', err);
-      location.href = '/';
-    }
-  });
-}
+  }
 
   if (logoutBtn){
     logoutBtn.type = 'button';
@@ -133,37 +107,34 @@ if (logoutBtn){
     });
   }
 
-// 5) حفظ المستخدم + شارة الحالة (مرة واحدة هنا)
-(async () => {
-  try {
-    // 5.a) احضري المستخدم من Auth0
-    const u = await auth0Client.getUser();
+  // 5) حفظ/تحديث المستخدم + شارة الحالة (مرة واحدة هنا)
+  (async () => {
+    try {
+      const u = await auth0Client.getUser();
 
-    // خزّني/حدّثي المستخدم في Supabase
-    if (u && typeof supaEnsureUser === 'function') {
-      await supaEnsureUser({
-        email: u.email,
-        full_name: u.name || u.nickname || null,
-        role: 'user',
-        subscription_type: (u['https://athar.app/app_metadata']?.plan) || null
-      });
-    }
+      if (u && typeof supaEnsureUser === 'function') {
+        await supaEnsureUser({
+          email: u.email,
+          full_name: u.name || u.nickname || null,
+          role: 'user',
+          subscription_type: (u['https://athar.app/app_metadata']?.plan) || null
+        });
+      }
 
-    // 5.b) شارة الحالة (من app_metadata)
-    const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
-    const active = !!meta.sub_active;
-    const badge = document.getElementById('sub-state');
-    if (badge){
-      badge.style.display    = 'inline-block';
-      badge.textContent      = active ? 'نشط' : 'غير مفعل';
-      badge.style.background = active ? '#dcfce7' : '#fee2e2';
-      badge.style.color      = active ? '#166534' : '#991b1b';
-      badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+      const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
+      const active = !!meta.sub_active;
+      const badge = document.getElementById('sub-state');
+      if (badge){
+        badge.style.display    = 'inline-block';
+        badge.textContent      = active ? 'نشط' : 'غير مفعل';
+        badge.style.background = active ? '#dcfce7' : '#fee2e2';
+        badge.style.color      = active ? '#166534' : '#991b1b';
+        badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+      }
+    } catch (err) {
+      console.error('[Auth0→Supabase] sync error:', err);
     }
-  } catch (err) {
-    console.error('[Auth0→Supabase] sync error:', err);
-  }
-})();
+  })();
 
   console.log('[Auth0] initAuth0: done');
 }
@@ -350,23 +321,24 @@ async function isSubActiveAsync(){
 }
 
 function wire(){
-  // 1) نماذج الدخول/التسجيل (تفتح Auth0)
+  // 1) نماذج الدخول/التسجيل (لو عندك فورمات تقليدية)
   const regForm   = $('#register-form'); if (regForm)   regForm.addEventListener('submit', handleRegister);
   const loginForm = $('#login-form');    if (loginForm) loginForm.addEventListener('submit', handleLogin);
 
-  // 2) أزرار الباقات
+  // 2) أزرار اختيار الباقات (ما تعتمد على auth0Client مباشرة)
   $$('#choose-plan [data-plan]').forEach(btn=>{
     btn.addEventListener('click', ()=> subscribe(btn.getAttribute('data-plan')));
   });
 
-  // 3) خروج عبر Auth0
-  const lo = $('#logout');
-  if (lo) lo.addEventListener('click', async (e)=>{
-    e.preventDefault();
-    await auth0Client.logout({
-      logoutParams: { returnTo: window.location.origin }
-    });
-  });
+  // 3) حذف الحساب (لو عندك دالة خادمية جاهزة له)
+  const del = $('#delete');
+  if (del && typeof deleteAccount === 'function') {
+    del.addEventListener('click', deleteAccount);
+  }
+
+  // ⚠️ لا تضيفي هنا أي try/catch أو IIFE تستدعي auth0Client.getUser()
+  // لأن auth0Client يتم تهيئته داخل initAuth0() فقط.
+}
 
   // 4) حذف الحساب (إن عندك دالة خادمية له)
   const del = $('#delete');
