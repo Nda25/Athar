@@ -1,9 +1,7 @@
   /* =========================================
    athar — app.js (نسخة منقحة ونهائية)
    ========================================= */
-/* ==== إعدادات عامة ==== */
-const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyzjAlY2ilPYkxKGBdo2EsOLQZd1Zq7awfX3nc7bxIWWsQy3qlh8a8XyZFRMwrQ5cCyMg/exec";
-const SHEET_API_KEY    = "NADA-ATHAR-2025!"; // نفس المفتاح في GAS
+/* ==== إعدادات عامة ==== *
 
 const ATHAR_APP_URL = "athar.html";
 const PRICING_URL   = "pricing.html";
@@ -319,42 +317,8 @@ $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
 function isValidEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x); }
 function isValidPhone(x){ return /^05\d{8}$/.test(x); }
 
-/* ==== أكواد التجربة (اختياري) ==== */
-const CODES = {
-  "IBNROSHD": { maxUsers: 100, perUserGenerations: 10, expiresAt: "2026-01-31T23:59:59+03:00" },
-  "TNS":      { maxUsers: 100, perUserGenerations: 20, expiresAt: "2026-01-31T23:59:59+03:00" },
 
-  // === كود فاميلي (15 مستخدم، توليد مفتوح) ===
-  "FAMILY":   { maxUsers: 15, perUserGenerations: Infinity, expiresAt: "2026-12-31T23:59:59+03:00" },
-
-  // === كود دندونه (مستخدم واحد فقط، 5 توليدات) ===
-  "دندونه":   { maxUsers: 1,   perUserGenerations: 5,  expiresAt: "2026-12-31T23:59:59+03:00" },
-  "DANDONAH": { maxUsers: 1,   perUserGenerations: 5,  expiresAt: "2026-12-31T23:59:59+03:00" }
-};
 const PLAN_NAMES = { weekly:"أسبوعي", monthly:"شهري", semi:"نصف سنوي", annual:"سنوي" };
-
-/* ==== الصلاحيات ==== */
-function isOwner(){
-  const u = store.user;
-  if(!u) return false;
-  if(OWNER_EMAILS.includes(u.email)) return true;
-  if(OWNER_PHONES.includes(u.phone)) return true;
-  return store.owner;
-}
-function isSubActive(){
-  const s = store.sub; if(!s) return false;
-  try{ return new Date() <= new Date(s.endsAt); }catch(_){ return false; }
-}
-function isTrialActive(){
-  const t = store.trial; if(!t) return false;
-  try{
-    const notExpired = new Date() <= new Date(t.expiresAt);
-    return notExpired && (t.remaining||0) > 0;
-  }catch(_){ return false; }
-}
-function hasAccess(){ return store.auth && (isOwner() || isSubActive() || isTrialActive()); }
-
-/* ==== إرسال صف إلى Google Sheets ==== */
 /* ترتيب الحقول: [تاريخ السجل, الاسم, البريد, الجوال, المدرسة, الكود, الخطة, بداية الاشتراك, نهاية الاشتراك, المبلغ, أوافق على الرسائل] */
 async function sendRowToSheet(payload){
   try{
