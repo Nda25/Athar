@@ -118,24 +118,37 @@ async function initAuth0(){
     });
   }
 
-  // 5) تحديث شارة الحالة إن وُجدت (من app_metadata فقط)
-  (async ()=>{
+// 5) تحديث شارة الحالة + حفظ/تحديث المستخدم في Supabase
+(async () => {
+  try {
     const u = await auth0Client.getUser();
-    const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
+
+    // 5.a) خزّني/حدّثي المستخدم في Supabase مرّة بعد تسجيل الدخول
+    if (u && typeof supaEnsureUser === 'function') {
+      await supaEnsureUser({
+        email: u.email,
+        full_name: u.name || u.nickname || null,
+        role: 'user',
+        // لو عندك نوع اشتراك ضمن app_metadata تقدرين تمريّره
+        subscription_type: (u['https://athar.app/app_metadata']?.plan) || null
+      });
+    }
+
+    // 5.b) شارة الحالة (من app_metadata)
+    const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
     const active = !!meta.sub_active;
     const badge = document.getElementById('sub-state');
     if (badge){
-      badge.style.display='inline-block';
-      badge.textContent = active ? 'نشط' : 'غير مفعل';
+      badge.style.display    = 'inline-block';
+      badge.textContent      = active ? 'نشط' : 'غير مفعل';
       badge.style.background = active ? '#dcfce7' : '#fee2e2';
       badge.style.color      = active ? '#166534' : '#991b1b';
       badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
     }
-  })();
-
-  console.log('[Auth0] initAuth0: done');
-}
-
+  } catch (err) {
+    console.error('[Auth0→Supabase] sync error:', err);
+  }
+})();    
 /* ==== أوتو-حفظ لأي صفحة فورم (نسخة محسّنة) ==== */
 // يجمع قيم input/textarea/select داخل عنصر معيّن
 function readForm(container){
