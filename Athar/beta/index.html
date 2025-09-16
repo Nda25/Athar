@@ -133,14 +133,16 @@
   <!-- توست للإشعارات الصغيرة -->
   <div class="toast" id="toast"></div>
 
-<!-- Auth0 SDK (لا تحطين defer) -->
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <!-- ========= السكربتات ========= -->
 
-<!-- Supabase (عادي defer) -->
-<script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
-<script src="assets/js/supabase-client.js?v=1" defer></script>
+  <!-- Auth0 SDK (مهم: بدون defer) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-<!-- سكربت مشروعك (defer) -->
-<script src="app.js?v=4" defer></script>
+  <!-- Supabase (ممكن defer) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+  <script src="assets/js/supabase-client.js?v=1" defer></script>
+
+  <!-- سكربت مشروعك (defer) -->
+  <script src="app.js?v=4" defer></script>
 </body>
 </html>
