@@ -389,4 +389,29 @@ function toast(msg){
   setTimeout(()=> t.classList.remove('show'), 1800);
 }
 
-/* ==== انتظـار جاهزية Auth0 SDK ==== */
+/* ===== زر الثيم (🌓) ===== */
+function bindThemeToggle(){
+  const root = document.documentElement;
+  const btn  = document.getElementById('themeToggle');
+  if (!btn) return;
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const dark = root.classList.toggle('dark');
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(_){}
+    toast(dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح');
+  });
+}
+
+/* ===== تشغيل بعد تحميل الصفحة ===== */
+document.addEventListener('DOMContentLoaded', async () => {
+  // اربطي واجهة المستخدم
+  if (typeof bindThemeToggle === 'function') bindThemeToggle();
+  if (typeof wire === 'function') wire();
+
+  // شغّلي Auth0 إذا الـ SDK موجود
+  if (typeof window.createAuth0Client === 'function' && typeof window.initAuth0 === 'function') {
+    await initAuth0();
+  } else {
+    console.error('[Auth0] SDK or initAuth0 missing');
+  }
+});
