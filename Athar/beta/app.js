@@ -50,41 +50,33 @@ async function initAuth0(){
     authorizationParams: { redirect_uri: window.location.origin }
   });
 
-  // 2) معالجة العودة من Auth0 (login/signup)
+  // 2) معالجة العودة من Auth0
   if (location.search.includes('code=') && location.search.includes('state=')) {
     try {
       const { appState } = await auth0Client.handleRedirectCallback();
-
-      // كوبون معلّق؟ فعّليه الآن (اختياري)
       const fromAppState = (appState && appState.coupon) ? String(appState.coupon).toUpperCase() : '';
       const fromSession  = (sessionStorage.getItem('pending_coupon') || '').toUpperCase();
       const coupon = fromAppState || fromSession;
-
-      // نظّف الـ URL ثم ارجع للمكان المطلوب
       history.replaceState({}, document.title, appState?.returnTo || '/');
-
       if (coupon && typeof redeemCode === 'function') {
-        try {
-          const r = await redeemCode(coupon); // يفترض دالة خادمية لديك
-          sessionStorage.removeItem('pending_coupon');
-          if (r?.ok) location.assign('/pay');
-        } catch(e){ console.warn('redeem after callback failed:', e); }
+        try { const r = await redeemCode(coupon); sessionStorage.removeItem('pending_coupon'); if (r?.ok) location.assign('/pay'); }
+        catch(e){ console.warn('redeem after callback failed:', e); }
       }
     } catch (e) {
       console.error('[Auth0] handleRedirectCallback error:', e);
     }
   }
 
-  // 3) جدّدي الجلسة لتحميل الـ claims
+  // 3) جدّدي الجلسة
   try { await auth0Client.checkSession(); } catch {}
 
-  // 4) ربط الأزرار
+  // 4) ربط الأزرار (دخول/تسجيل/خروج)
   const loginBtn    = document.getElementById('loginBtn');
   const logoutBtn   = document.getElementById('logout');
   const registerBtn = document.getElementById('registerBtn');
 
   if (loginBtn){
-    loginBtn.setAttribute('type','button');
+    loginBtn.type = 'button';
     loginBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       await auth0Client.loginWithRedirect({
@@ -95,7 +87,7 @@ async function initAuth0(){
   }
 
   if (registerBtn){
-    registerBtn.setAttribute('type','button');
+    registerBtn.type = 'button';
     registerBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       await auth0Client.loginWithRedirect({
@@ -106,7 +98,7 @@ async function initAuth0(){
   }
 
   if (logoutBtn){
-    logoutBtn.setAttribute('type','button');
+    logoutBtn.type = 'button';
     logoutBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       try {
@@ -118,37 +110,38 @@ async function initAuth0(){
     });
   }
 
-// 5) تحديث شارة الحالة + حفظ/تحديث المستخدم في Supabase
-(async () => {
-  try {
-    const u = await auth0Client.getUser();
+  // 5) تحديث شارة الحالة + حفظ/تحديث المستخدم في Supabase (مرّة واحدة هنا)
+  (async () => {
+    try {
+      const u = await auth0Client.getUser();
 
-    // 5.a) خزّني/حدّثي المستخدم في Supabase مرّة بعد تسجيل الدخول
-    if (u && typeof supaEnsureUser === 'function') {
-      await supaEnsureUser({
-        email: u.email,
-        full_name: u.name || u.nickname || null,
-        role: 'user',
-        // لو عندك نوع اشتراك ضمن app_metadata تقدرين تمريّره
-        subscription_type: (u['https://athar.app/app_metadata']?.plan) || null
-      });
-    }
+      if (u && typeof supaEnsureUser === 'function') {
+        await supaEnsureUser({
+          email: u.email,
+          full_name: u.name || u.nickname || null,
+          role: 'user',
+          subscription_type: (u['https://athar.app/app_metadata']?.plan) || null
+        });
+      }
 
-    // 5.b) شارة الحالة (من app_metadata)
-    const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
-    const active = !!meta.sub_active;
-    const badge = document.getElementById('sub-state');
-    if (badge){
-      badge.style.display    = 'inline-block';
-      badge.textContent      = active ? 'نشط' : 'غير مفعل';
-      badge.style.background = active ? '#dcfce7' : '#fee2e2';
-      badge.style.color      = active ? '#166534' : '#991b1b';
-      badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+      const meta  = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
+      const active = !!meta.sub_active;
+      const badge = document.getElementById('sub-state');
+      if (badge){
+        badge.style.display    = 'inline-block';
+        badge.textContent      = active ? 'نشط' : 'غير مفعل';
+        badge.style.background = active ? '#dcfce7' : '#fee2e2';
+        badge.style.color      = active ? '#166534' : '#991b1b';
+        badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+      }
+    } catch (err) {
+      console.error('[Auth0→Supabase] sync error:', err);
     }
-  } catch (err) {
-    console.error('[Auth0→Supabase] sync error:', err);
-  }
-})();    
+  })();
+
+  console.log('[Auth0] initAuth0: done');
+} // ✅ نهاية دالة initAuth0
+
 /* ==== أوتو-حفظ لأي صفحة فورم (نسخة محسّنة) ==== */
 // يجمع قيم input/textarea/select داخل عنصر معيّن
 function readForm(container){
