@@ -323,40 +323,39 @@ input::placeholder{ color:#64748b }
   from { transform: scale(.98); opacity: .7; }
   to   { transform: scale(1);   opacity: 1;  }
 }
-/* ===== Topbar layout override (الجديد) ===== */
-.topbar {
-  display: flex;
-  justify-content: space-between; /* يمين — وسط — يسار */
+/* ===== Topbar (Grid) — ترتيب يسار/وسط/يمين ===== */
+.topbar{
+  position: sticky; top: 0; z-index: 50;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;   /* يسار | وسط | يمين */
   align-items: center;
-  padding: 10px 20px;
-  gap: 20px;
+  gap: 12px;
+  padding: 12px 18px;
+  backdrop-filter: blur(8px);
+  background: rgba(255,255,255,.7);
+  border-bottom: 1px solid rgba(59,130,246,.22);
 }
+.dark .topbar{ background: rgba(17,24,39,.6); border-color:#3b82f6; }
 
-/* يسار: دخول + تسجيل فوق بعض */
-.left-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+/* يسار: دخول/تسجيل فوق بعض */
+.tb-left{ justify-self:start; display:grid; gap:6px; }
 
-/* وسط: زر 🌓 بالمنتصف */
-.center-actions {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
+/* الوسط: زر 🌓 وبجانبه مساحة إبداعي */
+.tb-center{ justify-self:center; display:inline-flex; gap:10px; align-items:center; }
 
-/* يمين: الخطط + مساحة إبداعي */
-.right-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
+/* يمين: زر الخطط لوحده */
+.tb-right{ justify-self:end; display:inline-flex; gap:10px; align-items:center; }
 
-/* موبايل */
-@media (max-width: 640px){
-  .topbar{ flex-wrap: wrap; }
-  .left-actions{ order:1; flex:1 1 100%; align-items: flex-start; }
-  .center-actions{ order:2; flex:1 1 100%; justify-content: center; margin-top: 6px; }
-  .right-actions{ order:3; flex:1 1 100%; justify-content: flex-end; margin-top: 6px; }
+/* موبايل: صفّين */
+@media (max-width:640px){
+  .topbar{
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "left right"
+      "center center";
+    row-gap: 10px;
+  }
+  .tb-left  { grid-area:left;  }
+  .tb-right { grid-area:right; }
+  .tb-center{ grid-area:center; }
 }
