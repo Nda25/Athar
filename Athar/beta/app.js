@@ -110,7 +110,9 @@ if (logoutBtn){
   logoutBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     try {
-      await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
+      await auth0Client.logout({
+        logoutParams: { returnTo: window.location.origin }
+      });
     } catch (err) {
       console.warn('[Auth0] logout error:', err);
       location.href = '/';
