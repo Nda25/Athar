@@ -78,12 +78,13 @@
     <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
   </div>
 
-  <!-- حالة المستخدم + برامجنا (يمين) -->
-  <div class="user">
+<!-- حالة المستخدم + برامجنا (يمين) -->
+<div class="user">
   <span id="nav-auth" style="display:inline-flex; gap:10px">
-  <button id="loginBtn" class="btn">دخول</button>
-<button id="registerBtn" class="btn">تسجيل </button>
-</span>
+    <button id="loginBtn" class="btn" type="button">دخول</button>
+    <button id="registerBtn" class="btn" type="button">تسجيل</button>
+  </span>
+</div>
 
 <a class="btn" href="programs.html" title="مساحة إبداعي">مساحة إبداعي</a>
 <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
@@ -222,8 +223,7 @@
   <div class="toast" id="toast"></div>
 
   <!-- ========= السكربتات ========= -->
-<!-- Auth0 SDK: بدون defer -->
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+
 
 <!-- Supabase -->
 <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
