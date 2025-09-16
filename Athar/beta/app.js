@@ -1,193 +1,113 @@
 /* =========================================
-   athar — app.js (FINAL)
-   Auth0 + Supabase + Coupons + Programs
+   athar — app.js (نسخة منقحة ونهائية)
    ========================================= */
 
-/* ====== الإعدادات العامة ====== */
-// TODO: حدّثي هذه حسب بيئتك
-const AUTH0_DOMAIN   = "dev-2f0fmbtj6u8o7en4.us.auth0.com";        // Auth0
-const AUTH0_CLIENTID = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";         // Auth0
+/* ==== إعدادات عامة ==== */
+const ATHAR_APP_URL = "athar.html";
+const PRICING_URL   = "pricing.html";
 
-const SUPABASE_URL   = "https://YOUR_SUPABASE_PROJECT.supabase.co"; // Supabase
-const SUPABASE_ANON  = "YOUR_SUPABASE_ANON_KEY";                    // Supabase
-
-// مسارات صفحاتك
-const APP_URL    = "/athar.html";
-const PRICING_URL= "/pricing.html";
-const PLANS_URL  = "/plans";
-const PAY_URL    = "/pay";
-
-// برامجك الستة (مفاتيح + روابط)
-const PROGRAMS = {
-  mulhim:   "/programs/mulhim.html",
-  murtakiz: "/programs/murtakiz.html",
-  munطلق:  "/programs/munطلق.html", // لو الاسم حروف عربية بالمسار تأكدي من الترميز
-  ithraa:   "/programs/ithraa.html",
-  miaad:    "/programs/miaad.html",
-  masar:    "/programs/masar.html",
-};
-
-// إعطاء صلاحية المالك يدوياً (اختياري)
-const OWNER_EMAILS = [];              // مثل ["you@example.com"]
-const OWNER_PHONES = ["0556795993"];  // مثال
-
-/* ====== أدوات صغيرة ====== */
+/* أدوات صغيرة */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-/* ====== توست (UI) ====== */
-function toast(msg){
-  let t = $('.toast');
-  if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), 1800);
-}
-
 /* ==============================
-   ثيم: وضع داكن/فاتح
+   Theme: init + toggle (موحّد)
    ============================== */
+
+// 0) توحيد مكان كلاس dark (لا يكون على <body>)
 (function unifyDarkClass(){
-  const root = document.documentElement;
-  const body = document.body;
+  var root = document.documentElement;
+  var body = document.body;
   if (body.classList.contains('dark')) {
     body.classList.remove('dark');
     root.classList.add('dark');
   }
 })();
+
+/* ===== 1) تفعيل الوضع الداكن/الفاتح (🌓) مع حفظ في localStorage ===== */
 (function initTheme(){
-  const root  = document.documentElement;
-  let saved = null;
+  var root  = document.documentElement;
+  var saved = null;
   try { saved = localStorage.getItem('theme'); } catch(_) {}
-  if (saved === 'dark') root.classList.add('dark');
-  else root.classList.remove('dark');
+  if (saved === 'dark') { root.classList.add('dark'); }
+  else { root.classList.remove('dark'); }
 })();
-function bindThemeToggle(){
-  const btn  = $('#themeToggle');
-  if (!btn) return;
-  btn.addEventListener('click', (e)=>{
-    e.preventDefault();
-    const root = document.documentElement;
-    const dark = root.classList.toggle('dark');
-    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(e){}
-    toast(dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح');
-  });
-}
 
-/* ==============================
-   تحميل مكتبات خارجية
-   ============================== */
-function loadScript(src){
-  return new Promise((resolve,reject)=>{
-    const s = document.createElement('script');
-    s.src = src; s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
-  });
-}
-
-/* ==============================
-   Supabase: تهيئة + وظائف
-   ============================== */
-let supabase = null;
-function initSupabase(){
-  // تفادي إعادة الإنشاء
-  if (supabase) return supabase;
-  if (!window.supabase) { console.error("[Supabase] SDK not loaded"); return null; }
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-  return supabase;
-}
-
-// حفظ/تحديث ملف العميل الأساسي في جدول profiles
-// جدول مقترح: profiles (id [uuid], email [unique], name, phone, school, marketing_consent bool, created_at, updated_at)
-async function upsertProfile({ email, name, phone, school, marketingConsent }){
-  const sb = initSupabase(); if(!sb) return { ok:false, error:"Supabase not ready" };
-  const payload = {
-    email: (email||"").toLowerCase(),
-    name:  name||"",
-    phone: phone||"",
-    school: school||"",
-    marketing_consent: !!marketingConsent
-  };
-  const { data, error } = await sb.from('profiles').upsert(payload, { onConflict:'email' }).select().single();
-  if (error){ console.error('[Supabase] upsertProfile:', error); return { ok:false, error }; }
-  return { ok:true, data };
-}
-
-// لوج للأحداث - اختياري (جدول events: email, type, meta json, created_at)
-async function logEvent({ email, type, meta }){
-  const sb = initSupabase(); if(!sb) return;
-  await sb.from('events').insert({ email:(email||"").toLowerCase(), type, meta: meta||{} });
-}
-
-/* ==============================
-   Auth0: تهيئة + دخول/تسجيل/خروج + حالة
-   ============================== */
-let auth0Client = null;
-
+/* ==== Auth0 Integration (نسخة نظيفة) ==== */
 async function initAuth0(){
-  if (!window.createAuth0Client){ console.error('[Auth0] SDK not loaded.'); return; }
+  console.log('[Auth0] initAuth0: start');
 
-  auth0Client = await window.createAuth0Client({
-    domain: AUTH0_DOMAIN,
-    clientId: AUTH0_CLIENTID,
+  if (typeof window.createAuth0Client !== 'function') {
+    console.error('[Auth0] SDK not loaded.');
+    return;
+  }
+
+  // 1) إنشاء العميل
+  window.auth0Client = await createAuth0Client({
+    domain: "dev-2f0fmbtj6u8o7en4.us.auth0.com",
+    clientId: "rXaNXLwIkIOALVTWبRDA8SwJnERnI1NU",
     cacheLocation: "localstorage",
     authorizationParams: { redirect_uri: window.location.origin }
   });
 
-  // معالجة العودة
+  // 2) معالجة العودة من Auth0 (login/signup)
   if (location.search.includes('code=') && location.search.includes('state=')) {
     try {
       const { appState } = await auth0Client.handleRedirectCallback();
+
+      // كوبون معلّق؟ فعّليه الآن (اختياري)
       const fromAppState = (appState && appState.coupon) ? String(appState.coupon).toUpperCase() : '';
       const fromSession  = (sessionStorage.getItem('pending_coupon') || '').toUpperCase();
       const coupon = fromAppState || fromSession;
 
-      // نظافة رابط
+      // نظّف الـ URL ثم ارجع للمكان المطلوب
       history.replaceState({}, document.title, appState?.returnTo || '/');
 
-      // تفعيل الكوبون إن وُجد (سيرفرياً)
-      if (coupon) {
+      if (coupon && typeof redeemCode === 'function') {
         try {
-          const r = await redeemCode(coupon);
+          const r = await redeemCode(coupon); // يفترض دالة خادمية لديك
           sessionStorage.removeItem('pending_coupon');
-          if (r?.ok) location.assign(PAY_URL);
-        } catch (e){ console.warn('redeem after callback failed:', e); }
+          if (r?.ok) location.assign('/pay');
+        } catch(e){ console.warn('redeem after callback failed:', e); }
       }
     } catch (e) {
       console.error('[Auth0] handleRedirectCallback error:', e);
     }
   }
 
-  // جدد الجلسة لظهور الـ claims
+  // 3) جدّدي الجلسة لتحميل الـ claims
   try { await auth0Client.checkSession(); } catch {}
 
-  // ربط أزرار الدخول/التسجيل/الخروج
-  const loginBtn    = $('#loginBtn');
-  const registerBtn = $('#registerBtn');
-  const logoutBtn   = $('#logout');
+  // 4) ربط الأزرار
+  const loginBtn    = document.getElementById('loginBtn');
+  const logoutBtn   = document.getElementById('logout');
+  const registerBtn = document.getElementById('registerBtn');
 
   if (loginBtn){
-    loginBtn.type = 'button';
-    loginBtn.addEventListener('click', async (e)=>{
+    loginBtn.setAttribute('type','button');
+    loginBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       await auth0Client.loginWithRedirect({
-        authorizationParams: { screen_hint:'login', redirect_uri: window.location.origin + PLANS_URL },
-        appState: { returnTo: PLANS_URL }
+        authorizationParams: { screen_hint: 'login', redirect_uri: window.location.origin + '/plans' },
+        appState: { returnTo: '/plans' }
       });
     });
   }
+
   if (registerBtn){
-    registerBtn.type = 'button';
-    registerBtn.addEventListener('click', async (e)=>{
+    registerBtn.setAttribute('type','button');
+    registerBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       await auth0Client.loginWithRedirect({
-        authorizationParams: { screen_hint:'signup', redirect_uri: window.location.origin + PLANS_URL },
-        appState: { returnTo: PLANS_URL }
+        authorizationParams: { screen_hint: 'signup', redirect_uri: window.location.origin + '/plans' },
+        appState: { returnTo: '/plans' }
       });
     });
   }
+
   if (logoutBtn){
-    logoutBtn.type = 'button';
-    logoutBtn.addEventListener('click', async (e)=>{
+    logoutBtn.setAttribute('type','button');
+    logoutBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       try {
         await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
@@ -198,29 +118,12 @@ async function initAuth0(){
     });
   }
 
-  // بعد ما يتوثّق المستخدم: احفظي بروفايله في Supabase
-  const isAuth = await auth0Client.isAuthenticated();
-  if (isAuth) {
-    const u = await auth0Client.getUser();
-    // event: login
-    try { await upsertProfile({
-      email: u?.email, name: u?.name, phone: u?.phone_number, school: u?.school, marketingConsent: false
-    }); } catch(_){}
-    try { await logEvent({ email: u?.email, type: 'login', meta: { ua: navigator.userAgent } }); } catch(_){}
-  }
-
-  // حدّثي شارة الاشتراك
-  updateSubBadge();
-}
-
-async function updateSubBadge(){
-  try {
+  // 5) تحديث شارة الحالة إن وُجدت (من app_metadata فقط)
+  (async ()=>{
     const u = await auth0Client.getUser();
     const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
-    const isOwner = isOwnerByIdentity(u);
-    const active  = isOwner || !!meta.sub_active;
-
-    const badge = $('#sub-state');
+    const active = !!meta.sub_active;
+    const badge = document.getElementById('sub-state');
     if (badge){
       badge.style.display='inline-block';
       badge.textContent = active ? 'نشط' : 'غير مفعل';
@@ -228,199 +131,329 @@ async function updateSubBadge(){
       badge.style.color      = active ? '#166534' : '#991b1b';
       badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
     }
-  } catch(_){}
+  })();
+
+  console.log('[Auth0] initAuth0: done');
 }
 
-function isOwnerByIdentity(u){
-  const email = (u?.email||"").toLowerCase();
-  const phone = (u?.phone_number||"").trim();
-  if (email && OWNER_EMAILS.map(e=>e.toLowerCase()).includes(email)) return true;
-  if (phone && OWNER_PHONES.includes(phone)) return true;
-  return false;
-}
+/* ==== أوتو-حفظ لأي صفحة فورم (نسخة محسّنة) ==== */
+// يجمع قيم input/textarea/select داخل عنصر معيّن
+function readForm(container){
+  const data = {};
+  const root = (typeof container === 'string') ? document.querySelector(container) : container;
+  if(!root) return data;
 
-/* ==============================
-   الاسترداد (كوبون) — عبر دالة خادمية
-   ============================== */
-// Netlify Function: /.netlify/functions/redeem
-// تقوم بالتالي: تتحقق من الكوبون وتحدّث app_metadata.sub_active=true للمستخدم في Auth0.
-// ومن جهتك هنا فقط تستدعينها بـ JWT من Auth0.
-async function redeemCode(codeRaw){
-  const code = (codeRaw||'').trim().toUpperCase();
-  if(!code) return { ok:false, msg:'اكتبي الكوبون' };
+  root.querySelectorAll('input, textarea, select').forEach(el=>{
+    const key = el.name || el.id;
+    if(!key) return;
 
-  const authed = await auth0Client.isAuthenticated();
-  if(!authed){
-    await auth0Client.loginWithRedirect({
-      authorizationParams:{ screen_hint:'signup', redirect_uri: location.href },
-      appState:{ returnTo: location.pathname, coupon: code }
-    });
-    return { ok:false, msg:'تم توجيهك للتسجيل' };
-  }
-  const token = await auth0Client.getTokenSilently();
-  const res = await fetch('/.netlify/functions/redeem',{
-    method:'POST',
-    headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-    body: JSON.stringify({ code })
+    if(el.tagName === 'SELECT'){
+      data[key] = el.multiple ? Array.from(el.selectedOptions).map(o=>o.value) : el.value;
+      return;
+    }
+    if(el.type === 'checkbox'){
+      const group = root.querySelectorAll(`input[type="checkbox"][name="${el.name}"]`);
+      if(group.length > 1){
+        data[key] = Array.from(group).filter(i=>i.checked).map(i=>i.value || true);
+      }else{
+        data[key] = !!el.checked;
+      }
+      return;
+    }
+    if(el.type === 'radio'){
+      if(el.checked) data[key] = el.value;
+      else if(!(key in data)) data[key] = '';
+      return;
+    }
+    if(el.type === 'number'){
+      data[key] = (el.value === '' ? '' : +el.value);
+      return;
+    }
+    data[key] = el.value;
   });
-  const j = await res.json().catch(()=> ({}));
-  if(!res.ok || !j.ok) return { ok:false, msg: j.error || 'فشل التفعيل' };
 
-  try { await auth0Client.checkSession(); } catch {}
-  toast('تم تفعيل الكود ✅');
-  updateSubBadge();
-  return { ok:true, msg:'تم التفعيل' };
+  return data;
 }
 
-/* ==============================
-   واجهة: تسجيل/دخول/اشتراك/برامج
-   ============================== */
+// يملأ الحقول من كائن بيانات
+function fillForm(container, data){
+  const root = (typeof container === 'string') ? document.querySelector(container) : container;
+  if(!root || !data) return;
 
-// نموذج التسجيل (يحفظ كوبون مؤقتًا ويرسل للتسجيل)
+  Object.entries(data).forEach(([k,v])=>{
+    const els = root.querySelectorAll(`[name="${k}"], #${CSS.escape(k)}`);
+    if(!els.length) return;
+
+    els.forEach(el=>{
+      if(el.tagName === 'SELECT'){
+        if(el.multiple && Array.isArray(v)){
+          Array.from(el.options).forEach(o=>o.selected = v.includes(o.value));
+        }else{
+          el.value = (v ?? '');
+        }
+        return;
+      }
+      if(el.type === 'checkbox'){
+        const group = root.querySelectorAll(`input[type="checkbox"][name="${el.name}"]`);
+        if(group.length > 1 && Array.isArray(v)){
+          el.checked = v.includes(el.value || true);
+        }else{
+          el.checked = !!v;
+        }
+        return;
+      }
+      if(el.type === 'radio'){
+        el.checked = (el.value == v);
+        return;
+      }
+      el.value = (v == null ? '' : v);
+    });
+  });
+}
+
+// يربط الأوتو-حفظ بصفحة محددة
+function bindAutoSave(pageKey, container){
+  const root = (typeof container === 'string') ? document.querySelector(container) : container;
+  if(!root) return;
+
+  // استرجاع قديم
+  fillForm(root, userDB.get(pageKey, {}));
+
+  // حفظ عند التغيير (بـ debounce خفيف)
+  let t=null;
+  const save = ()=>{
+    clearTimeout(t);
+    t = setTimeout(()=> userDB.set(pageKey, readForm(root)), 250);
+  };
+  root.addEventListener('input', save);
+  root.addEventListener('change', save);
+}
+
+/* ==== قاعدة بيانات محلية بسيطة للفورمات ==== */
+function userKey(){ return 'athar:data'; } // مفتاح عام (بدون store.user)
+const userDB = {
+  getAll(){
+    try{ return JSON.parse(localStorage.getItem(userKey())||'{}'); }
+    catch(_){ return {}; }
+  },
+  setAll(obj){
+    localStorage.setItem(userKey(), JSON.stringify(obj||{}));
+  },
+  get(page, fallback={}){ const all = this.getAll(); return all[page] ?? fallback; },
+  set(page, data){ const all = this.getAll(); all[page] = data; this.setAll(all); },
+  merge(page, partial){ const cur = this.get(page, {}); this.set(page, Object.assign({}, cur, partial)); },
+  remove(page){ const all = this.getAll(); delete all[page]; this.setAll(all); },
+  clearThisUser(){ this.setAll({}); }
+};
+
+/* ==== تحققات ==== */
+function isValidEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x); }
+function isValidPhone(x){ return /^05\d{8}$/.test(x); }
+
+/* ==== التسجيل ==== */
+// استبدال كامل — لا تخزين محلي ولا شيت
 async function handleRegister(e){
   e.preventDefault();
   const f = e.target;
-  const name    = (f.name?.value   || "").trim();
-  const email   = (f.email?.value  || "").trim();
-  const phone   = (f.phone?.value  || "").trim();
-  const school  = (f.school?.value || "").trim();
-  const coupon  = (f.promo?.value  || "").trim().toUpperCase();
-  const consent = !!f.consent?.checked;
 
-  // حفظ أولي للبروفايل في Supabase حتى قبل Auth0 (اختياري)
-  if (email) { try { await upsertProfile({ email, name, phone, school, marketingConsent: consent }); } catch(_){} }
+  // حقل كوبون (اختياري)
+  const promo = (f.promo?.value || "").trim().toUpperCase();
+  if (promo) sessionStorage.setItem('pending_coupon', promo);
 
-  if (coupon) sessionStorage.setItem('pending_coupon', coupon);
-
+  // افتحي تسجيل Auth0 مباشرة
   await auth0Client.loginWithRedirect({
-    authorizationParams: { screen_hint: 'signup', redirect_uri: window.location.origin + PAY_URL },
-    appState: { returnTo: PAY_URL, coupon: coupon || null }
+    authorizationParams: {
+      screen_hint: 'signup',
+      redirect_uri: window.location.origin + '/pay'
+    },
+    appState: { returnTo: '/pay', coupon: promo || null }
   });
 }
 
-// دخول بسيط
+/* ==== الدخول ==== */
+// دخول عبر Auth0
 async function handleLogin(e){
   e?.preventDefault?.();
   await auth0Client.loginWithRedirect({
-    authorizationParams: { screen_hint: 'login', redirect_uri: window.location.origin + PLANS_URL },
-    appState: { returnTo: PLANS_URL }
+    authorizationParams: {
+      screen_hint: 'login',
+      redirect_uri: window.location.origin + '/plans'
+    },
+    appState: { returnTo: '/plans' }
   });
 }
 
-// زر اشتراك: لو غير مشترك → مودال كوبون/الخطط؛ لو مشترك → صفحة الدفع/الحساب
+/* ==== الاشتراك (مؤقت بدون مزوّد دفع) ==== */
 async function subscribe(planKey){
+  // 1) لازم Auth0
   const authed = await auth0Client.isAuthenticated();
   if (!authed) {
     return auth0Client.loginWithRedirect({
-      authorizationParams: { screen_hint:'signup', redirect_uri: location.origin + PAY_URL },
-      appState: { returnTo: PAY_URL }
+      authorizationParams: { screen_hint:'signup', redirect_uri: location.origin + '/pay' },
+      appState: { returnTo: '/pay' }
     });
   }
 
+  // 2) نقرأ حالة الاشتراك من الكليم
   try { await auth0Client.checkSession(); } catch {}
   const u = await auth0Client.getUser();
   const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
-  const isOwner = isOwnerByIdentity(u);
-  const subscribed = isOwner || !!meta.sub_active;
+  const subscribed = !!meta.sub_active;
 
-  if (subscribed) return location.assign(PAY_URL);
+  if (subscribed) {
+    // مستخدم مشترك: ودّيه لصفحة الحساب/الفواتير
+    return location.assign('/pay');
+  }
 
-  if (typeof openModal === 'function' && $('#modal-coupon')) {
+  // 3) غير مشترك: وجّهيه للخطط/مودال الكوبون
+  if (typeof openModal === 'function' && document.querySelector('#modal-coupon')) {
     openModal('#modal-coupon');
   } else {
-    location.assign(PLANS_URL);
+    location.assign('/plans');
   }
 }
 
-// حماية برامجك الستة (تُنادى قبل فتح صفحة/زر البرنامج)
-async function requireAccessOrRedirect(programKey){
-  const authed = await auth0Client.isAuthenticated();
-  if (!authed){
-    await auth0Client.loginWithRedirect({
-      authorizationParams:{ screen_hint:'login', redirect_uri: location.origin + PLANS_URL },
-      appState:{ returnTo: PLANS_URL }
-    });
-    return false;
-  }
+/* ==== ربط الأحداث (نسخة Auth0) ==== */
+async function isSubActiveAsync(){
   try { await auth0Client.checkSession(); } catch {}
-
   const u = await auth0Client.getUser();
   const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
-  const isOwner = isOwnerByIdentity(u);
-  const active  = isOwner || !!meta.sub_active;
-  if (!active){
-    // غير مشترك: وجّهيه للخطط أو افتحي مودال كوبون
-    if ($('#modal-coupon')) openModal('#modal-coupon'); else location.assign(PLANS_URL);
-    return false;
-  }
-  // عنده وصول:
-  return true;
+  return !!meta.sub_active;
 }
 
-// ربط أزرار البرامج (قابلة للتوسّع)
-function bindProgramLinks(){
-  Object.entries(PROGRAMS).forEach(([key, url])=>{
-    const btn = document.querySelector(`[data-program="${key}"]`);
-    if (!btn) return;
-    btn.addEventListener('click', async (e)=>{
-      e.preventDefault();
-      if (await requireAccessOrRedirect(key)) location.assign(url);
+function wire(){
+  // 1) نماذج الدخول/التسجيل (تفتح Auth0)
+  const regForm   = $('#register-form'); if (regForm)   regForm.addEventListener('submit', handleRegister);
+  const loginForm = $('#login-form');    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+
+  // 2) أزرار الباقات
+  $$('#choose-plan [data-plan]').forEach(btn=>{
+    btn.addEventListener('click', ()=> subscribe(btn.getAttribute('data-plan')));
+  });
+
+  // 3) خروج عبر Auth0
+  const lo = $('#logout');
+  if (lo) lo.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    await auth0Client.logout({
+      logoutParams: { returnTo: window.location.origin }
     });
   });
+
+  // 4) حذف الحساب (إن عندك دالة خادمية له)
+  const del = $('#delete');
+  if (del && typeof deleteAccount === 'function') {
+    del.addEventListener('click', deleteAccount);
+  }
+
+  // 5) شارة حالة الاشتراك — تعتمد على app_metadata.sub_active فقط
+  const badge = $('#sub-state');
+  if (badge) {
+    (async ()=>{
+      const active = await isSubActiveAsync();
+      badge.style.display    = 'inline-block';
+      badge.textContent      = active ? 'نشط' : 'غير مفعل';
+      badge.style.background = active ? '#dcfce7' : '#fee2e2';
+      badge.style.color      = active ? '#166534' : '#991b1b';
+      badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+    })();
+  }
 }
 
-/* ==============================
-   مودالات
-   ============================== */
-function openModal(id){ $(id)?.classList.add('show'); }
-function closeModal(id){ $(id)?.classList.remove('show'); }
-function bindModals(){
-  $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
-    e.preventDefault();
-    btn.closest('.modal')?.classList.remove('show');
-  }));
+/* ==== النوافذ ==== */
+function openModal(id){ $(id).classList.add('show'); }
+function closeModal(id){ $(id).classList.remove('show'); }
+$$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
+  e.preventDefault();
+  const m = btn.closest('.modal'); if(m) m.classList.remove('show');
+}));
+
+/* ==== حذف/خروج (نسخة Auth0) ==== */
+function closeAnyOpenModal(){
+  const open = document.querySelector('.modal.show');
+  if (open) { open.classList.remove('show'); open.setAttribute('aria-hidden','true'); }
 }
-
-/* ==============================
-   نسيان كلمة المرور (Auth0)
-   ============================== */
-function bindForgotPassword(){
-  const forgotLink = $('#forgotPasswordLink');
-  if (!forgotLink) return;
-  forgotLink.addEventListener('click', (e)=>{
-    e.preventDefault();
-    const redirectUri = window.location.origin;
-    window.location.href =
-      `https://${AUTH0_DOMAIN}/u/reset-password?client_id=${AUTH0_CLIENTID}&returnTo=${redirectUri}`;
-  });
-}
-
-/* ==============================
-   بعد تحميل الصفحة
-   ============================== */
-document.addEventListener('DOMContentLoaded', async ()=>{
-  // اربطي UI
-  bindThemeToggle();
-  bindModals();
-  bindProgramLinks();
-
-  // اربطي نماذج الدخول/التسجيل
-  $('#register-form')?.addEventListener('submit', handleRegister);
-  $('#login-form')?.addEventListener('submit', handleLogin);
-
-  // زر “نسيت كلمة المرور”
-  bindForgotPassword();
-
-  // حمّلي مكتبات Supabase + Auth0 ثم ابدئي
+async function logout(e){
+  e?.preventDefault?.();
+  closeAnyOpenModal();
   try {
-    if (!window.supabase) await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js");
-  } catch { console.error("[Supabase] failed to load"); }
-
+    await auth0Client.logout({
+      logoutParams: { returnTo: window.location.origin }
+    });
+  } catch (err) {
+    console.warn('logout failed:', err);
+    location.href = '/';
+  }
+}
+async function deleteAccount(){
+  if (!confirm('سيتم حذف حسابك نهائيًا. هل أنتِ متأكدة؟')) return;
+  closeAnyOpenModal();
   try {
-    if (!window.createAuth0Client) await loadScript("https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js");
-  } catch { toast('تعذّر تحميل نظام الدخول، حاولي لاحقًا.'); }
+    const token = await auth0Client.getTokenSilently();
+    const res = await fetch('/.netlify/functions/delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    toast('تم حذف الحساب نهائيًا');
+  } catch (e) {
+    console.error(e);
+    toast('تعذّر حذف الحساب الآن.');
+  } finally {
+    await logout();
+  }
+}
 
-  // فعّلي Supabase و Auth0
-  initSupabase();
-  await initAuth0();
+/* ==== توست (نسخة واحدة فقط) ==== */
+function toast(msg){
+  let t = $('.toast'); 
+  if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg; 
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 1800);
+}
+
+/* ===== ربط كل شيء بعد تحميل الصفحة ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  // 1) زر الثيم
+  (function bindThemeToggle(){
+    const root = document.documentElement;
+    const btn  = document.getElementById('themeToggle');
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const dark = root.classList.toggle('dark');
+      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(e){}
+      toast(dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح');
+    });
+  })();
+
+  // 2) اربطي باقي الأحداث
+  wire();
+
+  // 3) حمّل SDK Auth0
+  const s = document.createElement('script');
+  s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
+  s.onload = async () => {
+    console.log('[Auth0] SDK loaded ✔️');
+    await initAuth0();
+  };
+  s.onerror = () => {
+    console.error('[Auth0] failed to load from CDN');
+    toast('تعذّر تحميل نظام الدخول، حاول لاحقًا.');
+  };
+  document.head.appendChild(s);
+
+  // 4) زر "نسيت كلمة المرور"
+  const forgotLink = document.getElementById('forgotPasswordLink');
+  if (forgotLink) {
+    forgotLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const domain = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+      const clientId = "rXaNXLwIkIOALVTWبRDA8SwJnERnI1NU";
+      const redirectUri = window.location.origin;
+      window.location.href =
+        `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
+    });
+  }
 });
