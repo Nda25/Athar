@@ -45,7 +45,7 @@ async function initAuth0(){
   // 1) إنشاء العميل
   window.auth0Client = await createAuth0Client({
     domain: "dev-2f0fmbtj6u8o7en4.us.auth0.com",
-    clientId: "rXaNXLwIkIOALVTWبRDA8SwJnERnI1NU",
+    clientId: "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU",
     cacheLocation: "localstorage",
     authorizationParams: { redirect_uri: window.location.origin }
   });
@@ -414,7 +414,7 @@ function toast(msg){
 }
 
 /* ===== ربط كل شيء بعد تحميل الصفحة ===== */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // 1) زر الثيم
   (function bindThemeToggle(){
     const root = document.documentElement;
@@ -431,18 +431,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2) اربطي باقي الأحداث
   wire();
 
-  // 3) حمّل SDK Auth0
-  const s = document.createElement('script');
-  s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
-  s.onload = async () => {
-    console.log('[Auth0] SDK loaded ✔️');
+  // 3) Auth0 init إذا المكتبة جاهزة
+  if (typeof window.createAuth0Client === 'function') {
     await initAuth0();
-  };
-  s.onerror = () => {
-    console.error('[Auth0] failed to load from CDN');
-    toast('تعذّر تحميل نظام الدخول، حاول لاحقًا.');
-  };
-  document.head.appendChild(s);
+  } else {
+    console.error('[Auth0] SDK not found');
+  }
 
   // 4) زر "نسيت كلمة المرور"
   const forgotLink = document.getElementById('forgotPasswordLink');
@@ -450,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
     forgotLink.addEventListener('click', (e) => {
       e.preventDefault();
       const domain = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-      const clientId = "rXaNXLwIkIOALVTWبRDA8SwJnERnI1NU";
+      const clientId = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
       const redirectUri = window.location.origin;
       window.location.href =
         `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
