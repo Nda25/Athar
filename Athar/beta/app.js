@@ -381,15 +381,29 @@ async function deleteAccount(){
 
 /* ==== توست ==== */
 function toast(msg){
-  let t = $('.toast'); 
+  let t = $('.toast');
   if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
-  t.textContent = msg; 
+  t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=> t.classList.remove('show'), 1800);
 }
 
+/* ==== انتظـار جاهزية Auth0 SDK ==== */
+function whenAuth0Ready(cb, tries = 10) {
+  if (typeof window.createAuth0Client === 'function') {
+    console.log('[Auth0] SDK ready');
+    return cb();
+  }
+  if (tries === 0) {
+    console.error('[Auth0] SDK not found after retries');
+    return;
+  }
+  setTimeout(() => whenAuth0Ready(cb, tries - 1), 200);
+}
+
 /* ===== ربط كل شيء بعد تحميل الصفحة ===== */
 document.addEventListener('DOMContentLoaded', async () => {
+  // زر الثيم
   (function bindThemeToggle(){
     const root = document.documentElement;
     const btn  = document.getElementById('themeToggle');
@@ -402,14 +416,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   })();
 
+  // أربطي باقي الأحداث العامة
   wire();
 
-  if (typeof window.createAuth0Client === 'function') {
+  // شغّلي Auth0 عندما تكون المكتبة جاهزة
+  whenAuth0Ready(async () => {
     await initAuth0();
-  } else {
-    console.error('[Auth0] SDK not found');
-  }
+  });
 
+  // زر "نسيت كلمة المرور"
   const forgotLink = document.getElementById('forgotPasswordLink');
   if (forgotLink) {
     forgotLink.addEventListener('click', (e) => {
