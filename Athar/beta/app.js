@@ -346,20 +346,32 @@ function wire(){
     del.addEventListener('click', deleteAccount);
   }
 
-  // 5) شارة حالة الاشتراك — تعتمد على app_metadata.sub_active فقط
-  const badge = $('#sub-state');
-  if (badge) {
-    (async ()=>{
-      const active = await isSubActiveAsync();
-      badge.style.display    = 'inline-block';
-      badge.textContent      = active ? 'نشط' : 'غير مفعل';
-      badge.style.background = active ? '#dcfce7' : '#fee2e2';
-      badge.style.color      = active ? '#166534' : '#991b1b';
-      badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
-    })();
+// 5) تحديث شارة الحالة + حفظ/تحديث المستخدم في Supabase
+(async ()=>{
+  const u = await auth0Client.getUser();
+  if (u) {
+    // 5.a) خزّني/حدّثي المستخدم في Supabase
+    await supaEnsureUser({
+      email: u.email,
+      full_name: u.name || u.nickname || null,
+      role: 'user',
+      // لو عندك نوع اشتراك ضمن الـ app_metadata تقدري تمريّره هنا
+      subscription_type: (u['https://athar.app/app_metadata']?.plan) || null
+    });
   }
-}
 
+  // 5.b) شارة الحالة (كما هو)
+  const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
+  const active = !!meta.sub_active;
+  const badge = document.getElementById('sub-state');
+  if (badge){
+    badge.style.display='inline-block';
+    badge.textContent = active ? 'نشط' : 'غير مفعل';
+    badge.style.background = active ? '#dcfce7' : '#fee2e2';
+    badge.style.color      = active ? '#166534' : '#991b1b';
+    badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+  }
+})();
 /* ==== النوافذ ==== */
 function openModal(id){ $(id).classList.add('show'); }
 function closeModal(id){ $(id).classList.remove('show'); }
