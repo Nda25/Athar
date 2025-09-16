@@ -129,32 +129,20 @@
     <!-- سطر إضافي لاسم المدرسة (اختياري) -->
     <!-- <p class="foot-name">مدرسة .........</p> -->
   </footer>
-<!-- Supabase (defer) -->
+<!-- Supabase -->
 <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
 <script src="assets/js/supabase-client.js?v=1" defer></script>
 
-<!-- لودر Auth0 SDK -->
-<script>
-function loadAuth0SDK(cb){
-  if (typeof window.createAuth0Client === 'function') return cb();
-  const s = document.createElement('script');
-  s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
-  s.onload = cb;
-  s.onerror = () => console.error('[Auth0] failed to load SDK script');
-  document.head.appendChild(s);
-}
+<!-- Auth0 SDK (من CDN) - بدون defer ليكون جاهز قبل ملفاتنا المؤجلة -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadAuth0SDK(async () => {
-    console.log("Auth0 SDK loaded?", typeof window.createAuth0Client);
-    if (typeof window.initAuth0 === 'function') {
-      await initAuth0();
-    } else {
-      console.error('[Auth0] initAuth0() not found');
-    }
-  });
-});
-</script>
+<!-- ملفات المشروع (كلها defer) -->
+<script src="assets/js/dom-helpers.js" defer></script>
+<script src="assets/js/theme.js" defer></script>
+<script src="assets/js/ui.js" defer></script>
+<script src="assets/js/storage.js" defer></script>
+<script src="assets/js/auth0.js" defer></script>
+<script src="app.js?v=4" defer></script>
 
 <!-- ملف مشروعك في الأخير (defer عادي) -->
 <script src="app.js?v=4" defer></script>
