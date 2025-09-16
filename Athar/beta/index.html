@@ -1,438 +1,235 @@
-/* =========================================
-   athar — app.js (نسخة منقحة ونهائية)
-   ========================================= */
-/* ==== إعدادات عامة ==== */
-const ATHAR_APP_URL = "athar.html";
-const PRICING_URL   = "pricing.html";
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>أثَـــر</title>
 
-/* أدوات صغيرة */
-const $  = (sel, root=document) => root.querySelector(sel);
-const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  <!-- أيقونة الموقع (صورة واحدة لكل شيء) -->
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="apple-touch-icon" href="assets/icon.png">
 
-/* ==============================
-   Theme: init + toggle (موحّد)
-   ============================== */
+  <!-- OG/Twitter لصورة المشاركة -->
+  <meta property="og:title" content="أثـَـر">
+  <meta property="og:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
+  <meta property="og:image" content="https://n-athar.co/assets/icon.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="أثـَـر">
+  <meta name="twitter:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
+  <meta name="twitter:image" content="https://n-athar.co/assets/icon.png">
 
-// 0) توحيد مكان كلاس dark (لا يكون على <body>)
-(function unifyDarkClass(){
+  <!-- الخط والستايل -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- (اختياري) Tailwind لبعض العناصر -->
+  <script src="https://cdn.tailwindcss.com"></script>
+<script>
+(function(){
   var root = document.documentElement;
-  var body = document.body;
-  if (body.classList.contains('dark')) {
-    body.classList.remove('dark');
-    root.classList.add('dark');
-  }
-})();
-
-/* ===== 1) تفعيل الوضع الداكن/الفاتح (🌓) مع حفظ في localStorage ===== */
-(function initTheme(){
-  var root  = document.documentElement;
   var saved = null;
   try { saved = localStorage.getItem('theme'); } catch(_) {}
-  if (saved === 'dark') { root.classList.add('dark'); }
-  else { root.classList.remove('dark'); }
-})(); // ← إغلاق الدالة الذاتية
 
-/* ==== Auth0 Integration ==== */
-async function initAuth0(){
-  console.log('[Auth0] initAuth0: start');
-
-  if (typeof window.createAuth0Client !== 'function') {
-    console.error('[Auth0] SDK not loaded.');
-    return;
+  if (saved === 'dark') root.classList.add('dark');
+  else {
+    root.classList.remove('dark');
+    try { localStorage.setItem('theme','light'); } catch(_) {}
   }
 
-  // إنشاء العميل
-  window.auth0Client = await createAuth0Client({
-    domain: "dev-2f0fmbtj6u8o7en4.us.auth0.com",
-    clientId: "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU",
-    cacheLocation: "localstorage",
-    authorizationParams: { redirect_uri: window.location.origin }
-  });
-
-  // معالجة العودة من Auth0
-  if (location.search.includes('code=') && location.search.includes('state=')) {
-    try {
-      await auth0Client.handleRedirectCallback();
-    } catch(e){
-      console.error(e);
+  // لو كان في صفحات ثانية حاطين .dark على <body> بالخطأ ننقله لـ <html> بعد ما يجهز البودي
+  function fixBodyDark(){
+    if (document.body && document.body.classList.contains('dark')) {
+      document.body.classList.remove('dark');
+      root.classList.add('dark');
     }
-    history.replaceState({}, document.title, location.origin + location.pathname);
   }
-
-  // ربط الأزرار
-  const loginBtn    = document.getElementById('loginBtn');
-  const registerBtn = document.getElementById('registerBtn');
-  const logoutBtn   = document.getElementById('logout');
-
-  if (loginBtn){
-    loginBtn.setAttribute('type','button');
-    loginBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      await auth0Client.loginWithRedirect({
-        authorizationParams: {
-          screen_hint: 'login',
-          redirect_uri: window.location.origin + '/plans'
-        },
-        appState: { returnTo: '/plans' }
-      });
-    });
-  }
-
-  if (registerBtn){
-    registerBtn.setAttribute('type','button');
-    registerBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      await auth0Client.loginWithRedirect({
-        authorizationParams: {
-          screen_hint: 'signup',
-          redirect_uri: window.location.origin + '/plans'
-        },
-        appState: { returnTo: '/plans' }
-      });
-    });
-  }
-
-  if (logoutBtn){
-    logoutBtn.setAttribute('type','button');
-    logoutBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        await auth0Client.logout({
-          logoutParams: { returnTo: window.location.origin }
-        });
-      } catch (err) {
-        console.warn('[Auth0] logout error:', err);
-        location.href = '/';
-      }
-    });
-  }
-
-  console.log('[Auth0] initAuth0: done');
-}
-
-/* ==== أوتو-حفظ لأي صفحة فورم (نسخة محسّنة) ==== */
-// مفتاح تخزين عام (بدون الاعتماد على store.user)
-function userKey(){ return 'athar:data'; }
-
-const userDB = {
-  getAll(){
-    try{ return JSON.parse(localStorage.getItem(userKey())||'{}'); }
-    catch(_){ return {}; }
-  },
-  setAll(obj){
-    localStorage.setItem(userKey(), JSON.stringify(obj||{}));
-  },
-  get(page, fallback={}){
-    const all = this.getAll();
-    return all[page] ?? fallback;
-  },
-  set(page, data){
-    const all = this.getAll();
-    all[page] = data;
-    this.setAll(all);
-  },
-  merge(page, partial){
-    const cur = this.get(page, {});
-    this.set(page, Object.assign({}, cur, partial));
-  },
-  remove(page){
-    const all = this.getAll();
-    delete all[page];
-    this.setAll(all);
-  },
-  clearThisUser(){
-    this.setAll({});
-  }
-};
-
-// يجمع قيم input/textarea/select داخل عنصر معيّن
-function readForm(container){
-  const data = {};
-  const root = (typeof container === 'string') ? document.querySelector(container) : container;
-  if(!root) return data;
-
-  root.querySelectorAll('input, textarea, select').forEach(el=>{
-    const key = el.name || el.id;
-    if(!key) return;
-
-    if(el.tagName === 'SELECT'){
-      data[key] = el.multiple ? Array.from(el.selectedOptions).map(o=>o.value) : el.value;
-      return;
-    }
-    if(el.type === 'checkbox'){
-      const group = root.querySelectorAll(`input[type="checkbox"][name="${el.name}"]`);
-      if(group.length > 1){
-        data[key] = Array.from(group).filter(i=>i.checked).map(i=>i.value || true);
-      }else{
-        data[key] = !!el.checked;
-      }
-      return;
-    }
-    if(el.type === 'radio'){
-      if(el.checked) data[key] = el.value;
-      else if(!(key in data)) data[key] = '';
-      return;
-    }
-    if(el.type === 'number'){
-      data[key] = (el.value === '' ? '' : +el.value);
-      return;
-    }
-    data[key] = el.value;
-  });
-
-  return data;
-}
-
-// يملأ الحقول من كائن بيانات
-function fillForm(container, data){
-  const root = (typeof container === 'string') ? document.querySelector(container) : container;
-  if(!root || !data) return;
-
-  Object.entries(data).forEach(([k,v])=>{
-    const els = root.querySelectorAll(`[name="${k}"], #${CSS.escape(k)}`);
-    if(!els.length) return;
-
-    els.forEach(el=>{
-      if(el.tagName === 'SELECT'){
-        if(el.multiple && Array.isArray(v)){
-          Array.from(el.options).forEach(o=>o.selected = v.includes(o.value));
-        }else{
-          el.value = (v ?? '');
-        }
-        return;
-      }
-      if(el.type === 'checkbox'){
-        const group = root.querySelectorAll(`input[type="checkbox"][name="${el.name}"]`);
-        if(group.length > 1 && Array.isArray(v)){
-          el.checked = v.includes(el.value || true);
-        }else{
-          el.checked = !!v;
-        }
-        return;
-      }
-      if(el.type === 'radio'){
-        el.checked = (el.value == v);
-        return;
-      }
-      el.value = (v == null ? '' : v);
-    });
-  });
-}
-
-// يربط الأوتو-حفظ بصفحة محددة
-function bindAutoSave(pageKey, container){
-  const root = (typeof container === 'string') ? document.querySelector(container) : container;
-  if(!root) return;
-
-  // استرجاع قديم
-  fillForm(root, userDB.get(pageKey, {}));
-
-  // حفظ عند التغيير (بـ debounce خفيف)
-  let t=null;
-  const save = ()=>{
-    clearTimeout(t);
-    t = setTimeout(()=> userDB.set(pageKey, readForm(root)), 250);
-  };
-  root.addEventListener('input', save);
-  root.addEventListener('change', save);
-}
-
-/* ==== تحققات ==== */
-function isValidEmail(x){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x); }
-function isValidPhone(x){ return /^05\d{8}$/.test(x); }
-
-/* ==== التسجيل (Auth0) ==== */
-async function handleRegister(e){
-  e.preventDefault();
-  const f = e.target;
-
-  // حقل كوبون (اختياري)
-  const promo = (f.promo?.value || "").trim().toUpperCase();
-  if (promo) sessionStorage.setItem('pending_coupon', promo);
-
-  await auth0Client.loginWithRedirect({
-    authorizationParams: {
-      screen_hint: 'signup',
-      redirect_uri: window.location.origin + '/pay'
-    },
-    appState: { returnTo: '/pay', coupon: promo || null }
-  });
-}
-
-/* ==== الدخول (Auth0) ==== */
-async function handleLogin(e){
-  e?.preventDefault?.();
-  await auth0Client.loginWithRedirect({
-    authorizationParams: {
-      screen_hint: 'login',
-      redirect_uri: window.location.origin + '/plans'
-    },
-    appState: { returnTo: '/plans' }
-  });
-}
-
-/* ==== الاشتراك (بدون مزوّد دفع حالياً) ==== */
-async function subscribe(planKey){
-  const authed = await auth0Client.isAuthenticated();
-  if (!authed) {
-    return auth0Client.loginWithRedirect({
-      authorizationParams: { screen_hint:'signup', redirect_uri: location.origin + '/pay' },
-      appState: { returnTo: '/pay' }
-    });
-  }
-
-  try { await auth0Client.checkSession(); } catch {}
-  const u = await auth0Client.getUser();
-  const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
-  const subscribed = !!meta.sub_active;
-
-  if (subscribed) {
-    return location.assign('/pay');
-  }
-
-  if (typeof openModal === 'function' && document.querySelector('#modal-coupon')) {
-    openModal('#modal-coupon');
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fixBodyDark);
   } else {
-    location.assign('/plans');
+    fixBodyDark();
   }
-}
+})();
+</script>
+</head>
+<body>
 
-/* ==== النوافذ ==== */
-function openModal(id){ $(id).classList.add('show'); }
-function closeModal(id){ $(id).classList.remove('show'); }
-$$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
-  e.preventDefault();
-  const m = btn.closest('.modal'); if(m) m.classList.remove('show');
-}));
+  <!-- طبقات الخلفية (لا تحذفينها) -->
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
 
-/* ==== ربط الأحداث (نظيف) ==== */
-async function isSubActiveAsync(){
-  try { await auth0Client.checkSession(); } catch {}
-  const u = await auth0Client.getUser();
-  const meta = u?.['https://athar.app/app_metadata'] || u?.app_metadata || {};
-  return !!meta.sub_active;
-}
+<!-- الشريط العلوي (موحّد) -->
+<div class="topbar">
+  <!-- روابط التنقّل (يسار) -->
+  <div class="left-actions">
+    <!-- في الرئيسية نحط "الخطط"، وفي الصفحات الثانية نخلي "الرئيسية" -->
+    <!-- في index.html: -->
+    <!-- <a class="btn" href="pricing.html" title="الخطط">الخطط</a> -->
 
-function wire(){
-  // نماذج الدخول/التسجيل
-  const regForm   = $('#register-form'); if (regForm)   regForm.addEventListener('submit', handleRegister);
-  const loginForm = $('#login-form');    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    <!-- في البرامج/أثر/درسي: -->
+    <!-- <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a> -->
 
-  // أزرار الباقات (في pricing.html)
-  $$('#choose-plan [data-plan]').forEach(btn=>{
-    btn.addEventListener('click', ()=> subscribe(btn.getAttribute('data-plan')));
-  });
+<a class="btn" href="pricing.html" title="الخطط">الخطط</a>
+  </div>
 
-  // خروج (لو فيه زر بالخارج غير اللي ربطناه في initAuth0)
-  const lo = $('#logout');
-  if (lo) lo.addEventListener('click', async (e)=>{
-    e.preventDefault();
-    await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
-  });
+  <!-- أدوات إضافية (الزر في الوسط وبنفس الإيموجي دائماً 🌓) -->
+  <div class="actions">
+    <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+  </div>
 
-  // شارة حالة الاشتراك — تعتمد على app_metadata.sub_active فقط
-  const badge = $('#sub-state');
-  if (badge) {
-    (async ()=>{
-      const active = await isSubActiveAsync();
-      badge.style.display    = 'inline-block';
-      badge.textContent      = active ? 'نشط' : 'غير مفعل';
-      badge.style.background = active ? '#dcfce7' : '#fee2e2';
-      badge.style.color      = active ? '#166534' : '#991b1b';
-      badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
-    })();
-  }
-}
+  <!-- حالة المستخدم + برامجنا (يمين) -->
+  <div class="user">
+  <span id="nav-auth" style="display:inline-flex; gap:10px">
+  <button id="loginBtn" class="btn">دخول</button>
+<button id="registerBtn" class="btn">تسجيل </button>
+</span>
 
-/* ==== خروج/حذف (نسخة Auth0) ==== */
-function closeAnyOpenModal(){
-  const open = document.querySelector('.modal.show');
-  if (open) { open.classList.remove('show'); open.setAttribute('aria-hidden','true'); }
-}
+<a class="btn" href="programs.html" title="مساحة إبداعي">مساحة إبداعي</a>
+<a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+  </div>
+</div>
+  
+  <!-- الهيدر / الهيرو -->
+  <header>
+    <div class="hero">
+      <h1 class="logo">أثـَــر</h1>
+      <div class="tag">
+        <span class="dot"></span>
+        حين يلتقي الشغف بالمعرفة .. يُصنع الأثـَـر
+      </div>
+    </div>
+  </header>
 
-async function logout(e){
-  e?.preventDefault?.();
-  closeAnyOpenModal();
-  try {
-    await auth0Client.logout({
-      logoutParams: { returnTo: window.location.origin }
-    });
-  } catch (err) {
-    console.warn('logout failed:', err);
-    location.href = '/';
-  }
-}
+  <!-- المحتوى -->
+  <main>
+    <div class="container">
+      <!-- كيف وُلد أثر؟ -->
+      <section class="card" style="margin-top:-14px">
+        <h2 class="title">كيف وُلد «أثر»؟</h2>
+        <p class="lead">
+          لم تكن الحكاية بحثًا عن “أداة” بقدر ما كانت مطاردةً لفكرة:
+          كيف نجعل الدرس ينبض بالحياة؟ حين اصطدمــتُ بسقف الاستراتيجيات التقليدية،
+          قررت أن أبني مساحةً تُشغِّل الفضول وتُهندس التجربة. من هنا وُلـد «أثـر»:
+          مشروعٌ تعليميٌّ صُنع على مهل، ليحترم عقل المتعلم ويُعطي المعلم أدواتٍ
+          دقيقة، جميلة، وسهلة الاستخدام.
+        </p>
+      </section>
 
-// حذف الحساب الحقيقي يتطلب دالة خادمية (Management API) — محفوظة لاحقًا
-async function deleteAccount(){
-  if (!confirm('سيتم حذف حسابك نهائيًا. هل أنتِ متأكدة؟')) return;
-  closeAnyOpenModal();
-  try {
-    const token = await auth0Client.getTokenSilently();
-    const res = await fetch('/.netlify/functions/delete-account', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` }
-    });
-    if (!res.ok) throw new Error(await res.text());
-    toast('تم حذف الحساب نهائيًا');
-  } catch (e) {
-    console.error(e);
-    toast('تعذّر حذف الحساب الآن.');
-  } finally {
-    await logout();
-  }
-}
+      <!-- ما هو أثر؟ + كيف يفيدني أثر كمعلم/ة؟ -->
+      <section class="grid">
+        <div class="box">
+          <h3>ما هو «أثر»؟</h3>
+          <p>
+            منصة تعليمية ذكية تُولِّد استراتيجيات وأنشطة وأسئلة قابلة للتخصيص،
+            وتتوافق مع مستويات بلوم والتقويم؛ لتجعل الحصة عميقة وسلسة في آنٍ واحد.
+          </p>
+        </div>
 
-/* ==== توست ==== */
-function toast(msg){
-  let t = $('.toast'); 
-  if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
-  t.textContent = msg; 
-  t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), 1800);
-}
+        <div class="box">
+          <h3>كيف يفيدني «أثر» كمعلم/ة؟</h3>
+          <p>
+            يوفّر لك قوالب جاهزة قابلة للتعديل، أسئلة متدرجة، بطاقات أنشطة،
+            تتبعًا مبسّطًا، وتجارب مُثرية؛ لتصميم درس ثري في دقائق بدل ساعات.
+            <a class="link" href="pricing.html">اطّلع/ي على الخطط</a>.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
 
-/* ===== ربط كل شيء بعد تحميل الصفحة ===== */
-document.addEventListener('DOMContentLoaded', () => {
-  // 1) زر الثيم
-  (function bindThemeToggle(){
-    const root = document.documentElement;
-    const btn  = document.getElementById('themeToggle');
-    if (!btn) return;
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const dark = root.classList.toggle('dark');
-      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(e){}
-      toast(dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح');
-    });
-  })();
+  <!-- الذيل -->
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
+    <!-- سطر إضافي لاسم المدرسة (اختياري) -->
+    <!-- <p class="foot-name">مدرسة .........</p> -->
+  </footer>
 
-  // 2) اربطي باقي الأحداث
-  wire();
+  <!-- ========= المودالات ========= -->
 
-  // 3) حمّل SDK Auth0
-  const s = document.createElement('script');
-  s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
-  s.onload = async () => {
-    console.log('[Auth0] SDK loaded ✔️');
-    await initAuth0();
-  };
-  s.onerror = () => {
-    console.error('[Auth0] failed to load from CDN');
-    toast('تعذّر تحميل نظام الدخول، حاول لاحقًا.');
-  };
-  document.head.appendChild(s);
+  <!-- مودال التسجيل -->
+  <div class="modal" id="modal-register" aria-hidden="true">
+    <div class="sheet">
+      <h3>تسجيل حساب جديد</h3>
+      <form id="register-form">
+        <div class="form-row">
+          <div>
+            <label>الاسم الكامل</label>
+            <input name="name" placeholder="مثال: ندى المجيرش" required>
+          </div>
+          <div>
+            <label>رقم الجوال</label>
+            <input name="phone" placeholder="05xxxxxxxx" required>
+          </div>
+        </div>
 
-  // 4) زر "نسيت كلمة المرور"
-  const forgotLink = document.getElementById('forgotPasswordLink');
-  if (forgotLink) {
-    forgotLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      const domain = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-      const clientId = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-      const redirectUri = window.location.origin;
-      window.location.href =
-        `https://${domain}/u/reset-password?client_id=${clientId}&returnTo=${redirectUri}`;
-    });
-  }
-});
+        <div class="form-row">
+          <div>
+            <label>البريد الإلكتروني</label>
+            <input type="email" name="email" placeholder="name@example.com" required>
+          </div>
+          <div>
+            <label>اسم المدرسة</label>
+            <input name="school" placeholder="مدرستك" required>
+          </div>
+        </div>
+
+        <label>كلمة المرور</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+
+        <label>رمز الدعوة (إن وجد)</label>
+        <input name="promo" placeholder="">
+
+        <label style="display:flex; align-items:center; gap:6px; font-size:12px; margin-top:10px">
+          <input type="checkbox" name="consent" style="width:16px; height:16px">
+          <span>أوافق على استلام التنبيهات والإشعارات من «أثر»</span>
+        </label>
+
+        <div class="actions-row">
+          <a href="#" class="btn ghost" data-close>إغلاق</a>
+          <button class="btn primary" type="submit">إنشاء حساب</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<!-- مودال الدخول -->
+<div class="modal" id="modal-login" aria-hidden="true">
+  <div class="sheet">
+    <h3>تسجيل الدخول</h3>
+    <form id="login-form">
+      <label>البريد الإلكتروني أو رقم الجوال</label>
+      <input name="identifier" placeholder="name@example.com أو 05xxxxxxxx" required>
+
+      <label>كلمة المرور</label>
+      <input type="password" name="password" placeholder="••••••••" required>
+
+      <!-- 🔽 هنا نضيف رابط نسيت كلمة المرور -->
+      <div class="forgot-password" style="margin:10px 0; font-size:14px; text-align:left">
+        <a href="#" id="forgotPasswordLink">نسيت كلمة المرور؟</a>
+      </div>
+
+      <div class="actions-row">
+        <a href="#" class="btn ghost" data-close>إغلاق</a>
+        <button class="btn primary" type="submit">دخول</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+  <!-- توست للإشعارات الصغيرة -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ========= السكربتات ========= -->
+<!-- Auth0 SDK: بدون defer -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+
+<!-- Supabase -->
+<script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+<script src="assets/js/supabase-client.js?v=1" defer></script>
+
+<!-- سكربت مشروعك -->
+<script src="app.js?v=4" defer></script>
+</body>
+</html>
