@@ -130,89 +130,17 @@
     <!-- <p class="foot-name">مدرسة .........</p> -->
   </footer>
 
-  <!-- ========= المودالات ========= -->
-
-  <!-- مودال التسجيل -->
-  <div class="modal" id="modal-register" aria-hidden="true">
-    <div class="sheet">
-      <h3>تسجيل حساب جديد</h3>
-      <form id="register-form">
-        <div class="form-row">
-          <div>
-            <label>الاسم الكامل</label>
-            <input name="name" placeholder="مثال: ندى المجيرش" required>
-          </div>
-          <div>
-            <label>رقم الجوال</label>
-            <input name="phone" placeholder="05xxxxxxxx" required>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div>
-            <label>البريد الإلكتروني</label>
-            <input type="email" name="email" placeholder="name@example.com" required>
-          </div>
-          <div>
-            <label>اسم المدرسة</label>
-            <input name="school" placeholder="مدرستك" required>
-          </div>
-        </div>
-
-        <label>كلمة المرور</label>
-        <input type="password" name="password" placeholder="••••••••" required>
-
-        <label>رمز الدعوة (إن وجد)</label>
-        <input name="promo" placeholder="">
-
-        <label style="display:flex; align-items:center; gap:6px; font-size:12px; margin-top:10px">
-          <input type="checkbox" name="consent" style="width:16px; height:16px">
-          <span>أوافق على استلام التنبيهات والإشعارات من «أثر»</span>
-        </label>
-
-        <div class="actions-row">
-          <a href="#" class="btn ghost" data-close>إغلاق</a>
-          <button class="btn primary" type="submit">إنشاء حساب</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-<!-- مودال الدخول -->
-<div class="modal" id="modal-login" aria-hidden="true">
-  <div class="sheet">
-    <h3>تسجيل الدخول</h3>
-    <form id="login-form">
-      <label>البريد الإلكتروني أو رقم الجوال</label>
-      <input name="identifier" placeholder="name@example.com أو 05xxxxxxxx" required>
-
-      <label>كلمة المرور</label>
-      <input type="password" name="password" placeholder="••••••••" required>
-
-      <!-- 🔽 هنا نضيف رابط نسيت كلمة المرور -->
-      <div class="forgot-password" style="margin:10px 0; font-size:14px; text-align:left">
-        <a href="#" id="forgotPasswordLink">نسيت كلمة المرور؟</a>
-      </div>
-
-      <div class="actions-row">
-        <a href="#" class="btn ghost" data-close>إغلاق</a>
-        <button class="btn primary" type="submit">دخول</button>
-      </div>
-    </form>
-  </div>
-</div>
-
   <!-- توست للإشعارات الصغيرة -->
   <div class="toast" id="toast"></div>
 
-  <!-- ========= السكربتات ========= -->
+<!-- Auth0 SDK (لا تحطين defer) -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-
-<!-- Supabase -->
+<!-- Supabase (عادي defer) -->
 <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
 <script src="assets/js/supabase-client.js?v=1" defer></script>
 
-<!-- سكربت مشروعك -->
+<!-- سكربت مشروعك (defer) -->
 <script src="app.js?v=4" defer></script>
 </body>
 </html>
