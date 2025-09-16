@@ -107,23 +107,20 @@
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-  <!-- Supabase -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
-  <script src="assets/js/supabase-client.js?v=1" defer></script>
+ <!-- Supabase -->
+<script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+<script src="assets/js/supabase-client.js?v=1" defer></script>
 
-  <!-- Auth0 SDK من CDN (بدون defer) -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<!-- ملفات المشروع (كلها defer) -->
+<!-- إذا كنتِ معرّفة $ و $$ داخل app.js فلا تضعي dom-helpers.js -->
+<!-- <script src="assets/js/dom-helpers.js" defer></script> -->
 
-  <!-- ملفات المشروع (اختر واحد لمسألة $/$$) -->
-  <!-- إذا كان dom-helpers.js يعرّف $ و $$ اتركيه واحذفي تعريفهم من app.js -->
-  <script src="assets/js/dom-helpers.js" defer></script>
+<script src="assets/js/theme.js" defer></script>
+<script src="assets/js/ui.js" defer></script>
+<script src="assets/js/storage.js" defer></script>
+<script src="assets/js/auth0.js" defer></script>
 
-  <script src="assets/js/theme.js" defer></script>
-  <script src="assets/js/ui.js" defer></script>
-  <script src="assets/js/storage.js" defer></script>
-  <script src="assets/js/auth0.js" defer></script>
-
-  <!-- app.js مرّة واحدة فقط -->
-  <script src="app.js?v=4" defer></script>
+<!-- app.js مرّة واحدة فقط -->
+<script src="app.js?v=4" defer></script>
 </body>
 </html>
