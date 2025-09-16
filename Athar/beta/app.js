@@ -417,33 +417,32 @@ function bindThemeToggle(){
   });
 }
 // يحمّل Auth0 SDK لو كان غير موجود
+// تحميل مكتبة Auth0 ديناميكيًا (مرة واحدة)
 function ensureAuth0SDK() {
   return new Promise((resolve, reject) => {
-    if (typeof window.createAuth0Client === 'function') return resolve();
+    if (typeof window.createAuth0Client === 'function') {
+      return resolve(); // محمّل من قبل
+    }
     const s = document.createElement('script');
-    s.src = 'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js';
-    s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error('[Auth0] failed to load SDK'));
+    s.src = "https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js";
+    s.onload = () => {
+      if (typeof window.createAuth0Client === 'function') resolve();
+      else reject(new Error("Auth0 SDK failed to load"));
+    };
+    s.onerror = () => reject(new Error("Auth0 SDK network error"));
     document.head.appendChild(s);
   });
 }
 // تشغيل بعد تحميل الصفحة (ويضمن تحميل Auth0 SDK أولاً)
 /* ===== تشغيل بعد تحميل الصفحة ===== */
 document.addEventListener('DOMContentLoaded', async () => {
-  // اربطي واجهة المستخدم
   if (typeof bindThemeToggle === 'function') bindThemeToggle();
   if (typeof wire === 'function') wire();
 
-  // تأكدي أن Auth0 SDK محمّل
   try {
-    await ensureAuth0SDK();
-    if (typeof window.initAuth0 === 'function') {
-      await initAuth0();
-    } else {
-      console.error('[Auth0] initAuth0 function مفقودة');
-    }
-  } catch (err) {
-    console.error('[Auth0] فشل تحميل SDK:', err);
+    await ensureAuth0SDK();   // ← نضمن أن المكتبة نزلت
+    await initAuth0();        // ← الآن نستدعي تهيئة Auth0
+  } catch (e) {
+    console.error("[Auth0] load/init error:", e);
   }
 });
