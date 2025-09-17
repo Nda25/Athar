@@ -1,3 +1,5 @@
+// assets/js/supabase-client.js
+
 // (اختياري) تبقين العميل لو احتجتي قراءات مستقبلاً.
 // مع RLS المشدد، القراءات من المتصفح بتتفشل إلا إذا سويتي سياسات قراءة.
 const SUPABASE_URL = "https://oywqpkzaudmzwvytxaop.supabase.co";
