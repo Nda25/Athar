@@ -72,34 +72,45 @@ const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
 
 let auth0Client = null;
 
-// helper: هل الـSDK متوفر بأي اسم؟
+// هل الـSDK متوفر بأي اسم؟
 function hasAuth0SDK(){
   return (window.auth0 && typeof window.auth0.createAuth0Client === 'function')
       || (typeof window.createAuth0Client === 'function');
 }
 
+// ننتظر الـSDK
 async function waitForAuth0SDK(max = 100) {
   for (let i = 0; i < max && !hasAuth0SDK(); i++) {
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 100)); // ~10 ثواني كحد أقصى
   }
   return hasAuth0SDK();
 }
 
-// داخل initAuth0
-const create = (window.auth0 && window.auth0.createAuth0Client)
-             ? window.auth0.createAuth0Client
-             : window.createAuth0Client;
-
-auth0Client = await create({
-  domain: AUTH0_DOMAIN,
-  clientId: AUTH0_CLIENT,
-  cacheLocation: "localstorage",
-  authorizationParams: { 
-    redirect_uri: window.location.origin,
-    scope: "openid profile email offline_access"
+// الدالة الأساسية لتهيئة Auth0
+async function initAuth0(){
+  const ready = await waitForAuth0SDK();
+  if (!ready) {
+    console.error("[Auth0] SDK still not loaded");
+    return;
   }
-});
 
+  try {
+    // نختار الدالة حسب ما توفّر
+    const create = (window.auth0 && window.auth0.createAuth0Client)
+                 ? window.auth0.createAuth0Client
+                 : window.createAuth0Client;
+
+    auth0Client = await create({
+      domain: AUTH0_DOMAIN,
+      clientId: AUTH0_CLIENT,
+      cacheLocation: "localstorage",
+      authorizationParams: { 
+        redirect_uri: window.location.origin,
+        scope: "openid profile email offline_access"
+      }
+    });
+
+    // تنظيف العودة من redirect إن وُجد
     if (/[?&](code|state)=/.test(location.search)) {
       try {
         await auth0Client.handleRedirectCallback();
@@ -109,6 +120,7 @@ auth0Client = await create({
       }
     }
 
+    // API مبسطة على window.auth
     const api = {
       login:  (opts)=> auth0Client.loginWithRedirect(opts||{}),
       logout: (opts)=> auth0Client.logout({ 
@@ -120,6 +132,8 @@ auth0Client = await create({
       getToken: (opts)=> auth0Client.getTokenSilently(opts||{})
     };
     window.auth = window.auth || api;
+
+    // نعلن الجاهزية
     window.dispatchEvent(new CustomEvent("auth0:ready"));
     console.log("[Auth0] ready");
   } catch (err) {
@@ -143,9 +157,9 @@ async function updateAuthUi(){
   }
 }
 
-// ==============================
-// Entry Point - كل شيء هنا
-// ==============================
+/* ==============================
+   Entry Point
+   ============================== */
 document.addEventListener('DOMContentLoaded', async () => {
   bindThemeToggle();
 
@@ -154,42 +168,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const registerBtn = document.getElementById('registerBtn');
   const logoutBtn   = document.getElementById('logout');
 
-  // إخفاء "خروج" مبدئيًا وإظهار دخول/تسجيل
+  // إخفاء "خروج" مبدئيًا
   if (loginBtn)    loginBtn.style.display    = '';
   if (registerBtn) registerBtn.style.display = '';
   if (logoutBtn)   logoutBtn.style.display   = 'none';
 
-  // دالة مساعدة لتبديل الظهور
-  function setButtons(isAuth) {
-    if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
-    if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
-    if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
-  }
-
-  // فعليًا نبني عميل Auth0 ونعلن "جاهز"
+  // بناء عميل Auth0
   await initAuth0();
 
-  // عند جاهزية Auth0: نربط الأزرار + نحدّث الواجهة
+  // عند الجاهزية: نربط الأزرار ونحدّث الواجهة
   window.addEventListener('auth0:ready', async () => {
-    // ربط الأزرار (بعد الجاهزية)
-    if (loginBtn) {
-      loginBtn.onclick = () =>
-        window.auth.login({ authorizationParams: { screen_hint: 'login' } });
-    }
-    if (registerBtn) {
-      registerBtn.onclick = () =>
-        window.auth.login({ authorizationParams: { screen_hint: 'signup' } });
-    }
-    if (logoutBtn) {
-      logoutBtn.onclick = () => window.auth.logout();
-    }
+    if (loginBtn)    loginBtn.onclick    = ()=> window.auth.login({ authorizationParams:{ screen_hint:"login" } });
+    if (registerBtn) registerBtn.onclick = ()=> window.auth.login({ authorizationParams:{ screen_hint:"signup" } });
+    if (logoutBtn)   logoutBtn.onclick   = ()=> window.auth.logout();
 
-    // تحديث أولي للظهور
-    try {
-      const isAuth = await window.auth.isAuthenticated();
-      setButtons(isAuth);
-    } catch {
-      setButtons(false);
-    }
+    updateAuthUi();
   });
 });
