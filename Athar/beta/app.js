@@ -72,24 +72,25 @@ const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
 
 let auth0Client = null;
 
-// انتظري حتى تتوفر createAuth0Client من الـSDK
-async function waitForAuth0SDK(max = 50) {
-  for (let i = 0; i < max && !(window.auth0 && typeof window.auth0.createAuth0Client === 'function'); i++) {
-    await new Promise(r => setTimeout(r, 100));
-  }
-  return (window.auth0 && typeof window.auth0.createAuth0Client === 'function');
+// helper: هل الـSDK متوفر بأي اسم؟
+function hasAuth0SDK(){
+  return (window.auth0 && typeof window.auth0.createAuth0Client === 'function')
+      || (typeof window.createAuth0Client === 'function');
 }
 
-// الدوال الأساسية
-async function initAuth0(){
-  const ready = await waitForAuth0SDK();
-  if (!ready) {
-    console.error("[Auth0] SDK still not loaded");
-    return;
+async function waitForAuth0SDK(max = 100) {
+  for (let i = 0; i < max && !hasAuth0SDK(); i++) {
+    await new Promise(r => setTimeout(r, 100));
   }
+  return hasAuth0SDK();
+}
 
-  try {
-    auth0Client = await window.auth0.createAuth0Client({
+// داخل initAuth0
+const create = (window.auth0 && window.auth0.createAuth0Client)
+             ? window.auth0.createAuth0Client
+             : window.createAuth0Client;
+
+auth0Client = await create({
   domain: AUTH0_DOMAIN,
   clientId: AUTH0_CLIENT,
   cacheLocation: "localstorage",
