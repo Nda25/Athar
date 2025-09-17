@@ -114,8 +114,11 @@
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- 1) مكتبة Auth0 الأساسية (بدون defer/async لضمان الترتيب) -->
+<!-- 1) مكتبة Auth0 الأساسية (بدون defer لضمان الجاهزية) -->
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+
+<!-- 2) bootstrap: يهيّئ عميل Auth0 ويعرّض window.auth ويطلق auth0:ready -->
+<script defer src="assets/js/auth0.js"></script>
 
 <!-- 3) بقية الواجهة -->
 <script defer src="assets/js/ui.js"></script>
@@ -123,7 +126,7 @@
 <script defer src="assets/js/storage.js"></script>
 <script defer src="app.js"></script>
 
-<!-- 4) ربط الأزرار بعد جاهزية Auth0 -->
+<!-- 4) ربط الأزرار وتبديل ظهورها حسب الحالة -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const loginBtn    = document.getElementById('loginBtn');
