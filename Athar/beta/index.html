@@ -107,16 +107,15 @@
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-  <!-- ترتيب السكربتات (Auth0 مطلوب هنا فقط) -->
-  <!-- Supabase (يُستخدم في مزامنة المستخدم مع قاعدة البيانات) -->
+  <!-- Supabase (للتخزين والمزامنة) -->
   <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script defer src="assets/js/supabase-client.js"></script>
 
-  <!-- Auth0 SDK + فولباك محلي إذا كان CDN محجوب -->
+  <!-- Auth0 SDK مع فولباك محلي إذا الـ CDN ما يفتح -->
   <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
           onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-  <!-- ملف Auth0 الوحيد في المشروع -->
+  <!-- ملف Auth0 الخاص بالمشروع (bootstrap / api wrapper) -->
   <script defer src="assets/js/auth0.js"></script>
 
   <!-- بقية سكربتات الواجهة -->
