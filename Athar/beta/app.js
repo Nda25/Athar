@@ -74,10 +74,10 @@ let auth0Client = null;
 
 // انتظري حتى تتوفر createAuth0Client من الـSDK
 async function waitForAuth0SDK(max = 50) {
-  for (let i = 0; i < max && !(window.auth0 && typeof window.createAuth0Client === 'function'); i++) {
+  for (let i = 0; i < max && !(window.auth0 && typeof window.auth0.createAuth0Client === 'function'); i++) {
     await new Promise(r => setTimeout(r, 100));
   }
-  return (window.auth0 && typeof window.createAuth0Client === 'function');
+  return (window.auth0 && typeof window.auth0.createAuth0Client === 'function');
 }
 
 // الدوال الأساسية
@@ -89,15 +89,15 @@ async function initAuth0(){
   }
 
   try {
-    auth0Client = await window.createAuth0Client({
-      domain: AUTH0_DOMAIN,
-      clientId: AUTH0_CLIENT,
-      cacheLocation: "localstorage",
-      authorizationParams: { 
-        redirect_uri: window.location.origin,
-        scope: "openid profile email offline_access"
-      }
-    });
+    auth0Client = await window.auth0.createAuth0Client({
+  domain: AUTH0_DOMAIN,
+  clientId: AUTH0_CLIENT,
+  cacheLocation: "localstorage",
+  authorizationParams: { 
+    redirect_uri: window.location.origin,
+    scope: "openid profile email offline_access"
+  }
+});
 
     if (/[?&](code|state)=/.test(location.search)) {
       try {
