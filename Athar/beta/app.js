@@ -179,60 +179,40 @@ document.addEventListener('DOMContentLoaded', () => {
   // الثيم
   bindThemeToggle();
 
+  // أزرار Auth0
   const loginBtn    = document.getElementById('loginBtn');
   const registerBtn = document.getElementById('registerBtn');
   const logoutBtn   = document.getElementById('logout');
 
   function wireClicks(){
-    if (loginBtn) {
-      loginBtn.onclick = (e) => {
-        e.preventDefault();
-        if (!window.auth) return console.error('[Auth0] api not ready');
-        window.auth.login({ authorizationParams: { screen_hint: 'login' } });
-      };
-    }
-    if (registerBtn) {
-      registerBtn.onclick = (e) => {
-        e.preventDefault();
-        if (!window.auth) return console.error('[Auth0] api not ready');
-        window.auth.login({ authorizationParams: { screen_hint: 'signup' } });
-      };
-    }
-    if (logoutBtn) {
-      logoutBtn.onclick = async (e) => {
-        e.preventDefault();
-        if (!window.auth) return console.error('[Auth0] api not ready');
-        await window.auth.logout({ logoutParams: { returnTo: window.location.origin } });
-      };
-    }
+    if (loginBtn)    loginBtn.onclick    = (e)=>{ e.preventDefault(); window.auth?.login({ authorizationParams:{ screen_hint:'login'  } }); };
+    if (registerBtn) registerBtn.onclick = (e)=>{ e.preventDefault(); window.auth?.login({ authorizationParams:{ screen_hint:'signup' } }); };
+    if (logoutBtn)   logoutBtn.onclick   = async (e)=>{ e.preventDefault(); await window.auth?.logout(); };
   }
 
   async function updateAuthUi(){
-    try {
+    try{
       const ok = await window.auth.isAuthenticated();
-      if (loginBtn)    loginBtn.style.display    = ok ? 'none'  : '';
-      if (registerBtn) registerBtn.style.display = ok ? 'none'  : '';
-      if (logoutBtn)   logoutBtn.style.display   = ok ? ''      : 'none';
-    } catch(_) {
+      if (loginBtn)    loginBtn.style.display    = ok ? 'none' : '';
+      if (registerBtn) registerBtn.style.display = ok ? 'none' : '';
+      if (logoutBtn)   logoutBtn.style.display   = ok ? ''     : 'none';
+    }catch(_){
       if (loginBtn)    loginBtn.style.display    = '';
       if (registerBtn) registerBtn.style.display = '';
       if (logoutBtn)   logoutBtn.style.display   = 'none';
     }
   }
 
-  function onReady(){
-    wireClicks();
-    updateAuthUi();
-  }
+  function onReady(){ wireClicks(); updateAuthUi(); }
 
   // اربطي بعد جاهزية Auth0 (يرسله assets/js/auth0.js)
   if (window.auth0ClientPromise) {
     window.addEventListener('auth0:ready', onReady, { once:true });
   } else {
-    // لو auth كان جاهز قبل هذا الملف
+    // في حال auth كان جاهز قبل هذا الملف
     onReady();
   }
 
-  // إن كان فيه wire() مُعرّفة (مثلاً بملف آخر)، شغّلها
+  // إن كان فيه wire() مُعرّفة بملف آخر، شغّلها
   if (typeof window.wire === 'function') window.wire();
 });
