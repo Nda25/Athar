@@ -1,4 +1,5 @@
 // assets/js/auth0.js — bootstrap يدوي مع فولباك
+console.log("Auth0 config check:", { DOMAIN, CLIENT_ID });
 
 (function () {
   "use strict";
