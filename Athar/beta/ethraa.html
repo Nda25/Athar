@@ -175,15 +175,29 @@
   </script>
 
   <!-- حماية الصفحة -->
-<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<!-- Auth0 SDK -->
+<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+
+<!-- Supabase -->
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
-<script defer src="assets/js/require-auth.js"></script> <!-- الملف المصحح -->
+
+<!-- حماية الصفحة -->
+<script defer src="assets/js/require-auth.js"></script>
+
+<!-- سكربتات المشروع -->
 <script defer src="app.js"></script>
+
+<!-- أكواد خاصة بصفحة إثراء -->
 <script>
-document.getElementById('gen')?.addEventListener('click', async () => {
-  await supaLogUsage('ethraa'); // يسجّل استخدام أداة إثراء
-});
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('gen')?.addEventListener('click', async () => {
+      await supaLogUsage('ethraa'); // يسجّل استخدام أداة إثراء
+    });
+  });
 </script>
+</body>
+</html>
 </body>
 </html>
