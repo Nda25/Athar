@@ -1,153 +1,0 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark light" />
-  <title>أثَـــر</title>
-
-  <link rel="icon" type="image/png" href="assets/icon.png">
-  <link rel="apple-touch-icon" href="assets/icon.png">
-
-  <meta property="og:title" content="أثـَـر">
-  <meta property="og:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
-  <meta property="og:image" content="https://n-athar.co/assets/icon.png">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="أثـَـر">
-  <meta name="twitter:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
-  <meta name="twitter:image" content="https://n-athar.co/assets/icon.png">
-
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-
-  <!-- (اختياري) Tailwind CDN للتجارب -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- تهيئة الثيم المبكرة -->
-  <script>
-    (function(){
-      var root = document.documentElement;
-      var saved = null;
-      try { saved = localStorage.getItem('theme'); } catch(_) {}
-      if (saved === 'dark') root.classList.add('dark');
-      else {
-        root.classList.remove('dark');
-        try { localStorage.setItem('theme','light'); } catch(_) {}
-      }
-      function fixBodyDark(){
-        if (document.body && document.body.classList.contains('dark')) {
-          document.body.classList.remove('dark');
-          root.classList.add('dark');
-        }
-      }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', fixBodyDark);
-      } else {
-        fixBodyDark();
-      }
-    })();
-  </script>
-</head>
-<body>
-  <div class="backdrop"></div>
-  <div class="pattern"></div>
-
-  <div class="topbar">
-    <div class="tb-left">
-      <button id="loginBtn" class="btn" type="button">دخول</button>
-      <button id="registerBtn" class="btn" type="button">تسجيل</button>
-      <button id="logout" class="btn" type="button">خروج</button>
-    </div>
-    <div class="tb-center">
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-      <a class="btn" href="programs.html">مساحة إبداعي</a>
-    </div>
-    <div class="tb-right">
-      <a class="btn" href="pricing.html">الخطط</a>
-    </div>
-  </div>
-
-  <header>
-    <div class="hero">
-      <h1 class="logo">أثـَــر</h1>
-      <div class="tag"><span class="dot"></span>حين يلتقي الشغف بالمعرفة .. يُصنع الأثـَـر</div>
-    </div>
-  </header>
-
-  <main>
-    <div class="container">
-
-      <!-- القسم التعريفي -->
-      <section class="card" style="margin-top:-14px">
-        <h2 class="title">كيف وُلد «أثر»؟</h2>
-        <p class="lead">
-          لم تكن الحكاية بحثًا عن “أداة” بقدر ما كانت مطاردةً لفكرة:  
-          كيف نجعل الدرس ينبض بالحياة؟ حين اصطدمــتُ بسقف الاستراتيجيات التقليدية،  
-          قررت أن أبني مساحةً تُشغِّل الفضول وتُهندس التجربة. من هنا وُلـد «أثـر»:  
-          مشروعٌ تعليميٌّ صُنع على مهل، ليحترم عقل المتعلم ويُعطي المعلم أدواتٍ  
-          دقيقة، جميلة، وسهلة الاستخدام.
-        </p>
-      </section>
-
-      <!-- تعريف المنصة -->
-      <section class="grid">
-        <div class="box">
-          <h3>ما هو «أثر»؟</h3>
-          <p>منصة تعليمية ذكية تُولّد استراتيجيات وأنشطة وأسئلة تفاعلية قابلة للتخصيص، وتدعم المعلم في التخطيط، الإدارة، والإبداع داخل الفصل وخارجه.</p>
-        </div>
-        <div class="box">
-          <h3>كيف يفيدني «أثر» كمعلم/ة؟</h3>
-          <p>يمنحك «أثر» قوالب جاهزة، تحليلات دقيقة، وتتبع للاستخدام. يساعدك على إدارة وقتك بكفاءة، ويمنح طلابك تجربة تعليمية محفزة وممتعة.</p>
-        </div>
-      </section>
-
-      <!-- برامج «أثر» -->
-      <section class="grid">
-        <div class="box">
-          <h3>مسار</h3>
-          <p>ينظم الدروس والخطط الأسبوعية بخطوات واضحة، مع تتبع للتقدم ومؤشرات للأداء.</p>
-        </div>
-        <div class="box">
-          <h3>إثراء</h3>
-          <p>يولد أنشطة وأسئلة تفاعلية مرتبطة بالمحتوى، تعزز الفهم العميق والتفكير النقدي.</p>
-        </div>
-        <div class="box">
-          <h3>ملهم</h3>
-          <p>أفكار إبداعية وأنشطة كسر الجمود، تبث الحماس داخل الصف وتشجع على المشاركة.</p>
-        </div>
-        <div class="box">
-          <h3>مياد</h3>
-          <p>أداة لتقسيم الوقت وإدارة الحصص بذكاء، تضمن استثمار كل دقيقة من الدرس.</p>
-        </div>
-        <div class="box">
-          <h3>بُعد</h3>
-          <p>مساعد ذكي للفيزياء، يشرح المفاهيم، يحل المسائل، ويربط الطالب بالقوانين والتطبيقات.</p>
-        </div>
-        <div class="box">
-          <h3>دَرسِي</h3>
-          <p>مساحة المعلم الخاصة لتجميع كل استراتيجياته وأنشطته في ملف واحد أنيق قابل للطباعة.</p>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-    <p class="foot-name">ندى المجيرش</p>
-  </footer>
-
-  <!-- === SDKs: أولاً === -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.2/auth0-spa-js.production.js"></script>
-
-  <!-- === سكربتات المشروع === -->
-  <script src="assets/js/supabase-client.js"></script>
-<script src="assets/js/supabase-client.js"></script>
-<script src="assets/js/ui.js"></script>
-<script src="assets/js/theme.js"></script>
-<script src="assets/js/storage.js"></script>
-<script src="app.js"></script>
-</body>
-</html>
