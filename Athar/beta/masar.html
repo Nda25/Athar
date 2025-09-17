@@ -508,6 +508,27 @@
 
       buildTable(); // سيستدعي colorizeCells() تلقائيًا
     });
-  </script>
+<!-- Auth0 SDK (بدون defer لضمان الجاهزية قبل require-auth) -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+
+<!-- حماية الصفحة: يتوقع SDK جاهز -->
+<script defer src="assets/js/require-auth.js"></script>
+
+<!-- (اختياري) Supabase لو تبين تسجيل استخدام الأداة لاحقاً -->
+<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script defer src="assets/js/supabase-client.js"></script>
+
+<!-- التخزين وأساسيات الواجهة -->
+<script defer src="assets/js/storage.js"></script>
+<script defer src="app.js"></script>
+
+<!-- مكتبة حفظ الجدول كصورة -->
+<script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<!-- سكربت الصفحة (يبقى كما هو، ويأتي بعد storage/app.js) -->
+<script>
+  // … سكربت مسار الطويل كما أرسلتيه (لا تغيّرينه)
+</script>
 </body>
 </html>
