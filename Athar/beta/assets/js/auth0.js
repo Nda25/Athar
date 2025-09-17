@@ -1,45 +1,41 @@
-// Debug: اطبع القيم للتأكد إنها واصلة صح
-console.log("Auth0 settings check:", {
-  domain: DOMAIN,
-  clientId: CLIENT_ID,
-  redirect: REDIRECT_URI
-});
+// assets/js/auth0.js — bootstrap يدوي مع فولباك
 
 (function () {
   "use strict";
 
-  // ===== الإعدادات =====
+  // 1) الإعدادات اليدوية
   var DOMAIN       = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-  var CLIENT_ID    = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+  var CLIENT_ID    = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU"; // ← تأكدي من صحته
   var AUDIENCE     = "default";
-  var REDIRECT_URI = window.location.origin;
+  var REDIRECT_URI = window.location.origin; // يرجع للرئيسية
   var SCOPE        = "openid profile email offline_access";
   var CACHE_LOC    = "localstorage";
-  // تحميل سكربت خارجي
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = src;
-      s.defer = true;
-      s.onload = resolve;
-      s.onerror = reject;
+
+  // 2) تحميل SDK عند الحاجة (CDN ثم فولباك محلي)
+  function loadScript(src){
+    return new Promise(function(res, rej){
+      var s = document.createElement("script");
+      s.src = src; s.defer = true;
+      s.onload = res; s.onerror = rej;
       document.head.appendChild(s);
     });
   }
-
-  // حمّل SDK: CDN ثم فولباك محلي (عدّل المسار إذا لزم)
-  async function ensureSdk() {
+  async function ensureSdk(){
     if (typeof window.createAuth0Client === "function") return;
     try {
       await loadScript("https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js");
-    } catch (_) {
-      await loadScript("/assets/vendor/auth0-spa-js.production.js"); // ← عدّليها لو مسارك مختلف
+    } catch(_) {
+      await loadScript("/assets/vendor/auth0-spa-js.production.js");
     }
   }
 
-  // خيارات العميل
-  function buildOptions() {
-    return {
+  // 3) تهيئة العميل مرة واحدة
+  var clientPromise = (async function init(){
+    await ensureSdk();
+    if (typeof window.createAuth0Client !== "function"){
+      throw new Error("sdk_not_loaded");
+    }
+    var opts = {
       domain: DOMAIN,
       clientId: CLIENT_ID,
       cacheLocation: CACHE_LOC,
@@ -49,58 +45,43 @@ console.log("Auth0 settings check:", {
         scope: SCOPE
       }
     };
-  }
 
-  const HCB = /[?&](code|state)=/.test(location.search);
+    var client = await window.createAuth0Client(opts);
 
-  // ابدأ
-  const clientPromise = (async () => {
-    await ensureSdk();
-    if (typeof window.createAuth0Client !== "function") {
-      console.error("[Auth0] SDK not loaded");
-      // نرجّع عميل وهمي يمنع كراش ويعطي رسالة مفهومة
-      throw new Error("sdk_not_loaded");
-    }
-
-    const client = await window.createAuth0Client(buildOptions());
-
-    if (HCB) {
+    // تنظيف redirect إن وُجد
+    if (/\b(code|state)=/.test(location.search)) {
       try {
-        const r = await client.handleRedirectCallback();
+        var r = await client.handleRedirectCallback();
         history.replaceState({}, document.title, location.pathname + location.hash);
-        window.__AUTH0_APP_STATE__ = r?.appState || null;
-      } catch (e) {
-        console.warn("[Auth0] redirect cleanup error:", e);
+        if (r && r.appState && r.appState.returnTo){
+          try { location.replace(r.appState.returnTo); } catch(_){}
+        }
+      } catch(e){
+        console.warn("[Auth0] redirect cleanup:", e);
       }
     }
 
+    // API مبسّطة
+    function wrap(fn){ return async function(){ return fn.apply(null, [client].concat([].slice.call(arguments))); }; }
+
+    var api = {
+      client: () => clientPromise,
+      login: wrap((c,opts)=> c.loginWithRedirect(opts||{})),
+      loginPopup: wrap((c,opts,p)=> c.loginWithPopup(opts||{}, p||{})),
+      logout: wrap((c,opts)=> c.logout(Object.assign({ logoutParams:{ returnTo: REDIRECT_URI }}, opts||{}))),
+      isAuthenticated: wrap(c=> c.isAuthenticated()),
+      getUser: wrap(c=> c.getUser()),
+      getToken: wrap((c,opts)=> c.getTokenSilently(opts||{})),
+    };
+
+    // تعريض + حدث جاهزية
+    window.auth = window.auth || api;
+    window.auth0ClientPromise = clientPromise;
+    window.dispatchEvent(new CustomEvent("auth0:ready"));
+    console.log("[Auth0] ready");
     return client;
   })();
 
-  // التفاف دوال — كل دالة تنتظر الجاهزية
-  function wrap(fn) {
-    return async function () {
-      const c = await clientPromise;
-      return fn.apply(null, [c].concat([].slice.call(arguments)));
-    };
-  }
-
-  const api = {
-    client: () => clientPromise,
-    login:  wrap((c, opts) => c.loginWithRedirect(opts || {})),
-    loginPopup: wrap((c, opts, popup) => c.loginWithPopup(opts || {}, popup || {})),
-    logout: wrap((c, opts) => c.logout({ logoutParams: { returnTo: REDIRECT_URI }, ...(opts||{}) })),
-    isAuthenticated: wrap((c) => c.isAuthenticated()),
-    getUser: wrap((c) => c.getUser()),
-    getToken: wrap((c, opts) => c.getTokenSilently(opts || {})),
-  };
-
-  window.auth = window.auth || api;
-  window.auth0ClientPromise = clientPromise;
-  window.dispatchEvent(new CustomEvent("auth0:ready"));
-
-  clientPromise.then(
-    () => console.log("[Auth0] ready"),
-    (e)  => console.error("[Auth0] init error:", e && e.message ? e.message : e)
-  );
+  // debug خفيف
+  clientPromise.catch(e=> console.error("[Auth0] init error:", e?.message || e));
 })();
