@@ -106,19 +106,23 @@
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
-<!-- Supabase -->
-<script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
-<script src="assets/js/supabase-client.js?v=1" defer></script>
 
-<!-- ملفات المشروع (كلها defer) -->
-<!-- لا تضيفي dom-helpers.js لأن $ و $$ مضافة داخل app.js -->
-<script src="assets/js/theme.js" defer></script>
-<script src="assets/js/ui.js" defer></script>
-<script src="assets/js/storage.js" defer></script>
+  <!-- ترتيب السكربتات (Auth0 مطلوب هنا فقط) -->
+  <!-- Supabase (يُستخدم في مزامنة المستخدم مع قاعدة البيانات) -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- مهم: لا تضيفي CDN حق Auth0 هنا، ولا تضيفي assets/js/auth0.js -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"></script>
-<!-- app.js مرّة واحدة فقط -->
-<script src="app.js?v=4" defer></script>
+  <!-- Auth0 SDK + فولباك محلي إذا كان CDN محجوب -->
+  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+
+  <!-- ملف Auth0 الوحيد في المشروع -->
+  <script defer src="assets/js/auth0.js"></script>
+
+  <!-- بقية سكربتات الواجهة -->
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/theme.js"></script>
+  <script defer src="assets/js/storage.js"></script>
+  <script defer src="app.js?v=4"></script>
 </body>
 </html>
