@@ -72,15 +72,15 @@ const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
 
 let auth0Client = null;
 
-// انتظري حتى تتوفر createAuth0Client من الـSDK
+// انتظري حتى تتوفر window.auth0.createAuth0Client من الـSDK
 async function waitForAuth0SDK(max = 50) {
   for (let i = 0; i < max && !(window.auth0 && typeof window.auth0.createAuth0Client === 'function'); i++) {
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 100)); // ~5 ثواني كحد أقصى
   }
   return (window.auth0 && typeof window.auth0.createAuth0Client === 'function');
 }
 
-// الدوال الأساسية
+// تهيئة عميل Auth0 + تعريض واجهة مبسّطة على window.auth
 async function initAuth0(){
   const ready = await waitForAuth0SDK();
   if (!ready) {
@@ -90,15 +90,16 @@ async function initAuth0(){
 
   try {
     auth0Client = await window.auth0.createAuth0Client({
-  domain: AUTH0_DOMAIN,
-  clientId: AUTH0_CLIENT,
-  cacheLocation: "localstorage",
-  authorizationParams: { 
-    redirect_uri: window.location.origin,
-    scope: "openid profile email offline_access"
-  }
-});
+      domain: AUTH0_DOMAIN,
+      clientId: AUTH0_CLIENT,
+      cacheLocation: "localstorage",
+      authorizationParams: { 
+        redirect_uri: window.location.origin,
+        scope: "openid profile email offline_access"
+      }
+    });
 
+    // تنظيف التفويض بعد العودة من Auth0 (إن وُجد code/state)
     if (/[?&](code|state)=/.test(location.search)) {
       try {
         await auth0Client.handleRedirectCallback();
@@ -108,6 +109,7 @@ async function initAuth0(){
       }
     }
 
+    // API مبسّطة
     const api = {
       login:  (opts)=> auth0Client.loginWithRedirect(opts||{}),
       logout: (opts)=> auth0Client.logout({ 
@@ -119,6 +121,8 @@ async function initAuth0(){
       getToken: (opts)=> auth0Client.getTokenSilently(opts||{})
     };
     window.auth = window.auth || api;
+
+    // أعلن الجاهزية (لازم المستمع يكون مسجّل قبل النداء)
     window.dispatchEvent(new CustomEvent("auth0:ready"));
     console.log("[Auth0] ready");
   } catch (err) {
@@ -126,6 +130,7 @@ async function initAuth0(){
   }
 }
 
+// تبديل ظهور أزرار الدخول/التسجيل/الخروج
 async function updateAuthUi(){
   const loginBtn    = document.getElementById('loginBtn');
   const registerBtn = document.getElementById('registerBtn');
@@ -142,26 +147,51 @@ async function updateAuthUi(){
   }
 }
 
-// ==============================
-// Entry Point - كل شيء هنا
-// ==============================
+/* ==============================
+   Entry Point — تفعيل كل شيء بترتيب صحيح
+   ============================== */
 document.addEventListener('DOMContentLoaded', async () => {
   // الثيم
   bindThemeToggle();
 
-  // تهيئة Auth0
-  await initAuth0();
-
-  // ربط الأزرار بعد جاهزية Auth0
+  // عناصر الأزرار
   const loginBtn    = document.getElementById('loginBtn');
   const registerBtn = document.getElementById('registerBtn');
   const logoutBtn   = document.getElementById('logout');
 
-  window.addEventListener("auth0:ready", async () => {
-    if (loginBtn)    loginBtn.onclick    = ()=> window.auth.login({ authorizationParams:{ screen_hint:"login" } });
-    if (registerBtn) registerBtn.onclick = ()=> window.auth.login({ authorizationParams:{ screen_hint:"signup" } });
-    if (logoutBtn)   logoutBtn.onclick   = ()=> window.auth.logout();
+  // حالة ابتدائية آمنة: دخول/تسجيل ظاهر — خروج مخفي
+  function setButtons(isAuth) {
+    if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
+    if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
+    if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
+  }
+  setButtons(false);
 
-    updateAuthUi();
-  });
+  // اربطي الأزرار مبكرًا (تستخدم window.auth عند توفره)
+  if (loginBtn)    loginBtn.onclick    = () => window.auth?.login({ authorizationParams:{ screen_hint:'login' } });
+  if (registerBtn) registerBtn.onclick = () => window.auth?.login({ authorizationParams:{ screen_hint:'signup' } });
+  if (logoutBtn)   logoutBtn.onclick   = () => window.auth?.logout();
+
+  // سجّلي المستمع قبل التهيئة عشان ما يفوتنا الحدث
+  window.addEventListener('auth0:ready', async () => {
+    try {
+      const ok = await window.auth.isAuthenticated();
+      setButtons(ok);
+    } catch {
+      setButtons(false);
+    }
+  }, { once:true });
+
+  // فعليًا نهيّئ Auth0 (يطلق الحدث بداخله)
+  await initAuth0();
+
+  // باك-أب: لو الحدث فاتنا وكان window.auth جاهز، حدثّي الآن
+  if (window.auth) {
+    try {
+      const ok = await window.auth.isAuthenticated();
+      setButtons(ok);
+    } catch {
+      setButtons(false);
+    }
+  }
 });
