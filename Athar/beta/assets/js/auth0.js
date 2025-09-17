@@ -1,5 +1,5 @@
 // assets/js/auth0.js — bootstrap يدوي مع فولباك
-console.log("Auth0 config check:", { DOMAIN, CLIENT_ID });
+
 
 (function () {
   "use strict";
@@ -11,7 +11,8 @@ console.log("Auth0 config check:", { DOMAIN, CLIENT_ID });
   var REDIRECT_URI = window.location.origin; // يرجع للرئيسية
   var SCOPE        = "openid profile email offline_access";
   var CACHE_LOC    = "localstorage";
-
+console.log("Auth0 config check:", { DOMAIN, CLIENT_ID });
+  
   // 2) تحميل SDK عند الحاجة (CDN ثم فولباك محلي)
   function loadScript(src){
     return new Promise(function(res, rej){
