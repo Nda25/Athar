@@ -3,8 +3,8 @@
   "use strict";
 
   // إعداداتك
-  const DOMAIN       = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-  const CLIENT_ID    = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+var DOMAIN       = "dev-2f0fmbtj6u8o7en4.us.auth0.com"; 
+var CLIENT_ID    = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";   // الكلاينت ID
   const AUDIENCE     = "default";
   const REDIRECT_URI = window.location.origin;
   const SCOPE        = "openid profile email offline_access";
