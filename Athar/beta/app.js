@@ -87,7 +87,6 @@ function isValidPhone(x){ return /^05\d{8}$/.test(x); }
 /* ==============================
    أوتو-حفظ فورمات
    ============================== */
-// جمع القيم
 function readForm(container){
   const data = {};
   const root = (typeof container === 'string') ? document.querySelector(container) : container;
@@ -124,7 +123,6 @@ function readForm(container){
   return data;
 }
 
-// ملء القيم
 function fillForm(container, data){
   const root = (typeof container === 'string') ? document.querySelector(container) : container;
   if(!root || !data) return;
@@ -160,7 +158,6 @@ function fillForm(container, data){
   });
 }
 
-// ربط الأوتو-حفظ
 function bindAutoSave(pageKey, container){
   const root = (typeof container === 'string') ? document.querySelector(container) : container;
   if(!root) return;
@@ -179,7 +176,41 @@ function bindAutoSave(pageKey, container){
    تشغيل بعد تحميل الصفحة
    ============================== */
 document.addEventListener('DOMContentLoaded', () => {
+  // الثيم
   bindThemeToggle();
+
+  // ربط أزرار الدخول/التسجيل/الخروج في الشريط العلوي
+  const loginBtn    = document.getElementById('loginBtn');
+  const registerBtn = document.getElementById('registerBtn');
+  const logoutBtn   = document.getElementById('logout');
+
+  if (loginBtn) {
+    loginBtn.type = 'button';
+    loginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!window.auth) return console.error('[Auth0] api not ready');
+      window.auth.login({ authorizationParams: { screen_hint: 'login' } });
+    });
+  }
+
+  if (registerBtn) {
+    registerBtn.type = 'button';
+    registerBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!window.auth) return console.error('[Auth0] api not ready');
+      window.auth.login({ authorizationParams: { screen_hint: 'signup' } });
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.type = 'button';
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!window.auth) return console.error('[Auth0] api not ready');
+      window.auth.logout({ returnTo: window.location.origin });
+    });
+  }
+
   // إن كان فيه wire() مُعرّفة (مثلاً في assets/js/auth0.js) شغّلها:
   if (typeof window.wire === 'function') window.wire();
 });
