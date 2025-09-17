@@ -173,44 +173,66 @@ function bindAutoSave(pageKey, container){
 }
 
 /* ==============================
-   تشغيل بعد تحميل الصفحة
+   تشغيل بعد تحميل الصفحة + ربط أزرار Auth0
    ============================== */
 document.addEventListener('DOMContentLoaded', () => {
   // الثيم
   bindThemeToggle();
 
-  // ربط أزرار الدخول/التسجيل/الخروج في الشريط العلوي
   const loginBtn    = document.getElementById('loginBtn');
   const registerBtn = document.getElementById('registerBtn');
   const logoutBtn   = document.getElementById('logout');
 
-  if (loginBtn) {
-    loginBtn.type = 'button';
-    loginBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (!window.auth) return console.error('[Auth0] api not ready');
-      window.auth.login({ authorizationParams: { screen_hint: 'login' } });
-    });
+  function wireClicks(){
+    if (loginBtn) {
+      loginBtn.onclick = (e) => {
+        e.preventDefault();
+        if (!window.auth) return console.error('[Auth0] api not ready');
+        window.auth.login({ authorizationParams: { screen_hint: 'login' } });
+      };
+    }
+    if (registerBtn) {
+      registerBtn.onclick = (e) => {
+        e.preventDefault();
+        if (!window.auth) return console.error('[Auth0] api not ready');
+        window.auth.login({ authorizationParams: { screen_hint: 'signup' } });
+      };
+    }
+    if (logoutBtn) {
+      logoutBtn.onclick = async (e) => {
+        e.preventDefault();
+        if (!window.auth) return console.error('[Auth0] api not ready');
+        await window.auth.logout({ logoutParams: { returnTo: window.location.origin } });
+      };
+    }
   }
 
-  if (registerBtn) {
-    registerBtn.type = 'button';
-    registerBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (!window.auth) return console.error('[Auth0] api not ready');
-      window.auth.login({ authorizationParams: { screen_hint: 'signup' } });
-    });
+  async function updateAuthUi(){
+    try {
+      const ok = await window.auth.isAuthenticated();
+      if (loginBtn)    loginBtn.style.display    = ok ? 'none'  : '';
+      if (registerBtn) registerBtn.style.display = ok ? 'none'  : '';
+      if (logoutBtn)   logoutBtn.style.display   = ok ? ''      : 'none';
+    } catch(_) {
+      if (loginBtn)    loginBtn.style.display    = '';
+      if (registerBtn) registerBtn.style.display = '';
+      if (logoutBtn)   logoutBtn.style.display   = 'none';
+    }
   }
 
-  if (logoutBtn) {
-    logoutBtn.type = 'button';
-    logoutBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (!window.auth) return console.error('[Auth0] api not ready');
-      window.auth.logout({ returnTo: window.location.origin });
-    });
+  function onReady(){
+    wireClicks();
+    updateAuthUi();
   }
 
-  // إن كان فيه wire() مُعرّفة (مثلاً في assets/js/auth0.js) شغّلها:
+  // اربطي بعد جاهزية Auth0 (يرسله assets/js/auth0.js)
+  if (window.auth0ClientPromise) {
+    window.addEventListener('auth0:ready', onReady, { once:true });
+  } else {
+    // لو auth كان جاهز قبل هذا الملف
+    onReady();
+  }
+
+  // إن كان فيه wire() مُعرّفة (مثلاً بملف آخر)، شغّلها
   if (typeof window.wire === 'function') window.wire();
 });
