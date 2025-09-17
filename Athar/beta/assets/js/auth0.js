@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  // ===== إعداداتك =====
+  // إعداداتك
   const DOMAIN       = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
   const CLIENT_ID    = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
   const AUDIENCE     = "default";
@@ -22,13 +22,13 @@
     });
   }
 
-  // حمّل الـSDK: CDN ثم فولباك محلي
+  // حمّل SDK: CDN ثم فولباك محلي (عدّل المسار إذا لزم)
   async function ensureSdk() {
     if (typeof window.createAuth0Client === "function") return;
     try {
       await loadScript("https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js");
     } catch (_) {
-      await loadScript("/assets/vendor/auth0-spa-js.production.js");
+      await loadScript("/assets/vendor/auth0-spa-js.production.js"); // ← عدّليها لو مسارك مختلف
     }
   }
 
@@ -52,12 +52,13 @@
   const clientPromise = (async () => {
     await ensureSdk();
     if (typeof window.createAuth0Client !== "function") {
-      throw new Error("[Auth0] SDK still not available");
+      console.error("[Auth0] SDK not loaded");
+      // نرجّع عميل وهمي يمنع كراش ويعطي رسالة مفهومة
+      throw new Error("sdk_not_loaded");
     }
 
     const client = await window.createAuth0Client(buildOptions());
 
-    // تنظيف العودة من Auth0
     if (HCB) {
       try {
         const r = await client.handleRedirectCallback();
@@ -71,7 +72,7 @@
     return client;
   })();
 
-  // التفاف دوال
+  // التفاف دوال — كل دالة تنتظر الجاهزية
   function wrap(fn) {
     return async function () {
       const c = await clientPromise;
@@ -79,7 +80,6 @@
     };
   }
 
-  // API عام
   const api = {
     client: () => clientPromise,
     login:  wrap((c, opts) => c.loginWithRedirect(opts || {})),
@@ -90,14 +90,12 @@
     getToken: wrap((c, opts) => c.getTokenSilently(opts || {})),
   };
 
-  // تعريض + حدث جاهزية
   window.auth = window.auth || api;
   window.auth0ClientPromise = clientPromise;
   window.dispatchEvent(new CustomEvent("auth0:ready"));
 
-  // لوج مفيد
   clientPromise.then(
     () => console.log("[Auth0] ready"),
-    (e)  => console.error("[Auth0] init error:", e)
+    (e)  => console.error("[Auth0] init error:", e && e.message ? e.message : e)
   );
 })();
