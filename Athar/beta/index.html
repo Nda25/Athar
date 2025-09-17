@@ -109,58 +109,45 @@
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-<!-- Supabase -->
+<!-- Supabase (اختياري) -->
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- Auth0 SDK -->
-<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
-        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-
-<!-- ملف Auth0 -->
+<!-- ملف Auth0 (يحمل SDK داخليًا مع فولباك) -->
 <script defer src="assets/js/auth0.js"></script>
 
-<!-- بقية الملفات -->
+<!-- بقية الواجهة -->
 <script defer src="assets/js/ui.js"></script>
 <script defer src="assets/js/theme.js"></script>
 <script defer src="assets/js/storage.js"></script>
 <script defer src="app.js"></script>
 
-<!-- ربط الأزرار + إظهارها حسب حالة الدخول -->
+<!-- ربط أزرار دخول/تسجيل/خروج -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const loginBtn    = document.getElementById('loginBtn');
   const registerBtn = document.getElementById('registerBtn');
   const logoutBtn   = document.getElementById('logout');
 
-  function wireAuthButtons(){
-    if (loginBtn)    loginBtn.onclick = (e)=>{ e.preventDefault(); window.auth?.login({ authorizationParams:{ screen_hint:'login'  } }); };
+  function wire(){
+    if (loginBtn)    loginBtn.onclick    = (e)=>{ e.preventDefault(); window.auth?.login({ authorizationParams:{ screen_hint:'login' } }); };
     if (registerBtn) registerBtn.onclick = (e)=>{ e.preventDefault(); window.auth?.login({ authorizationParams:{ screen_hint:'signup' } }); };
     if (logoutBtn)   logoutBtn.onclick   = (e)=>{ e.preventDefault(); window.auth?.logout(); };
   }
-
-  async function updateAuthUi(){
-    try {
+  async function updateUi(){
+    try{
       const ok = await window.auth.isAuthenticated();
       if (loginBtn)    loginBtn.style.display    = ok ? 'none' : '';
       if (registerBtn) registerBtn.style.display = ok ? 'none' : '';
       if (logoutBtn)   logoutBtn.style.display   = ok ? ''     : 'none';
-    } catch {
+    }catch(_){
       if (loginBtn)    loginBtn.style.display    = '';
       if (registerBtn) registerBtn.style.display = '';
       if (logoutBtn)   logoutBtn.style.display   = 'none';
     }
   }
-
-  function onReady(){
-    wireAuthButtons();
-    updateAuthUi();
-  }
-
-  // لو auth0.js يجهز لاحقاً
-  window.addEventListener('auth0:ready', onReady, { once: true });
-
-  // ولو كان جاهز قبل ما نوصل هنا
+  function onReady(){ wire(); updateUi(); }
+  window.addEventListener('auth0:ready', onReady, { once:true });
   if (window.auth && window.auth0ClientPromise) onReady();
 });
 </script>
