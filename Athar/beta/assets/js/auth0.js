@@ -1,15 +1,20 @@
-// assets/js/auth0.js — يحمّل SDK بنفسه + فولباك محلي + يعرّض window.auth
+// Debug: اطبع القيم للتأكد إنها واصلة صح
+console.log("Auth0 settings check:", {
+  domain: DOMAIN,
+  clientId: CLIENT_ID,
+  redirect: REDIRECT_URI
+});
+
 (function () {
   "use strict";
 
-  // إعداداتك
-var DOMAIN       = "dev-2f0fmbtj6u8o7en4.us.auth0.com"; 
-var CLIENT_ID    = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";   // الكلاينت ID
-  const AUDIENCE     = "default";
-  const REDIRECT_URI = window.location.origin;
-  const SCOPE        = "openid profile email offline_access";
-  const CACHE_LOC    = "localstorage";
-
+  // ===== الإعدادات =====
+  var DOMAIN       = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+  var CLIENT_ID    = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+  var AUDIENCE     = "default";
+  var REDIRECT_URI = window.location.origin;
+  var SCOPE        = "openid profile email offline_access";
+  var CACHE_LOC    = "localstorage";
   // تحميل سكربت خارجي
   function loadScript(src) {
     return new Promise((resolve, reject) => {
