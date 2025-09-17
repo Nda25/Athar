@@ -110,22 +110,16 @@
   </footer>
 
 
-<!-- Supabase -->
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
-
-<!-- Auth0 SDK -->
+<!-- 1) Auth0 SDK (بدون defer/async) -->
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-<!-- Auth0 bootstrap -->
-<script defer src="assets/js/auth0.js"></script>
-
-<!-- بقية الواجهة -->
+<!-- 2) بقية ملفاتك -->
+<script defer src="assets/js/supabase-client.js"></script>
 <script defer src="assets/js/ui.js"></script>
 <script defer src="assets/js/theme.js"></script>
-
-<!-- التخزين المحلي قبل app.js -->
 <script defer src="assets/js/storage.js"></script>
+
+<!-- 3) الملف الموحد: يهيّئ Auth0 ويربط الأزرار -->
 <script defer src="app.js"></script>
 
 <!-- 4) ربط الأزرار وتبديل ظهورها حسب الحالة -->
