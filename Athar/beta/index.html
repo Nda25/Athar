@@ -21,31 +21,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
+  <!-- (اختياري) Tailwind CDN للتجارب -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- تهيئة الثيم المبكرة -->
   <script>
-  (function(){
-    var root = document.documentElement;
-    var saved = null;
-    try { saved = localStorage.getItem('theme'); } catch(_) {}
-    if (saved === 'dark') root.classList.add('dark');
-    else {
-      root.classList.remove('dark');
-      try { localStorage.setItem('theme','light'); } catch(_) {}
-    }
-    function fixBodyDark(){
-      if (document.body && document.body.classList.contains('dark')) {
-        document.body.classList.remove('dark');
-        root.classList.add('dark');
+    (function(){
+      var root = document.documentElement;
+      var saved = null;
+      try { saved = localStorage.getItem('theme'); } catch(_) {}
+      if (saved === 'dark') root.classList.add('dark');
+      else {
+        root.classList.remove('dark');
+        try { localStorage.setItem('theme','light'); } catch(_) {}
       }
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fixBodyDark);
-    } else {
-      fixBodyDark();
-    }
-  })();
+      function fixBodyDark(){
+        if (document.body && document.body.classList.contains('dark')) {
+          document.body.classList.remove('dark');
+          root.classList.add('dark');
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixBodyDark);
+      } else {
+        fixBodyDark();
+      }
+    })();
   </script>
 </head>
 <body>
@@ -54,7 +55,6 @@
 
   <div class="topbar">
     <div class="tb-left">
-      <!-- الأزرار المطلوبة -->
       <button id="loginBtn" class="btn" type="button">دخول</button>
       <button id="registerBtn" class="btn" type="button">تسجيل</button>
       <button id="logout" class="btn" type="button">خروج</button>
@@ -71,36 +71,13 @@
   <header>
     <div class="hero">
       <h1 class="logo">أثـَــر</h1>
-      <div class="tag">
-        <span class="dot"></span>
-        حين يلتقي الشغف بالمعرفة .. يُصنع الأثـَـر
-      </div>
+      <div class="tag"><span class="dot"></span>حين يلتقي الشغف بالمعرفة .. يُصنع الأثـَـر</div>
     </div>
   </header>
 
   <main>
     <div class="container">
-      <section class="card" style="margin-top:-14px">
-        <h2 class="title">كيف وُلد «أثر»؟</h2>
-        <p class="lead">
-          لم تكن الحكاية بحثًا عن “أداة” بقدر ما كانت مطاردةً لفكرة:
-          كيف نجعل الدرس ينبض بالحياة؟ حين اصطدمــتُ بسقف الاستراتيجيات التقليدية،
-          قررت أن أبني مساحةً تُشغِّل الفضول وتُهندس التجربة. من هنا وُلـد «أثـر»:
-          مشروعٌ تعليميٌّ صُنع على مهل، ليحترم عقل المتعلم ويُعطي المعلم أدواتٍ
-          دقيقة، جميلة، وسهلة الاستخدام.
-        </p>
-      </section>
-
-      <section class="grid">
-        <div class="box">
-          <h3>ما هو «أثر»؟</h3>
-          <p>منصة تعليمية ذكية تُولِّد استراتيجيات وأنشطة وأسئلة قابلة للتخصيص…</p>
-        </div>
-        <div class="box">
-          <h3>كيف يفيدني «أثر» كمعلم/ة؟</h3>
-          <p>قوالب جاهزة قابلة للتعديل… <a class="link" href="pricing.html">اطّلع/ي على الخطط</a>.</p>
-        </div>
-      </section>
+      <!-- … محتوى صفحتك … -->
     </div>
   </main>
 
@@ -109,47 +86,16 @@
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
+  <!-- 1) Auth0 SDK — مرة واحدة فقط (بدون defer/async) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-<!-- 1) Auth0 SDK (بدون defer/async) -->
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <!-- 2) بقية ملفاتك (defer) -->
+  <script defer src="assets/js/supabase-client.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/theme.js"></script>
+  <script defer src="assets/js/storage.js"></script>
 
-<!-- 2) بقية ملفاتك -->
-<script defer src="assets/js/supabase-client.js"></script>
-<script defer src="assets/js/ui.js"></script>
-<script defer src="assets/js/theme.js"></script>
-<script defer src="assets/js/storage.js"></script>
-
-<!-- 3) الملف الموحد: يهيّئ Auth0 ويربط الأزرار -->
-<script defer src="app.js"></script>
-
-<!-- 4) ربط الأزرار وتبديل ظهورها حسب الحالة -->
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const loginBtn    = document.getElementById('loginBtn');
-  const registerBtn = document.getElementById('registerBtn');
-  const logoutBtn   = document.getElementById('logout');
-
-  function wire(){
-    if (loginBtn)    loginBtn.onclick    = (e)=>{ e.preventDefault(); window.auth?.login({ authorizationParams:{ screen_hint:'login' } }); };
-    if (registerBtn) registerBtn.onclick = (e)=>{ e.preventDefault(); window.auth?.login({ authorizationParams:{ screen_hint:'signup' } }); };
-    if (logoutBtn)   logoutBtn.onclick   = (e)=>{ e.preventDefault(); window.auth?.logout(); };
-  }
-  async function updateUi(){
-    try{
-      const ok = await window.auth.isAuthenticated();
-      if (loginBtn)    loginBtn.style.display    = ok ? 'none' : '';
-      if (registerBtn) registerBtn.style.display = ok ? 'none' : '';
-      if (logoutBtn)   logoutBtn.style.display   = ok ? ''     : 'none';
-    }catch(_){
-      if (loginBtn)    loginBtn.style.display    = '';
-      if (registerBtn) registerBtn.style.display = '';
-      if (logoutBtn)   logoutBtn.style.display   = 'none';
-    }
-  }
-  function onReady(){ wire(); updateUi(); }
-  window.addEventListener('auth0:ready', onReady, { once:true });
-  if (window.auth && window.auth0ClientPromise) onReady();
-});
-</script>
+  <!-- 3) الملف الموحد: يهيّئ Auth0 ويربط الأزرار ويحدّث الواجهة -->
+  <script defer src="app.js"></script>
 </body>
 </html>
