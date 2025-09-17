@@ -141,22 +141,27 @@
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- Auth0 SDK + فولباك محلي -->
-<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
+<!-- Auth0 SDK (بدون defer لضمان الجاهزية قبل require-auth) -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
         onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-<!-- حماية الصفحة (لا يحمّل SDK) -->
+<!-- حماية الصفحة (يتوقع وجود SDK جاهز) -->
 <script defer src="assets/js/require-auth.js"></script>
 
-<!-- سكربتات المشروع -->
+<!-- سكربتات المشروع (لازم storage قبل app.js لأننا نستخدم bindAutoSave) -->
+<script defer src="assets/js/storage.js"></script>
 <script defer src="app.js"></script>
 
 <!-- كود الصفحة -->
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // أوتو-حفظ نموذج ميعاد
     bindAutoSave('miyad', '#miyad-form');
+
+    // زر تشغيل الأداة
     document.getElementById('go')?.addEventListener('click', async () => {
-      await supaLogUsage('miyad');
+      // ✅ الاسم الصحيح للدالة هو supaLogToolUsage
+      await supaLogToolUsage('miyad');
     });
   });
 </script>
