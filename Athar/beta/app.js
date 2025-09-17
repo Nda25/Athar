@@ -165,5 +165,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateAuthUi();
   });
 });
-
-هذا هو الحل الصحيح والكامل الذي يجمع كل الأجزاء معًا.
