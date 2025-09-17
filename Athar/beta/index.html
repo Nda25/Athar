@@ -113,18 +113,18 @@
   <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script defer src="assets/js/supabase-client.js"></script>
 
-  <!-- Auth0 SDK + فولباك محلي (سيستخدمه auth0.js أيضاً عند الحاجة) -->
-  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+<!-- Auth0 SDK -->
+<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-  <!-- ملف Auth0 (يبني window.auth ويطلق حدث auth0:ready) -->
-  <script defer src="assets/js/auth0.js"></script>
+<!-- ملف Auth0 -->
+<script defer src="assets/js/auth0.js"></script>
 
-  <!-- بقية سكربتات الواجهة -->
-  <script defer src="assets/js/ui.js"></script>
-  <script defer src="assets/js/theme.js"></script>
-  <script defer src="assets/js/storage.js"></script>
-  <script defer src="app.js"></script>
+<!-- بقية الملفات -->
+<script defer src="assets/js/ui.js"></script>
+<script defer src="assets/js/theme.js"></script>
+<script defer src="assets/js/storage.js"></script>
+<script defer src="app.js"></script>
 
   <!-- ربط الأزرار بعد جاهزية Auth0 -->
   <script>
