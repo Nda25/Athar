@@ -54,8 +54,10 @@
 
   <div class="topbar">
     <div class="tb-left">
+      <!-- الأزرار المطلوبة -->
       <button id="loginBtn" class="btn" type="button">دخول</button>
       <button id="registerBtn" class="btn" type="button">تسجيل</button>
+      <button id="logout" class="btn" type="button">خروج</button>
     </div>
     <div class="tb-center">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
@@ -107,21 +109,59 @@
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-<!-- Supabase (إن لزم) -->
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
+  <!-- Supabase -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- Auth0 SDK + فولباك محلي -->
-<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
-        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+  <!-- Auth0 SDK + فولباك محلي (سيستخدمه auth0.js أيضاً عند الحاجة) -->
+  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-<!-- ملف Auth0 الوحيد المسؤول عن أزرار الدخول/التسجيل -->
-<script defer src="assets/js/auth0.js"></script>
+  <!-- ملف Auth0 (يبني window.auth ويطلق حدث auth0:ready) -->
+  <script defer src="assets/js/auth0.js"></script>
 
-<!-- بقية سكربتات الواجهة -->
-<script defer src="assets/js/ui.js"></script>
-<script defer src="assets/js/theme.js"></script>
-<script defer src="assets/js/storage.js"></script>
-<script defer src="app.js"></script>
+  <!-- بقية سكربتات الواجهة -->
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/theme.js"></script>
+  <script defer src="assets/js/storage.js"></script>
+  <script defer src="app.js"></script>
+
+  <!-- ربط الأزرار بعد جاهزية Auth0 -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const loginBtn    = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const logoutBtn   = document.getElementById('logout');
+
+    function wireAuthButtons(){
+      if (loginBtn) {
+        loginBtn.onclick = (e) => {
+          e.preventDefault();
+          window.auth?.login({ authorizationParams: { screen_hint: 'login' } });
+        };
+      }
+      if (registerBtn) {
+        registerBtn.onclick = (e) => {
+          e.preventDefault();
+          window.auth?.login({ authorizationParams: { screen_hint: 'signup' } });
+        };
+      }
+      if (logoutBtn) {
+        logoutBtn.onclick = (e) => {
+          e.preventDefault();
+          window.auth?.logout();
+        };
+      }
+    }
+
+    // لو auth0.js أطلق حدث الجاهزية لاحقاً
+    window.addEventListener('auth0:ready', wireAuthButtons, { once: true });
+
+    // ولو كان جاهز قبل ما نوصل هنا
+    if (window.auth && window.auth0ClientPromise) {
+      wireAuthButtons();
+    }
+  });
+  </script>
 </body>
 </html>
