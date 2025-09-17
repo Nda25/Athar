@@ -107,21 +107,21 @@
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-  <!-- Supabase (للتخزين والمزامنة) -->
-  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="assets/js/supabase-client.js"></script>
+<!-- Supabase (إن لزم) -->
+<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script defer src="assets/js/supabase-client.js"></script>
 
-  <!-- Auth0 SDK مع فولباك محلي إذا الـ CDN ما يفتح -->
-  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+<!-- Auth0 SDK + فولباك محلي -->
+<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
+        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-  <!-- ملف Auth0 الخاص بالمشروع (bootstrap / api wrapper) -->
-  <script defer src="assets/js/auth0.js"></script>
+<!-- ملف Auth0 الوحيد المسؤول عن أزرار الدخول/التسجيل -->
+<script defer src="assets/js/auth0.js"></script>
 
-  <!-- بقية سكربتات الواجهة -->
-  <script defer src="assets/js/ui.js"></script>
-  <script defer src="assets/js/theme.js"></script>
-  <script defer src="assets/js/storage.js"></script>
-  <script defer src="app.js?v=4"></script>
+<!-- بقية سكربتات الواجهة -->
+<script defer src="assets/js/ui.js"></script>
+<script defer src="assets/js/theme.js"></script>
+<script defer src="assets/js/storage.js"></script>
+<script defer src="app.js"></script>
 </body>
 </html>
