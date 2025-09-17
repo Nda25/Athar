@@ -110,19 +110,21 @@
   </footer>
 
 
-<!-- Supabase (اختياري) -->
+<!-- Supabase -->
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- 1) مكتبة Auth0 الأساسية (بدون defer لضمان الجاهزية) -->
+<!-- Auth0 SDK -->
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-<!-- 2) bootstrap: يهيّئ عميل Auth0 ويعرّض window.auth ويطلق auth0:ready -->
+<!-- Auth0 bootstrap -->
 <script defer src="assets/js/auth0.js"></script>
 
-<!-- 3) بقية الواجهة -->
+<!-- بقية الواجهة -->
 <script defer src="assets/js/ui.js"></script>
 <script defer src="assets/js/theme.js"></script>
+
+<!-- التخزين المحلي قبل app.js -->
 <script defer src="assets/js/storage.js"></script>
 <script defer src="app.js"></script>
 
