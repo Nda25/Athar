@@ -110,17 +110,45 @@
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-<!-- 1) SDKs -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/@auth0/auth0-spa-js@2/dist/auth0-spa-js.production.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.2/auth0-spa-js.production.js"></script>
 
-<!-- 2) ملفاتك (عادي تبقيها بدون defer أو بـ defer) -->
-<script src="assets/js/supabase-client.js"></script>
-<script src="assets/js/ui.js"></script>
-<script src="assets/js/theme.js"></script>
-<script src="assets/js/storage.js"></script>
+  <script>
+    const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+    const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
 
-<!-- 3) ملفك الرئيسي بعدهم -->
-<script src="app.js"></script>
+    async function initAuth0Client() {
+      try {
+        window.auth0Client = await createAuth0Client({
+          domain: AUTH0_DOMAIN,
+          clientId: AUTH0_CLIENT,
+          cacheLocation: "localstorage",
+          authorizationParams: {
+            redirect_uri: window.location.origin,
+            scope: "openid profile email offline_access"
+          }
+        });
+        console.log("[Auth0] Client initialized successfully.");
+        // يمكننا ربط الأزرار هنا مباشرةً
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const logoutBtn = document.getElementById('logout');
+
+        loginBtn.onclick = () => window.auth0Client.loginWithRedirect({ authorizationParams: { screen_hint: "login" } });
+        registerBtn.onclick = () => window.auth0Client.loginWithRedirect({ authorizationParams: { screen_hint: "signup" } });
+        logoutBtn.onclick = () => window.auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
+      } catch (err) {
+        console.error("[Auth0] Initialization failed:", err);
+      }
+    }
+    initAuth0Client();
+  </script>
+
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/storage.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
+
