@@ -110,19 +110,23 @@
   </footer>
 
 <!-- Supabase (اختياري) -->
+<!-- Supabase (اختياري) -->
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- ملف Auth0 (يحمل SDK داخليًا مع فولباك) -->
-<script defer src="assets/js/auth0.js"></script>
+<!-- 1) مكتبة Auth0 الأساسية (بدون defer/async لضمان الترتيب) -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-<!-- بقية الواجهة -->
+<!-- 2) ملف vendor الذي يهيّئ العميل ويعرّض window.auth -->
+<script src="assets/js/vendor/auth0-bootstrap-min.js"></script>
+
+<!-- 3) بقية الواجهة -->
 <script defer src="assets/js/ui.js"></script>
 <script defer src="assets/js/theme.js"></script>
 <script defer src="assets/js/storage.js"></script>
 <script defer src="app.js"></script>
 
-<!-- ربط أزرار دخول/تسجيل/خروج -->
+<!-- 4) ربط الأزرار بعد جاهزية Auth0 -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const loginBtn    = document.getElementById('loginBtn');
