@@ -114,21 +114,32 @@
   });
   document.getElementById('print').addEventListener('click',()=>window.print());
   </script>
-<script src="app.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', ()=>{
-  bindAutoSave('milham', '#milham-form');
-});
-</script>
-<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
-<script defer src="assets/js/require-auth.js"></script> <!-- الملف المصحح -->
-<script defer src="app.js"></script>
-<script>
-document.getElementById('gen')?.addEventListener('click', async () => {
-  await supaLogUsage('mulham'); // يسجّل استخدام أداة ملهم
-});
-</script>
+  <!-- Supabase -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
+
+  <!-- Auth0 SDK + فولباك محلي إذا تعذّر CDN -->
+  <script defer
+          src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+
+  <!-- حماية الصفحة (يفترض أن SDK محمّل من الوسم أعلاه) -->
+  <script defer src="assets/js/require-auth.js"></script>
+
+  <!-- سكربتات المشروع -->
+  <script defer src="app.js"></script>
+
+  <!-- أكواد خاصة بصفحة ملهم -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // حفظ تلقائي لنموذج ملهم
+      bindAutoSave('mulham', '#mulham-form');
+
+      // تسجيل استخدام أداة ملهم
+      document.getElementById('gen')?.addEventListener('click', async () => {
+        await supaLogUsage('mulham');
+      });
+    });
+  </script>
 </body>
 </html>
