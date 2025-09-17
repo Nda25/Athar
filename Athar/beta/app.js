@@ -30,19 +30,6 @@ const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 })();
 
 
-// تحميل مكتبة Auth0 ديناميكيًا إذا ما كانت موجودة
-function ensureAuth0SDK() {
-  return new Promise((resolve, reject) => {
-    if (typeof window.createAuth0Client === "function") {
-      return resolve(); // جاهزة
-    }
-    const s = document.createElement("script");
-    s.src = "https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js";
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("فشل تحميل Auth0 SDK"));
-    document.head.appendChild(s);
-  });
-}
    
 /* ==== Auth0 Integration (Popup) ==== */
 async function initAuth0(){
@@ -433,16 +420,54 @@ function ensureAuth0SDK() {
     document.head.appendChild(s);
   });
 }
-// تشغيل بعد تحميل الصفحة (ويضمن تحميل Auth0 SDK أولاً)
-/* ===== تشغيل بعد تحميل الصفحة ===== */
+// --- تحميل سكربت خارجي مع Promise ---
+function loadScript(url){
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = url;
+    s.async = true;
+    s.onload  = () => resolve(url);
+    s.onerror = () => reject(new Error('failed: '+url));
+    document.head.appendChild(s);
+  });
+}
+
+// --- نضمن تحميل Auth0 SDK قبل initAuth0 ---
+async function ensureAuth0SDK(){
+  if (typeof window.createAuth0Client === 'function') return 'already-present';
+
+  const candidates = [
+    'https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js',
+    'https://unpkg.com/@auth0/auth0-spa-js@2.1.4/dist/auth0-spa-js.production.js',
+    'https://unpkg.com/@auth0/auth0-spa-js@2.1.3/dist/auth0-spa-js.production.js',
+    'https://unpkg.com/@auth0/auth0-spa-js@latest/dist/auth0-spa-js.production.js',
+    'https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.1.4/dist/auth0-spa-js.production.js',
+    'https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.1.3/dist/auth0-spa-js.production.js',
+    'https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@latest/dist/auth0-spa-js.production.js',
+  ];
+
+  let lastErr = null;
+  for (const url of candidates){
+    try{
+      const used = await loadScript(url);
+      if (typeof window.createAuth0Client === 'function'){
+        console.log('[Auth0] SDK loaded from:', used);
+        return used;
+      }
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error('Auth0 SDK failed to load from all CDNs');
+}
+
+// ===== تشغيل بعد تحميل الصفحة =====
 document.addEventListener('DOMContentLoaded', async () => {
   if (typeof bindThemeToggle === 'function') bindThemeToggle();
-  if (typeof wire === 'function') wire();
+  if (typeof wire           === 'function')  wire();
 
-  try {
-    await ensureAuth0SDK();   // ← نضمن أن المكتبة نزلت
-    await initAuth0();        // ← الآن نستدعي تهيئة Auth0
-  } catch (e) {
-    console.error("[Auth0] load/init error:", e);
+  try{
+    await ensureAuth0SDK();   // ← نضمن تحميل مكتبة Auth0
+    await initAuth0();        // ← الآن نهيّء Auth0 (ويربط أزرار دخول/تسجيل)
+  }catch(err){
+    console.error('[Auth0] load/init error:', err);
   }
 });
