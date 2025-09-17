@@ -85,17 +85,17 @@
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
+<!-- أولاً: مكتبات أساسية -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-  <!-- 1) Auth0 SDK — مرة واحدة فقط (بدون defer/async) -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<!-- ثانياً: ملفات مشروعك (تجي بعد المكتبات) -->
+<script defer src="assets/js/supabase-client.js"></script>
+<script defer src="assets/js/ui.js"></script>
+<script defer src="assets/js/theme.js"></script>
+<script defer src="assets/js/storage.js"></script>
 
-  <!-- 2) بقية ملفاتك (defer) -->
-  <script defer src="assets/js/supabase-client.js"></script>
-  <script defer src="assets/js/ui.js"></script>
-  <script defer src="assets/js/theme.js"></script>
-  <script defer src="assets/js/storage.js"></script>
-
-  <!-- 3) الملف الموحد: يهيّئ Auth0 ويربط الأزرار ويحدّث الواجهة -->
-  <script defer src="app.js"></script>
+<!-- أخيراً: الملف الموحد -->
+<script defer src="app.js"></script>
 </body>
 </html>
