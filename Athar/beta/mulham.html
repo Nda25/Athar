@@ -118,22 +118,26 @@
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- Auth0 SDK + فولباك محلي -->
-<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
-        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+<!-- Auth0 SDK (بدون defer لتفادي سباق التحميل) -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-<!-- حماية الصفحة (لا يحمّل SDK) -->
+<!-- حماية الصفحة (يفترض SDK جاهز) -->
 <script defer src="assets/js/require-auth.js"></script>
 
-<!-- سكربتات المشروع -->
+<!-- سكربتات الواجهة (التخزين قبل app.js لأننا نستخدم bindAutoSave) -->
+<script defer src="assets/js/storage.js"></script>
 <script defer src="app.js"></script>
 
 <!-- كود الصفحة -->
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // أوتو-حفظ نموذج ملهم
     bindAutoSave('mulham', '#mulham-form');
+
+    // زر تنفيذ الأداة (اسم الزر الصحيح: go)
     document.getElementById('go')?.addEventListener('click', async () => {
-      await supaLogUsage('mulham');
+      // ✅ الاسم الصحيح للدالة حسب ملف supabase-client.js هو supaLogToolUsage
+      await supaLogToolUsage('mulham');
     });
   });
 </script>
