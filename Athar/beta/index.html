@@ -110,21 +110,17 @@
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-<!-- Supabase SDK -->
+<!-- 1) SDKs -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@auth0/auth0-spa-js@2/dist/auth0-spa-js.production.js"></script>
 
-<!-- Auth0 SDK من CDN مع فولباك محلي لمسارك الصحيح -->
-<script src="https://unpkg.com/@auth0/auth0-spa-js@2/dist/auth0-spa-js.production.js"
-        onerror="this.onerror=null;this.src='assets/vendor/auth0-spa-js.production.js'"></script>
+<!-- 2) ملفاتك (عادي تبقيها بدون defer أو بـ defer) -->
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/theme.js"></script>
+<script src="assets/js/storage.js"></script>
 
-<!-- ملفات مشروعك -->
-<script defer src="assets/js/supabase-client.js"></script>
-<script defer src="assets/js/ui.js"></script>
-<script defer src="assets/js/theme.js"></script>
-<script defer src="assets/js/storage.js"></script>
-<!-- لا تضيفي أي ملف auth0_old.js أو bootstrap قديم هنا -->
-
-<!-- ملفك الموحد -->
-<script defer src="app.js"></script>
+<!-- 3) ملفك الرئيسي بعدهم -->
+<script src="app.js"></script>
 </body>
 </html>
