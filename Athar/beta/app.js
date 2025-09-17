@@ -405,21 +405,6 @@ function bindThemeToggle(){
 }
 // يحمّل Auth0 SDK لو كان غير موجود
 // تحميل مكتبة Auth0 ديناميكيًا (مرة واحدة)
-function ensureAuth0SDK() {
-  return new Promise((resolve, reject) => {
-    if (typeof window.createAuth0Client === 'function') {
-      return resolve(); // محمّل من قبل
-    }
-    const s = document.createElement('script');
-    s.src = "https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js";
-    s.onload = () => {
-      if (typeof window.createAuth0Client === 'function') resolve();
-      else reject(new Error("Auth0 SDK failed to load"));
-    };
-    s.onerror = () => reject(new Error("Auth0 SDK network error"));
-    document.head.appendChild(s);
-  });
-}
 // --- تحميل سكربت خارجي مع Promise ---
 function loadScript(url){
   return new Promise((resolve, reject) => {
