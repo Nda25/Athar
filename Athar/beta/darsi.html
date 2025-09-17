@@ -675,25 +675,38 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 </script>
 
-<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<!-- Supabase -->
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
+
+<!-- Auth0 SDK + فولباك محلي إذا تعذّر CDN -->
+<script defer
+        src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
+        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+
+<!-- حماية الصفحة (يفترض أن SDK محمّل من الوسم أعلاه) -->
 <script defer src="assets/js/require-auth.js"></script>
+
+<!-- سكربتات المشروع -->
 <script defer src="app.js"></script>
-  <script>
-document.addEventListener('DOMContentLoaded', ()=>{
-  try{
-    if (typeof hasAccess === 'function' && !hasAccess()) {
-      location.href = 'pricing.html';
-    }
-  }catch(_){}
-});
-</script>
-  <!-- darsi.html (درسي) -->
+
+<!-- أكواد خاصة بصفحة درسي -->
 <script>
-document.getElementById('gen')?.addEventListener('click', async () => {
-  await supaLogUsage('darsi'); // يسجّل استخدام أداة درسي
-});
+  document.addEventListener('DOMContentLoaded', () => {
+    // (اختياري) إن كان عندك دالة hasAccess وتجارب قديمة:
+    try {
+      if (typeof hasAccess === 'function' && !hasAccess()) {
+        location.href = 'pricing.html';
+        return;
+      }
+    } catch(_) {}
+
+    // تسجيل استخدام أداة "درسي" عند الضغط على زر التنفيذ
+    // تأكدي أن الزر يحمل id="go" أو عدّلي السطر التالي للـ id الصحيح
+    document.getElementById('go')?.addEventListener('click', async () => {
+      await supaLogUsage('darsi');
+    });
+  });
 </script>
 </body>
 </html>
