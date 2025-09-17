@@ -146,22 +146,49 @@ async function updateAuthUi(){
 // Entry Point - كل شيء هنا
 // ==============================
 document.addEventListener('DOMContentLoaded', async () => {
-  // الثيم
   bindThemeToggle();
 
-  // تهيئة Auth0
-  await initAuth0();
-
-  // ربط الأزرار بعد جاهزية Auth0
+  // عناصر الأزرار
   const loginBtn    = document.getElementById('loginBtn');
   const registerBtn = document.getElementById('registerBtn');
   const logoutBtn   = document.getElementById('logout');
 
-  window.addEventListener("auth0:ready", async () => {
-    if (loginBtn)    loginBtn.onclick    = ()=> window.auth.login({ authorizationParams:{ screen_hint:"login" } });
-    if (registerBtn) registerBtn.onclick = ()=> window.auth.login({ authorizationParams:{ screen_hint:"signup" } });
-    if (logoutBtn)   logoutBtn.onclick   = ()=> window.auth.logout();
+  // إخفاء "خروج" مبدئيًا وإظهار دخول/تسجيل
+  if (loginBtn)    loginBtn.style.display    = '';
+  if (registerBtn) registerBtn.style.display = '';
+  if (logoutBtn)   logoutBtn.style.display   = 'none';
 
-    updateAuthUi();
+  // دالة مساعدة لتبديل الظهور
+  function setButtons(isAuth) {
+    if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
+    if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
+    if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
+  }
+
+  // فعليًا نبني عميل Auth0 ونعلن "جاهز"
+  await initAuth0();
+
+  // عند جاهزية Auth0: نربط الأزرار + نحدّث الواجهة
+  window.addEventListener('auth0:ready', async () => {
+    // ربط الأزرار (بعد الجاهزية)
+    if (loginBtn) {
+      loginBtn.onclick = () =>
+        window.auth.login({ authorizationParams: { screen_hint: 'login' } });
+    }
+    if (registerBtn) {
+      registerBtn.onclick = () =>
+        window.auth.login({ authorizationParams: { screen_hint: 'signup' } });
+    }
+    if (logoutBtn) {
+      logoutBtn.onclick = () => window.auth.logout();
+    }
+
+    // تحديث أولي للظهور
+    try {
+      const isAuth = await window.auth.isAuthenticated();
+      setButtons(isAuth);
+    } catch {
+      setButtons(false);
+    }
   });
 });
