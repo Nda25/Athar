@@ -85,15 +85,17 @@
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
-<!-- أولاً: مكتبات أساسية -->
+<!-- 1) نحمّل الـSDKs أولاً -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"></script>
 
-<script defer src="assets/js/supabase-client.js"></script>
-<script defer src="assets/js/ui.js"></script>
-<script defer src="assets/js/theme.js"></script>
-<script defer src="assets/js/storage.js"></script>
+<!-- 2) ملفاتك التي تعتمد عليهم -->
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/theme.js"></script>
+<script src="assets/js/storage.js"></script>
 
-<script defer src="app.js"></script>
+<!-- 3) الملف الموحد اللي يربط الأزرار ويهيّئ Auth0 -->
+<script src="app.js"></script>
 </body>
 </html>
