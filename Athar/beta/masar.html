@@ -73,62 +73,51 @@
     .legend span{ display:inline-flex; align-items:center; gap:6px; }
     .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
 
-/* اطبعي "العنوان + الجدول + الفوتر" فقط، وبحجم صفحة واحدة */
-@media print {
-  /* إخفاء كل شيء… */
-  body * { visibility: hidden !important; }
-
-  /* … ما عدا الهيدر، الجدول، الفوتر */
-  header, #tableWrap, footer,
-  header * , #tableWrap * , footer * {
-    visibility: visible !important;
-  }
-
-  /* صفحة A4 أفقية وهوامش مناسبة */
+/* طباعة: العنوان + الجدول + الفوتر (A4 أفقي) */
+@media print{
+  /* حجم الصفحة وهوامشها */
   @page { size: A4 landscape; margin: 8mm; }
-
   html, body { width: 297mm; height: 210mm; }
 
-  /* ألغِ تأثير الكروت والحواشي حتى يتمدّد الجدول */
-  .container, main, .card {
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
+  /* أخفي عناصر الواجهة فقط */
+  .topbar, .controls, .row-actions, .toast { display:none !important; }
+
+  /* نظّف البطاقات والهوامش حتى يتمدد المحتوى */
+  .container, main, .card{
+    margin:0 !important; padding:0 !important;
+    box-shadow:none !important; border:none !important;
   }
 
-  /* اضبطي الهيدر والفوتر يكونون خفاف */
-  header { margin: 0 0 6mm 0 !important; padding: 0 !important; }
-  .hero { padding: 0 !important; }
-  .hero .logo { font-size: 28pt !important; margin: 0 !important; }
-  .tag { font-size: 10pt !important; margin-top: 3mm !important; }
+  /* العنوان والفوتر مطبوعين */
+  header{ margin:0 0 6mm 0; }
+  footer{ margin-top:6mm; }
 
-  footer { margin-top: 6mm !important; }
+  /* خلّي الجدول يملأ العرض */
+  #tableWrap{ width:100% !important; }
+  table.schedule{ width:100% !important; min-width:auto !important; font-size:14px; }
+  .schedule th, .schedule td{ padding:8px; }
+  .cell input{ border:none; padding:2px 4px; font-size:13px; }
 
-  /* توسعة الجدول ليملأ العرض */
-  #tableWrap { width: 100% !important; }
-  table.schedule { width: 100% !important; min-width: auto !important; font-size: 14px; }
-  .schedule th, .schedule td { padding: 8px; }
+  /* لا تقطّعي المحتوى بين الصفحات */
+  header, #tableWrap, footer,
+  table.schedule, thead, tbody, tr{
+    break-inside: avoid; page-break-inside: avoid;
+  }
 
-  /* ألوان واضحة في الطباعة */
-  body, .schedule, .schedule th, .schedule td, .cell {
+  /* اطبعي الألوان كما هي */
+  body, .schedule, .schedule th, .schedule td, .cell{
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     color-adjust: exact;
   }
 
-  /* لا تقطّعي الصفوف */
-  table.schedule, thead, tbody, tr { break-inside: avoid; page-break-inside: avoid; }
+  /* اخفي محتوى الخلايا الفارغة فقط (الحدود تبقى) */
+  .cell.empty{ opacity:0; }
 
-  /* أخفي محتوى الخلايا الفارغة (الحدود تبقى) */
-  .cell.empty { opacity: 0; }
-}
-
-/* نسخة مضغوطة عند اختيار "طباعة مضغّطة" */
-@media print {
-  body.print-compact table.schedule { font-size: 12px; }
+  /* وضع مضغوط عند تفعيل كلاس print-compact من الزر */
+  body.print-compact table.schedule{ font-size:12px; }
   body.print-compact .schedule th,
-  body.print-compact .schedule td { padding: 6px; }
+  body.print-compact .schedule td{ padding:6px 6px; }
 }
   </style>
 </head>
