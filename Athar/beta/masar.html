@@ -43,6 +43,7 @@
       background-repeat:no-repeat; background-position:center; background-size:contain;
       opacity:.16; pointer-events:none; z-index:0;
     }
+  
     .table-wrap.bg-none::before     { background-image:none; opacity:0; }
  .table-wrap.bg-flowers::before  { background-image: url('/assets/bg/flowers-big.svg'); }
 .table-wrap.bg-leaves::before   { background-image: url('/assets/bg/leaves-big.svg'); }
@@ -82,7 +83,48 @@
     .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:.9rem; color:var(--muted) }
     .legend span{ display:inline-flex; align-items:center; gap:6px; }
     .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
+/* اطبعي الجدول فقط */
+@media print {
+  /* اخفي كل شي */
+  body * { 
+    visibility: hidden !important;
+  }
 
+  /* أظهر الجدول فقط */
+  #tableWrap, #tableWrap * {
+    visibility: visible !important;
+  }
+
+  /* ثبّتي الجدول يملأ الصفحة */
+  #tableWrap {
+    position: absolute !important;
+    inset: 0 !important;            /* top/right/bottom/left: 0 */
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* صفحة A4 أفقية وهوامش مناسبة */
+  @page { size: A4 landscape; margin: 8mm; }
+
+  /* إخفاء المناطق غير الضرورية (احتياطيًا) */
+  .topbar, header, .controls, footer, .row-actions, .toast {
+    display: none !important;
+  }
+
+  /* احرصي على طباعة الألوان */
+  body, .schedule, .schedule th, .schedule td, .cell {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
+  }
+}
+
+/* نمط مضغوط للطباعة عند تفعيل كلاس print-compact على body */
+@media print {
+  body.print-compact #tableWrap table.schedule { font-size: 12px; }
+  body.print-compact #tableWrap .schedule th,
+  body.print-compact #tableWrap .schedule td { padding: 6px 6px; }
+}
     /* اطبعي الألوان كما هي + اضبطي الصفحة */
     @media print{
       @page { size: A4 landscape; margin: 8mm; }
@@ -501,17 +543,21 @@
       if(!el) return; el.addEventListener('input', ()=>{ applyThemeFromControls(); saveTheme(); });
     });
 
-    // طباعة مضغّطة
-    const printBtn = document.getElementById('printCompact');
-    if (printBtn) {
-      printBtn.addEventListener('click', () => {
-        document.body.classList.add('print-compact');
-        setTimeout(() => window.print(), 50);
-      });
-      window.addEventListener('afterprint', () => {
-        document.body.classList.remove('print-compact');
-      });
-    }
+  function printArea(compact = false) {
+  // فعّلي/الغِ الوضع المضغوط حسب الحاجة
+  document.body.classList.toggle('print-compact', compact);
+
+  // اطبعي
+  window.print();
+
+  // نظّفي بعد الطباعة مرة واحدة
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('print-compact');
+  }, { once: true });
+}
+
+document.getElementById('print')?.addEventListener('click', () => printArea(false));
+document.getElementById('printCompact')?.addEventListener('click', () => printArea(true));
 
     // تهيئة
     document.addEventListener('DOMContentLoaded', ()=>{
