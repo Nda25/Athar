@@ -259,18 +259,15 @@
     const $ = (sel)=>document.querySelector(sel);
 
     const tbl         = $('#tbl');
-    const tableWrap   = $('#tableWrap');
-
-    const daysSel     = $('#days');
-    const periodsSel  = $('#periods');
-    const startTime   = $('#startTime');
-    const slotMinsSel = $('#slotMins');
-    const orientSel   = $('#orient');
-
-    const bgSel       = $('#tblBg');
-    const colorInp    = $('#tblColor');
-    const mixInp      = $('#tblIntensity');
-    const borderInp   = $('#tblBorderIntensity');
+const daysSel     = $('#days');
+const periodsSel  = $('#periods');
+const startTime   = $('#startTime');
+const slotMinsSel = $('#slotMins');
+const orientSel   = $('#orient');
+// حُذفت خلفية الجدول، نخليهم null آمنين:
+const bgThemeSel  = null;
+const tblColorInp = $('#tblColor');
+const tableWrap   = $('#tableWrap');
 
     const DB_KEY = 'masar';
     const DEFAULT_DAYS = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
@@ -351,13 +348,13 @@
 
     /* ============ بناء الجدول ============ */
     function buildTable(){
-      const days    = readDays();
-      const periods = parseInt(periodsSel.value,10) || 7;
-      const startAt = startTime.value || '07:00';
-      const slotMin = parseInt(slotMinsSel.value,10) || 50;
-      const times   = buildTimes(startAt, slotMin, periods);
-      const saved   = getSaved();
-      const orient  = orientSel.value; // periods-rows | periods-cols
+  const days    = readDays();
+const periods = parseInt(periodsSel?.value, 10) || 7;
+const startAt = (startTime?.value) || '07:00';
+const slotMin = parseInt(slotMinsSel?.value, 10) || 50;
+const times   = buildTimes(startAt, slotMin, periods);
+const saved   = getSaved();
+const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-cols
 
       const thead = document.createElement('thead');
       const tbody = document.createElement('tbody');
@@ -447,11 +444,7 @@
       }catch(e){ console.error(e); if(window.toast) toast('تعذّر حفظ الصورة.'); }
     }
 
-    /* ============ الخلفية (table-wrap) ============ */
-    function applyBg(val){
-      tableWrap.classList.remove('bg-none','bg-flowers','bg-leaves');
-      tableWrap.classList.add('bg-'+(val||'none'));
-    }
+    
 
     /* ============ ثيم الجدول (لون/شدة) ============ */
     function applyThemeFromControls(){
@@ -526,12 +519,11 @@ document.getElementById('printCompact')?.addEventListener('click', () => printAr
       loadTheme();
 
       const saved = getSaved(); const m = saved.__meta || {};
-      startTime.value   = m.startAt || '07:00';
-      slotMinsSel.value = String(m.slotMin || 50);
-      periodsSel.value  = String(m.periods || 7);
-      orientSel.value   = m.orient || 'periods-rows';
-      daysSel.value     = (Array.isArray(m.days) && m.days.length===4) ? 'sun-wed' : 'sun-thu';
-
+periodsSel && (periodsSel.value  = String(m.periods || 7));
+startTime  && (startTime.value   = m.startAt || '07:00');
+slotMinsSel&& (slotMinsSel.value = String(m.slotMin || 50));
+orientSel  && (orientSel.value   = m.orient || 'periods-rows');
+daysSel    && (daysSel.value     = (Array.isArray(m.days) && m.days.length===4) ? 'sun-wed' : 'sun-thu');
       window.__colorsOn = (m.colorsOn!==undefined) ? !!m.colorsOn : true;
       $('#toggleColors').textContent = window.__colorsOn ? 'تلوين المواد (مفعّل)' : 'تلوين المواد';
 
