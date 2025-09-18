@@ -256,7 +256,7 @@
   const subjectSel = $('#subject');
   const bloomSel   = $('#type');
   const lessonInp  = $('#lesson');
-  const genBtn     = $('#gen');
+  const goBtn     = $('#go');
   const regenBtn   = $('#regen');
   const statusEl   = $('#status');
 
@@ -288,12 +288,12 @@
   }
   function setLoading(isLoading){
     if(isLoading){
-      genBtn.dataset._label = genBtn.textContent;
-      genBtn.textContent = "نحوّل شغفك لاستراتيجية… ✨";
-      genBtn.disabled = true; regenBtn.disabled = true;
-    }else{
-      genBtn.textContent = genBtn.dataset._label || "ساعدني على الإبداع";
-      genBtn.disabled = false; regenBtn.disabled = false;
+      goBtn.dataset._label = goBtn.textContent;
+goBtn.textContent = "نحوّل شغفك لاستراتيجية… ✨";
+goBtn.disabled = true; regenBtn.disabled = true;
+…
+goBtn.textContent = goBtn.dataset._label || "ساعدني على الإبداع";
+goBtn.disabled = false; regenBtn.disabled = false;
     }
   }
   function readStageLabel(val){
@@ -440,7 +440,7 @@
 
     // تسجيل استخدام أداة "أثر" عند الضغط على زر التنفيذ (تأكدي أن id="go")
     document.getElementById('go')?.addEventListener('click', async () => {
-      await supaLogUsage('athar');
+      await supaLogToolUsage('athar');
     });
   });
 </script>
