@@ -1,196 +1,79 @@
-/* =========================================
-   athar — app.js (نسخة موحّدة ونهائية)
-   ========================================= */
+// assets/js/supabase-client.js
 
-/* أدوات صغيرة */
-const $  = (sel, root=document) => root.querySelector(sel);
-const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+// (اختياري) تبقين العميل لو احتجتي قراءات مستقبلاً.
+// مع RLS المشدد، القراءات من المتصفح بتتفشل إلا إذا سويتي سياسات قراءة.
+const SUPABASE_URL = "https://oywqpkzaudmzwvytxaop.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d3Fwa3phdWRtend2eXR4YW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4OTczMTYsImV4cCI6MjA3MzQ3MzMxNn0.nhjbZMiHPkWvcPnNDeGu3sGSP2TloC0jESZjQ03FnyM";
 
-/* ==============================
-   Theme: init + toggle
-   ============================== */
-(function unifyDarkClass(){
-  const root = document.documentElement, body = document.body;
-  if (body && body.classList.contains('dark')) {
-    body.classList.remove('dark');
-    root.classList.add('dark');
-  }
-})();
-(function initTheme(){
-  const root = document.documentElement;
-  let saved = null; 
-  try { saved = localStorage.getItem('theme'); } catch(_){}
-  if (saved === 'dark') root.classList.add('dark'); 
-  else root.classList.remove('dark');
-})();
-function bindThemeToggle(){
-  const root = document.documentElement;
-  const btn  = document.getElementById('themeToggle');
-  if (!btn) return;
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const dark = root.classList.toggle('dark');
-    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(_){}
-    if (typeof window.toast === 'function') {
-      toast(dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح');
-    }
-  });
-}
+// تقدرِين تحذفين السطرين هذولا إذا ما تحتاجين قراءات client-side
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ==============================
-   Toast (إشعارات صغيرة)
-   ============================== */
-if (!window.toast) {
-  window.toast = function(msg){
-    let t = document.querySelector('.toast');
-    if(!t){ 
-      t = document.createElement('div'); 
-      t.className = 'toast'; 
-      document.body.appendChild(t); 
-    }
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(()=> t.classList.remove('show'), 1800);
-  };
-}
-
-/* ==============================
-   Modals (اختياري)
-   ============================== */
-if (!window.openModal)  window.openModal  = (id)=>{ const n=$(id); if(n) n.classList.add('show'); };
-if (!window.closeModal) window.closeModal = (id)=>{ const n=$(id); if(n) n.classList.remove('show'); };
-$$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
-  e.preventDefault();
-  const m = btn.closest('.modal'); if(m) m.classList.remove('show');
-}));
-
-/* ==============================
-   Auth0 — نسخة موحّدة
-   ============================== */
-const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-
-let auth0Client = null;
-
-// انتظري حتى تتوفر window.auth0.createAuth0Client من الـSDK
-async function waitForAuth0SDK(max = 50) {
-  for (let i = 0; i < max && typeof window.createAuth0Client !== 'function'; i++) {
-    await new Promise(r => setTimeout(r, 100)); // ~5 ثواني
-  }
-  return (typeof window.createAuth0Client === 'function');
-}
-// تهيئة عميل Auth0 + تعريض واجهة مبسّطة على window.auth
-async function initAuth0(){
-  const ready = await waitForAuth0SDK();
-  if (!ready) {
-    console.error("[Auth0] SDK still not loaded");
-    return;
-  }
+/**
+ * حفظ/تحديث المستخدم — عبر الدالة الخادمية (Netlify Function)
+ * ما عاد نكتب مباشرة من المتصفح بسبب RLS المشدد.
+ */
+async function supaEnsureUser(u = {}) {
+  if (!u.email) return { ok:false, error: "missing email" };
 
   try {
-    auth0Client = await window.createAuth0Client({
-  domain: AUTH0_DOMAIN,
-  clientId: AUTH0_CLIENT,
-  cacheLocation: "localstorage",
-  authorizationParams: { 
-    redirect_uri: window.location.origin,
-    scope: "openid profile email offline_access"
-  }
-});
+    const res = await fetch('/.netlify/functions/upsert-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: String(u.email).toLowerCase(),
+        full_name: u.full_name || null,
+        plan: u.subscription_type || null // لو حابة تمريّرين خطة الاشتراك
+      })
+      // لو تبين تحقق JWT في الخادم:
+      // headers: {
+      //   'Content-Type': 'application/json',
+      //   'Authorization': `Bearer ${await auth0Client.getTokenSilently()}`
+      // }
+    });
 
-    // تنظيف التفويض بعد العودة من Auth0 (إن وُجد code/state)
-    if (/[?&](code|state)=/.test(location.search)) {
-      try {
-        await auth0Client.handleRedirectCallback();
-        history.replaceState({}, document.title, location.pathname + location.hash);
-      } catch (e) {
-        console.warn("[Auth0] redirect cleanup:", e);
-      }
+    if (!res.ok) {
+      const msg = await res.text();
+      return { ok:false, error: msg || 'server error' };
     }
-
-    // API مبسّطة
-    const api = {
-      login:  (opts)=> auth0Client.loginWithRedirect(opts||{}),
-      logout: (opts)=> auth0Client.logout({ 
-        logoutParams:{ returnTo: window.location.origin }, 
-        ...(opts||{}) 
-      }),
-      isAuthenticated: ()=> auth0Client.isAuthenticated(),
-      getUser: ()=> auth0Client.getUser(),
-      getToken: (opts)=> auth0Client.getTokenSilently(opts||{})
-    };
-    window.auth = window.auth || api;
-
-    // أعلن الجاهزية (لازم المستمع يكون مسجّل قبل النداء)
-    window.dispatchEvent(new CustomEvent("auth0:ready"));
-    console.log("[Auth0] ready");
-  } catch (err) {
-    console.error("[Auth0] init error:", err);
+    const json = await res.json();
+    return { ok:true, data: json.user };
+  } catch (e) {
+    return { ok:false, error: e.message || 'network error' };
   }
 }
 
-// تبديل ظهور أزرار الدخول/التسجيل/الخروج
-async function updateAuthUi(){
-  const loginBtn    = document.getElementById('loginBtn');
-  const registerBtn = document.getElementById('registerBtn');
-  const logoutBtn   = document.getElementById('logout');
-  try{
-    const ok = await window.auth.isAuthenticated();
-    if (loginBtn)    loginBtn.style.display    = ok ? 'none' : '';
-    if (registerBtn) registerBtn.style.display = ok ? 'none' : '';
-    if (logoutBtn)   logoutBtn.style.display   = ok ? ''     : 'none';
-  }catch(_){
-    if (loginBtn)    loginBtn.style.display    = '';
-    if (registerBtn) registerBtn.style.display = '';
-    if (logoutBtn)   logoutBtn.style.display   = 'none';
+/**
+ * تسجيل استخدام أداة — خليه أيضاً عبر خادم (مستقبلاً)
+ * مؤقتاً نخليه يرسل للخادم (لا يكتب مباشرة).
+ */
+async function supaLogToolUsage(toolName, meta = {}, user_email) {
+  try {
+    const res = await fetch('/.netlify/functions/log-tool-usage', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        tool_name: toolName,
+        user_email: user_email || null,
+        meta
+      })
+    });
+    if (!res.ok) return { ok:false, error: await res.text() };
+    return { ok:true, data: await res.json() };
+  } catch (e) {
+    return { ok:false, error: e.message };
   }
 }
 
-/* ==============================
-   Entry Point — تفعيل كل شيء بترتيب صحيح
-   ============================== */
-document.addEventListener('DOMContentLoaded', async () => {
-  // الثيم
-  bindThemeToggle();
-
-  // عناصر الأزرار
-  const loginBtn    = document.getElementById('loginBtn');
-  const registerBtn = document.getElementById('registerBtn');
-  const logoutBtn   = document.getElementById('logout');
-
-  // حالة ابتدائية آمنة: دخول/تسجيل ظاهر — خروج مخفي
-  function setButtons(isAuth) {
-    if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
-    if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
-    if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
-  }
-  setButtons(false);
-
-  // اربطي الأزرار مبكرًا (تستخدم window.auth عند توفره)
-  if (loginBtn)    loginBtn.onclick    = () => window.auth?.login({ authorizationParams:{ screen_hint:'login' } });
-  if (registerBtn) registerBtn.onclick = () => window.auth?.login({ authorizationParams:{ screen_hint:'signup' } });
-  if (logoutBtn)   logoutBtn.onclick   = () => window.auth?.logout();
-
-  // سجّلي المستمع قبل التهيئة عشان ما يفوتنا الحدث
-  window.addEventListener('auth0:ready', async () => {
-    try {
-      const ok = await window.auth.isAuthenticated();
-      setButtons(ok);
-    } catch {
-      setButtons(false);
-    }
-  }, { once:true });
-
-  // فعليًا نهيّئ Auth0 (يطلق الحدث بداخله)
-  await initAuth0();
-
-  // باك-أب: لو الحدث فاتنا وكان window.auth جاهز، حدثّي الآن
-  if (window.auth) {
-    try {
-      const ok = await window.auth.isAuthenticated();
-      setButtons(ok);
-    } catch {
-      setButtons(false);
-    }
-  }
-});
+/**
+ * قراءة بروفايل المستخدم — تنجح فقط إذا عندك سياسة READ مناسبة.
+ * مع RLS “المشدّد بدون سياسات قراءة”، هذي بتفشل.
+ * إما تضيفين سياسة READ محدودة، أو تسوين دالة خادمية read-user.
+ */
+async function supaGetUserByEmail(email){
+  const { data, error } = await supa
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .single();
+  return { ok: !error, data, error };
+}
