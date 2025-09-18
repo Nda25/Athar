@@ -1,5 +1,4 @@
 <!-- assets/js/require-auth.js (نسخة حديثة) -->
-<script>
 (async () => {
   // إعدادات Auth0 (مثل app.js)
   const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
@@ -110,4 +109,3 @@
 
   // وصلنا هنا؟ إذًا المستخدم مخوّل 👌
 })();
-</script>
