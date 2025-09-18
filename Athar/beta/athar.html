@@ -286,16 +286,18 @@
     t.textContent = msg; t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'), 2000);
   }
-  function setLoading(isLoading){
-    if(isLoading){
-      goBtn.dataset._label = goBtn.textContent;
-goBtn.textContent = "نحوّل شغفك لاستراتيجية… ✨";
-goBtn.disabled = true; regenBtn.disabled = true;
-…
-goBtn.textContent = goBtn.dataset._label || "ساعدني على الإبداع";
-goBtn.disabled = false; regenBtn.disabled = false;
-    }
+function setLoading(isLoading){
+  if (isLoading){
+    goBtn.dataset._label = goBtn.textContent;
+    goBtn.textContent = "نحوّل شغفك لاستراتيجية… ✨";
+    goBtn.disabled = true;
+    regenBtn.disabled = true;
+  } else {
+    goBtn.textContent = goBtn.dataset._label || "ساعدني على الإبداع";
+    goBtn.disabled = false;
+    regenBtn.disabled = false;
   }
+}
   function readStageLabel(val){
     return {
       "primary-lower":"ابتدائي — دنيا",
@@ -394,9 +396,8 @@ goBtn.disabled = false; regenBtn.disabled = false;
     }
   }
 
-  $("#gen").addEventListener("click", ()=> generate(null));
-  $("#regen").addEventListener("click", ()=> generate(Date.now()));
-
+goBtn.addEventListener("click", ()=> generate(null));
+regenBtn.addEventListener("click", ()=> generate(Date.now()));
   // نسخ الناتج
   $("#copy").addEventListener("click", ()=>{
     const text = document.querySelector("#out").innerText;
