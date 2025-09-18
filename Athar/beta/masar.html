@@ -72,61 +72,33 @@
     .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:.9rem; color:var(--muted) }
     .legend span{ display:inline-flex; align-items:center; gap:6px; }
     .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
-
-/* طباعة: أظهر العنوان + الجدول + الفوتر فقط وارفع الجدول */
 @media print {
-  /* ورقة A4 أفقية مع حافة علوية أصغر شوي */
-  @page { size: A4 landscape; margin: 6mm 8mm 8mm 8mm; }
+  @page { size: A4 landscape; margin: 8mm; }
 
-  /* اخفي كل شيء مبدئيًا */
+  /* نخلي بس الهيدر + الجدول + الفوتر يبانوا */
   body * { visibility: hidden !important; }
-
-  /* أظهر العناصر المطلوبة فقط */
   header, #tableWrap, footer,
   header *, #tableWrap *, footer * {
     visibility: visible !important;
   }
 
-  /* شيل الهوامش/الظلال الزايدة */
-  .card { box-shadow: none !important; border: none !important; }
+  /* خلي الهيدر أقرب للأعلى */
+  header { margin-top: -10mm !important; } /* <-- عدلي الرقم حسب رغبتك */
 
-  /* قلّلي الفراغ فوق/تحت العنوان */
-  header { margin: 0 0 2mm !important; padding: 0 !important; }
-  .hero { padding: 0 !important; }
-  .hero .tag { margin-top: 1mm !important; }
+  /* قرب الجدول من الهيدر */
+  #tableWrap { margin-top: 0 !important; }
 
-  /* ارفعي الجدول لفوق بكم ملم (عدّلي الرقم لو حبيتي) */
-  #tableWrap {
-    margin-top: -6mm !important; /* ← لو بغيتِ أعلى: -8mm أو -10mm */
-    margin-bottom: 2mm !important;
-  }
+  /* قرب الفوتر شوي تحت الجدول */
+  footer { margin-top: 2mm !important; }
 
-  /* عرض الجدول على كامل الصفحة */
+  /* عرض الجدول كامل الصفحة */
   #tableWrap, table.schedule { width: 100% !important; min-width: auto !important; }
 
-  /* ألوان واضحة */
   body, .schedule, .schedule th, .schedule td, .cell {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     color-adjust: exact;
   }
-
-  /* حجم افتراضي للطباعة (عدّليه حسب الحاجة) */
-  table.schedule { font-size: 14px; }
-  .schedule th, .schedule td { padding: 8px; }
-
-  /* لا تقطّعي الصفوف */
-  table.schedule, thead, tbody, tr { break-inside: avoid; page-break-inside: avoid; }
-
-  /* أخفي محتوى الخلايا الفارغة (الحدود تبقى) */
-  .cell.empty { opacity: 0; }
-}
-
-/* نسخة مضغوطة إذا ضغطتِ زر "طباعة مضغّطة" */
-@media print {
-  body.print-compact table.schedule { font-size: 12px; }
-  body.print-compact .schedule th,
-  body.print-compact .schedule td { padding: 6px; }
 }
   </style>
 </head>
