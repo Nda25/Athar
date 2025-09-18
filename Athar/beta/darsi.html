@@ -275,14 +275,18 @@
         </div>
       </section>
 
-      <section class="card" id="out-goals" style="display:none">
-        <h2 class="title">بطاقة أهداف (جاهزة للطباعة)</h2>
-        <div class="printable" id="goalsCard">
-          <h3 style="margin:0 0 6px">أهداف الدرس: <span id="goalsTitleOut">—</span></h3>
-          <ul id="goalsList" class="list" style="margin:0"></ul>
-          <p style="margin-top:6px"><strong>معايير النجاح:</strong> <span id="successOut">—</span></p>
-        </div>
-      </section>
+<section class="card" id="out-goals" style="display:none">
+  <h2 class="title">بطاقة أهداف (جاهزة للطباعة)</h2>
+  <div class="printable" id="goalsCard">
+    <h3 style="margin:0 0 6px">أهداف الدرس: <span id="goalsTitleOut">—</span></h3>
+    <ul id="goalsList" class="list" style="margin:0"></ul>
+    <p style="margin-top:6px"><strong>معايير النجاح:</strong> <span id="successOut">—</span></p>
+  </div>
+  <div class="mini-actions">
+    <button class="btn" id="btn-goals-copy">نسخ بطاقة الأهداف</button>
+    <button class="btn" id="btn-goals-print">طباعة البطاقة</button>
+  </div>
+</section>
 
       <section class="card" id="out-onemin" style="display:none">
         <h2 class="title">خطة الدقيقة الواحدة</h2>
@@ -667,6 +671,44 @@ Due: (set by teacher)`
       copyText(exportTeams(CURRENT));
     });
     document.getElementById('btn-print').addEventListener('click', ()=> window.print());
+      // نسخ نص بطاقة الأهداف
+    function copyGoalsCard(){
+      const el = document.getElementById('goalsCard');
+      if(!el) return;
+      const txt = el.innerText.trim();
+      navigator.clipboard.writeText(txt).then(()=> toastMsg('تم نسخ بطاقة الأهداف ✅'));
+    }
+
+    // طباعة بطاقة الأهداف فقط
+    function printElementById(id, title='بطاقة الأهداف'){
+      const node = document.getElementById(id);
+      if(!node) return;
+      const w = window.open('', '_blank');
+      w.document.open();
+      w.document.write(`
+        <!doctype html><html lang="ar" dir="rtl">
+        <head>
+          <meta charset="utf-8"><title>${title}</title>
+          <style>
+            body{font-family:"Cairo",system-ui,-apple-system,Segoe UI,Roboto; color:#0f172a; margin:20px}
+            .box{border:1px solid #93c5fd80; border-radius:12px; padding:14px}
+            h3{margin:0 0 6px; font-weight:700}
+            ul{margin:0; padding-inline-start:1.2rem}
+            strong{font-weight:700}
+            @media print{ @page{margin:12mm} }
+          </style>
+        </head>
+        <body>
+          <div class="box">${node.innerHTML}</div>
+          <script>window.onload=()=>window.print()<\/script>
+        </body></html>
+      `);
+      w.document.close();
+    }
+
+    // ربط الأزرار
+    document.getElementById('btn-goals-copy')?.addEventListener('click', copyGoalsCard);
+    document.getElementById('btn-goals-print')?.addEventListener('click', ()=> printElementById('goalsCard'));
   </script>
 <script src="app.js"></script>
 <script>
