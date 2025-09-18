@@ -12,9 +12,9 @@
   <style>
     /* ================== ثيم الجدول ================== */
     :root{
-      --table-accent: #3b82f6;          /* لون الأساس */
-      --table-mix: 28%;                 /* شدّة خلفية العناوين */
-      --table-border-mix: 45%;          /* شدّة حدود الخلايا */
+      --table-accent: #3b82f6;   /* لون الأساس */
+      --table-mix: 28%;          /* شدّة خلفية رؤوس الأعمدة */
+      --table-border-mix: 45%;   /* شدّة الحدود */
       /* للطباعة: أغمق قليلاً */
       --table-mix-print: 38%;
       --table-border-mix-print: 60%;
@@ -35,19 +35,8 @@
     @media(max-width:900px){ .grid-4{grid-template-columns:1fr 1fr} }
     @media(max-width:640px){ .grid-4,.grid-3{grid-template-columns:1fr} }
 
-    /* غلاف الجدول يسمح بخلفية مخصّصة */
+    /* غلاف الجدول */
     .table-wrap{ position: relative; isolation: isolate; overflow:auto; }
-    .table-wrap::before{
-      content:"";
-      position:absolute; inset: 6px;
-      background-repeat:no-repeat; background-position:center; background-size:contain;
-      opacity:.16; pointer-events:none; z-index:0;
-    }
-  
-    .table-wrap.bg-none::before     { background-image:none; opacity:0; }
- .table-wrap.bg-flowers::before  { background-image: url('/assets/bg/flowers-big.svg'); }
-.table-wrap.bg-leaves::before   { background-image: url('/assets/bg/leaves-big.svg'); }
-    .table-wrap > *{ position:relative; z-index:1; }
 
     table.schedule{ width:100%; border-collapse:separate; border-spacing:0; min-width:780px }
     .schedule th, .schedule td{
@@ -83,47 +72,43 @@
     .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:.9rem; color:var(--muted) }
     .legend span{ display:inline-flex; align-items:center; gap:6px; }
     .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
-/* طباعة الجدول فقط – نسخة نهائية */
-@media print {
-  /* أخفي الواجهة */
-  .topbar, header, footer, .controls, .row-actions, .toast { display: none !important; }
-  .container, main, #tableWrap { margin: 0 !important; padding: 0 !important; }
-  .card { box-shadow: none !important; border: none !important; }
 
-  /* إعداد الورقة */
-  @page { size: A4 landscape; margin: 8mm; }
-  html, body { width: 297mm; height: 210mm; }
+    /* ================== طباعة: العنوان + الجدول + الفوتر فقط ================== */
+    @media print {
+      /* أخفي كل شي */
+      body * { visibility: hidden !important; }
 
-  /* اجعل الجدول يملأ الصفحة */
-  #tableWrap { width: 100% !important; }
-  table.schedule { width: 100% !important; min-width: auto !important; }
+      /* أظهر الهيدر (العنوان)، الجدول، والفوتر */
+      header, header *, #tableWrap, #tableWrap *, footer, footer * {
+        visibility: visible !important;
+      }
 
-  /* ألوان قوية في الطباعة */
-  body, .schedule, .schedule th, .schedule td, .cell {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    color-adjust: exact;
-  }
+      /* إعداد الورقة */
+      @page { size: A4 landscape; margin: 8mm; }
 
-  /* الحجم “العادي” للطباعة */
-  table.schedule { font-size: 14px; }
-  .schedule th, .schedule td { padding: 8px; }
-  .cell { min-height: 0; padding: 0; }
-  .cell input { font-size: 13px; border: none; padding: 2px 4px; }
+      /* ألوان واضحة */
+      body, .schedule, .schedule th, .schedule td, .cell{
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+      }
 
-  /* لا تقطّعي الجدول */
-  table.schedule, table.schedule thead, table.schedule tbody, table.schedule tr {
-    break-inside: avoid; page-break-inside: avoid;
-  }
+      /* مقاس الجدول في الطباعة */
+      table.schedule{ width:100% !important; min-width:auto !important; font-size:14px; }
+      .schedule th, .schedule td{ padding:8px; }
+      .cell input{ font-size:13px; border:none; padding:2px 4px; }
 
-  /* أخفي محتوى الخلايا الفارغة فقط */
-  .cell.empty { opacity: 0; }
+      /* لا تقطّعي الصفوف */
+      table.schedule, thead, tbody, tr{ break-inside:avoid; page-break-inside:avoid; }
 
-  /* النسخة المضغوطة عندما يضاف الكلاس إلى <body> */
-  body.print-compact table.schedule { font-size: 12px !important; }
-  body.print-compact .schedule th,
-  body.print-compact .schedule td { padding: 6px 6px !important; }
-}
+      /* أخفي محتوى الخلايا الفارغة (الحدود تبقى) */
+      .cell.empty{ opacity:0; }
+
+      /* نسخة مضغوطة عند تفعيل الكلاس على <body> */
+      body.print-compact table.schedule { font-size:12px !important; }
+      body.print-compact .schedule th,
+      body.print-compact .schedule td { padding:6px 6px !important; }
+    }
   </style>
 </head>
 <body>
@@ -146,7 +131,7 @@
     </div>
   </div>
 
-  <!-- الهيدر -->
+  <!-- الهيدر (هذا سيظهر في الطباعة) -->
   <header>
     <div class="hero">
       <h1 class="logo">مَســار</h1>
@@ -182,19 +167,22 @@
       </div>
 
       <div class="grid-3" style="margin-top:8px">
-  <div class="field">
-    <label>اتجاه الجدول</label>
-    <select id="orient">
-      <option value="periods-rows" selected>الأوقات = صفوف</option>
-      <option value="periods-cols">الأوقات = أعمدة</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>لون الجدول</label>
-    <input id="tblColor" type="color" value="#3b82f6">
-  </div>
-</div>
+        <div class="field">
+          <label>اتجاه الجدول</label>
+          <select id="orient">
+            <option value="periods-rows" selected>الأوقات = صفوف</option>
+            <option value="periods-cols">الأوقات = أعمدة</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>لون الجدول</label>
+          <input id="tblColor" type="color" value="#3b82f6">
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn" id="printCompact">طباعة مضغّطة</button>
+        </div>
+      </div>
 
       <div class="grid-3" style="margin-top:8px">
         <div class="field">
@@ -207,7 +195,7 @@
         </div>
         <div class="field">
           <label>&nbsp;</label>
-          <button class="btn" id="printCompact">طباعة مضغّطة</button>
+          <span class="muted">تؤثر فورًا وتُحفظ تلقائيًا</span>
         </div>
       </div>
 
@@ -228,14 +216,15 @@
       </div>
     </section>
 
-    <!-- الجدول -->
+    <!-- الجدول (هذا سيظهر في الطباعة) -->
     <section class="card">
-      <div class="table-wrap bg-none" id="tableWrap">
+      <div class="table-wrap" id="tableWrap">
         <table class="schedule" id="tbl"></table>
       </div>
     </section>
   </main>
 
+  <!-- الفوتر (سيظهر في الطباعة) -->
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
@@ -258,23 +247,22 @@
   (function(){
     const $ = (sel)=>document.querySelector(sel);
 
-    // أعلى سكربت مسار مع بقية العناصر
-const tbl         = $('#tbl');
-const daysSel     = $('#days');
-const periodsSel  = $('#periods');
-const startTime   = $('#startTime');
-const slotMinsSel = $('#slotMins');
-const orientSel   = $('#orient');
-// أضيفي هذا السطر حتى لو ما فيه عنصر بهذا الـ id:
-const bgSel       = document.getElementById('tblBg');  // ممكن يكون null — عادي
-const bgThemeSel  = null;
-const tblColorInp = $('#tblColor');
-const tableWrap   = $('#tableWrap');
+    /* عناصر الواجهة */
+    const tbl         = $('#tbl');
+    const daysSel     = $('#days');
+    const periodsSel  = $('#periods');
+    const startTime   = $('#startTime');
+    const slotMinsSel = $('#slotMins');
+    const orientSel   = $('#orient');
+    const colorInp    = document.getElementById('tblColor');
+    const mixInp      = document.getElementById('tblIntensity');
+    const borderInp   = document.getElementById('tblBorderIntensity');
+    const tableWrap   = $('#tableWrap');
 
     const DB_KEY = 'masar';
     const DEFAULT_DAYS = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
 
-    /* ============ ألوان المواد حسب الاسم ============ */
+    /* ===== ألوان المواد حسب الاسم ===== */
     function loadColorMap(){ const all = userDB.get(DB_KEY, {}); return all.__colors || {}; }
     function saveColorMap(map){ const all = userDB.get(DB_KEY, {}); all.__colors = map || {}; userDB.set(DB_KEY, all); }
     function hashColor(name){ let h=0; for(let i=0;i<name.length;i++) h=(h*31 + name.charCodeAt(i))%360; return `hsl(${h} 70% 88%)`; }
@@ -292,7 +280,7 @@ const tableWrap   = $('#tableWrap');
       });
     }
 
-    /* ============ وقت ============ */
+    /* ===== وقت ===== */
     function timeToMinutes(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
     function minutesToTime(m){ const h=Math.floor(m/60), mm=String(m%60).padStart(2,'0'); return String(h).padStart(2,'0')+':'+mm; }
     function buildTimes(start, slot, count){
@@ -301,20 +289,20 @@ const tableWrap   = $('#tableWrap');
       return out;
     }
 
-    /* ============ أيام ============ */
+    /* ===== أيام ===== */
     function readDays(){ return (daysSel.value==='sun-wed') ? DEFAULT_DAYS.slice(0,4) : DEFAULT_DAYS.slice(); }
 
-    /* ============ تخزين شامل ============ */
-    const getSaved = () => userDB.get(DB_KEY, {});
-    const setSaved = (obj) => userDB.set(DB_KEY, obj || {});
+    /* ===== تخزين ===== */
+    const getSaved   = () => userDB.get(DB_KEY, {});
+    const setSaved   = (obj) => userDB.set(DB_KEY, obj || {});
     const mergeSaved = (partial) => userDB.merge(DB_KEY, partial || {});
 
-    /* ============ بناء خلية ============ */
+    /* ===== خلية ===== */
     function makeCell(r,c, saved){
       const key = `r${r}c${c}`;
       const cellData = saved[key] || { subj:'', class:'', room:'' };
 
-      const td = document.createElement('td');
+      const td   = document.createElement('td');
       const wrap = document.createElement('div'); wrap.className = 'cell';
 
       const s = document.createElement('input');
@@ -348,15 +336,15 @@ const tableWrap   = $('#tableWrap');
       return td;
     }
 
-    /* ============ بناء الجدول ============ */
+    /* ===== بناء الجدول ===== */
     function buildTable(){
-  const days    = readDays();
-const periods = parseInt(periodsSel?.value, 10) || 7;
-const startAt = (startTime?.value) || '07:00';
-const slotMin = parseInt(slotMinsSel?.value, 10) || 50;
-const times   = buildTimes(startAt, slotMin, periods);
-const saved   = getSaved();
-const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-cols
+      const days    = readDays();
+      const periods = parseInt(periodsSel?.value, 10) || 7;
+      const startAt = (startTime?.value) || '07:00';
+      const slotMin = parseInt(slotMinsSel?.value, 10) || 50;
+      const times   = buildTimes(startAt, slotMin, periods);
+      const saved   = getSaved();
+      const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-cols
 
       const thead = document.createElement('thead');
       const tbody = document.createElement('tbody');
@@ -386,7 +374,7 @@ const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-
           const tr = document.createElement('tr');
           const tdDay = document.createElement('td'); tdDay.className='day-col'; tdDay.textContent = days[c] || '';
           tr.appendChild(tdDay);
-          for(let r=0;r<periods;r++){ tr.appendChild(makeCell(r,c,saved)); } /* مفاتيح التخزين ثابتة (r,c) */
+          for(let r=0;r<periods;r++){ tr.appendChild(makeCell(r,c,saved)); }
           tbody.appendChild(tr);
         }
       }
@@ -398,18 +386,12 @@ const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-
       mergeSaved({
         __meta:{
           days, periods, startAt, slotMin,
-          orient, colorsOn: !!window.__colorsOn,
-          theme:{
-            accent: getComputedStyle(document.documentElement).getPropertyValue('--table-accent').trim(),
-            mix: getComputedStyle(document.documentElement).getPropertyValue('--table-mix').replace('%','').trim(),
-            borderMix: getComputedStyle(document.documentElement).getPropertyValue('--table-border-mix').replace('%','').trim(),
-          },
-          bg: bgSel.value
+          orient, colorsOn: !!window.__colorsOn
         }
       });
     }
 
-    /* ============ CSV ============ */
+    /* ===== CSV ===== */
     function tableToCsv(){
       const saved = getSaved();
       const m  = saved.__meta || {};
@@ -436,7 +418,7 @@ const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-
       URL.revokeObjectURL(url);
     }
 
-    /* ============ PNG ============ */
+    /* ===== PNG ===== */
     async function saveTableAsPng(){
       try{
         const canvas=await html2canvas(tableWrap,{ backgroundColor:getComputedStyle(document.body).getPropertyValue('--bg')||null, scale:window.devicePixelRatio||2, useCORS:true });
@@ -446,9 +428,7 @@ const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-
       }catch(e){ console.error(e); if(window.toast) toast('تعذّر حفظ الصورة.'); }
     }
 
-    
-
-    /* ============ ثيم الجدول (لون/شدة) ============ */
+    /* ===== ثيم الجدول (لون/شدة) ===== */
     function applyThemeFromControls(){
       if(colorInp)  document.documentElement.style.setProperty('--table-accent', colorInp.value);
       if(mixInp)    document.documentElement.style.setProperty('--table-mix', mixInp.value + '%');
@@ -458,8 +438,7 @@ const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-
       mergeSaved({ __theme:{
         accent: colorInp?.value || '#3b82f6',
         mix:    mixInp?.value   || '28',
-        borderMix: borderInp?.value || '45',
-        bg: bgSel?.value || 'none'
+        borderMix: borderInp?.value || '45'
       }});
     }
     function loadTheme(){
@@ -467,11 +446,10 @@ const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-
       if(th.accent && colorInp)  colorInp.value = th.accent;
       if(th.mix && mixInp)       mixInp.value = th.mix;
       if(th.borderMix && borderInp) borderInp.value = th.borderMix;
-      if(th.bg && bgSel) bgSel.value = th.bg;
-      applyThemeFromControls(); applyBg(bgSel?.value || 'none');
+      applyThemeFromControls();
     }
 
-    /* ============ أزرار وأحداث ============ */
+    /* ===== أزرار وأحداث ===== */
     $('#addRow').addEventListener('click', ()=>{ periodsSel.value = String((parseInt(periodsSel.value,10)||7)+1); buildTable(); });
     $('#addCol').addEventListener('click', ()=>{ daysSel.value='sun-thu'; buildTable(); });
 
@@ -481,7 +459,8 @@ const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-
       setSaved(saved); buildTable(); if(window.toast) toast('تم المسح ✓');
     });
 
-    $('#print').addEventListener('click', ()=>window.print());
+    $('#print').addEventListener('click', ()=>printArea(false));
+    $('#printCompact').addEventListener('click', ()=>printArea(true));
     $('#exportCsv').addEventListener('click', downloadCsv);
     $('#savePng').addEventListener('click', saveTableAsPng);
 
@@ -492,48 +471,34 @@ const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-
       colorizeCells();
     });
 
-// إعادة بناء عند تغيير الاتجاه
-orientSel?.addEventListener('change', buildTable);
+    orientSel?.addEventListener('change', buildTable);
 
-// (اختياري) خلفية الجدول – ما يشتغل إلا لو العنصر موجود
-if (bgSel) {
-  bgSel.addEventListener('change', () => {
-    applyBg(bgSel.value);
-    saveTheme();
-  });
-}
+    /* تغييرات الثيم تحفظ فورًا */
+    [colorInp, mixInp, borderInp].forEach(el=>{
+      if(!el) return;
+      el.addEventListener('input', ()=>{ applyThemeFromControls(); saveTheme(); });
+    });
 
-// تحكم بالثيم (اللون/الشدة/حدود)
-[colorInp, mixInp, borderInp].forEach(el => {
-  if (!el) return;
-  el.addEventListener('input', () => {
-    applyThemeFromControls();
-    saveTheme();
-  });
-});
+    /* طباعة (عادي / مضغوط) */
+    function printArea(compact = false) {
+      document.body.classList.toggle('print-compact', compact);
+      window.print();
+      window.addEventListener('afterprint', () => {
+        document.body.classList.remove('print-compact');
+      }, { once: true });
+    }
 
-// الطباعة (عادي / مضغوطة)
-function printArea(compact = false) {
-  document.body.classList.toggle('print-compact', compact);
-  window.print();
-  window.addEventListener('afterprint', () => {
-    document.body.classList.remove('print-compact');
-  }, { once: true });
-}
-document.getElementById('print')?.addEventListener('click', () => printArea(false));
-document.getElementById('printCompact')?.addEventListener('click', () => printArea(true));
-    
-    // تهيئة
+    /* تهيئة */
     document.addEventListener('DOMContentLoaded', ()=>{
-      // استرجاع ثيم
       loadTheme();
 
       const saved = getSaved(); const m = saved.__meta || {};
-periodsSel && (periodsSel.value  = String(m.periods || 7));
-startTime  && (startTime.value   = m.startAt || '07:00');
-slotMinsSel&& (slotMinsSel.value = String(m.slotMin || 50));
-orientSel  && (orientSel.value   = m.orient || 'periods-rows');
-daysSel    && (daysSel.value     = (Array.isArray(m.days) && m.days.length===4) ? 'sun-wed' : 'sun-thu');
+      periodsSel && (periodsSel.value  = String(m.periods || 7));
+      startTime  && (startTime.value   = m.startAt || '07:00');
+      slotMinsSel&& (slotMinsSel.value = String(m.slotMin || 50));
+      orientSel  && (orientSel.value   = m.orient || 'periods-rows');
+      daysSel    && (daysSel.value     = (Array.isArray(m.days) && m.days.length===4) ? 'sun-wed' : 'sun-thu');
+
       window.__colorsOn = (m.colorsOn!==undefined) ? !!m.colorsOn : true;
       $('#toggleColors').textContent = window.__colorsOn ? 'تلوين المواد (مفعّل)' : 'تلوين المواد';
 
