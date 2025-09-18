@@ -10,12 +10,11 @@
   <link rel="stylesheet" href="style.css" />
 
   <style>
-    /* ================== ثيم الجدول ================== */
+      /* ============= ثيم الجدول ============= */
     :root{
-      --table-accent: #3b82f6;   /* لون الأساس */
-      --table-mix: 28%;          /* شدّة خلفية رؤوس الأعمدة */
-      --table-border-mix: 45%;   /* شدّة الحدود */
-      /* للطباعة: أغمق قليلاً */
+      --table-accent: #3b82f6;
+      --table-mix: 28%;            /* شدّة خلفية العناوين */
+      --table-border-mix: 45%;     /* شدّة لون حدود الخلايا */
       --table-mix-print: 38%;
       --table-border-mix-print: 60%;
     }
@@ -37,7 +36,9 @@
 
     /* غلاف الجدول */
     .table-wrap{ position: relative; isolation: isolate; overflow:auto; }
+    .table-wrap > *{ position:relative; z-index:1; }
 
+    /* الجدول */
     table.schedule{ width:100%; border-collapse:separate; border-spacing:0; min-width:780px }
     .schedule th, .schedule td{
       border:1px solid color-mix(in oklab, var(--table-accent) var(--table-border-mix), #cbd5e1);
@@ -72,34 +73,56 @@
     .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:.9rem; color:var(--muted) }
     .legend span{ display:inline-flex; align-items:center; gap:6px; }
     .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
-@media print {
-  @page { size: A4 landscape; margin: 8mm; }
 
-  /* نخلي بس الهيدر + الجدول + الفوتر يبانوا */
-  body * { visibility: hidden !important; }
-  header, #tableWrap, footer,
-  header *, #tableWrap *, footer * {
-    visibility: visible !important;
-  }
+    /* ============= الطباعة: الهيدر + الجدول فقط ============= */
+    @media print {
+      @page { size: A4 landscape; margin: 6mm 8mm 8mm 8mm; }
 
-  /* خلي الهيدر أقرب للأعلى */
-  header { margin-top: -46mm !important; } /* <-- عدلي الرقم حسب رغبتك */
+      /* أخفي كل شيء */
+      body * { visibility: hidden !important; }
 
-  /* قرب الجدول من الهيدر */
-  #tableWrap { margin-top: -182mm !important; }
+      /* أظهر العنوان + الجدول */
+      header, #tableWrap,
+      header *, #tableWrap * {
+        visibility: visible !important;
+      }
 
-  /* قرب الفوتر شوي تحت الجدول */
-  footer { margin-top: 5mm !important; }
+      /* الفوتر لا يُطبع */
+      footer { display: none !important; }
 
-  /* عرض الجدول كامل الصفحة */
-  #tableWrap, table.schedule { width: 100% !important; min-width: auto !important; }
+      .card { box-shadow: none !important; border: none !important; }
 
-  body, .schedule, .schedule th, .schedule td, .cell {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    color-adjust: exact;
-  }
-}
+      /* ارفعي الجدول */
+      header { margin: 0 0 2mm !important; padding: 0 !important; }
+      #tableWrap { margin-top: -6mm !important; }
+
+      /* عرض كامل */
+      #tableWrap, table.schedule { width: 100% !important; min-width: auto !important; }
+
+      /* الألوان واضحة */
+      body, .schedule, .schedule th, .schedule td, .cell {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+      }
+
+      /* مقاسات مريحة */
+      table.schedule { font-size: 14px; }
+      .schedule th, .schedule td { padding: 8px; }
+
+      /* لا تقطّعي الصفوف */
+      table.schedule, thead, tbody, tr { break-inside: avoid; page-break-inside: avoid; }
+
+      /* الخلايا الفارغة تُخفى */
+      .cell.empty { opacity: 0; }
+    }
+
+    /* نسخة مضغوطة */
+    @media print {
+      body.print-compact table.schedule { font-size: 12px; }
+      body.print-compact .schedule th,
+      body.print-compact .schedule td { padding: 6px; }
+    }
   </style>
 </head>
 <body>
