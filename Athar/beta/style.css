@@ -359,3 +359,36 @@ input::placeholder{ color:#64748b }
   .tb-right { grid-area:right; }
   .tb-center{ grid-area:center; }
 }
+/* ===== مرتكز: تكبير الحقول والبطاقات ===== */
+
+/* حقول كبيرة مريحة مثل "منطلق" */
+.field input,
+.field textarea,
+.field select{
+  width:100%;
+  font-size:1rem;           /* تكبير النص */
+  line-height:1.35;
+  padding:.9rem 1rem;       /* نفس إحساس منطلق */
+  border-radius:12px;
+  border:1px solid rgba(59,130,246,.35);
+  background:#fff; color:#0f172a;
+}
+.dark .field input,
+.dark .field textarea,
+.dark .field select{
+  background:#0f172a; color:#f1f5f9; border-color:#3b82f6;
+}
+
+/* صناديق البطاقات المطبوعة نفس المظهر */
+.printable{
+  background:rgba(255,255,255,.6);
+  border:1px solid rgba(59,130,246,.25);
+  border-radius:14px; padding:14px 16px;
+}
+.dark .printable{ background:rgba(17,24,39,.35) }
+
+/* صف أزرار صغير تحت العناوين */
+.card .mini-actions{
+  display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 0;
+}
+.card .mini-actions .btn{ padding:.55rem .9rem; border-radius:10px; }
