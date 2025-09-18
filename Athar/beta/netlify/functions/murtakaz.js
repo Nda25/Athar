@@ -21,16 +21,16 @@ exports.handler = async (event) => {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-    const AGE_LABELS = { p1:"ابتدائي دُنيا", p2:"ابتدائي عُليا", m:"متوسط", h:"ثانوي" };
+    const AGE_LABELS = { p1: "ابتدائي دُنيا", p2: "ابتدائي عُليا", m: "متوسط", h: "ثانوي" };
     const ageLabel = AGE_LABELS[age] || age || "—";
 
     const prompt = `
-أنت مخطط دروس ذكي. أعد النتائج بصيغة JSON صالحة فقط (بدون أي شرح خارج JSON).
-راعي الفئة العمرية (${ageLabel}) وزمن الحصة (${duration || 45} دقيقة)،
+أنت مخطط دروس ذكي. أعِد النتائج بصيغة JSON صالحة فقط (بدون أي شرح خارج JSON).
+راعي الفئة العمرية (${ageLabel}) وزمن الحصة (${duration || 45} دقيقة)
 ومستوى بلوم الأساسي "${bloomMain}" والداعم "${bloomSupport || "—"}".
-عند إدخال نص للتحليل: استخرج موضوعًا مناسبًا ومواءم الأهداف معه.
+عند إدخال نص للتحليل: استخرج موضوعًا مناسبًا ووافق الأهداف معه.
 
-أعد حقول JSON التالية:
+أعِد حقول JSON التالية:
 {
   "meta": {
     "topic": "عنوان مختصر",
@@ -51,13 +51,13 @@ exports.handler = async (event) => {
 المعطيات:
 - المادة: ${subject || "—"}
 - النمط: ${mode}
-- الموضوع (إن وُجد): ${topic || "—"}
-- النص للتحليل (إن وُجد): ${(sourceText || "—").slice(0, 1200)}
+- الموضوع (إن وجد): ${topic || "—"}
+- النص للتحليل (إن وجد): ${(sourceText || "—").slice(0,1200)}
 - ملاحظات: ${notes || "—"}
 - مستوى الصف: ${level || "—"}
 - تعلم تكيفي: ${adapt ? "نعم" : "لا"}
 
-احرص أن يكون الإخراج JSON صالحًا فقط.
+أخرِج JSON فقط.
 `;
 
     const result = await model.generateContent({
@@ -65,10 +65,21 @@ exports.handler = async (event) => {
     });
 
     const raw = (result.response.text() || "").trim();
+    console.log("RAW from Gemini:", raw); // يظهر في Netlify logs
 
-    // التقاط JSON حتى لو فيه كلام قبل/بعد
-    const m = raw.match(/\{[\s\S]*\}$/);
-    const payload = JSON.parse(m ? m[0] : raw);
+    // جرّب التقاط JSON حتى لو فيه كلام زائد
+    let payload;
+    try {
+      const m = raw.match(/\{[\s\S]*\}/);
+      payload = JSON.parse(m ? m[0] : raw);
+    } catch (e) {
+      console.error("JSON parse failed:", e);
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({ error: "Gemini output is not valid JSON", raw })
+      };
+    }
 
     const safeArr = (a) => Array.isArray(a) ? a.filter(Boolean) : [];
     const body = JSON.stringify({
