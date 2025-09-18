@@ -505,6 +505,36 @@
       buildTable();
     });
   })();
+    <script>
+(function(){
+  const box = document.getElementById('toast');
+  // ستايل بسيط لو ما كان موجود
+  if (box && !box.style.position){
+    box.style.position = 'fixed';
+    box.style.bottom = '16px';
+    box.style.insetInline = '0';
+    box.style.margin = '0 auto';
+    box.style.maxWidth = '320px';
+    box.style.padding = '10px 14px';
+    box.style.borderRadius = '10px';
+    box.style.background = 'rgba(17,25,40,.9)';
+    box.style.color = '#fff';
+    box.style.fontWeight = '700';
+    box.style.textAlign = 'center';
+    box.style.zIndex = '9999';
+    box.style.boxShadow = '0 8px 24px rgba(0,0,0,.25)';
+    box.style.display = 'none';
+  }
+
+  window.toast = function(msg, ms=1800){
+    if(!box){ alert(msg); return; } // احتياط
+    box.textContent = msg || '';
+    box.style.display = 'block';
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(()=>{ box.style.display='none'; }, ms);
+  };
+})();
+</script>
   </script>
 </body>
 </html>
