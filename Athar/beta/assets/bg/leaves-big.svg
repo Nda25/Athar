@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#22c55e" stop-opacity="0.12"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#60a5fa" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#3b82f6" stop-opacity="0.10"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="100%" height="100%" fill="none"/>
+  <!-- ورقتان كبيرتان ناعمتان -->
+  <ellipse cx="300" cy="260" rx="260" ry="110" fill="url(#g1)"/>
+  <ellipse cx="1260" cy="740" rx="280" ry="120" fill="url(#g2)"/>
+
+  <!-- لمسات خفيفة متكررة -->
+  <g fill="#10b981" fill-opacity="0.10">
+    <path d="M1500 120c-90 70-170 90-260 70 80-60 160-80 260-70z"/>
+    <path d="M140 900c120-20 180-70 220-140-140 10-210 60-220 140z"/>
+  </g>
+</svg>
