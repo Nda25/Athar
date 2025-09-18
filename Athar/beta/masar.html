@@ -74,8 +74,7 @@
     .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
 @media print {
   @page { size: A4 landscape; margin: 8mm; }
-footer { display: none !important; }
-}
+
   /* نخلي بس الهيدر + الجدول + الفوتر يبانوا */
   body * { visibility: hidden !important; }
   header, #tableWrap, footer,
@@ -89,7 +88,8 @@ footer { display: none !important; }
   /* قرب الجدول من الهيدر */
   #tableWrap { margin-top: -182mm !important; }
 
-  
+  /* قرب الفوتر شوي تحت الجدول */
+  footer { margin-top: 5mm !important; }
 
   /* عرض الجدول كامل الصفحة */
   #tableWrap, table.schedule { width: 100% !important; min-width: auto !important; }
