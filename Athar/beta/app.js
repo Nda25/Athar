@@ -127,29 +127,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   setButtons(false);
 
-  // اربطي الأزرار الآن (تشتغل لاحقًا لما window.auth يجهز)
-  if (loginBtn)    loginBtn.onclick    = () => window.auth?.login({ authorizationParams:{ screen_hint:'login' } });
-  if (registerBtn) registerBtn.onclick = () => window.auth?.login({ authorizationParams:{ screen_hint:'signup' } });
-  if (logoutBtn)   logoutBtn.onclick   = () => window.auth?.logout();
+// عناصر الأزرار
+const loginBtn    = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+const logoutBtn   = document.getElementById('logout');
 
-  // اسمعي الجاهزية قبل التهيئة
-  window.addEventListener('auth0:ready', async () => {
-    try {
-      const ok = await window.auth.isAuthenticated();
-      setButtons(ok);
-    } catch {
-      setButtons(false);
-    }
-  }, { once:true });
+// حالة ابتدائية
+function setButtons(isAuth) {
+  if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
+  if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
+  if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
+}
+setButtons(false);
 
-  // فعليًا نهيّئ Auth0
-  await initAuth0();
+// نقرأ كود الدعوة من رابط الصفحة (إن وُجد)
+const urlParams = new URLSearchParams(window.location.search);
+const inviteCode = urlParams.get('code');
 
-  // باك-أب لو فاتنا الحدث
-  if (window.auth) {
-    try {
-      const ok = await window.auth.isAuthenticated();
-      setButtons(ok);
-    } catch { setButtons(false); }
-  }
-});
+// اربطي الأزرار الآن (تشتغل لاحقًا لما window.auth يجهز)
+if (loginBtn) {
+  loginBtn.onclick = () =>
+    window.auth?.login({
+      authorizationParams: {
+        screen_hint: 'login',
+        redirect_uri: window.location.origin
+      }
+    });
+}
+
+if (registerBtn) {
+  registerBtn.onclick = () =>
+    window.auth?.login({
+      authorizationParams: {
+        screen_hint: 'signup',
+        redirect_uri: window.location.origin,
+        // نمرّر الكود للـ Action (Pre User Registration) عبر query
+        ...(inviteCode ? { code: inviteCode } : {})
+      }
+    });
+}
+
+if (logoutBtn) {
+  logoutBtn.onclick = () => window.auth?.logout();
+}
