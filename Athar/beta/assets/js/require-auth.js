@@ -1,31 +1,38 @@
-/* assets/js/require-auth.js — hardened */
+<!-- assets/js/require-auth.js (نسخة حديثة) -->
+<script>
 (async () => {
-  const domain   = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-  const clientId = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-  const redirectUri = window.location.origin + "/";
+  // إعدادات Auth0 (مثل app.js)
+  const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+  const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+  const REDIRECT_URI = window.location.origin + "/";
 
-  // صفحات عامة بالاسم (بغض النظر عن المسار/المجلد)
-  const PUBLIC_FILES = new Set(["", "index.html", "pricing.html", "programs.html"]);
+  // صفحات عامة (تُفتح للجميع). أي صفحة غيرها تعتبر محمية.
+  const PUBLIC_FILES = new Set(["", "index.html", "pricing.html"]);
 
-  // ردّ توجيه مغلق (أضمن)
-  function sendToPricing() {
-    const target = "/pricing.html";
-    location.replace(target);
+  function goPricing() {
+    location.replace("/pricing.html");
   }
 
-  // اكتشاف اسم الملف من المسار الحالي (يدعم مجلدات مثل /beta/)
   function currentFile() {
-    const path = location.pathname.replace(/\/+$/, "");    // شيل السلاشات الزائدة
-    const file = path.split("/").pop();                    // اسم الملف
-    return file || "";                                     // "" تعني مجرّد "/" (index)
+    const path = location.pathname.replace(/\/+$/, "");
+    const file = path.split("/").pop();
+    return file || ""; // "/" → ""
   }
 
-  // حمّلي Auth0 SDK عند الحاجة
+  // انتظري window.auth من app.js إن كان موجود
+  async function waitForWindowAuth(max = 50) {
+    for (let i = 0; i < max && !(window.auth && typeof window.auth.isAuthenticated === "function"); i++) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+    return !!(window.auth && typeof window.auth.isAuthenticated === "function");
+  }
+
+  // حمّلي UMD SDK عند الحاجة (ونستخدم window.auth0.createAuth0Client)
   async function ensureAuth0Sdk() {
-    if (typeof window.createAuth0Client === "function") return true;
+    if (window.auth0 && typeof window.auth0.createAuth0Client === "function") return true;
     await new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js";
+      s.src = "https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js";
       s.onload = resolve;
       s.onerror = reject;
       document.head.appendChild(s);
@@ -33,72 +40,74 @@
     return true;
   }
 
-  // 1) السماح للصفحات العامة فقط
+  async function buildTempClient() {
+    await ensureAuth0Sdk();
+    return await window.auth0.createAuth0Client({
+      domain: AUTH0_DOMAIN,
+      clientId: AUTH0_CLIENT,
+      cacheLocation: "localstorage",
+      authorizationParams: { redirect_uri: REDIRECT_URI }
+    });
+  }
+
+  // 1) لو الصفحة عامة، نسمح و(اختياري) ننظّف باراميترات العودة من Auth0
   const file = currentFile();
-  const isPublic = PUBLIC_FILES.has(file);
-  if (isPublic) {
-    // نظّف باراميترات Auth0 إن وُجدت (اختياري)
+  if (PUBLIC_FILES.has(file)) {
     try {
-      await ensureAuth0Sdk();
+      // تنظيف code/state إن وُجد
       if (location.search.includes("code=") && location.search.includes("state=")) {
-        const c = await createAuth0Client({
-          domain, clientId,
-          authorizationParams: { redirect_uri: redirectUri }
-        });
-        await c.handleRedirectCallback();
+        const tmp = await buildTempClient();
+        await tmp.handleRedirectCallback();
         history.replaceState({}, document.title, location.pathname);
       }
-    } catch (_) {}
-    return; // صفحات عامة: لا حماية
+    } catch(_) {}
+    return;
   }
 
-  // 2) الصفحات المحمية — فشل = توجيه
-  try {
-    await ensureAuth0Sdk();
-  } catch (e) {
-    console.error("[Auth0] SDK load failed:", e);
-    return sendToPricing(); // فشل تحميل SDK → وجّهي
-  }
+  // 2) الصفحات المحمية
+  // نحاول استخدام window.auth أولاً (من app.js)، وإلا نبني عميل مؤقت
+  let isAuth = false;
+  let claims = null;
 
-  let auth0Client;
   try {
-    auth0Client = await createAuth0Client({
-      domain, clientId,
-      cacheLocation: "localstorage",
-      authorizationParams: { redirect_uri: redirectUri }
-    });
-  } catch (e) {
-    console.error("[Auth0] create client failed:", e);
-    return sendToPricing(); // فشل إنشاء العميل → وجّهي
-  }
+    if (await waitForWindowAuth()) {
+      isAuth = await window.auth.isAuthenticated();
+      if (isAuth && typeof window.auth.getIdTokenClaims === "function") {
+        claims = await window.auth.getIdTokenClaims();
+      }
+    } else {
+      const tmp = await buildTempClient();
 
-  // 3) تنظيف الرجوع من Auth0
-  try {
-    if (location.search.includes("code=") && location.search.includes("state=")) {
-      await auth0Client.handleRedirectCallback();
-      history.replaceState({}, document.title, location.pathname);
+      // تنظيف code/state إذا رجعنا من Auth0
+      if (location.search.includes("code=") && location.search.includes("state=")) {
+        await tmp.handleRedirectCallback();
+        history.replaceState({}, document.title, location.pathname);
+      }
+
+      isAuth = await tmp.isAuthenticated();
+      if (isAuth) claims = await tmp.getIdTokenClaims();
     }
   } catch (e) {
-    console.error("[Auth0] redirect handling error:", e);
-    // حتى لو فشل التنظيف، كمّلي للتحقّق من الحالة
+    console.warn("[Guard] auth check error:", e);
+    return goPricing();
   }
 
-  // 4) التحقّق من المصادقة
-  try {
-    const loggedIn = await auth0Client.isAuthenticated();
-    if (!loggedIn) return sendToPricing();
-  } catch (e) {
-    console.error("[Auth0] isAuthenticated error:", e);
-    return sendToPricing(); // أي خطأ هنا → توجيه
-  }
+  if (!isAuth) return goPricing();
 
-  // 5) (اختياري) ربط المستخدم بـ Supabase
-  try {
-    const u = await auth0Client.getUser();
-    if (typeof supaEnsureUser === "function" && u?.email) {
-      await supaEnsureUser({ email: u.email, full_name: u.name || "", role: "user" });
-    }
-  } catch (e) {
-    console.warn("[Auth0] link to Supabase failed:", e);
-  }
+  // 3) نقرأ الخطة/الدور من الكليم الموحّد الذي وضعناه في Action:
+  //   api.idToken.setCustomClaim("https://n-athar.co/app_metadata", event.user.app_metadata || {})
+  const meta = claims?.["https://n-athar.co/app_metadata"] || {};
+  const plan = meta.plan || "free";
+  const role = meta.role || "user";
+
+  // سياسة السماح:
+  // - admin مسموح دائمًا
+  // - باقي المستخدمين: اسمحي لهذي الخطط فقط (عدّليها حسب رغبتك)
+  const ALLOW_PLANS = new Set(["trial", "free", "lifetime_free"]);
+  const allowed = role === "admin" || ALLOW_PLANS.has(plan);
+
+  if (!allowed) return goPricing();
+
+  // وصلنا هنا؟ إذًا المستخدم مخوّل 👌
 })();
+</script>
