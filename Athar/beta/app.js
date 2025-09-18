@@ -145,28 +145,28 @@ const urlParams = new URLSearchParams(window.location.search);
 const inviteCode = urlParams.get('code');
 
 // اربطي الأزرار الآن (تشتغل لاحقًا لما window.auth يجهز)
-if (loginBtn) {
-  loginBtn.onclick = () =>
-    window.auth?.login({
-      authorizationParams: {
-        screen_hint: 'login',
-        redirect_uri: window.location.origin
-      }
-    });
-}
+if (loginBtn)    loginBtn.onclick    = () => window.auth?.login({ authorizationParams:{ screen_hint:'login' } });
+if (registerBtn) registerBtn.onclick = () => window.auth?.login({ authorizationParams:{ screen_hint:'signup' } });
+if (logoutBtn)   logoutBtn.onclick   = () => window.auth?.logout();
 
-if (registerBtn) {
-  registerBtn.onclick = () =>
-    window.auth?.login({
-      authorizationParams: {
-        screen_hint: 'signup',
-        redirect_uri: window.location.origin,
-        // نمرّر الكود للـ Action (Pre User Registration) عبر query
-        ...(inviteCode ? { code: inviteCode } : {})
-      }
-    });
-}
+// اسمعي الجاهزية قبل التهيئة
+window.addEventListener('auth0:ready', async () => {
+  try {
+    const ok = await window.auth.isAuthenticated();
+    setButtons(ok);
+  } catch {
+    setButtons(false);
+  }
+}, { once:true });
 
-if (logoutBtn) {
-  logoutBtn.onclick = () => window.auth?.logout();
+// فعليًا نهيّئ Auth0
+await initAuth0();
+
+// باك-أب لو فاتنا الحدث
+if (window.auth) {
+  try {
+    const ok = await window.auth.isAuthenticated();
+    setButtons(ok);
+  } catch { setButtons(false); }
 }
+});
