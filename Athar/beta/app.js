@@ -119,54 +119,59 @@ document.addEventListener('DOMContentLoaded', async () => {
   const registerBtn = document.getElementById('registerBtn');
   const logoutBtn   = document.getElementById('logout');
 
-  // حالة ابتدائية
+  // حالة ابتدائية آمنة
   function setButtons(isAuth) {
     if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
     if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
     if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
   }
-  setButtons(false);
+  setButtons(false); // دخول/تسجيل ظاهر، خروج مخفي
 
-// عناصر الأزرار
-const loginBtn    = document.getElementById('loginBtn');
-const registerBtn = document.getElementById('registerBtn');
-const logoutBtn   = document.getElementById('logout');
+  // نقرأ كود الدعوة من رابط الصفحة (إن وُجد)
+  const inviteCode = new URLSearchParams(location.search).get('code') || undefined;
 
-// حالة ابتدائية
-function setButtons(isAuth) {
-  if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
-  if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
-  if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
-}
-setButtons(false);
-
-// نقرأ كود الدعوة من رابط الصفحة (إن وُجد)
-const urlParams = new URLSearchParams(window.location.search);
-const inviteCode = urlParams.get('code');
-
-// اربطي الأزرار الآن (تشتغل لاحقًا لما window.auth يجهز)
-if (loginBtn)    loginBtn.onclick    = () => window.auth?.login({ authorizationParams:{ screen_hint:'login' } });
-if (registerBtn) registerBtn.onclick = () => window.auth?.login({ authorizationParams:{ screen_hint:'signup' } });
-if (logoutBtn)   logoutBtn.onclick   = () => window.auth?.logout();
-
-// اسمعي الجاهزية قبل التهيئة
-window.addEventListener('auth0:ready', async () => {
-  try {
-    const ok = await window.auth.isAuthenticated();
-    setButtons(ok);
-  } catch {
-    setButtons(false);
+  // اربطي الأزرار الآن (حتى لو Auth0 يتأخر)
+  if (loginBtn) {
+    loginBtn.onclick = () => window.auth?.login({
+      authorizationParams: {
+        screen_hint: 'login',
+        redirect_uri: window.location.origin
+      }
+    });
   }
-}, { once:true });
+  if (registerBtn) {
+    registerBtn.onclick = () => window.auth?.login({
+      authorizationParams: {
+        screen_hint: 'signup',
+        redirect_uri: window.location.origin,
+        ...(inviteCode ? { code: inviteCode } : {})
+      }
+    });
+  }
+  if (logoutBtn) {
+    logoutBtn.onclick = () => window.auth?.logout();
+  }
 
-// فعليًا نهيّئ Auth0
-await initAuth0();
+  // اسمعي الجاهزية قبل التهيئة (عشان ما يفوتنا الحدث)
+  window.addEventListener('auth0:ready', async () => {
+    try {
+      const ok = await window.auth.isAuthenticated();
+      setButtons(ok);
+    } catch {
+      setButtons(false);
+    }
+  }, { once:true });
 
-// باك-أب لو فاتنا الحدث
-if (window.auth) {
-  try {
-    const ok = await window.auth.isAuthenticated();
-    setButtons(ok);
-  } catch { setButtons(false); }
-}
+  // فعليًا نهيّئ Auth0 (يطلق حدث auth0:ready داخله)
+  await initAuth0();
+
+  // باك-أب: لو الحدث فاتنا وكان window.auth جاهز، حدّثي الآن
+  if (window.auth) {
+    try {
+      const ok = await window.auth.isAuthenticated();
+      setButtons(ok);
+    } catch {
+      setButtons(false);
+    }
+  }
 });
