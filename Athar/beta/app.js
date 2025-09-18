@@ -1,12 +1,6 @@
-// assets/js/supabase-client.js
+
 
 // (اختياري) تبقين العميل لو احتجتي قراءات مستقبلاً.
-// مع RLS المشدد، القراءات من المتصفح بتتفشل إلا إذا سويتي سياسات قراءة.
-const SUPABASE_URL = "https://oywqpkzaudmzwvytxaop.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d3Fwa3phdWRtend2eXR4YW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4OTczMTYsImV4cCI6MjA3MzQ3MzMxNn0.nhjbZMiHPkWvcPnNDeGu3sGSP2TloC0jESZjQ03FnyM";
-
-// تقدرِين تحذفين السطرين هذولا إذا ما تحتاجين قراءات client-side
-const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
  * حفظ/تحديث المستخدم — عبر الدالة الخادمية (Netlify Function)
