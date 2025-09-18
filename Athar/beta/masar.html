@@ -258,13 +258,15 @@
   (function(){
     const $ = (sel)=>document.querySelector(sel);
 
-    const tbl         = $('#tbl');
+    // أعلى سكربت مسار مع بقية العناصر
+const tbl         = $('#tbl');
 const daysSel     = $('#days');
 const periodsSel  = $('#periods');
 const startTime   = $('#startTime');
 const slotMinsSel = $('#slotMins');
 const orientSel   = $('#orient');
-// حُذفت خلفية الجدول، نخليهم null آمنين:
+// أضيفي هذا السطر حتى لو ما فيه عنصر بهذا الـ id:
+const bgSel       = document.getElementById('tblBg');  // ممكن يكون null — عادي
 const bgThemeSel  = null;
 const tblColorInp = $('#tblColor');
 const tableWrap   = $('#tableWrap');
@@ -490,29 +492,37 @@ const orient  = (orientSel?.value) || 'periods-rows'; // periods-rows | periods-
       colorizeCells();
     });
 
-    orientSel.addEventListener('change', buildTable);
+// إعادة بناء عند تغيير الاتجاه
+orientSel?.addEventListener('change', buildTable);
 
-    if(bgSel){ bgSel.addEventListener('change', ()=>{ applyBg(bgSel.value); saveTheme(); }); }
-    [colorInp, mixInp, borderInp].forEach(el=>{
-      if(!el) return; el.addEventListener('input', ()=>{ applyThemeFromControls(); saveTheme(); });
-    });
+// (اختياري) خلفية الجدول – ما يشتغل إلا لو العنصر موجود
+if (bgSel) {
+  bgSel.addEventListener('change', () => {
+    applyBg(bgSel.value);
+    saveTheme();
+  });
+}
 
-  function printArea(compact = false) {
-  // فعّلي/الغِ الوضع المضغوط حسب الحاجة
+// تحكم بالثيم (اللون/الشدة/حدود)
+[colorInp, mixInp, borderInp].forEach(el => {
+  if (!el) return;
+  el.addEventListener('input', () => {
+    applyThemeFromControls();
+    saveTheme();
+  });
+});
+
+// الطباعة (عادي / مضغوطة)
+function printArea(compact = false) {
   document.body.classList.toggle('print-compact', compact);
-
-  // اطبعي
   window.print();
-
-  // نظّفي بعد الطباعة مرة واحدة
   window.addEventListener('afterprint', () => {
     document.body.classList.remove('print-compact');
   }, { once: true });
 }
-
 document.getElementById('print')?.addEventListener('click', () => printArea(false));
 document.getElementById('printCompact')?.addEventListener('click', () => printArea(true));
-
+    
     // تهيئة
     document.addEventListener('DOMContentLoaded', ()=>{
       // استرجاع ثيم
