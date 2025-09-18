@@ -83,79 +83,47 @@
     .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:.9rem; color:var(--muted) }
     .legend span{ display:inline-flex; align-items:center; gap:6px; }
     .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
-/* اطبعي الجدول فقط */
+/* طباعة الجدول فقط – نسخة نهائية */
 @media print {
-  /* اخفي كل شي */
-  body * { 
-    visibility: hidden !important;
-  }
+  /* أخفي الواجهة */
+  .topbar, header, footer, .controls, .row-actions, .toast { display: none !important; }
+  .container, main, #tableWrap { margin: 0 !important; padding: 0 !important; }
+  .card { box-shadow: none !important; border: none !important; }
 
-  /* أظهر الجدول فقط */
-  #tableWrap, #tableWrap * {
-    visibility: visible !important;
-  }
-
-  /* ثبّتي الجدول يملأ الصفحة */
-  #tableWrap {
-    position: absolute !important;
-    inset: 0 !important;            /* top/right/bottom/left: 0 */
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* صفحة A4 أفقية وهوامش مناسبة */
+  /* إعداد الورقة */
   @page { size: A4 landscape; margin: 8mm; }
+  html, body { width: 297mm; height: 210mm; }
 
-  /* إخفاء المناطق غير الضرورية (احتياطيًا) */
-  .topbar, header, .controls, footer, .row-actions, .toast {
-    display: none !important;
-  }
+  /* اجعل الجدول يملأ الصفحة */
+  #tableWrap { width: 100% !important; }
+  table.schedule { width: 100% !important; min-width: auto !important; }
 
-  /* احرصي على طباعة الألوان */
+  /* ألوان قوية في الطباعة */
   body, .schedule, .schedule th, .schedule td, .cell {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     color-adjust: exact;
   }
-}
 
-/* نمط مضغوط للطباعة عند تفعيل كلاس print-compact على body */
-@media print {
-  body.print-compact #tableWrap table.schedule { font-size: 12px; }
-  body.print-compact #tableWrap .schedule th,
-  body.print-compact #tableWrap .schedule td { padding: 6px 6px; }
-}
-    /* اطبعي الألوان كما هي + اضبطي الصفحة */
-    @media print{
-      @page { size: A4 landscape; margin: 8mm; }
-      html, body { width:297mm; height:210mm; }
-      body, .schedule, .schedule th, .schedule td, .cell{
-        -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;
-      }
-      .schedule th{
-        background: color-mix(in oklab, var(--table-accent) var(--table-mix-print), white) !important;
-      }
-      .schedule th,.schedule td{
-        border-color: color-mix(in oklab, var(--table-accent) var(--table-border-mix-print), #cbd5e1) !important;
-      }
-      table.schedule{ font-size:12px; min-width:auto; }
-      .schedule th,.schedule td{ padding:6px 6px; }
-      .cell{ min-height:0; padding:0; }
-      .cell input{ font-size:11px; padding:3px 6px; border:none; }
-      .time-col,.day-col{ width:auto; white-space:nowrap; }
-      .table-wrap::before{ opacity:.22; }
-      #tableWrap, table.schedule, thead, tbody, tr{ break-inside:avoid; page-break-inside:avoid; }
-      .cell.empty{ opacity:0; } /* أخفِ محتوى الخلايا الفارغة (الحدود تبقى) */
-    }
+  /* الحجم “العادي” للطباعة */
+  table.schedule { font-size: 14px; }
+  .schedule th, .schedule td { padding: 8px; }
+  .cell { min-height: 0; padding: 0; }
+  .cell input { font-size: 13px; border: none; padding: 2px 4px; }
 
-    /* طباعة مضغّطة عبر زر خاص */
-    @media print{
-      .print-compact table.schedule{ font-size:12px; }
-      .print-compact .schedule th,.print-compact .schedule td{ padding:6px 6px; }
-      .print-compact, .print-compact .schedule, .print-compact .schedule th, .print-compact .schedule td{
-        -webkit-print-color-adjust: exact; print-color-adjust: exact;
-      }
-    }
+  /* لا تقطّعي الجدول */
+  table.schedule, table.schedule thead, table.schedule tbody, table.schedule tr {
+    break-inside: avoid; page-break-inside: avoid;
+  }
+
+  /* أخفي محتوى الخلايا الفارغة فقط */
+  .cell.empty { opacity: 0; }
+
+  /* النسخة المضغوطة عندما يضاف الكلاس إلى <body> */
+  body.print-compact table.schedule { font-size: 12px !important; }
+  body.print-compact .schedule th,
+  body.print-compact .schedule td { padding: 6px 6px !important; }
+}
   </style>
 </head>
 <body>
@@ -214,26 +182,19 @@
       </div>
 
       <div class="grid-3" style="margin-top:8px">
-        <div class="field">
-          <label>اتجاه الجدول</label>
-          <select id="orient">
-            <option value="periods-rows" selected>الأوقات = صفوف</option>
-            <option value="periods-cols">الأوقات = أعمدة</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>خلفية الجدول</label>
-          <select id="tblBg">
-            <option value="none" selected>بدون</option>
-            <option value="flowers">ورد 🌸</option>
-            <option value="leaves">ورق شجر 🍃</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>لون الجدول</label>
-          <input id="tblColor" type="color" value="#3b82f6">
-        </div>
-      </div>
+  <div class="field">
+    <label>اتجاه الجدول</label>
+    <select id="orient">
+      <option value="periods-rows" selected>الأوقات = صفوف</option>
+      <option value="periods-cols">الأوقات = أعمدة</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>لون الجدول</label>
+    <input id="tblColor" type="color" value="#3b82f6">
+  </div>
+</div>
 
       <div class="grid-3" style="margin-top:8px">
         <div class="field">
