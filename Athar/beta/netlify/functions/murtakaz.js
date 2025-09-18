@@ -1,7 +1,7 @@
-// netlify/functions/murtakaz.js
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// netlify/functions/murtakaz.js  (CommonJS)
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   try {
     if (event.httpMethod !== "POST") {
       return { statusCode: 405, body: "Method Not Allowed" };
@@ -14,72 +14,88 @@ export const handler = async (event) => {
     } = JSON.parse(event.body || "{}");
 
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+    if (!apiKey) {
+      return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+    }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-    const ageLabel = ({p1:"ابتدائي دُنيا", p2:"ابتدائي عُليا", m:"متوسط", h:"ثانوي"}[age] || age);
-    const prompt = `
-أنت مخطط دروس ذكي. أعطني مخرجات منظمة بصيغة JSON فقط بدون شرح.
-اجعل كل عنصر محددًا ودقيقًا للموضوع المطلوب، ومناسبًا للفئة العمرية (${ageLabel}) وزمن الحصة (${duration} دقيقة)،
-وارتكز على مستوى بلوم الأساسي "${bloomMain}" والداعم "${bloomSupport || "—"}".
-إن كان الإدخال نصًا للتحليل، استخرج الموضوع المناسب ومواءمة الأهداف معه.
+    const AGE_LABELS = { p1:"ابتدائي دُنيا", p2:"ابتدائي عُليا", m:"متوسط", h:"ثانوي" };
+    const ageLabel = AGE_LABELS[age] || age || "—";
 
-الحقول المطلوبة في JSON:
+    const prompt = `
+أنت مخطط دروس ذكي. أعد النتائج بصيغة JSON صالحة فقط (بدون أي شرح خارج JSON).
+راعي الفئة العمرية (${ageLabel}) وزمن الحصة (${duration || 45} دقيقة)،
+ومستوى بلوم الأساسي "${bloomMain}" والداعم "${bloomSupport || "—"}".
+عند إدخال نص للتحليل: استخرج موضوعًا مناسبًا ومواءم الأهداف معه.
+
+أعد حقول JSON التالية:
 {
   "meta": {
-    "topic": "عنوان مختصر للدرس",
-    "age": "${age}",
+    "topic": "عنوان مختصر",
+    "age": "${age || ""}",
     "ageLabel": "${ageLabel}",
-    "mainBloomLabel": "${bloomMain}",
+    "mainBloomLabel": "${bloomMain || ""}",
     "supportBloomLabel": "${bloomSupport || ""}"
   },
-  "goals": ["${goalCount} أهداف واضحة مبنية على أفعال بلوم المناسبة للموضوع"],
-  "success": "معيار نجاح واحد واضح وقابل للقياس مرتبط بالأهداف",
-  "structure": ["قبل: ...", "أثناء: ...", "بعد: ..."],
-  "activities": ["نشاط رئيسي وواحد داعم على الأقل، مخصصان للموضوع"],
-  "assessment": ["س١ ...", "س٢ ...", "س٣ ..."],
-  "diff": ["دعم: ...", "إثراء: ...", "مرونة العرض: ..."],
-  "oneMin": "نص خطة الدقيقة الواحدة الملائم للموضوع"
+  "goals": [ ${Array.from({length: Math.max(1, +goalCount || 2)}).map(()=>`"__"`).join(", ")} ],
+  "success": "__",
+  "structure": ["قبل: __", "أثناء: __", "بعد: __"],
+  "activities": ["نشاط رئيسي مخصص للموضوع", "نشاط داعم مخصص"],
+  "assessment": ["س١: __", "س٢: __", "س٣: __"],
+  "diff": ["دعم: __", "إثراء: __", "مرونة العرض: __"],
+  "oneMin": "نص الدقيقة الواحدة الملائم"
 }
 
 المعطيات:
 - المادة: ${subject || "—"}
-- نمط الإدخال: ${mode}
+- النمط: ${mode}
 - الموضوع (إن وُجد): ${topic || "—"}
-- نص للتحليل (إن وُجد): ${sourceText ? sourceText.slice(0,1200) : "—"}
-- ملاحظات خاصة: ${notes || "—"}
-- تقدير مستوى الصف: ${level || "—"}
-- تفعيل التعلم التكيفي: ${adapt ? "نعم" : "لا"}
+- النص للتحليل (إن وُجد): ${(sourceText || "—").slice(0, 1200)}
+- ملاحظات: ${notes || "—"}
+- مستوى الصف: ${level || "—"}
+- تعلم تكيفي: ${adapt ? "نعم" : "لا"}
 
-التزم بكتابة JSON صالح فقط.
+احرص أن يكون الإخراج JSON صالحًا فقط.
 `;
 
-    const result = await model.generateContent({ contents: [{ role: "user", parts: [{ text: prompt }] }] });
-    const text = result.response.text().trim();
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }]
+    });
 
-    // حاول قراءة JSON حتى لو أضاف النموذج نصوصًا زائدة
-    const jsonMatch = text.match(/\{[\s\S]*\}$/);
-    const payload = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
+    const raw = (result.response.text() || "").trim();
 
-    // حماية: اضمن وجود مفاتيح أساسية
-    const safe = (arr) => Array.isArray(arr) ? arr.filter(Boolean) : [];
+    // التقاط JSON حتى لو فيه كلام قبل/بعد
+    const m = raw.match(/\{[\s\S]*\}$/);
+    const payload = JSON.parse(m ? m[0] : raw);
+
+    const safeArr = (a) => Array.isArray(a) ? a.filter(Boolean) : [];
     const body = JSON.stringify({
-      meta: payload.meta || { topic: topic || "—", age, ageLabel, mainBloomLabel: bloomMain, supportBloomLabel: bloomSupport },
-      goals: safe(payload.goals),
+      meta: payload.meta || {
+        topic: topic || "—",
+        age: age || "",
+        ageLabel,
+        mainBloomLabel: bloomMain || "",
+        supportBloomLabel: bloomSupport || ""
+      },
+      goals: safeArr(payload.goals),
       success: payload.success || "",
-      structure: safe(payload.structure),
-      activities: safe(payload.activities),
-      assessment: safe(payload.assessment),
-      diff: safe(payload.diff),
+      structure: safeArr(payload.structure),
+      activities: safeArr(payload.activities),
+      assessment: safeArr(payload.assessment),
+      diff: safeArr(payload.diff),
       oneMin: payload.oneMin || ""
     });
 
-    return { statusCode: 200, headers: { "Content-Type": "application/json; charset=utf-8" }, body };
+    return {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body
+    };
 
   } catch (err) {
     console.error("murtakaz error:", err);
-    return { statusCode: 500, body: String(err?.message || err) };
+    return { statusCode: 500, body: `Server error: ${err.message || String(err)}` };
   }
 };
