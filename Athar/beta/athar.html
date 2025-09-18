@@ -1,97 +1,76 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>مُـنطــلق </title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css" />
-<meta name="color-scheme" content="dark light">
-<style>
-  /* خصوصيات بسيطة لهذه الصفحة فوق style.css */
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مُـنطــلق</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <meta name="color-scheme" content="dark light">
+  <style>
+    .topbar .left-actions { display:flex; align-items:center; gap:10px; }
+    .emoji-toggle { font-size:18px; line-height:1; }
 
-  .topbar .left-actions { display:flex; align-items:center; gap:10px; }
-  .emoji-toggle { font-size:18px; line-height:1; }
+    .controls.card { padding:20px; }
+    .select-wrap{ position:relative }
+    .select-wrap .sel{
+      width:100%; background:#fff; color:#0f172a; border:1px solid rgba(59,130,246,.35);
+      border-radius:12px; padding:.9rem 1rem; padding-inline-start:2.2rem; outline:none; appearance:none;
+    }
+    .dark .select-wrap .sel{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6; }
+    .select-wrap .sel-icon{
+      position:absolute; inset-inline-start:.7rem; top:50%; transform:translateY(-50%);
+      width:16px; height:16px; pointer-events:none; color:var(--sea-500);
+    }
+    .select-wrap .sel-icon svg{ width:16px; height:16px; display:block; fill:currentColor }
+    .dark .select-wrap .sel-icon{ color:#93c5fd }
 
-  .controls.card { padding:20px; }
-  .select-wrap{ position:relative }
-  .select-wrap .sel{
-    width:100%; background:#fff; color:#0f172a; border:1px solid rgba(59,130,246,.35);
-    border-radius:12px; padding:.9rem 1rem; padding-inline-start:2.2rem; outline:none; appearance:none;
-  }
-  .dark .select-wrap .sel{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6; }
-  .select-wrap .sel-icon{
-    position:absolute; inset-inline-start:.7rem; top:50%; transform:translateY(-50%);
-    width:16px; height:16px; pointer-events:none; color:var(--sea-500);
-  }
-  .select-wrap .sel-icon svg{ width:16px; height:16px; display:block; fill:currentColor }
-  .dark .select-wrap .sel-icon{ color:#93c5fd }
+    .muted { color: var(--muted); font-size:.95rem; }
 
-  .muted { color: var(--muted); font-size:.95rem; }
+    #out h2, #out h3 { color: var(--sea-600); margin: 0 0 8px; }
+    .dark #out h2, .dark #out h3 { color: #93c5fd; }
 
-  /* العناوين بالأزرق مثل طلبك */
-  #out h2, #out h3 { color: var(--sea-600); margin: 0 0 8px; }
-  .dark #out h2, .dark #out h3 { color: #93c5fd; }
+    #chips .chip{
+      display:inline-block; padding:.28rem .65rem; border-radius:999px; background:var(--sea-100); color:#0c4a6e; font-size:.82rem; border:1px solid rgba(59,130,246,.25); margin-inline-start:6px;
+    }
+    .dark #chips .chip{ background:#0f172a; color:#e2e8f0; border-color:#3b82f6; }
 
-  #chips .chip{
-    display:inline-block; padding:.28rem .65rem; border-radius:999px; background:var(--sea-100); color:#0c4a6e; font-size:.82rem; border:1px solid rgba(59,130,246,.25); margin-inline-start:6px;
-  }
-  .dark #chips .chip{ background:#0f172a; color:#e2e8f0; border-color:#3b82f6; }
+    #regen{ display:none; }
 
-  #regen{ display:none; }
+    .brand-name{
+      font-family:"Cairo", sans-serif; font-weight:700; letter-spacing:.5px;
+      font-size:clamp(44px, 6.2vw, 84px); margin:0; color:#1e40af;
+      text-shadow:0 1px 0 rgba(255,255,255,.55);
+    }
+    .dark .brand-name{ color:#93c5fd; text-shadow:none; }
+    .brand-tag{ color:var(--muted); font-weight:700; margin-top:.4rem; }
 
-  /* شعار «أثــر» كما في الأصل */
-.brand-name{
-  font-family:"Cairo", sans-serif; 
-  font-weight:700; 
-  letter-spacing:.5px;
-  font-size:clamp(44px, 6.2vw, 84px); 
-  margin:0;
-  color:#1e40af; 
-  text-shadow:0 1px 0 rgba(255,255,255,.55);
-}
-  .dark .brand-name{ color:#93c5fd; text-shadow:none; }
-  .brand-tag{ color:var(--muted); font-weight:700; margin-top:.4rem; }
-
-  /* تصغير شعار “أثر” على الشاشات الصغيرة */
-  @media (max-width: 640px){
-    .brand-name{ font-size:2.4rem; }
-  }
-</style>
+    @media (max-width: 640px){ .brand-name{ font-size:2.4rem; } }
+  </style>
 </head>
 <body>
-  <!-- الخلفيات جاهزة من style.css -->
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط العلوي -->
   <div class="topbar">
     <div class="left-actions">
       <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
       <a class="btn" href="profile.html" title="الملف الشخصي">الملف الشخصي</a>
-          <a id="nav-programs" class="btn" href="programs.html" style="display:none">مساحة إبداعي </a>
+      <a id="nav-programs" class="btn" href="programs.html" style="display:none">مساحة إبداعي</a>
     </div>
     <div class="actions">
       <button class="btn emoji-toggle" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
     </div>
   </div>
 
-  <!-- الهوية -->
   <header class="brand-wrap">
     <div class="brand-row">
-    
       <h1 class="brand-name">مُـنطــلق</h1>
     </div>
     <div class="brand-tag">حيـثُ تبدأ الخطوة.. ويستمـرُ الأثـَـر</div>
   </header>
   
   <main class="container">
-    <!-- بوابة بسيطة: لو ما عنده وصول يتحوّل للخطط -->
-    <section class="card" id="gate" style="display:none; margin-bottom:14px">
-      <div class="muted">نقوم بالتحقق من حالة اشتراكك…</div>
-    </section>
-
-    <!-- عناصر التحكم -->
     <section class="card controls">
       <div class="grid" style="grid-template-columns:1fr 1fr; gap:14px">
         <div>
@@ -99,10 +78,10 @@
           <div class="select-wrap">
             <select id="stage" class="sel">
               <option value="" selected disabled>اختر المرحلة</option>
-              <option value="primary-lower"> المرحلة الإبتدائي — دنيا </option>
-              <option value="primary-upper"> المرحلة الإبتدائية — عليا </option>
-              <option value="middle"> المرحلة المتوسطة </option>
-              <option value="secondary">المرحلة الثانوية </option>
+              <option value="primary-lower">المرحلة الإبتدائي — دنيا</option>
+              <option value="primary-upper">المرحلة الإبتدائية — عليا</option>
+              <option value="middle">المرحلة المتوسطة</option>
+              <option value="secondary">المرحلة الثانوية</option>
             </select>
             <span class="sel-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg></span>
           </div>
@@ -131,19 +110,18 @@
           </div>
         </div>
         <div>
-          <label>اسم الدرس </label>
+          <label>اسم الدرس</label>
           <input id="lesson" placeholder="مثال: الاتزان الدوراني">
         </div>
       </div>
 
       <div class="flex" style="display:flex; align-items:center; gap:8px; margin-top:12px">
-        <button id="go" class="btn primary"> ✨ساعدني على الإبداع</button>
+        <button id="go" class="btn primary">✨ساعدني على الإبداع</button>
         <button id="regen" class="btn">أبدع باستراتيجية أخرى</button>
         <span id="status" class="muted"></span>
       </div>
     </section>
 
-    <!-- المخرجات -->
     <section id="out" class="card" style="display:none">
       <div class="flex" style="display:flex; align-items:center; justify-content:space-between; gap:10px">
         <h2 id="title" class="text-2xl" style="margin:0"></h2>
@@ -206,7 +184,7 @@
       </div>
     </section>
 
-    <p id="err" class="muted" style="text-align:center; display:none">رجاءً اختاري المرحلة والمادة.</p>
+    <p id="err" class="muted" style="text-align:center; display:none">رجاءً اختر المرحلة والمادة.</p>
   </main>
 
   <footer>
@@ -214,227 +192,192 @@
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
-  <div class="toast"></div>
+  <!-- Auth0 SDK -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
+  <!-- حماية الصفحة -->
+  <script defer src="assets/js/require-auth.js"></script>
 
-<script>
-  // تأكيد الوصول: لو ما فيه اشتراك/تجربة → تحويل للخطط
+  <!-- Supabase -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
 
-  // المواد حسب المرحلة (منهج السعودية 2025 — تبسيط عملي)
-  const SUBJECTS = {
-    "primary-lower": [ // 1-3
-      "اللغة العربية","الرياضيات","العلوم","مهارات رقمية","اللغة الإنجليزية",
-      "الدراسات الإسلامية","التربية الفنية","التربية البدنية والدفاع عن النفس","مهارات حياتية وأسرية"
-    ],
-    "primary-upper": [ // 4-6
-      "اللغة العربية","الرياضيات","العلوم","المهارات الرقمية","اللغة الإنجليزية",
-      "الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد","التربية الفنية","التربية البدنية والدفاع عن النفس"
-    ],
-    "middle": [ // 1-3 متوسط
-      "اللغة العربية","الرياضيات","العلوم","اللغة الإنجليزية","الدراسات الإجتماعية",
-      "الدراسات الإسلامية","التفكير الناقد والمنطق","مهارات رقمية","التربية الفنية","التربية البدنية والدفاع عن النفس"
-    ],
-    "secondary": [ // ثانوي مسارات (عامة)
-      "الفيزياء","الكيمياء","الأحياء","الرياضيات","اللغة العربية","اللغة الإنجليزية",
-      "التاريخ","الدراسات الإسلامية","مهارات رقمية","علم الأرض والفضاء","التفكير الناقد"
-    ]
-  };
+  <!-- التخزين والأدوات العامة -->
+  <script defer src="assets/js/storage.js"></script>
+  <script defer src="app.js"></script>
 
-  // نستخدم $ و $$ الجاهزة من app.js (لا تعيدين تعريفها هنا)
-  const stageSel   = $('#stage');
-  const subjectSel = $('#subject');
-  const bloomSel   = $('#type');
-  const lessonInp  = $('#lesson');
-  const goBtn     = $('#go');
-  const regenBtn   = $('#regen');
-  const statusEl   = $('#status');
+  <!-- سكربت الصفحة -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // المواد حسب المرحلة
+    const SUBJECTS = {
+      "primary-lower": ["اللغة العربية","الرياضيات","العلوم","مهارات رقمية","اللغة الإنجليزية","الدراسات الإسلامية","التربية الفنية","التربية البدنية والدفاع عن النفس","مهارات حياتية وأسرية"],
+      "primary-upper": ["اللغة العربية","الرياضيات","العلوم","المهارات الرقمية","اللغة الإنجليزية","الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد","التربية الفنية","التربية البدنية والدفاع عن النفس"],
+      "middle":        ["اللغة العربية","الرياضيات","العلوم","اللغة الإنجليزية","الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد والمنطق","مهارات رقمية","التربية الفنية","التربية البدنية والدفاع عن النفس"],
+      "secondary":     ["الفيزياء","الكيمياء","الأحياء","الرياضيات","اللغة العربية","اللغة الإنجليزية","التاريخ","الدراسات الإسلامية","مهارات رقمية","علم الأرض والفضاء","التفكير الناقد"]
+    };
 
-  // تحميل مواد المرحلة
-  stageSel.addEventListener('change', ()=>{
-    const s = stageSel.value;
-    subjectSel.innerHTML = '<option value="" selected disabled>اختر المادة</option>';
-    (SUBJECTS[s]||[]).forEach(m=>{
-      const opt = document.createElement('option'); opt.value = m; opt.textContent = m;
-      subjectSel.appendChild(opt);
-    });
-    subjectSel.disabled = !(SUBJECTS[s] && SUBJECTS[s].length);
-  });
+    // عناصر الواجهة
+    const $  = (s)=>document.querySelector(s);
+    const stageSel   = $('#stage');
+    const subjectSel = $('#subject');
+    const bloomSel   = $('#type');
+    const lessonInp  = $('#lesson');
+    const goBtn      = $('#go');
+    const regenBtn   = $('#regen');
+    const statusEl   = $('#status');
 
-  function listTo(el, arr){
-    el.innerHTML = "";
-    (arr||[]).forEach(v=>{
-      const t = (v||"").toString().trim();
-      if(!t) return;
-      const li = document.createElement('li'); li.textContent = t;
-      el.appendChild(li);
-    });
-  }
-  function toast(msg){
-    let t = document.querySelector('.toast'); 
-    if(!t){ t=document.createElement('div'); t.className='toast'; document.body.appendChild(t); }
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 2000);
-  }
-function setLoading(isLoading){
-  if (isLoading){
-    goBtn.dataset._label = goBtn.textContent;
-    goBtn.textContent = "نحوّل شغفك لاستراتيجية… ✨";
-    goBtn.disabled = true;
-    regenBtn.disabled = true;
-  } else {
-    goBtn.textContent = goBtn.dataset._label || "ساعدني على الإبداع";
-    goBtn.disabled = false;
-    regenBtn.disabled = false;
-  }
-}
-  function readStageLabel(val){
-    return {
-      "primary-lower":"ابتدائي — دنيا",
-      "primary-upper":"ابتدائي — عليا",
-      "middle":"متوسط",
-      "secondary":"ثانوي"
-    }[val] || val;
-  }
-
-  // نداء الـ Function
-  async function callStrategy({stage, subject, bloomType, lesson, variant}){
-    const res = await fetch("/.netlify/functions/strategy", {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ stage, subject, bloomType, lesson, variant })
-    });
-    if(!res.ok){
-      const txt = await res.text();
-      throw new Error("خطأ من الخادم: "+res.status+" | "+txt);
-    }
-    return res.json();
-  }
-
-  function paintOutput(data, meta){
-    $("#title").textContent = data.strategy_name || "—";
-    // Chips
-    const chips=[];
-    if(meta.stage)   chips.push(meta.stageLabel || meta.stage);
-    if(meta.subject) chips.push(meta.subject);
-    if(data.bloom || meta.bloomType) chips.push(data.bloom || meta.bloomType);
-    if(meta.lesson)  chips.push("الدرس: "+meta.lesson);
-    $("#chips").innerHTML = chips.map(t=>`<span class="chip">${t}</span>`).join("");
-
-    $("#importance").textContent = data.importance || "—";
-    $("#materials").textContent  = data.materials  || "—";
-    $("#assessment").textContent = data.assessment || "—";
-    $("#impact").textContent     = data.expected_impact || "—";
-
-    const diffUl = $("#diff"); diffUl.innerHTML = "";
-    [["دعم: ",data.diff_support],["أساسي: ",data.diff_core],["تحدّي: ",data.diff_challenge]].forEach(([k,v])=>{
-      if(v){ const li=document.createElement('li'); li.textContent = k+v; diffUl.appendChild(li); }
-    });
-
-    listTo($("#goals"),    data.goals);
-    listTo($("#steps"),    data.steps);
-    listTo($("#examples"), data.examples);
-
-    const citesUl = $("#cites"); citesUl.innerHTML = "";
-    (data.citations||[]).forEach(c=>{
-      if(!c || !c.title) return;
-      const li = document.createElement('li');
-      const strong = document.createElement('strong'); strong.textContent = c.title;
-      li.appendChild(strong);
-      if(c.benefit){
-        const p = document.createElement('p'); p.style.margin = "4px 0 0 0"; p.className = "muted"; p.textContent = c.benefit;
-        li.appendChild(p);
-      }
-      citesUl.appendChild(li);
-    });
-
-    $("#out").style.display = "block";
-    $("#err").style.display = "none";
-    $("#regen").style.display = "inline-flex";
-  }
-
-  async function generate(variant=null){
-    const stage   = stageSel.value;
-    const subject = subjectSel.value;
-    const bloom   = bloomSel.value;
-    const lesson  = lessonInp.value.trim();
-
-    if(!stage || !subject){
-      $("#err").style.display = "block";
-      toast("اختاري المرحلة والمادة أولاً.");
-      return;
-    }
-    $("#err").style.display = "none";
-    statusEl.textContent = "جاري تحويل شغفك إلى استراتيجية ملموسة …✨";
-    setLoading(true);
-    try{
-      const data = await callStrategy({
-        stage,
-        subject,
-        bloomType: bloom,
-        lesson,
-        variant: variant || Math.floor(Math.random()*1e9)
+    // تعبئة المواد عند تغيير المرحلة
+    stageSel.addEventListener('change', () => {
+      const s = stageSel.value;
+      subjectSel.innerHTML = '<option value="" selected disabled>اختر المادة</option>';
+      (SUBJECTS[s] || []).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m; opt.textContent = m;
+        subjectSel.appendChild(opt);
       });
-      paintOutput(data, { stage, stageLabel: readStageLabel(stage), subject, bloomType: bloom, lesson });
-      statusEl.textContent = "تـــم  ✨";
-    }catch(err){
-      console.error(err);
-      statusEl.textContent = err.message || "تعذر التوليد.";
-      toast("تعذّر التوليد. جرّب ثانية.");
-    }finally{
-      setLoading(false);
+      subjectSel.disabled = !(SUBJECTS[s] && SUBJECTS[s].length);
+    });
+
+    function readStageLabel(v){
+      return {"primary-lower":"ابتدائي — دنيا","primary-upper":"ابتدائي — عليا","middle":"متوسط","secondary":"ثانوي"}[v] || v;
     }
-  }
 
-goBtn.addEventListener("click", ()=> generate(null));
-regenBtn.addEventListener("click", ()=> generate(Date.now()));
-  // نسخ الناتج
-  $("#copy").addEventListener("click", ()=>{
-    const text = document.querySelector("#out").innerText;
-    if(navigator.clipboard && window.isSecureContext){
-      navigator.clipboard.writeText(text).then(()=> toast("تم النسخ ✓"));
-    }else{
-      const ta=document.createElement("textarea"); ta.value=text;
-      document.body.appendChild(ta); ta.select();
-      try{ document.execCommand("copy"); toast("تم النسخ ✓"); }
-      finally{ document.body.removeChild(ta); }
+    function setLoading(isLoading){
+      if (isLoading){
+        goBtn.dataset._label = goBtn.textContent;
+        goBtn.textContent = "جارٍ تحويل شغفك إلى استراتيجية ملموسة … ✨";
+        goBtn.disabled = true;
+        regenBtn.disabled = true;
+      } else {
+        goBtn.textContent = goBtn.dataset._label || "ساعدني على الإبداع";
+        goBtn.disabled = false;
+        regenBtn.disabled = false;
+      }
     }
-  });
 
-  // تهيئة زر المادة إذا كانت المرحلة محددة مسبقًا لأي سبب
-  document.addEventListener('DOMContentLoaded', ()=>{
-    if(stageSel.value){
-      stageSel.dispatchEvent(new Event('change'));
+    async function callStrategy({stage, subject, bloomType, lesson, variant}){
+      const res = await fetch("/.netlify/functions/strategy", {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ stage, subject, bloomType, lesson, variant })
+      });
+      if(!res.ok){
+        const txt = await res.text();
+        throw new Error("خطأ من الخادم: "+res.status+" | "+txt);
+      }
+      return res.json();
     }
+
+    function listTo(el, arr){
+      el.innerHTML = "";
+      (arr||[]).forEach(v=>{
+        const t = (v||"").toString().trim();
+        if(!t) return;
+        const li = document.createElement('li'); li.textContent = t;
+        el.appendChild(li);
+      });
+    }
+
+    function paintOutput(data, meta){
+      $("#title").textContent = data.strategy_name || "—";
+      const chips=[];
+      if(meta.stage)   chips.push(meta.stageLabel || meta.stage);
+      if(meta.subject) chips.push(meta.subject);
+      if(data.bloom || meta.bloomType) chips.push(data.bloom || meta.bloomType);
+      if(meta.lesson)  chips.push("الدرس: "+meta.lesson);
+      $("#chips").innerHTML = chips.map(t=>`<span class="chip">${t}</span>`).join("");
+
+      $("#importance").textContent = data.importance || "—";
+      $("#materials").textContent  = data.materials  || "—";
+      $("#assessment").textContent = data.assessment || "—";
+      $("#impact").textContent     = data.expected_impact || "—";
+
+      const diffUl = $("#diff"); diffUl.innerHTML = "";
+      [["دعم: ",data.diff_support],["أساسي: ",data.diff_core],["تحدّي: ",data.diff_challenge]].forEach(([k,v])=>{
+        if(v){ const li=document.createElement('li'); li.textContent = k+v; diffUl.appendChild(li); }
+      });
+
+      listTo($("#goals"), data.goals);
+      listTo($("#steps"), data.steps);
+      listTo($("#examples"), data.examples);
+
+      const citesUl = $("#cites"); citesUl.innerHTML = "";
+      (data.citations||[]).forEach(c=>{
+        if(!c || !c.title) return;
+        const li = document.createElement('li');
+        const strong = document.createElement('strong'); strong.textContent = c.title;
+        li.appendChild(strong);
+        if(c.benefit){
+          const p = document.createElement('p'); p.style.margin = "4px 0 0 0"; p.className = "muted"; p.textContent = c.benefit;
+          li.appendChild(p);
+        }
+        citesUl.appendChild(li);
+      });
+
+      $("#out").style.display = "block";
+      $("#err").style.display = "none";
+      $("#regen").style.display = "inline-flex";
+    }
+
+    async function generate(variant=null){
+      const stage   = stageSel.value;
+      const subject = subjectSel.value;
+      const bloom   = bloomSel.value;
+      const lesson  = lessonInp.value.trim();
+
+      if(!stage || !subject){
+        $("#err").style.display = "block";
+        (window.toast? toast("اختر المرحلة والمادة أولاً.") : null);
+        return;
+      }
+      $("#err").style.display = "none";
+      statusEl.textContent = "جاري تحويل شغفك إلى استراتيجية ملموسة …✨";
+      setLoading(true);
+      try{
+        const data = await callStrategy({
+          stage,
+          subject,
+          bloomType: bloom,
+          lesson,
+          variant: variant || Math.floor(Math.random()*1e9)
+        });
+        paintOutput(data, { stage, stageLabel: readStageLabel(stage), subject, bloomType: bloom, lesson });
+        statusEl.textContent = "تـــم  ✨";
+      }catch(err){
+        console.error(err);
+        statusEl.textContent = err.message || "تعذّر التوليد.";
+        (window.toast? toast("تعذّر التوليد. جرّبي ثانية.") : null);
+      }finally{
+        setLoading(false);
+      }
+    }
+
+    // أزرار التوليد
+    goBtn.addEventListener("click", ()=> generate(null));
+    regenBtn.addEventListener("click", ()=> generate(Date.now()));
+
+    // نسخ الناتج
+    $("#copy").addEventListener("click", ()=>{
+      const text = document.querySelector("#out").innerText;
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(()=> (window.toast? toast("تم النسخ ✓") : null));
+      }else{
+        const ta=document.createElement("textarea"); ta.value=text;
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand("copy"); (window.toast? toast("تم النسخ ✓") : null); }
+        finally{ document.body.removeChild(ta); }
+      }
+    });
+
+    // تسجيل استخدام الأداة (اختياري)
+    document.getElementById('go')?.addEventListener('click', async () => {
+      if (typeof supaLogToolUsage === 'function') {
+        await supaLogToolUsage('athar');
+      }
+    });
   });
-</script>
-<!-- Auth0 SDK (بدون defer لضمان جاهزيته قبل require-auth) -->
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-
-<!-- حماية الصفحة -->
-<script defer src="assets/js/require-auth.js"></script>
-
-<!-- Supabase -->
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
-
-<!-- التخزين/الأدوات العامة -->
-<script defer src="assets/js/storage.js"></script>
-
-<!-- ملفك العام مرة وحدة فقط -->
-<script defer src="app.js"></script>
-
-<!-- سكربت الصفحة (توليد الاستراتيجية) — من دون hasAccess -->
-<script>
-  // … بقاء كود SUBJECTS, callStrategy, generate, paintOutput
-  // … تعريف goBtn/regenBtn و setLoading
-  goBtn.addEventListener("click", ()=> generate(null));
-  regenBtn.addEventListener("click", ()=> generate(Date.now()));
-
-  // تسجيل الاستخدام (اختياري)
-  document.getElementById('go')?.addEventListener('click', async () => {
-    await supaLogToolUsage('athar');
-  });
-</script>
+  </script>
 </body>
 </html>
