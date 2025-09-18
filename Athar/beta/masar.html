@@ -1,4 +1,4 @@
-<!-- masar.html — صفحة "مَسار" لإنشاء الجداول -->
+<!-- masar.html — نسخة مبسطة واحترافية -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -10,7 +10,20 @@
   <link rel="stylesheet" href="style.css" />
 
   <style>
-    /* تحسينات فوق style.css */
+    /* ===== إعدادات عامة فوق style.css ===== */
+    :root{
+      --tbl-accent: #3b82f6;           /* يتغير من اختيارك */
+      --bg-floral: radial-gradient( circle at 20% 20%, rgba(255,192,203,.25) 0 20%, transparent 21% ) ,
+                   radial-gradient( circle at 80% 30%, rgba(255,192,203,.18) 0 18%, transparent 19% ),
+                   radial-gradient( circle at 30% 80%, rgba(255,192,203,.20) 0 22%, transparent 23% );
+      --bg-leaves: radial-gradient( 60px 60px at 20% 30%, rgba(148,210,165,.25) 0 50%, transparent 51% ),
+                   radial-gradient( 80px 80px at 80% 70%, rgba(148,210,165,.18) 0 50%, transparent 51% ),
+                   radial-gradient( 70px 70px at 40% 85%, rgba(148,210,165,.20) 0 50%, transparent 51% );
+    }
+    body.bg-floral .pattern{ background-image: var(--bg-floral); }
+    body.bg-leaves .pattern{ background-image: var(--bg-leaves); }
+    .pattern{ position:fixed; inset:0; pointer-events:none; opacity:.5; background-size: 500px 500px; }
+
     .controls .field{ margin:8px 0 }
     .controls .field label{ display:block; font-weight:700; margin:6px 0 }
     .controls .field input, .controls .field select{
@@ -18,54 +31,66 @@
       border:1px solid rgba(59,130,246,.35); background:#fff; color:#0f172a;
     }
     .dark .controls .field input, .dark .controls .field select{
-      background:#0f172a; color:#f1f5f9; border-color:#3b82f6;
+      background:#0f172a; color:#f1f5f9; border-color:var(--tbl-accent);
     }
     .grid-4{ display:grid; gap:12px; grid-template-columns:repeat(4,1fr) }
     .grid-3{ display:grid; gap:12px; grid-template-columns:repeat(3,1fr) }
-    .grid-2{ display:grid; gap:12px; grid-template-columns:repeat(2,1fr) }
     @media(max-width:900px){ .grid-4{grid-template-columns:1fr 1fr} }
-    @media(max-width:640px){ .grid-4,.grid-3,.grid-2{grid-template-columns:1fr} }
+    @media(max-width:640px){ .grid-4,.grid-3{grid-template-columns:1fr} }
+
+    .row-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px }
 
     .table-wrap{ overflow:auto; }
     table.schedule{ width:100%; border-collapse:separate; border-spacing:0; min-width:780px }
     .schedule th,.schedule td{
-      border:1px solid rgba(59,130,246,.25); padding:8px; vertical-align:top; background:var(--card);
+      border:1px solid color-mix(in oklab, var(--tbl-accent) 32%, transparent);
+      padding:8px; vertical-align:top; background:var(--card);
     }
-    .schedule th{ background:var(--sea-50); color:#0c4a6e; position:sticky; top:0; z-index:1 }
-    .dark .schedule th{ background:#0b1220; color:#c7d2fe }
+    .schedule th{
+      background: color-mix(in oklab, var(--tbl-accent) 12%, white);
+      color:#0c4a6e; position:sticky; top:0; z-index:1
+    }
+    .dark .schedule th{ background:color-mix(in oklab, var(--tbl-accent) 25%, #0b1220); color:#c7d2fe }
+
     .time-col{ width:140px; white-space:nowrap; text-align:center; font-weight:700 }
     .day-col{ width:120px; text-align:center; font-weight:700 }
+
     .cell{ min-height:72px; display:flex; flex-direction:column; gap:6px; padding:2px }
-    .cell input{ width:100%; padding:8px 10px; border-radius:10px; border:1px solid rgba(59,130,246,.3); background:#fff; color:#0f172a }
-    .dark .cell input{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6 }
+    .cell input{
+      width:100%; padding:8px 10px; border-radius:10px;
+      border:1px solid color-mix(in oklab, var(--tbl-accent) 35%, transparent);
+      background:#fff; color:#0f172a
+    }
+    .dark .cell input{ background:#0f172a; color:#f1f5f9; border-color:var(--tbl-accent) }
     .cell .mini{ display:flex; gap:6px }
     .cell .mini input{ flex:1 }
 
-    .row-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px }
-    .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:.9rem; color:var(--muted) }
-    .legend span{ display:inline-flex; align-items:center; gap:6px; }
-    .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
+    /* خلايا فارغة */
+    td.empty{ border-color: transparent; background: transparent; }
+    td.empty .cell input{ border-color: transparent; background: transparent; color: transparent; }
 
+    /* للطباعة: صفحة واحدة قدر الإمكان وإخفاء الفارغ */
     @media print{
       .topbar,.controls,.row-actions,.toast{ display:none !important }
       .card{ box-shadow:none; border:none }
       body{ background:#fff }
-      /* جعل الجدول مناسب ورقة A4 أفقية */
       @page { size: A4 landscape; margin: 10mm; }
-      table.schedule{ min-width: auto; }
+      table.schedule{ min-width:auto; table-layout:fixed; }
+      .schedule th,.schedule td{ padding:4px; font-size:12px }
+      .cell input{ padding:2px 4px; border:0; background:transparent }
+      td.empty{ border-color: transparent; }
     }
   </style>
 </head>
-<body>
-  <!-- خلفيات -->
+<body class="bg-none">
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط العلوي -->
+  <!-- الشريط العلوي (اختياري من موقعك) -->
   <div class="topbar">
     <div class="left-actions">
-      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-      <a class="btn" href="programs.html" title="مساحة إبداعي">مساحة إبداعي</a>
+      <a class="btn" href="index.html">الرئيسية</a>
+      <a class="btn" href="programs.html">مساحة إبداعي</a>
     </div>
     <div class="actions">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
@@ -76,52 +101,62 @@
     </div>
   </div>
 
-  <!-- الهيدر -->
   <header>
     <div class="hero">
       <h1 class="logo">مَســار</h1>
-      <div class="tag"><span class="dot"></span>جداول حصص مرتّبة — أنيقة — جاهزة للطباعة.</div>
+      <div class="tag"><span class="dot"></span>جدول حصص مرن — ألوان جميلة — جاهز للطباعة.</div>
     </div>
   </header>
 
   <main class="container">
-
-    <!-- الضوابط -->
     <section class="card controls">
       <h2 class="title" style="margin-top:0">إعداد الجدول</h2>
+
       <div class="grid-4">
         <div class="field">
           <label>أيام الأسبوع</label>
           <select id="days">
             <option value="sun-thu" selected>الأحد → الخميس (5 أيام)</option>
             <option value="sun-wed">الأحد → الأربعاء (4 أيام)</option>
-            <option value="custom">مخصّص…</option>
           </select>
         </div>
+
         <div class="field">
           <label>عدد الحصص/اليوم</label>
           <select id="periods">
             <option>5</option><option>6</option><option selected>7</option><option>8</option>
           </select>
         </div>
+
         <div class="field">
           <label>بداية اليوم</label>
           <input id="startTime" type="time" value="07:00">
         </div>
+
         <div class="field">
           <label>مدة الحصة (دقائق)</label>
-          <select id="slotMins"><option>35</option><option>45</option><option selected>50</option><option>55</option><option>60</option></select>
+          <select id="slotMins">
+            <option>35</option><option>45</option><option selected>50</option><option>55</option><option>60</option>
+          </select>
         </div>
       </div>
 
-      <div id="customDaysWrap" class="grid-2" style="display:none; margin-top:8px">
+      <div class="grid-3" style="margin-top:6px">
         <div class="field">
-          <label>أدخل أسماء الأيام (مفصولة بفواصل)</label>
-          <input id="customDays" placeholder="الأحد, الإثنين, الثلاثاء, الأربعاء, الخميس">
+          <label>خلفية الصفحة</label>
+          <select id="bg">
+            <option value="none" selected>بدون</option>
+            <option value="floral">ورود 🌸</option>
+            <option value="leaves">ورق شجر 🍃</option>
+          </select>
         </div>
         <div class="field">
-          <label>إضافة فواصل/استراحات (اختياري)</label>
-          <input id="breakAfter" placeholder="مثال: بعد الحصة 2,5">
+          <label>لون الجدول</label>
+          <input id="tblColor" type="color" value="#3b82f6">
+        </div>
+        <div class="field">
+          <label style="visibility:hidden">-</label>
+          <button class="btn" id="toggleColors">تلوين المواد</button>
         </div>
       </div>
 
@@ -131,26 +166,32 @@
         <button class="btn" id="addCol">+ يوم إضافي</button>
         <button class="btn" id="clearAll">مسح البيانات</button>
 
-        <button class="btn" id="toggleColors">تلوين المواد</button>
+        <button class="btn" id="editColors">لوحة الألوان</button>
         <button class="btn" id="exportCsv">تصدير CSV</button>
         <button class="btn" id="savePng">حفظ كصورة PNG</button>
         <button class="btn" id="print">طباعة</button>
       </div>
 
-      <div class="legend">
+      <div id="colorPanel" class="card" style="display:none; margin-top:8px; padding:10px">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+          <strong>ألوان المواد:</strong>
+          <small class="muted">اكتبي اسم المادة في الجدول، ثم اختاري لونها هنا — تُحفظ تلقائيًا.</small>
+        </div>
+        <div id="colorList" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:8px"></div>
+      </div>
+
+      <div class="legend" style="margin-top:6px">
         <span><i></i> المربعات قابلة للتحرير: المادة، المعلم/ـة، القاعة</span>
         <span><i style="background:#86efac"></i> يحفظ تلقائيًا لكل مستخدم</span>
         <span><i style="background:#fde68a"></i> ألوان المواد تحفظ تلقائيًا</span>
       </div>
     </section>
 
-    <!-- الجدول -->
     <section class="card">
       <div class="table-wrap" id="tableWrap">
         <table class="schedule" id="tbl"></table>
       </div>
     </section>
-
   </main>
 
   <footer>
@@ -160,222 +201,251 @@
 
   <div class="toast" id="toast"></div>
 
-  <!-- ترتيب السكربتات مهم جدًا ولا يوجد تكرار -->
-  <!-- Auth0 SDK (بدون defer) لضمان جاهزيته قبل require-auth -->
+  <!-- ===== ترتيب السكربتات (الحماية أولاً) ===== -->
+  <!-- Auth0 SDK (بدون defer لضمان الجاهزية قبل require-auth) -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
           onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-  <!-- حماية الصفحة (تعتمد على Auth0) -->
+  <!-- حماية الصفحة (يعتمد على Auth0) -->
   <script defer src="assets/js/require-auth.js"></script>
 
-  <!-- (اختياري) Supabase لو تحتاجين لوج لاحقًا — لا تكرريه -->
+  <!-- (اختياري) Supabase مرة واحدة فقط -->
   <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script defer src="assets/js/supabase-client.js"></script>
 
-  <!-- أدوات تخزين محلية + دوال مساعدة -->
+  <!-- التخزين المحلي و الأساسيات -->
   <script defer src="assets/js/storage.js"></script>
-
-  <!-- أساسيات الواجهة (فيه $ و themeToggle إن حبيتِ) -->
   <script defer src="app.js"></script>
 
   <!-- مكتبة حفظ الجدول كصورة -->
   <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-  <!-- سكربت الصفحة نفسه (مقفول تمامًا — لا داخلِه وسوم <script> أخرى) -->
+  <!-- سكربت الصفحة -->
   <script>
   (function(){
-    const $ = (sel)=>document.querySelector(sel); // احتياط إن ما وُجدت من app.js
+    const $ = (s)=>document.querySelector(s);
 
-    const tbl = document.getElementById('tbl');
-    const daysSel = $('#days');
-    const periodsSel = $('#periods');
-    const startTimeInp = $('#startTime');
-    const slotMinsSel = $('#slotMins');
-    const customWrap = $('#customDaysWrap');
-    const customDaysInp = $('#customDays');
-    const breakAfterInp = $('#breakAfter');
-    const tableWrap = document.getElementById('tableWrap');
+    const DB_KEY='masar';
+    const DEFAULT_DAYS=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
 
-    const DB_KEY = 'masar';
-    const DEFAULT_DAYS = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
+    const tbl = $('#tbl');
+    const tableWrap = $('#tableWrap');
 
-    /* ===== ألوان المواد ===== */
-    function loadColorMap(){ const all = userDB.get(DB_KEY, {}); return all.__colors || {}; }
-    function saveColorMap(map){ const all = userDB.get(DB_KEY, {}); all.__colors = map || {}; userDB.set(DB_KEY, all); }
-    function hashColor(name){ let h=0; for (let i=0;i<name.length;i++) h = (h*31 + name.charCodeAt(i)) % 360; return `hsl(${h} 70% 88%)`; }
-    function getColorForSubject(subj){
-      if(!subj) return '';
-      const map = loadColorMap();
-      if(!map[subj]){ map[subj] = hashColor(subj); saveColorMap(map); }
-      return map[subj];
-    }
+    const daysSel   = $('#days');
+    const periodsSel= $('#periods');
+    const startTime = $('#startTime');
+    const slotMins  = $('#slotMins');
+
+    const bgSel     = $('#bg');
+    const colorInp  = $('#tblColor');
+
+    /* ===== ألوان المواد (مع لوحة) ===== */
+    function loadColorMap(){ const all=userDB.get(DB_KEY,{}); return all.__colors||{}; }
+    function saveColorMap(map){ const all=userDB.get(DB_KEY,{}); all.__colors=map||{}; userDB.set(DB_KEY,all); }
+    function hashColor(name){ let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%360; return `hsl(${h} 70% 88%)`; }
+    function getColorForSubject(subj){ if(!subj) return ''; const map=loadColorMap(); if(!map[subj]){ map[subj]=hashColor(subj); saveColorMap(map);} return map[subj]; }
     function colorizeCells(){
-      const map = loadColorMap();
-      document.querySelectorAll('#tbl tbody tr td .cell').forEach(cell=>{
+      const map=loadColorMap();
+      document.querySelectorAll('#tbl tbody .cell').forEach(cell=>{
         const subj = cell.querySelector('input[placeholder="المادة"]')?.value.trim();
+        cell.parentElement.classList.toggle('empty', !(cell.querySelector('input[placeholder="المادة"]').value.trim()
+                                                     ||cell.querySelector('input[placeholder="المعلم/ـة"]').value.trim()
+                                                     ||cell.querySelector('input[placeholder="القاعة"]').value.trim()));
         cell.style.background = (window.__colorsOn && subj) ? (map[subj] || getColorForSubject(subj)) : '';
+      });
+    }
+    function collectSubjects(){
+      const set=new Set();
+      document.querySelectorAll('#tbl tbody input[placeholder="المادة"]').forEach(i=>{
+        const v=(i.value||'').trim(); if(v) set.add(v);
+      });
+      return [...set];
+    }
+    function renderColorPanel(){
+      const subs=collectSubjects();
+      const map=loadColorMap();
+      const list=$('#colorList'); list.innerHTML='';
+      if(!subs.length){ list.innerHTML='<em class="muted">أدخلي أسماء المواد أولًا ثم افتحي هذه اللوحة.</em>'; return; }
+      subs.forEach(name=>{
+        const wrap=document.createElement('div');
+        wrap.style.display='grid'; wrap.style.gridTemplateColumns='1fr auto'; wrap.style.gap='8px';
+        const t=document.createElement('input'); t.type='text'; t.value=name; t.readOnly=true;
+        t.style.borderRadius='10px'; t.style.border='1px solid rgba(59,130,246,.3)'; t.style.padding='8px 10px';
+        const c=document.createElement('input'); c.type='color';
+        // تحويل HSL الافتراضي إلى HEX سريع
+        let cur=map[name]||hashColor(name);
+        if(cur.startsWith('hsl')){ const m=cur.match(/hsl\((\d+)\s+(\d+)%\s+(\d+)%\)/); if(m){const h=+m[1]/360,s=+m[2]/100,l=+m[3]/100;
+          const a=(1-Math.abs(2*l-1))*s, f=(n)=>(l-a/2 + a*Math.max(-1,Math.min(Math.min(n-1,3-n),1)));
+          const r=f(3*h),g=f(3*h-1),b=f(3*h-2), hex=(x)=>('#'+[r,g,b].map(v=>Math.round(v*255)).map(n=>n.toString(16).padStart(2,'0')).join(''));
+          cur=hex();
+        }}
+        c.value=cur;
+        c.addEventListener('input',()=>{ const m=loadColorMap(); m[name]=c.value; saveColorMap(m); colorizeCells(); });
+        wrap.appendChild(t); wrap.appendChild(c); list.appendChild(wrap);
       });
     }
 
     /* ===== وقت ===== */
-    function timeToMinutes(t){ const [h,m] = t.split(':').map(Number); return h*60+m; }
-    function minutesToTime(m){ const h = Math.floor(m/60), mm = (m%60+'').padStart(2,'0'); return (h+'').padStart(2,'0')+':'+mm; }
-    function buildTimes(start, slot, count){
-      const out=[]; let m=timeToMinutes(start);
-      for(let i=0;i<count;i++){ const from=minutesToTime(m); m+=slot; const to=minutesToTime(m); out.push(`${from}—${to}`); }
-      return out;
-    }
+    function timeToMinutes(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
+    function minutesToTime(m){ const h=Math.floor(m/60), mm=(m%60+'').padStart(2,'0'); return (h+'').padStart(2,'0')+':'+mm; }
+    function buildTimes(start, slot, count){ const out=[]; let m=timeToMinutes(start); for(let i=0;i<count;i++){ const f=minutesToTime(m); m+=slot; const t=minutesToTime(m); out.push(`${f}—${t}`);} return out; }
 
     function readDays(){
-      if(daysSel.value==='sun-thu') return DEFAULT_DAYS.slice();
-      if(daysSel.value==='sun-wed') return DEFAULT_DAYS.slice(0,4);
-      const raw=(customDaysInp.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-      return raw.length?raw:DEFAULT_DAYS.slice();
+      return (daysSel.value==='sun-wed') ? DEFAULT_DAYS.slice(0,4) : DEFAULT_DAYS.slice();
     }
-    function readBreaks(){ return new Set((breakAfterInp.value||'').split(',').map(v=>parseInt(v.trim(),10)).filter(n=>!isNaN(n))); }
 
     /* ===== بناء الجدول ===== */
-    function buildTable(){
+    function makeCell(key, data){
+      const td=document.createElement('td');
+      const wrap=document.createElement('div'); wrap.className='cell';
+      const s=document.createElement('input'); s.placeholder='المادة';     s.value=data.subj||'';
+      const mini=document.createElement('div'); mini.className='mini';
+      const t=document.createElement('input'); t.placeholder='المعلم/ـة';  t.value=data.teacher||'';
+      const r=document.createElement('input'); r.placeholder='القاعة';     r.value=data.room||'';
+      mini.appendChild(t); mini.appendChild(r);
+      wrap.appendChild(s); wrap.appendChild(mini); td.appendChild(wrap);
+
+      const save=()=>{ const cur=userDB.get(DB_KEY,{}); cur[key]={subj:s.value, teacher:t.value, room:r.value}; userDB.set(DB_KEY,cur); colorizeCells(); };
+      [s,t,r].forEach(el=>el.addEventListener('input', save));
+
+      // وسم الخلية فارغة/غير فارغة من البداية
+      td.classList.toggle('empty', !(s.value.trim()||t.value.trim()||r.value.trim()));
+      return td;
+    }
+
+    function build(){
       const days = readDays();
       const periods = parseInt(periodsSel.value,10)||7;
-      const startAt = startTimeInp.value || '07:00';
-      const slotMins = parseInt(slotMinsSel.value,10)||50;
-      const breaks = readBreaks();
+      const start   = startTime.value || '07:00';
+      const mins    = parseInt(slotMins.value,10)||50;
 
-      const saved = userDB.get(DB_KEY, {});
-      const times = buildTimes(startAt, slotMins, periods);
+      const saved = userDB.get(DB_KEY,{});
+      const times = buildTimes(start, mins, periods);
 
-      // thead
-      const thead = document.createElement('thead');
-      const hr = document.createElement('tr');
-      const th0 = document.createElement('th'); th0.className='time-col'; th0.textContent='الوقت \\ اليوم';
-      hr.appendChild(th0);
-      days.forEach(d=>{ const th=document.createElement('th'); th.className='day-col'; th.textContent=d; hr.appendChild(th); });
+      const thead=document.createElement('thead');
+      const hr=document.createElement('tr');
+      const th0=document.createElement('th'); th0.className='time-col'; th0.textContent='الوقت \\ اليوم'; hr.appendChild(th0);
+      days.forEach(d=>{ const th=document.createElement('th'); th.className='day-col'; th.style.borderColor='color-mix(in oklab, var(--tbl-accent) 32%, transparent)'; th.textContent=d; hr.appendChild(th); });
       thead.appendChild(hr);
 
-      // tbody
-      const tbody = document.createElement('tbody');
+      const tbody=document.createElement('tbody');
       for(let r=0;r<periods;r++){
-        const tr = document.createElement('tr');
-        const tdTime = document.createElement('td'); tdTime.className='time-col'; tdTime.textContent = times[r]||''; tr.appendChild(tdTime);
-
+        const tr=document.createElement('tr');
+        const tdTime=document.createElement('td'); tdTime.className='time-col'; tdTime.textContent=times[r]||''; tr.appendChild(tdTime);
         for(let c=0;c<days.length;c++){
           const key=`r${r}c${c}`;
-          const cellData = saved[key] || {subj:'',teacher:'',room:''};
-
-          const td=document.createElement('td');
-          const wrap=document.createElement('div'); wrap.className='cell';
-
-          const inpSubj=document.createElement('input'); inpSubj.placeholder='المادة'; inpSubj.value=cellData.subj||'';
-          const mini=document.createElement('div'); mini.className='mini';
-          const inpTeacher=document.createElement('input'); inpTeacher.placeholder='المعلم/ـة'; inpTeacher.value=cellData.teacher||'';
-          const inpRoom=document.createElement('input'); inpRoom.placeholder='القاعة'; inpRoom.value=cellData.room||'';
-          mini.appendChild(inpTeacher); mini.appendChild(inpRoom);
-
-          wrap.appendChild(inpSubj); wrap.appendChild(mini); td.appendChild(wrap); tr.appendChild(td);
-
-          [inpSubj,inpTeacher,inpRoom].forEach(el=>{
-            el.addEventListener('input', ()=>{
-              const cur=userDB.get(DB_KEY,{});
-              cur[key]={subj:inpSubj.value, teacher:inpTeacher.value, room:inpRoom.value};
-              userDB.set(DB_KEY, cur);
-              if(el===inpSubj) colorizeCells();
-            });
-          });
+          const data=saved[key]||{subj:'',teacher:'',room:''};
+          tr.appendChild(makeCell(key, data));
         }
-
         tbody.appendChild(tr);
-
-        if (breaks.has(r+1)){
-          const br=document.createElement('tr');
-          const bt=document.createElement('td'); bt.colSpan=days.length+1;
-          bt.style.background='rgba(59,130,246,.08)'; bt.style.textAlign='center'; bt.style.fontWeight='700';
-          bt.textContent='استراحة'; br.appendChild(bt); tbody.appendChild(br);
-        }
       }
 
       tbl.innerHTML=''; tbl.appendChild(thead); tbl.appendChild(tbody);
 
-      const meta = userDB.get(DB_KEY,{});
-      meta.__meta={days, periods, startAt, slotMins, breaks:[...readBreaks()], colorsOn:!!window.__colorsOn};
+      // احفظ الميتا + لون الجدول + الخلفية
+      const meta=userDB.get(DB_KEY,{});
+      meta.__meta={days, periods, startAt:start, slotMins:mins, colorsOn:!!window.__colorsOn, bg:bgSel.value, accent: colorInp.value};
       userDB.set(DB_KEY, meta);
+
+      document.documentElement.style.setProperty('--tbl-accent', colorInp.value);
+      document.body.classList.remove('bg-none','bg-floral','bg-leaves');
+      document.body.classList.add(bgSel.value==='floral'?'bg-floral':bgSel.value==='leaves'?'bg-leaves':'bg-none');
 
       colorizeCells();
     }
 
-    /* ===== CSV ===== */
+    /* ===== CSV / PNG / طباعة ===== */
     function tableToCsv(){
       const meta=userDB.get(DB_KEY,{});
-      const days=(meta.__meta?.days)||['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
+      const days=(meta.__meta?.days)||DEFAULT_DAYS;
       const periods=meta.__meta?.periods || (parseInt(periodsSel.value,10)||7);
-      const startAt=meta.__meta?.startAt || (startTimeInp.value||'07:00');
-      const slotMins=meta.__meta?.slotMins || (parseInt(slotMinsSel.value,10)||50);
-      const times=(function(){const out=[];let m=timeToMinutes(startAt);for(let i=0;i<periods;i++){const from=minutesToTime(m);m+=slotMins;const to=minutesToTime(m);out.push(`${from}-${to}`);}return out;})();
+      const startAt=meta.__meta?.startAt || (startTime.value||'07:00');
+      const slot=meta.__meta?.slotMins || (parseInt(slotMins.value,10)||50);
+      const times=buildTimes(startAt, slot, periods);
       const rows=[['الزمن','اليوم','المادة','المعلم/ـة','القاعة']];
       for(let r=0;r<periods;r++){
         for(let c=0;c<days.length;c++){
-          const key=`r${r}c${c}`;
-          const cellData=(meta[key])||{subj:'',teacher:'',room:''};
-          rows.push([times[r]||'', days[c]||'', (cellData.subj||''), (cellData.teacher||''), (cellData.room||'')]);
+          const key=`r${r}c${c}`; const cell=(meta[key])||{subj:'',teacher:'',room:''};
+          rows.push([times[r]||'', days[c]||'', cell.subj||'', cell.teacher||'', cell.room||'']);
         }
       }
       const bom='\uFEFF';
-      const csv=rows.map(r=>r.map(x=>`"${(x||'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
-      return bom+csv;
+      return bom + rows.map(r=>r.map(x=>`"${(x||'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
     }
     function downloadCsv(){
-      const csv=tableToCsv();
-      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
+      const blob=new Blob([tableToCsv()],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob), a=document.createElement('a');
+      const stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      a.href=url; a.download=`masar-schedule-${stamp}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+    async function savePng(){
+      const canvas=await html2canvas(tableWrap,{ backgroundColor:getComputedStyle(document.body).getPropertyValue('--bg')||null, scale:window.devicePixelRatio||2, useCORS:true });
       const a=document.createElement('a'); const stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-      a.href=url; a.download=`masar-schedule-${stamp}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      a.href=canvas.toDataURL('image/png'); a.download=`masar-schedule-${stamp}.png`; document.body.appendChild(a); a.click(); a.remove();
     }
 
-    /* ===== PNG ===== */
-    async function saveTableAsPng(){
-      try{
-        const node=tableWrap;
-        const canvas=await html2canvas(node,{ backgroundColor:getComputedStyle(document.body).getPropertyValue('--bg')||null, scale:window.devicePixelRatio||2, useCORS:true });
-        const dataURL=canvas.toDataURL('image/png'); const a=document.createElement('a');
-        const stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); a.href=dataURL; a.download=`masar-schedule-${stamp}.png`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      }catch(e){ console.error(e); if(typeof toast==='function') toast('تعذّر حفظ الصورة.'); }
-    }
-
-    /* ===== أزرار ===== */
-    $('#rebuild').addEventListener('click', buildTable);
-    $('#addRow').addEventListener('click', ()=>{ periodsSel.value=(parseInt(periodsSel.value,10)+1).toString(); buildTable(); });
+    /* ===== أحداث واجهة ===== */
+    $('#rebuild').addEventListener('click', build);
+    $('#addRow').addEventListener('click', ()=>{ periodsSel.value=(parseInt(periodsSel.value,10)+1).toString(); build(); });
     $('#addCol').addEventListener('click', ()=>{
-      if(daysSel.value!=='custom'){ daysSel.value='custom'; customWrap.style.display=''; customDaysInp.value=DEFAULT_DAYS.join(', '); }
-      const d=readDays(); d.push('يوم جديد'); customDaysInp.value=d.join(', '); buildTable();
+      // لما نضيف يوم جديد نتحول تلقائيًا إلى 6 أيام مع اسم افتراضي
+      const meta=userDB.get(DB_KEY,{});
+      const curDays=readDays();
+      curDays.push('يوم جديد');
+      meta.__meta = meta.__meta || {};
+      meta.__meta.days = curDays;
+      userDB.set(DB_KEY, meta);
+      // نجبر القائمة على "5 أيام" (نقطة مرنة) لكن نبني من الميتا
+      build();
     });
-    $('#clearAll').addEventListener('click', ()=>{ if(!confirm('مسح كل بيانات الجدول؟')) return; userDB.remove(DB_KEY); buildTable(); toast('تم المسح ✓'); });
+    $('#clearAll').addEventListener('click', ()=>{ if(!confirm('مسح كل بيانات الجدول؟')) return; userDB.remove(DB_KEY); build(); toast && toast('تم المسح ✓'); });
     $('#print').addEventListener('click', ()=>window.print());
-    daysSel.addEventListener('change', ()=>{ customWrap.style.display=(daysSel.value==='custom')?'':''; });
+    document.getElementById('exportCsv').addEventListener('click', downloadCsv);
+    document.getElementById('savePng').addEventListener('click', savePng);
 
+    // تلوين المواد تشغيل/إيقاف
     document.getElementById('toggleColors').addEventListener('click', ()=>{
       window.__colorsOn = !window.__colorsOn;
       document.getElementById('toggleColors').textContent = window.__colorsOn ? 'إيقاف التلوين' : 'تلوين المواد';
       const meta=userDB.get(DB_KEY,{}); meta.__meta=meta.__meta||{}; meta.__meta.colorsOn=!!window.__colorsOn; userDB.set(DB_KEY, meta);
       colorizeCells();
     });
-    document.getElementById('exportCsv').addEventListener('click', downloadCsv);
-    document.getElementById('savePng').addEventListener('click', saveTableAsPng);
 
+    // لوحة الألوان
+    document.getElementById('editColors').addEventListener('click', ()=>{
+      const panel = document.getElementById('colorPanel');
+      panel.style.display = (panel.style.display==='none') ? '' : 'none';
+      if(panel.style.display!=='none') renderColorPanel();
+    });
+
+    // تغييرات الخلفية/اللون
+    bgSel.addEventListener('change', build);
+    colorInp.addEventListener('input', build);
+
+    /* ===== Helpers ===== */
+    function readDays(){
+      // إن سبق وضفنا أيام مخصّصة في الميتا (من +يوم إضافي) نستعملها
+      const meta=userDB.get(DB_KEY,{});
+      if(meta.__meta?.days && meta.__meta.days.length) return meta.__meta.days.slice();
+      return (daysSel.value==='sun-wed') ? DEFAULT_DAYS.slice(0,4) : DEFAULT_DAYS.slice();
+    }
+
+    /* ===== تهيئة ===== */
     document.addEventListener('DOMContentLoaded', ()=>{
       const saved=userDB.get(DB_KEY,{});
       const m=saved.__meta;
       if(m){
-        startTimeInp.value=m.startAt||'07:00';
-        slotMinsSel.value=(m.slotMins||50).toString();
+        startTime.value=m.startAt||'07:00';
+        slotMins.value=(m.slotMins||50).toString();
         periodsSel.value=(m.periods||7).toString();
-        if(m.days && m.days.length){ daysSel.value='custom'; customWrap.style.display=''; customDaysInp.value=m.days.join(', '); }
-        if(m.breaks && m.breaks.length){ breakAfterInp.value=m.breaks.join(', '); }
+        bgSel.value = m.bg || 'none';
+        colorInp.value = m.accent || '#3b82f6';
         window.__colorsOn = (m.colorsOn!==undefined)?!!m.colorsOn:true;
       }else{
         window.__colorsOn = true;
       }
       document.getElementById('toggleColors').textContent = window.__colorsOn ? 'إيقاف التلوين' : 'تلوين المواد';
-      buildTable();
+      build();
     });
   })();
   </script>
