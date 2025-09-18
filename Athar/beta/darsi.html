@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title> مُـرتكـز</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri:wght@700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri:wght@700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
 <style>
@@ -63,12 +63,13 @@
     header{ padding-bottom:0 }
     main{ padding-top:0 }
     .card{ box-shadow:none; border:none }
+  }
   .logo {
-    font-family: 'Amiri', serif;
-    font-weight: 700;
-    font-size: 2.8rem;
-    letter-spacing: 1px;
-    margin: 0;
+    font-family:'Amiri', serif;
+    font-weight:700;
+    font-size:2.8rem;
+    letter-spacing:1px;
+    margin:0;
   }
 </style>
 </head>
@@ -81,16 +82,12 @@
   <div class="topbar">
     <div class="left-actions">
       <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-
     </div>
     <div class="actions">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
     </div>
     <div class="user">
-      <span id="nav-auth" style="display:none; gap:10px">
-
-
-      </span>
+      <span id="nav-auth" style="display:none; gap:10px"></span>
       <a id="nav-programs" class="btn" href="programs.html" style="display:inline-flex">مساحة إبداعي</a>
       <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
     </div>
@@ -100,9 +97,8 @@
   <header>
     <div class="hero">
       <h1 class="logo">مُـرتــكز</h1>
-      <div class="tag"><span class="dot"></span>أســاسٌ عميق.. يُرسـِّخ الأثـَـر.</div>
+      <div class="tag"><span class="dot"></span>أســاسٌ عميق.. يُرسـِّخ الأثـَـر.</div>
     </div>
-  
   </header>
 
   <main>
@@ -275,18 +271,18 @@
         </div>
       </section>
 
-<section class="card" id="out-goals" style="display:none">
-  <h2 class="title">بطاقة أهداف (جاهزة للطباعة)</h2>
-  <div class="printable" id="goalsCard">
-    <h3 style="margin:0 0 6px">أهداف الدرس: <span id="goalsTitleOut">—</span></h3>
-    <ul id="goalsList" class="list" style="margin:0"></ul>
-    <p style="margin-top:6px"><strong>معايير النجاح:</strong> <span id="successOut">—</span></p>
-  </div>
-  <div class="mini-actions">
-    <button class="btn" id="btn-goals-copy">نسخ بطاقة الأهداف</button>
-    <button class="btn" id="btn-goals-print">طباعة البطاقة</button>
-  </div>
-</section>
+      <section class="card" id="out-goals" style="display:none">
+        <h2 class="title">بطاقة أهداف (جاهزة للطباعة)</h2>
+        <div class="printable" id="goalsCard">
+          <h3 style="margin:0 0 6px">أهداف الدرس: <span id="goalsTitleOut">—</span></h3>
+          <ul id="goalsList" class="list" style="margin:0"></ul>
+          <p style="margin-top:6px"><strong>معايير النجاح:</strong> <span id="successOut">—</span></p>
+        </div>
+        <div class="mini-actions">
+          <button class="btn" id="btn-goals-copy">نسخ بطاقة الأهداف</button>
+          <button class="btn" id="btn-goals-print">طباعة البطاقة</button>
+        </div>
+      </section>
 
       <section class="card" id="out-onemin" style="display:none">
         <h2 class="title">خطة الدقيقة الواحدة</h2>
@@ -298,9 +294,7 @@
 
       <section class="card" id="out-ladder" style="display:none">
         <h2 class="title">سلم تقدير مبسّط (للطلاب)</h2>
-        <div class="ladder" id="ladderWrap">
-          <!-- يُعبّأ تلقائيًا -->
-        </div>
+        <div class="ladder" id="ladderWrap"></div>
       </section>
 
     </div>
@@ -312,9 +306,12 @@
   </footer>
 
   <div class="toast" id="toast"></div>
-  <script src="app.js"></script>
+
+  <!-- سكربت عام المشروع -->
+  <script defer src="app.js"></script>
+
   <script>
-    /* ===== قواميس ومعينات ===== */
+    /* ===== قواميس ومعينات محلية (للاستدلال وشوية وظائف مساعدة) ===== */
     const BLOOM_VERBS = {
       remember:['يعدّد','يسمّي','يذكر','يتعرّف'],
       understand:['يشرح','يلخّص','يعطي مثالًا','يفسّر','يصنّف'],
@@ -331,26 +328,11 @@
       understand:['اشرح','لخّص','مثال','فسّر','عرّف'],
       remember:['اذكر','عدّد','سمِّ','تعرّف']
     };
-    const AGE_TEMPLATES = {
-      p1:{before:['تهيئة حسّية قصيرة (بطاقات/صور)','سؤال دافئ بسيط','تذكير لطيف بقواعد الصف'],
-          during:['نشاط ثنائي قصير','لعبة تعليمية مرتبطة بالموضوع','تفكير بصوت مسموع'],
-          after:['رسم يعبّر عن الفكرة','تذكرة خروج بكلمة/صورة','أكمل: “تعلّمت اليوم أن…”']},
-      p2:{before:['صورة/مقطع قصير','تنشيط سابق معرفة','هدف اليوم على السبورة'],
-          during:['مجموعات صغيرة بأدوار','تجربة مبسطة','بطاقة مهمة بخطوات واضحة'],
-          after:['تأمل سريع: ماذا أتقن؟','ملخص من 3 أسطر','سؤال ختامي']},
-      m:{ before:['مشكلة محفزة','خريطة مفاهيم خاطفة','إطار النجاح'],
-          during:['تعلم تعاوني','تحقيق/تجربة قصيرة','مسائل على مستويات'],
-          after:['تذكرة خروج بمستويين','انعكاس قصير','توسعة للمشروع']},
-      h:{ before:['سؤال عالي المستوى','تحفيز استقصائي مرتبط بالحياة','اتفاق على النواتج'],
-          during:['نقاش منظّم','مهمة أدائية مصغرة','قراءة موجهة وتحليل'],
-          after:['سلم تقدير ذاتي','تذكرة خروج نقدية','تدوين انعكاس + هدف شخصي']}
-    };
     const AGE_NAME = { p1:'ابتدائي دُنيا', p2:'ابتدائي عُليا', m:'متوسط', h:'ثانوي' };
 
     function pick(a){ return a[Math.floor(Math.random()*a.length)] || '' }
-    function bullets(el, arr){ el.innerHTML=''; arr.filter(Boolean).forEach(t=>{const li=document.createElement('li'); li.textContent=t; el.appendChild(li);});}
+    function bullets(el, arr){ el.innerHTML=''; (arr||[]).filter(Boolean).forEach(t=>{const li=document.createElement('li'); li.textContent=t; el.appendChild(li);});}
     function toastMsg(msg){ const t=document.getElementById('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
-    function copyText(txt){ navigator.clipboard.writeText(txt).then(()=>toastMsg('تم النسخ ✅')); }
 
     /* ===== تبديل “نمط الإدخال” ===== */
     const modeSel   = document.getElementById('f-mode');
@@ -362,74 +344,6 @@
       modeTopic.style.display = isText ? 'none' : '';
     });
 
-    /* ===== أدوات التوليد ===== */
-    function inferBloomFrom(text){
-      text = (text||'').replace(/[^\u0600-\u06FF\s]/g,' ');
-      const rank=['create','evaluate','analyze','apply','understand','remember'];
-      for(const lvl of rank){
-        if((BLOOM_HINTS[lvl]||[]).some(k => text.includes(k))) return lvl;
-      }
-      return 'understand';
-    }
-    function genGoals(topic,count,mainBloom,supportBloom){
-      const v1 = pick(BLOOM_VERBS[mainBloom]||['يوضح']);
-      const v2 = supportBloom ? pick(BLOOM_VERBS[supportBloom]||[]) : null;
-      const out = [];
-      out.push(`${v1} المتعلّم/ـة مفهوم "${topic}" عمليًا.`);
-      if(count>1) out.push(`أن ${v1} الفكرة في مواقف صفية قصيرة.`);
-      if(count>2 && v2) out.push(`أن ${v2} نواتج التعلم بتمثيلات متعددة.`);
-      return out.slice(0,count);
-    }
-    function genSuccessCriteria(mainBloom){
-      const v = pick(BLOOM_VERBS[mainBloom]||['يوضح']);
-      return `أتحقق إذا كان الطالب ${v} المفهوم بدقة، ويطبّقه في مثال جديد دون مساعدة.`;
-    }
-    function genActivities(age,mainBloom,supportBloom,topic){
-      const t = AGE_TEMPLATES[age] || AGE_TEMPLATES.p2;
-      const v1 = pick(BLOOM_VERBS[mainBloom]||[]);
-      const v2 = supportBloom ? pick(BLOOM_VERBS[supportBloom]||[]) : null;
-      return [
-        `قبل التعلم: ${pick(t.before)}.`,
-        `أثناء التعلم (النشاط الرئيسي — ${v1}): نشاط يطبّق "${topic}" بخطوات واضحة.`,
-        v2 ? `نشاط داعم — ${v2}: لغز/موقف تطبيقي لتعميق "${topic}".` : null,
-        `بعد التعلم: ${pick(t.after)}.`
-      ].filter(Boolean);
-    }
-    function genAssessment(mainBloom,supportBloom,topic){
-      const easy='عدّد نقطتين أساسيتين';
-      const mid = pick(BLOOM_VERBS[mainBloom]||['اشرح']);
-      const adv = pick(BLOOM_VERBS[supportBloom||mainBloom]||['وظّف']);
-      return [
-        `س١ (سهل): ${easy} حول "${topic}".`,
-        `س٢ (متوسط): ${mid} الفكرة بمثال من حياتك.`,
-        `س٣ (متقدم): ${adv} "${topic}" في مهمة صغيرة.`
-      ];
-    }
-    function genDiff(age,topic){
-      return [
-        `دعم: بطاقات تلميح/أمثلة محلولة مرتبطة بـ"${topic}".`,
-        `إثراء: تحدي قصير يربط "${topic}" بسياق حقيقي أو مادة أخرى.`,
-        `مرونة العرض: كتابة/رسم/عرض شفهي حسب تفضيل الطالب.`
-      ];
-    }
-    function genStructure(age,duration){
-      const t = AGE_TEMPLATES[age] || AGE_TEMPLATES.p2;
-      return [
-        `قبل: ${pick(t.before)} (5–7 د).`,
-        `أثناء: تعلم موجه + تعاون (${Math.max(20, duration-15)} د).`,
-        `بعد: ${pick(t.after)} (5–8 د).`
-      ];
-    }
-    function genOneMinute(topic){
-      return `في دقيقة: لخّصي "${topic}" في جملة، ثم أعطي مثالًا من حياتك يدعم الفكرة.`;
-    }
-    function makePreQuiz(topic, mainBloom, supportBloom){
-      const q1 = `س١ تمهيدي: اذكري (أو عرّفي) فكرة أساسية عن "${topic}".`;
-      const q2 = `س٢ ${pick(BLOOM_VERBS[mainBloom]||['اشرح'])}: اشرحي "${topic}" بمثال مبسّط.`;
-      const q3 = `س٣ ${pick(BLOOM_VERBS[supportBloom||mainBloom]||['طبّق'])}: طبّقي "${topic}" في موقف قصير.`;
-      return [q1,q2,q3];
-    }
-
     /* ===== عناصر DOM ===== */
     const fAge = document.getElementById('f-age');
     const fDur = document.getElementById('f-duration');
@@ -437,8 +351,6 @@
     const fSup  = document.getElementById('f-bloom-support');
     const fGoal = document.getElementById('f-goal-count');
     const fNotes= document.getElementById('f-notes');
-    const fAdapt= document.getElementById('f-adapt');
-    const fLevel= document.getElementById('f-level');
     const inputsWrap = document.getElementById('inputs');
 
     const btnAnalyze = document.getElementById('btn-analyze');
@@ -473,114 +385,149 @@
     toggleInputs.addEventListener('click', toggleInputsView);
     if(toggleInputs2) toggleInputs2.addEventListener('click', toggleInputsView);
 
-    /* ===== تحليل المحتوى ===== */
+    /* ===== تحليل المحتوى (استدلال بلوم من نص) ===== */
+    function inferBloomFrom(text){
+      text = (text||'').replace(/[^\u0600-\u06FF\s]/g,' ');
+      const rank=['create','evaluate','analyze','apply','understand','remember'];
+      for(const lvl of rank){
+        if((BLOOM_HINTS[lvl]||[]).some(k => text.includes(k))) return lvl;
+      }
+      return 'understand';
+    }
     btnAnalyze.addEventListener('click', ()=>{
       const mode = document.getElementById('f-mode').value;
-      if(mode!=='text'){ toastMsg('اختر : نص للتحليل أولًا'); return; }
+      if(mode!=='text'){ toastMsg('اختر: نص للتحليل أولًا'); return; }
       const text = document.getElementById('f-text').value || '';
-      if(!text.trim()){ toastMsg('الصق فقرة للتحليل'); return; }
+      if(!text.trim()){ toastMsg('الصقي فقرة للتحليل'); return; }
       const inferred = inferBloomFrom(text);
       fMain.value = inferred;
       toastMsg(`تم الاستدلال على مستوى بلوم: ${inferred}`);
     });
 
-    /* ===== توليد الخطة ===== */
-    btnGen.addEventListener('click', ()=>{
-      const mode = document.getElementById('f-mode').value;
+    /* ===== نداء Gemini عبر Netlify Function ===== */
+    btnGen.addEventListener('click', async ()=>{
+      const mode = document.getElementById('f-mode').value;   // 'topic' | 'text'
       const subject = (document.getElementById('f-subject')?.value||'').trim() || '—';
-      let topic = (document.getElementById('f-topic')?.value||'').trim();
+      const topic = (document.getElementById('f-topic')?.value||'').trim();
       const sourceText = (document.getElementById('f-text')?.value||'').trim();
 
-      const age = fAge.value; const duration = +fDur.value||45;
-      const main = fMain.value; const sup = fSup.value||'';
-      const goalCount = +fGoal.value||2; const notes = fNotes.value.trim();
-      const level = fLevel.value; const adapt = fAdapt.value==='on';
+      const age = fAge.value;
+      const duration = +fDur.value||45;
+      const bloomMain = fMain.value;
+      const bloomSupport = fSup.value || '';
+      const goalCount = +fGoal.value||2;
+      const notes = fNotes.value.trim();
+      const adapt = (document.getElementById('f-adapt').value === 'on');
 
-      if(mode==='topic' && !topic){ toastMsg('اكتب الموضوع…'); return; }
-      if(mode==='text'){
-        if(!sourceText){ toastMsg('الصق نصًا أولًا…'); return; }
-        topic = topic || (sourceText.split(/[.!؟\n]/)[0].slice(0,60)+'…');
-      }
+      // تحقّق سريع
+      if (mode==='topic' && !topic) { toastMsg('اكتبي الموضوع…'); return; }
+      if (mode==='text'  && !sourceText) { toastMsg('الصقي نصًا للتحليل…'); return; }
 
-      const goals = genGoals(topic, goalCount, main, sup);
-      const structure = genStructure(age, duration);
-      const activities = genActivities(age, main, sup, topic);
-      const assessment = genAssessment(main, sup, topic);
-      const oneMin = genOneMinute(topic);
-      const success = genSuccessCriteria(main);
+      // حالة انتظار
+      btnGen.disabled = true; btnGen.dataset._label = btnGen.textContent;
+      btnGen.textContent = 'نولّد خطة ذكية… ✨';
 
-      CURRENT = { subject, topic, main, sup, age, duration, goals, success, activities, assessment, structure, oneMin, notes, adaptMsg:'' };
-
-      document.getElementById('out-head').textContent = `المادة: ${subject} — الموضوع: "${topic}" — الزمن: ${duration} دقيقة`;
-      bullets(document.getElementById('out-bullets'), [
-        notes ? `ملاحظة المعلم: ${notes}` : null,
-        (sup ? 'دمج مستويين من بلوم (أساسي + داعم).' : 'تركيز على مستوى بلوم أساسي واحد.')
-      ]);
-      const outAdapt = document.getElementById('out-adapt'); outAdapt.style.display='none'; outAdapt.textContent='';
-      pillMain.textContent = 'بلوم (أساسي): '+main;
-      pillSup.style.display = sup? 'inline-block':'none';
-      if(sup) pillSup.textContent = 'بلوم (+2): '+sup;
-      pillAge.textContent = 'العمر: '+(AGE_NAME[age]||age);
-
-      bullets(document.getElementById('out-structure'), structure);
-      bullets(document.getElementById('out-activities'), activities);
-      bullets(document.getElementById('out-assessment'), assessment);
-      bullets(document.getElementById('out-diff'), genDiff(age, topic));
-
-      document.getElementById('oneMinText').textContent = oneMin;
-      document.getElementById('goalsTitleOut').textContent = topic;
-      const gl = document.getElementById('goalsList'); gl.innerHTML=''; goals.forEach(g=>{ const li=document.createElement('li'); li.textContent=g; gl.appendChild(li); });
-      document.getElementById('successOut').textContent = success;
-
-      // سلّم تقدير مبسّط واضح
-      const ladder = document.getElementById('ladderWrap');
-      ladder.innerHTML = `
-        <div class="step">
-          <div class="tag ok">أتقن ✔︎</div>
-          <div>يحقق الهدف بدقة ويطبق المفهوم في مثال جديد دون مساعدة.</div>
-        </div>
-        <div class="step">
-          <div class="tag mid">متوسط ◉</div>
-          <div>يفهم الفكرة الأساسية ويحتاج توجيهًا بسيطًا عند التطبيق.</div>
-        </div>
-        <div class="step">
-          <div class="tag need">بحاجة دعم ✳︎</div>
-          <div>يواجه صعوبة في الفهم/التطبيق — يُقدَّم له مثال إضافي أو تبسيط.</div>
-        </div>
-      `;
-
-      // إظهار النتائج + الأزرار اللاحقة
-      outSummary.style.display=''; outGrid.style.display='';
-      outGoals.style.display=''; outOneMin.style.display='';
-      outLadder.style.display=''; postActions.style.display='';
-
-      // إظهار الاختبار القبلي إن طُلِب
-      const pq = document.getElementById('pre-quiz');
-      if(adapt){
-        pq.style.display='';
-        const qs = makePreQuiz(topic, main, sup);
-        const wrap = document.getElementById('quizWrap'); wrap.innerHTML='';
-        qs.forEach((q,i)=>{
-          const box = document.createElement('div');
-          box.className='field';
-          box.innerHTML = `
-            <div class="printable" style="border-style:solid">
-              <div class="muted" style="margin-bottom:6px">سؤال ${i+1}:</div>
-              <div>${q}</div>
-              <label style="display:block; margin-top:8px">عدد المخطِئين</label>
-              <input type="number" min="0" value="0" data-q="${i}">
-            </div>`;
-          wrap.appendChild(box);
+      try{
+        const res = await fetch('/.netlify/functions/murtakaz', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({
+            mode, subject, topic, sourceText,
+            age, duration, bloomMain, bloomSupport,
+            goalCount, notes, level: document.getElementById('f-level').value, adapt
+          })
         });
-      }else{
-        pq.style.display='none';
+        if(!res.ok){
+          const t = await res.text();
+          throw new Error(t || ('HTTP '+res.status));
+        }
+        const R = await res.json();
+
+        // تخزين حالي (لنفس أزرار النسخ/الطباعة)
+        CURRENT = {
+          subject,
+          topic: R.meta?.topic || topic,
+          main: bloomMain,
+          sup: bloomSupport,
+          age, duration,
+          goals: R.goals || [],
+          success: R.success || '',
+          activities: R.activities || [],
+          assessment: R.assessment || [],
+          structure: R.structure || [],
+          oneMin: R.oneMin || '',
+          notes
+        };
+
+        // رسم الواجهة
+        document.getElementById('out-head').textContent =
+          `المادة: ${subject} — الموضوع: "${CURRENT.topic}" — الزمن: ${duration} دقيقة`;
+
+        bullets(document.getElementById('out-bullets'), [
+          notes ? `ملاحظة المعلم: ${notes}` : null,
+          bloomSupport ? 'دمج مستويين من بلوم (أساسي + داعم).' : 'تركيز على مستوى بلوم أساسي واحد.'
+        ]);
+
+        const outAdapt = document.getElementById('out-adapt'); outAdapt.style.display='none'; outAdapt.textContent='';
+        pillMain.textContent = 'بلوم (أساسي): ' + (R.meta?.mainBloomLabel || CURRENT.main);
+        if(bloomSupport){
+          pillSup.style.display = 'inline-block';
+          pillSup.textContent = 'بلوم (+2): ' + (R.meta?.supportBloomLabel || bloomSupport);
+        }else{
+          pillSup.style.display = 'none';
+        }
+        pillAge.textContent = 'العمر: ' + (R.meta?.ageLabel || R.meta?.age || age);
+
+        bullets(document.getElementById('out-structure'), CURRENT.structure);
+        bullets(document.getElementById('out-activities'), CURRENT.activities);
+        bullets(document.getElementById('out-assessment'), CURRENT.assessment);
+        bullets(document.getElementById('out-diff'), R.diff || []);
+
+        document.getElementById('oneMinText').textContent = CURRENT.oneMin;
+        document.getElementById('goalsTitleOut').textContent = CURRENT.topic;
+
+        const gl = document.getElementById('goalsList'); gl.innerHTML='';
+        (CURRENT.goals||[]).forEach(g => { const li=document.createElement('li'); li.textContent=g; gl.appendChild(li); });
+        document.getElementById('successOut').textContent = R.success || '';
+
+        // سلّم تقدير مبسّط (يستفيد من النجاح)
+        const ladder = document.getElementById('ladderWrap');
+        ladder.innerHTML = `
+          <div class="step">
+            <div class="tag ok">أتقن ✔︎</div>
+            <div>${R.success || 'يطبق المفهوم بدقة في مثال جديد دون مساعدة.'}</div>
+          </div>
+          <div class="step">
+            <div class="tag mid">متوسط ◉</div>
+            <div>يفهم الفكرة الأساسية ويحتاج توجيهًا بسيطًا عند التطبيق.</div>
+          </div>
+          <div class="step">
+            <div class="tag need">بحاجة دعم ✳︎</div>
+            <div>يواجه صعوبة — قدّمي مثالًا إضافيًا أو تبسيطًا.</div>
+          </div>
+        `;
+
+        // إظهار الأقسام
+        outSummary.style.display=''; outGrid.style.display='';
+        outGoals.style.display=''; outOneMin.style.display='';
+        outLadder.style.display=''; postActions.style.display='';
+
+        // طيّ المدخلات إن كانت مفتوحة
+        if(!inputsWrap.classList.contains('collapsed')) {
+          inputsWrap.classList.add('collapsed');
+          toggleInputs.textContent = 'إظهار المدخلات';
+          if (toggleInputs2) toggleInputs2.textContent = 'إظهار مدخلاتي';
+        }
+
+        toastMsg('تم توليد خطة ذكية 🎉');
+        window.scrollTo({ top: outSummary.offsetTop - 10, behavior:'smooth' });
+
+      }catch(err){
+        console.error(err);
+        toastMsg('تعذّر توليد الخطة. تحقّقي من المفتاح أو أعيدي المحاولة.');
+      }finally{
+        btnGen.disabled = false; btnGen.textContent = btnGen.dataset._label || 'ولّد لي الخطة ✨';
       }
-
-      // طيّ المدخلات بعد التوليد (زر "إظهار/إخفاء مدخلاتي" يبقى)
-      if(!inputsWrap.classList.contains('collapsed')) toggleInputsView();
-
-      toastMsg('تم توليد الخطة 🎉');
-      window.scrollTo({ top: outSummary.offsetTop - 10, behavior: 'smooth' });
     });
 
     /* ===== تطبيق التكيّف بناء على الاختبار القبلي ===== */
@@ -613,18 +560,19 @@
     });
 
     /* ===== نسخ/طباعة/تصدير ===== */
+    const AGE_LABEL = k => (AGE_NAME[k]||k);
     function exportFullText(S){
       const lines = [];
       lines.push(`العنوان: ${S.topic} — (${S.subject})`);
       if(S.adaptMsg) lines.push(S.adaptMsg);
-      lines.push(`الزمن: ${S.duration} دقيقة — العمر: ${(AGE_NAME[S.age]||S.age)}`);
+      lines.push(`الزمن: ${S.duration} دقيقة — العمر: ${AGE_LABEL(S.age)}`);
       lines.push(`بلوم (أساسي): ${S.main}${S.sup?(' + '+S.sup):''}`);
       if(S.notes) lines.push(`ملاحظات المعلم: ${S.notes}`);
-      lines.push('\nالأهداف:'); S.goals.forEach((g,i)=>lines.push(`- ${g}`));
-      lines.push('\nمخطط الدرس:'); S.structure.forEach(s=>lines.push(`- ${s}`));
-      lines.push('\nأنشطة:'); S.activities.forEach(a=>lines.push(`- ${a}`));
-      lines.push('\nتقويم سريع:'); S.assessment.forEach(a=>lines.push(`- ${a}`));
-      lines.push('\nتمايز:'); genDiff(S.age,S.topic).forEach(a=>lines.push(`- ${a}`));
+      lines.push('\nالأهداف:'); (S.goals||[]).forEach((g)=>lines.push(`- ${g}`));
+      lines.push('\nمخطط الدرس:'); (S.structure||[]).forEach(s=>lines.push(`- ${s}`));
+      lines.push('\nأنشطة:'); (S.activities||[]).forEach(a=>lines.push(`- ${a}`));
+      lines.push('\nتقويم سريع:'); (S.assessment||[]).forEach(a=>lines.push(`- ${a}`));
+      lines.push('\nتمايز:'); (S.diff||[]).forEach(a=>lines.push(`- ${a}`));
       lines.push('\nالدقيقة الواحدة:'); lines.push(`- ${S.oneMin}`);
       lines.push('\nمعايير النجاح:'); lines.push(`- ${S.success}`);
       return lines.join('\n');
@@ -634,17 +582,17 @@
 `[Google Classroom]
 العنوان: ${S.topic} — ${S.subject}`,
 `التعليمات:
-- اقرأ/ي الهدف: ${S.goals[0]||'-'}.
+- اقرأ/ي الهدف: ${S.goals?.[0]||'-'}.
 - نفّذي النشاط الرئيسي ثم أرسلي تذكرة الخروج.`,
 `المواد: (يُحدّد المعلم)`,
 `التاريخ/الوقت: (يُحدّد المعلم)`,
 `التقويم السريع:
-1) ${S.assessment[0]||'-'}
-2) ${S.assessment[1]||'-'}
-3) ${S.assessment[2]||'-'}`,
+1) ${S.assessment?.[0]||'-'}
+2) ${S.assessment?.[1]||'-'}
+3) ${S.assessment?.[2]||'-'}`,
 `تمايز:
-- دعم: ${genDiff(S.age,S.topic)[0]}
-- إثراء: ${genDiff(S.age,S.topic)[1]}`
+- دعم: ${(S.diff||[])[0]||'-'}
+- إثراء: ${(S.diff||[])[1]||'-'}`
       ].join('\n');
     }
     function exportTeams(S){
@@ -652,103 +600,64 @@
 `[Microsoft Teams Assignment]
 Title: ${S.topic} — ${S.subject}
 Instructions:
-- Goals: ${S.goals.join(' | ')}
-- Main Activity: ${S.activities[1]||'-'}
-- Exit Ticket: ${S.assessment[0]||'-'}
+- Goals: ${(S.goals||[]).join(' | ')}
+- Main Activity: ${S.activities?.[1]||'-'}
+- Exit Ticket: ${S.assessment?.[0]||'-'}
 Rubric: (paste from page)
 Due: (set by teacher)`
       ].join('\n');
     }
 
-    document.getElementById('btn-copy-full').addEventListener('click', ()=> {
-      const txt = exportFullText(CURRENT);
-      copyText(txt);
-    });
-    document.getElementById('btn-classroom').addEventListener('click', ()=> {
-      copyText(exportClassroom(CURRENT));
-    });
-    document.getElementById('btn-teams').addEventListener('click', ()=> {
-      copyText(exportTeams(CURRENT));
-    });
+    function copyText(txt){ navigator.clipboard.writeText(txt).then(()=>toastMsg('تم النسخ ✅')); }
+    document.getElementById('btn-copy-full').addEventListener('click', ()=> copyText(exportFullText(CURRENT)));
+    document.getElementById('btn-classroom').addEventListener('click', ()=> copyText(exportClassroom(CURRENT)));
+    document.getElementById('btn-teams').addEventListener('click', ()=> copyText(exportTeams(CURRENT)));
     document.getElementById('btn-print').addEventListener('click', ()=> window.print());
-      // نسخ نص بطاقة الأهداف
-    function copyGoalsCard(){
-      const el = document.getElementById('goalsCard');
-      if(!el) return;
-      const txt = el.innerText.trim();
-      navigator.clipboard.writeText(txt).then(()=> toastMsg('تم نسخ بطاقة الأهداف ✅'));
-    }
 
-    // طباعة بطاقة الأهداف فقط
+    // نسخ/طباعة بطاقة الأهداف فقط
+    function copyGoalsCard(){
+      const el = document.getElementById('goalsCard'); if(!el) return;
+      const txt = el.innerText.trim(); navigator.clipboard.writeText(txt).then(()=> toastMsg('تم نسخ بطاقة الأهداف ✅'));
+    }
     function printElementById(id, title='بطاقة الأهداف'){
-      const node = document.getElementById(id);
-      if(!node) return;
+      const node = document.getElementById(id); if(!node) return;
       const w = window.open('', '_blank');
       w.document.open();
-      w.document.write(`
-        <!doctype html><html lang="ar" dir="rtl">
-        <head>
-          <meta charset="utf-8"><title>${title}</title>
-          <style>
-            body{font-family:"Cairo",system-ui,-apple-system,Segoe UI,Roboto; color:#0f172a; margin:20px}
-            .box{border:1px solid #93c5fd80; border-radius:12px; padding:14px}
-            h3{margin:0 0 6px; font-weight:700}
-            ul{margin:0; padding-inline-start:1.2rem}
-            strong{font-weight:700}
-            @media print{ @page{margin:12mm} }
-          </style>
-        </head>
-        <body>
-          <div class="box">${node.innerHTML}</div>
-          <script>window.onload=()=>window.print()<\/script>
-        </body></html>
-      `);
+      w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head>
+        <meta charset="utf-8"><title>${title}</title>
+        <style>
+          body{font-family:"Cairo",system-ui,-apple-system,Segoe UI,Roboto; color:#0f172a; margin:20px}
+          .box{border:1px solid #93c5fd80; border-radius:12px; padding:14px}
+          h3{margin:0 0 6px; font-weight:700}
+          ul{margin:0; padding-inline-start:1.2rem}
+          strong{font-weight:700}
+          @media print{ @page{margin:12mm} }
+        </style>
+      </head><body>
+        <div class="box">${node.innerHTML}</div>
+        <script>window.onload=()=>window.print()<\/script>
+      </body></html>`);
       w.document.close();
     }
-
-    // ربط الأزرار
     document.getElementById('btn-goals-copy')?.addEventListener('click', copyGoalsCard);
     document.getElementById('btn-goals-print')?.addEventListener('click', ()=> printElementById('goalsCard'));
-  </script>
-<script src="app.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', ()=>{
-  bindAutoSave('darsi', '#darsi-form');
-});
-</script>
 
-<!-- Supabase -->
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
-
-<!-- Auth0 SDK + فولباك محلي إذا تعذّر CDN -->
-<script defer
-        src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
-        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-
-<!-- حماية الصفحة (يفترض أن SDK محمّل من الوسم أعلاه) -->
-<script defer src="assets/js/require-auth.js"></script>
-
-<!-- سكربتات المشروع -->
-<script defer src="app.js"></script>
-
-<!-- أكواد خاصة بصفحة درسي -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // (اختياري) إن كان عندك دالة hasAccess وتجارب قديمة:
-    try {
-      if (typeof hasAccess === 'function' && !hasAccess()) {
-        location.href = 'pricing.html';
-        return;
-      }
-    } catch(_) {}
-
-    // تسجيل استخدام أداة "درسي" عند الضغط على زر التنفيذ
-    // تأكدي أن الزر يحمل id="go" أو عدّلي السطر التالي للـ id الصحيح
-    document.getElementById('go')?.addEventListener('click', async () => {
-      await supaLogUsage('darsi');
+    // تسجيل استخدام الأداة (اختياري)
+    document.getElementById('btn-generate')?.addEventListener('click', async () => {
+      if (typeof supaLogUsage === 'function') { try { await supaLogUsage('murtakaz'); } catch(_){} }
     });
-  });
-</script>
+  </script>
+
+  <!-- Supabase -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
+
+  <!-- Auth0 SDK + فولباك محلي إذا تعذّر CDN -->
+  <script defer
+          src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+
+  <!-- حماية الصفحة -->
+  <script defer src="assets/js/require-auth.js"></script>
 </body>
 </html>
