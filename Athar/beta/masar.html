@@ -75,21 +75,21 @@
 @media print {
   @page { size: A4 landscape; margin: 8mm; }
 
-  /* نخلي بس الهيدر + الجدول + الفوتر يبانوا */
-  body * { visibility: hidden !important; }
-  header, #tableWrap, footer,
-  header *, #tableWrap *, footer * {
-    visibility: visible !important;
-  }
+header, #tableWrap,
+header *, #tableWrap * {
+  visibility: visible !important;
+}
+
+/* اخفي الفوتر دايمًا وقت الطباعة */
+footer { display: none !important; }
 
   /* خلي الهيدر أقرب للأعلى */
-  header { margin-top: -48mm !important; } /* <-- عدلي الرقم حسب رغبتك */
+  header { margin-top: -47.3mm !important; } /* <-- عدلي الرقم حسب رغبتك */
 
   /* قرب الجدول من الهيدر */
   #tableWrap { margin-top: -182mm !important; }
 
-  /* قرب الفوتر شوي تحت الجدول */
-  footer { margin-top: 5mm !important; }
+
 
   /* عرض الجدول كامل الصفحة */
   #tableWrap, table.schedule { width: 100% !important; min-width: auto !important; }
