@@ -216,20 +216,9 @@
 
   <div class="toast"></div>
 
-  <!-- يعتمد على app.js (الوصول/الثيم/التوست …) -->
-  <script src="app.js"></script>
 
 <script>
   // تأكيد الوصول: لو ما فيه اشتراك/تجربة → تحويل للخطط
-  document.addEventListener('DOMContentLoaded', ()=>{
-    try{
-      if(typeof hasAccess === 'function'){
-        const ok = hasAccess();
-        if(!ok){ location.href = 'pricing.html'; }
-        else { const g=document.getElementById('gate'); if(g) g.style.display='none'; }
-      }
-    }catch(_){}
-  });
 
   // المواد حسب المرحلة (منهج السعودية 2025 — تبسيط عملي)
   const SUBJECTS = {
@@ -422,27 +411,29 @@ regenBtn.addEventListener("click", ()=> generate(Date.now()));
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
         onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-<!-- حماية الصفحة (يفترض أن SDK جاهز) -->
+<!-- حماية الصفحة -->
 <script defer src="assets/js/require-auth.js"></script>
 
-<!-- Supabase (للتسجيل والمزامنة) -->
+<!-- Supabase -->
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- التخزين/الأدوات العامة + واجهة المشروع -->
+<!-- التخزين/الأدوات العامة -->
 <script defer src="assets/js/storage.js"></script>
+
+<!-- ملفك العام مرة وحدة فقط -->
 <script defer src="app.js"></script>
 
-<!-- كود الصفحة -->
+<!-- سكربت الصفحة (توليد الاستراتيجية) — من دون hasAccess -->
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // حفظ تلقائي لنموذج "أثر"
-    bindAutoSave('athar', '#athar-form');
+  // … بقاء كود SUBJECTS, callStrategy, generate, paintOutput
+  // … تعريف goBtn/regenBtn و setLoading
+  goBtn.addEventListener("click", ()=> generate(null));
+  regenBtn.addEventListener("click", ()=> generate(Date.now()));
 
-    // تسجيل استخدام أداة "أثر" عند الضغط على زر التنفيذ (تأكدي أن id="go")
-    document.getElementById('go')?.addEventListener('click', async () => {
-      await supaLogToolUsage('athar');
-    });
+  // تسجيل الاستخدام (اختياري)
+  document.getElementById('go')?.addEventListener('click', async () => {
+    await supaLogToolUsage('athar');
   });
 </script>
 </body>
