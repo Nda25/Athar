@@ -73,51 +73,60 @@
     .legend span{ display:inline-flex; align-items:center; gap:6px; }
     .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; background:var(--sea-300) }
 
-/* طباعة: العنوان + الجدول + الفوتر (A4 أفقي) */
-@media print{
-  /* حجم الصفحة وهوامشها */
-  @page { size: A4 landscape; margin: 8mm; }
-  html, body { width: 297mm; height: 210mm; }
+/* طباعة: أظهر العنوان + الجدول + الفوتر فقط وارفع الجدول */
+@media print {
+  /* ورقة A4 أفقية مع حافة علوية أصغر شوي */
+  @page { size: A4 landscape; margin: 6mm 8mm 8mm 8mm; }
 
-  /* أخفي عناصر الواجهة فقط */
-  .topbar, .controls, .row-actions, .toast { display:none !important; }
+  /* اخفي كل شيء مبدئيًا */
+  body * { visibility: hidden !important; }
 
-  /* نظّف البطاقات والهوامش حتى يتمدد المحتوى */
-  .container, main, .card{
-    margin:0 !important; padding:0 !important;
-    box-shadow:none !important; border:none !important;
-  }
-
-  /* العنوان والفوتر مطبوعين */
-  header{ margin:0 0 6mm 0; }
-  footer{ margin-top:6mm; }
-
-  /* خلّي الجدول يملأ العرض */
-  #tableWrap{ width:100% !important; }
-  table.schedule{ width:100% !important; min-width:auto !important; font-size:14px; }
-  .schedule th, .schedule td{ padding:8px; }
-  .cell input{ border:none; padding:2px 4px; font-size:13px; }
-
-  /* لا تقطّعي المحتوى بين الصفحات */
+  /* أظهر العناصر المطلوبة فقط */
   header, #tableWrap, footer,
-  table.schedule, thead, tbody, tr{
-    break-inside: avoid; page-break-inside: avoid;
+  header *, #tableWrap *, footer * {
+    visibility: visible !important;
   }
 
-  /* اطبعي الألوان كما هي */
-  body, .schedule, .schedule th, .schedule td, .cell{
+  /* شيل الهوامش/الظلال الزايدة */
+  .card { box-shadow: none !important; border: none !important; }
+
+  /* قلّلي الفراغ فوق/تحت العنوان */
+  header { margin: 0 0 2mm !important; padding: 0 !important; }
+  .hero { padding: 0 !important; }
+  .hero .tag { margin-top: 1mm !important; }
+
+  /* ارفعي الجدول لفوق بكم ملم (عدّلي الرقم لو حبيتي) */
+  #tableWrap {
+    margin-top: -6mm !important; /* ← لو بغيتِ أعلى: -8mm أو -10mm */
+    margin-bottom: 2mm !important;
+  }
+
+  /* عرض الجدول على كامل الصفحة */
+  #tableWrap, table.schedule { width: 100% !important; min-width: auto !important; }
+
+  /* ألوان واضحة */
+  body, .schedule, .schedule th, .schedule td, .cell {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     color-adjust: exact;
   }
 
-  /* اخفي محتوى الخلايا الفارغة فقط (الحدود تبقى) */
-  .cell.empty{ opacity:0; }
+  /* حجم افتراضي للطباعة (عدّليه حسب الحاجة) */
+  table.schedule { font-size: 14px; }
+  .schedule th, .schedule td { padding: 8px; }
 
-  /* وضع مضغوط عند تفعيل كلاس print-compact من الزر */
-  body.print-compact table.schedule{ font-size:12px; }
+  /* لا تقطّعي الصفوف */
+  table.schedule, thead, tbody, tr { break-inside: avoid; page-break-inside: avoid; }
+
+  /* أخفي محتوى الخلايا الفارغة (الحدود تبقى) */
+  .cell.empty { opacity: 0; }
+}
+
+/* نسخة مضغوطة إذا ضغطتِ زر "طباعة مضغّطة" */
+@media print {
+  body.print-compact table.schedule { font-size: 12px; }
   body.print-compact .schedule th,
-  body.print-compact .schedule td{ padding:6px 6px; }
+  body.print-compact .schedule td { padding: 6px; }
 }
   </style>
 </head>
