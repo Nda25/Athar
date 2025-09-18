@@ -648,16 +648,17 @@ Due: (set by teacher)`
     });
   </script>
 
-  <!-- Supabase -->
-  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="assets/js/supabase-client.js"></script>
+<!-- Supabase -->
+<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script defer src="/assets/js/supabase-client.js"></script>
 
-  <!-- Auth0 SDK + فولباك محلي إذا تعذّر CDN -->
-  <script defer
-          src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+<!-- Auth0 SDK + فولباك محلي إذا تعذّر CDN -->
+<script defer
+  src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
+  onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'">
+</script>
 
-  <!-- حماية الصفحة -->
-  <script defer src="assets/js/require-auth.js"></script>
+<!-- حماية الصفحة (يجب أن يأتي بعد الـ SDK) -->
+<script defer src="/assets/js/require-auth.js"></script>
 </body>
 </html>
