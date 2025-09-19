@@ -9,6 +9,7 @@
 <meta name="color-scheme" content="dark light" />
 <style>
   :root{ --accent:#3b82f6; }
+
   .field{ margin:10px 0 }
   .field label{ display:block; font-weight:700; margin:6px 0 }
   .field input,.field select{
@@ -19,6 +20,16 @@
   /* شبكة المدخلات */
   .cols-3{ display:grid; gap:12px; grid-template-columns:1fr }
   @media(min-width:900px){ .cols-3{ grid-template-columns:1fr 1fr 1fr } }
+
+  /* شبكة إضافية للموضوع + المرحلة */
+  .cols-2 { display:grid; gap:12px; grid-template-columns:1fr 1fr; }
+
+  /* لترتيب الخيارات (checkboxes) أفقياً */
+  .field.inline label {
+    display:flex; align-items:center; gap:6px;
+    white-space:nowrap;
+  }
+  .field.inline input[type="checkbox"] { margin-top:0; }
 
   .actions-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px }
 
@@ -89,31 +100,38 @@
               </select>
             </div>
 
-            <!-- الموضوع والمرحلة في صف واحد -->
-            <div class="field"><label>الموضوع</label>
-              <input id="s-topic" name="s-topic" required placeholder="اكتبي موضوع الدرس بدقة">
-            </div>
+<!-- الموضوع + المرحلة في صف واحد -->
+<div class="cols-2">
+  <div class="field">
+    <label>الموضوع</label>
+    <input id="s-topic" name="s-topic" required placeholder="اكتب موضوع الدرس بدقة">
+  </div>
 
-            <div class="field"><label>المرحلة</label>
-              <select id="s-age" name="s-age">
-                <option value="p1">ابتدائي دُنيا</option>
-                <option value="p2" selected>ابتدائي عُليا</option>
-                <option value="m">متوسط</option>
-                <option value="h">ثانوي</option>
-              </select>
-            </div>
+  <div class="field">
+    <label>المرحلة</label>
+    <select id="s-age" name="s-age">
+      <option value="p1">ابتدائي دُنيا</option>
+      <option value="p2" selected>ابتدائي عُليا</option>
+      <option value="m">متوسط</option>
+      <option value="h">ثانوي</option>
+    </select>
+  </div>
+</div>
 
-            <!-- قيود وملاءمات -->
-            <div class="field">
-              <label><input type="checkbox" id="s-noTools"> بدون أدوات/كروت/قص ولصق (Zero-prep)</label>
-            </div>
-            <div class="field">
-              <label><input type="checkbox" id="s-adaptLow"> ملاءمة للتحفيز المنخفض</label>
-            </div>
-            <div class="field">
-              <label><input type="checkbox" id="s-adaptDiff"> مراعاة الفروق الفردية</label>
-            </div>
-          </div>
+<!-- الخيارات في صف واحد -->
+<div class="cols-3">
+  <div class="field inline">
+    <label><input type="checkbox" id="s-noTools"> بدون أدوات/كروت/قص ولصق (Zero-prep)</label>
+  </div>
+
+  <div class="field inline">
+    <label><input type="checkbox" id="s-adaptLow"> ملاءمة للتحفيز المنخفض</label>
+  </div>
+
+  <div class="field inline">
+    <label><input type="checkbox" id="s-adaptDiff"> مراعاة الفروق الفردية</label>
+  </div>
+</div>
         </form>
 
         <div class="actions-row">
