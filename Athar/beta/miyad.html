@@ -30,31 +30,77 @@
 .controls + #reminder-card{ margin-top:22px }
 
 /* تنسيق أساسي لقسم التذكير */
-#reminder-card .grid2{ align-items:center }
-#reminder-card .field.inline{ display:flex; align-items:center; gap:10px }
-#reminder-card .field.inline label{ margin:0; font-weight:700 }
-#reminder-card .muted{ opacity:.8; font-size:.95rem }
+/* ===== Reminder Card – polished mobile-first ===== */
+#reminder-card.card { padding:16px 18px; }
 
-/* ===== النسخة النحيفة لقسم التذكير ===== */
-#reminder-card.card.compact { padding:16px 18px; }
-#reminder-card .title { font-size:1.15rem; margin:0 0 10px; }
-
-/* صف مُدمج للخيارات */
-#reminder-card .row{
-  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+#reminder-card .title{
+  font-size:1.15rem;
+  margin:0 0 6px;
+  text-align:center;
 }
 
-/* توضيح تحت العنوان */
+/* سطر الوصف تحت العنوان */
 #reminder-card .hint{
-  margin-top:8px; opacity:.85; font-size:.9rem;
+  margin:0 auto 12px;
+  opacity:.85;
+  font-size:.92rem;
+  text-align:center;
+  max-width:34rem;
 }
 
-/* حجم القائمة */
-#reminder-card select{ max-width:220px; }
+/* صفوف الخيارات */
+#reminder-card .row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:8px 0;
+  direction:rtl; /* محاذاة RTL جميلة */
+}
 
-/* زر الحفظ ومسافته */
-#reminder-card .actions-row{ margin-top:12px; }
+/* عنوان صغير لكل صف */
+#reminder-card .row .label{
+  font-weight:700;
+  white-space:nowrap;
+}
 
+/* قائمة الأيام */
+#reminder-card select{
+  min-width: 9rem;
+  max-width: 12rem;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(59,130,246,.35);
+  background:var(--card);
+}
+
+/* زر الحفظ وحالة الحفظ */
+#reminder-card .actions-row{
+  margin-top:10px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+#reminder-card #rem-status{ opacity:.8 }
+
+/* ===== شكل سويتش أنيق للتمكين ===== */
+.switch{
+  position:relative; display:inline-block;
+  width:46px; height:26px; vertical-align:middle;
+}
+.switch input{ display:none; }
+.switch .slider{
+  position:absolute; inset:0; cursor:pointer;
+  background:#cbd5e1; border-radius:100px;
+  transition:.25s;
+}
+.switch .slider::before{
+  content:""; position:absolute; height:20px; width:20px;
+  right:3px; top:3px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.15);
+  transition:.25s;
+}
+.switch input:checked + .slider{ background:#3b82f6; }
+.switch input:checked + .slider::before{ transform:translateX(-20px); }
 /* قائمة المواعيد */
 .events{ margin-top:12px }
 .ev{
@@ -155,30 +201,30 @@
       </section>
     </div>
     <!-- بطاقة إعدادات التذكير عبر الإيميل (نحيفة) -->
-<section class="card compact" id="reminder-card">
-  <h2 class="title">التذكير عبر البريد</h2>
+<section class="card" id="reminder-card">
+  <h2 class="title">التذكير عبر البريد الإلكتروني📩 </h2>
+  <p class="hint">تأكد من تفعيل اشعارات البريد الإلكتروني.</p>
 
   <div class="row">
-    <label class="field inline" style="display:flex;align-items:center;gap:8px;margin:0">
+    <div class="label">تفعيل التذكير عبر البريد الإلكتروني</div>
+    <label class="switch" aria-label="تفعيل التذكير عبر البريد">
       <input type="checkbox" id="rem-enable">
-      <span>تفعيل التذكير عبر البريد الإلكتروني</span>
+      <span class="slider"></span>
     </label>
-
-    <div class="field" style="margin:0">
-      <label for="rem-days" style="margin:0 0 4px">قبل الموعد بـ</label>
-      <select id="rem-days">
-        <option value="1">يوم واحد</option>
-        <option value="2" selected>يومين</option>
-        <option value="3">3 أيام</option>
-        <option value="4">4 أيام</option>
-        <option value="5">5 أيام</option>
-        <option value="6">6 أيام</option>
-        <option value="7">7 أيام</option>
-      </select>
-    </div>
   </div>
 
-  <div class="hint">سنرسل تذكيرًا قبل الموعد بعدد الأيام الذي تختارينه.</div>
+  <div class="row">
+    <div class="label">قبل الموعد بـ</div>
+    <select id="rem-days" aria-label="قبل الموعد بـ">
+      <option value="1">يوم واحد</option>
+      <option value="2" selected>يومين</option>
+      <option value="3">3 أيام</option>
+      <option value="4">4 أيام</option>
+      <option value="5">5 أيام</option>
+      <option value="6">6 أيام</option>
+      <option value="7">7 أيام</option>
+    </select>
+  </div>
 
   <div class="actions-row">
     <button class="btn" id="rem-save">حفظ إعدادات التذكير</button>
