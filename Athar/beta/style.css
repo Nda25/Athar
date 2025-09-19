@@ -371,3 +371,12 @@ input::placeholder{ color:#64748b }
 .info-card:last-child {
   margin-bottom: 0; /* آخر عنصر ما يحتاج فراغ تحته */
 }
+.info-card .lead a {
+  color: var(--sea-600);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.info-card .lead a:hover {
+  color: var(--sea-400);
+}
