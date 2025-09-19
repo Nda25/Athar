@@ -6,7 +6,6 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 exports.handler = async (event) => {
   try {
-    // نسمح فقط بـ POST
     if (event.httpMethod !== "POST") {
       return { statusCode: 405, body: "Method Not Allowed" };
     }
@@ -27,18 +26,18 @@ exports.handler = async (event) => {
       subject = "",
       topic   = "",
       time    = 20,
-      bloom   = "understand",   // remember | understand | apply | analyze | create
-      age     = "p2",           // p1 | p2 | m | h
-      noTools = false,          // أنشطة صفر تجهيز
-      adaptLow  = false,        // تكييف: منخفض التحفيز
-      adaptDiff = false,        // تكييف: فروق فردية
-      variant = ""              // لتوليد بدائل
+      bloom   = "understand",
+      age     = "p2",
+      noTools = false,
+      adaptLow  = false,
+      adaptDiff = false,
+      variant = ""
     } = payload;
 
     const AGE_LABEL = { p1:"ابتدائي دنيا", p2:"ابتدائي عليا", m:"متوسط", h:"ثانوي" };
     const ageLabel = AGE_LABEL[age] || "ابتدائي عليا";
 
-    // 3) نص التعليمات للنموذج
+    // 3) تبني البرومبت
     const constraints = [];
     if (noTools) constraints.push("يجب أن تكون كل الأنشطة Zero-prep (بدون قص/لصق/بطاقات/أدوات).");
     constraints.push(`الزمن المتاح إجماليًا ~ ${time} دقيقة؛ اجعل كل نشاط قابلاً للتنفيذ داخل هذا السقف.`);
@@ -64,8 +63,7 @@ ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.
 {
   "meta": { "subject": "...", "topic": "...", "time": 20, "bloom": "...", "age": "...", "variant": "..." },
   "categories": [
-    {
-      "name": "أنشطة صفّية حركية",
+    { "name": "أنشطة صفّية حركية",
       "activities": [
         {
           "title": "...",
@@ -81,12 +79,12 @@ ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.
     { "name": "أنشطة صفّية جماعية", "activities": [...] },
     { "name": "أنشطة صفّية فردية", "activities": [...] }
   ],
-  "tips": ["اختياري: نصائح قصيرة ..."]
+  "tips": ["...", "..."]
 }
 بدون أي نص خارج JSON.
 `.trim();
 
-    // 4) استدعاء Gemini بالشكل الصحيح (contents + generationConfig)
+    // 4) تهيئة Gemini + الاستدعاء الصحيح (contents + generationConfig)
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -104,10 +102,11 @@ ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.
 
     const result = await model.generateContent(req);
 
-    // 5) نلتقط النص ونحوّله إلى JSON
+    // 5) ناخذ النص ونحوّله JSON
     const text =
       (typeof result?.response?.text === "function" ? result.response.text() : "") ||
-      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "";
 
     if (!text) {
       console.error("Empty response from model", result);
@@ -131,72 +130,60 @@ ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.
       return { statusCode: 500, body: "Invalid JSON shape" };
     }
 
-    // ================== التحويل إلى الشكل الذي تتوقعه الواجهة ==================
-
-    // نحاول تحويل categories -> sets (حركي/جماعي/فردي)
-    function normalizeActivity(a) {
+    // ---- تطبيع للواجهة: categories -> sets (حركي/جماعي/فردي) ----
+    function normalizeActivity(a = {}) {
       return {
-        ideaHook:        a?.ideaHook || a?.title || "",
-        desc:            a?.summary  || a?.description || "",
-        duration:        a?.duration || undefined,      // إن وُجد
-        materials:       a?.materials || [],            // إن وُجد
-        steps:           a?.steps || [],
-        exitTicket:      a?.exit  || a?.exitTicket || "",
-        expectedImpact:  a?.impact || a?.expectedImpact || "",
+        ideaHook:        a.ideaHook || a.title || "",
+        desc:            a.summary  || a.description || "",
+        duration:        a.duration || undefined,
+        materials:       a.materials || [],
+        steps:           a.steps || [],
+        exitTicket:      a.exit  || a.exitTicket || "",
+        expectedImpact:  a.impact || a.expectedImpact || "",
         diff: {
-          lowMotivation:   a?.lowMotivation || a?.diff_low || "",
-          differentiation: a?.differentiation || a?.diff_levels || ""
+          lowMotivation:   a.lowMotivation || a.diff_low || "",
+          differentiation: a.differentiation || a.diff_levels || ""
         }
       };
     }
 
     const sets = { movement:{}, group:{}, individual:{} };
 
-    // نمسك أول نشاط في كل فئة (الواجهة تعرض نشاطًا واحدًا لكل فئة)
     for (const cat of (data.categories || [])) {
       const name = (cat.name || "").toLowerCase();
       const first = (cat.activities || [])[0] || {};
       const norm  = normalizeActivity(first);
 
-      if (name.includes("حرك")) {          // أنشطة صفّية حركية
+      if (name.includes("حرك")) {
         sets.movement = norm;
-      } else if (name.includes("جمع")) {   // أنشطة صفّية جماعية
+      } else if (name.includes("جمع")) {
         sets.group = norm;
-      } else if (name.includes("فرد")) {   // أنشطة صفّية فردية
+      } else if (name.includes("فرد")) {
         sets.individual = norm;
       }
     }
 
-    // احتياط: إن ما تعرّفت الأسماء نُسقطها بالترتيب
     const cats = data.categories || [];
-    if (!sets.movement.ideaHook && cats[0]) sets.movement   = normalizeActivity((cats[0].activities||[])[0]||{});
-    if (!sets.group.ideaHook     && cats[1]) sets.group      = normalizeActivity((cats[1].activities||[])[0]||{});
-    if (!sets.individual.ideaHook&& cats[2]) sets.individual = normalizeActivity((cats[2].activities||[])[0]||{});
+    if (!sets.movement.ideaHook && cats[0]) sets.movement   = normalizeActivity((cats[0].activities||[])[0]);
+    if (!sets.group.ideaHook     && cats[1]) sets.group      = normalizeActivity((cats[1].activities||[])[0]);
+    if (!sets.individual.ideaHook&& cats[2]) sets.individual = normalizeActivity((cats[2].activities||[])[0]);
 
-    // meta بالشكل الذي تستخدمه الواجهة
     const meta = {
       subject: subject || "",
       topic:   topic || subject || "",
       time,
       bloom,
       age,
-      variant: variant || "",
-      // معلومات إضافية مفيدة للعرض (اختياري)
-      ageLabel: ageLabel,
-      bloomLabel: bloom
+      variant: variant || ""
     };
 
-    // tips إن وُجدت
     const tips = Array.isArray(data.tips) ? data.tips : [];
 
-    // نُعيد الشكل الذي تتوقعه الواجهة
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({ meta, sets, tips })
     };
-
-    // ==========================================================================
 
   } catch (err) {
     console.error("Mulham error:", err);
@@ -211,7 +198,6 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 exports.handler = async (event) => {
   try {
-    // نسمح فقط بـ POST
     if (event.httpMethod !== "POST") {
       return { statusCode: 405, body: "Method Not Allowed" };
     }
@@ -232,18 +218,18 @@ exports.handler = async (event) => {
       subject = "",
       topic   = "",
       time    = 20,
-      bloom   = "understand",   // remember | understand | apply | analyze | create
-      age     = "p2",           // p1 | p2 | m | h
-      noTools = false,          // أنشطة صفر تجهيز
-      adaptLow  = false,        // تكييف: منخفض التحفيز
-      adaptDiff = false,        // تكييف: فروق فردية
-      variant = ""              // لتوليد بدائل
+      bloom   = "understand",
+      age     = "p2",
+      noTools = false,
+      adaptLow  = false,
+      adaptDiff = false,
+      variant = ""
     } = payload;
 
     const AGE_LABEL = { p1:"ابتدائي دنيا", p2:"ابتدائي عليا", m:"متوسط", h:"ثانوي" };
     const ageLabel = AGE_LABEL[age] || "ابتدائي عليا";
 
-    // 3) نص التعليمات للنموذج
+    // 3) تبني البرومبت
     const constraints = [];
     if (noTools) constraints.push("يجب أن تكون كل الأنشطة Zero-prep (بدون قص/لصق/بطاقات/أدوات).");
     constraints.push(`الزمن المتاح إجماليًا ~ ${time} دقيقة؛ اجعل كل نشاط قابلاً للتنفيذ داخل هذا السقف.`);
@@ -269,8 +255,7 @@ ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.
 {
   "meta": { "subject": "...", "topic": "...", "time": 20, "bloom": "...", "age": "...", "variant": "..." },
   "categories": [
-    {
-      "name": "أنشطة صفّية حركية",
+    { "name": "أنشطة صفّية حركية",
       "activities": [
         {
           "title": "...",
@@ -286,12 +271,12 @@ ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.
     { "name": "أنشطة صفّية جماعية", "activities": [...] },
     { "name": "أنشطة صفّية فردية", "activities": [...] }
   ],
-  "tips": ["اختياري: نصائح قصيرة ..."]
+  "tips": ["...", "..."]
 }
 بدون أي نص خارج JSON.
 `.trim();
 
-    // 4) استدعاء Gemini بالشكل الصحيح (contents + generationConfig)
+    // 4) تهيئة Gemini + الاستدعاء الصحيح (contents + generationConfig)
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -309,10 +294,11 @@ ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.
 
     const result = await model.generateContent(req);
 
-    // 5) نلتقط النص ونحوّله إلى JSON
+    // 5) ناخذ النص ونحوّله JSON
     const text =
       (typeof result?.response?.text === "function" ? result.response.text() : "") ||
-      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "";
 
     if (!text) {
       console.error("Empty response from model", result);
@@ -336,72 +322,60 @@ ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.
       return { statusCode: 500, body: "Invalid JSON shape" };
     }
 
-    // ================== التحويل إلى الشكل الذي تتوقعه الواجهة ==================
-
-    // نحاول تحويل categories -> sets (حركي/جماعي/فردي)
-    function normalizeActivity(a) {
+    // ---- تطبيع للواجهة: categories -> sets (حركي/جماعي/فردي) ----
+    function normalizeActivity(a = {}) {
       return {
-        ideaHook:        a?.ideaHook || a?.title || "",
-        desc:            a?.summary  || a?.description || "",
-        duration:        a?.duration || undefined,      // إن وُجد
-        materials:       a?.materials || [],            // إن وُجد
-        steps:           a?.steps || [],
-        exitTicket:      a?.exit  || a?.exitTicket || "",
-        expectedImpact:  a?.impact || a?.expectedImpact || "",
+        ideaHook:        a.ideaHook || a.title || "",
+        desc:            a.summary  || a.description || "",
+        duration:        a.duration || undefined,
+        materials:       a.materials || [],
+        steps:           a.steps || [],
+        exitTicket:      a.exit  || a.exitTicket || "",
+        expectedImpact:  a.impact || a.expectedImpact || "",
         diff: {
-          lowMotivation:   a?.lowMotivation || a?.diff_low || "",
-          differentiation: a?.differentiation || a?.diff_levels || ""
+          lowMotivation:   a.lowMotivation || a.diff_low || "",
+          differentiation: a.differentiation || a.diff_levels || ""
         }
       };
     }
 
     const sets = { movement:{}, group:{}, individual:{} };
 
-    // نمسك أول نشاط في كل فئة (الواجهة تعرض نشاطًا واحدًا لكل فئة)
     for (const cat of (data.categories || [])) {
       const name = (cat.name || "").toLowerCase();
       const first = (cat.activities || [])[0] || {};
       const norm  = normalizeActivity(first);
 
-      if (name.includes("حرك")) {          // أنشطة صفّية حركية
+      if (name.includes("حرك")) {
         sets.movement = norm;
-      } else if (name.includes("جمع")) {   // أنشطة صفّية جماعية
+      } else if (name.includes("جمع")) {
         sets.group = norm;
-      } else if (name.includes("فرد")) {   // أنشطة صفّية فردية
+      } else if (name.includes("فرد")) {
         sets.individual = norm;
       }
     }
 
-    // احتياط: إن ما تعرّفت الأسماء نُسقطها بالترتيب
     const cats = data.categories || [];
-    if (!sets.movement.ideaHook && cats[0]) sets.movement   = normalizeActivity((cats[0].activities||[])[0]||{});
-    if (!sets.group.ideaHook     && cats[1]) sets.group      = normalizeActivity((cats[1].activities||[])[0]||{});
-    if (!sets.individual.ideaHook&& cats[2]) sets.individual = normalizeActivity((cats[2].activities||[])[0]||{});
+    if (!sets.movement.ideaHook && cats[0]) sets.movement   = normalizeActivity((cats[0].activities||[])[0]);
+    if (!sets.group.ideaHook     && cats[1]) sets.group      = normalizeActivity((cats[1].activities||[])[0]);
+    if (!sets.individual.ideaHook&& cats[2]) sets.individual = normalizeActivity((cats[2].activities||[])[0]);
 
-    // meta بالشكل الذي تستخدمه الواجهة
     const meta = {
       subject: subject || "",
       topic:   topic || subject || "",
       time,
       bloom,
       age,
-      variant: variant || "",
-      // معلومات إضافية مفيدة للعرض (اختياري)
-      ageLabel: ageLabel,
-      bloomLabel: bloom
+      variant: variant || ""
     };
 
-    // tips إن وُجدت
     const tips = Array.isArray(data.tips) ? data.tips : [];
 
-    // نُعيد الشكل الذي تتوقعه الواجهة
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({ meta, sets, tips })
     };
-
-    // ==========================================================================
 
   } catch (err) {
     console.error("Mulham error:", err);
