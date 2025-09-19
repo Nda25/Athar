@@ -41,7 +41,7 @@
   <main>
     <div class="container">
       <section class="card controls">
-        <h2 class="title">أضِف موعدًا إلى تقويم الترم</h2>
+        <h2 class="title">أضِف موعدًا إلى تقويم الفصل الدراسي</h2>
         <div class="grid2">
           <div class="field"><label>المادة</label><input id="m-subj" placeholder="مثال: علوم"></div>
           <div class="field"><label>الفصل</label><input id="m-class" placeholder="مثال: 6/ب"></div>
@@ -63,7 +63,7 @@
           </div>
         </div>
         <div class="actions-row">
-          <button class="btn primary" id="add">إضافة للترم</button>
+          <button class="btn primary" id="add">إضافة موعد</button>
           <button class="btn" id="export">نسخ قائمة المواعيد</button>
           <button class="btn" id="print">طباعة</button>
           <button class="btn ghost" id="clear">حذف الكل</button>
@@ -71,7 +71,7 @@
       </section>
 
       <section class="card">
-        <h2 class="title">مواعيد الترم</h2>
+        <h2 class="title">مواعيد الفصل الدراسي ⏰</h2>
         <div class="legend">
           <span class="pill">رتّب حسب اليوم والحصة</span>
           <span class="pill">كل موعد يظهر معه اللون + المادة + الفصل</span>
@@ -121,7 +121,7 @@
     const date=document.getElementById('m-date').value;
     const color=document.getElementById('m-color').value;
     if(!subj||!cls){ toast('أدخلي المادة والفصل'); return; }
-    const list=load(); list.push({subj,cls,day,slot,date,color}); save(list); render(); toast('أُضيف للترم ✅');
+    const list=load(); list.push({subj,cls,day,slot,date,color}); save(list); render(); toast('تمت الإضــافة ✅');
   });
   document.getElementById('list').addEventListener('click', (e)=>{
     const a=e.target.closest('a[data-i]'); if(!a) return; e.preventDefault();
@@ -133,7 +133,7 @@
   });
   document.getElementById('print').addEventListener('click', ()=>window.print());
   document.getElementById('clear').addEventListener('click', ()=>{
-    if(confirm('حذف جميع مواعيد الترم؟')){ localStorage.removeItem(KEY); render(); }
+    if(confirm('حذف جميع مواعيد الفصل الدراسي؟')){ localStorage.removeItem(KEY); render(); }
   });
   render();
   </script>
