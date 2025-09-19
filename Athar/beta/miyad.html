@@ -8,56 +8,76 @@
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
 <style>
-  /* حقول عامة */
-  .field{ margin:8px 0 }
-  .field label{ display:block; font-weight:700; margin:4px 0; line-height:1.6 }
-  .field input,.field select{
-    width:100%; padding:10px; border-radius:10px; box-sizing:border-box;
-    border:1px solid rgba(59,130,246,.35);
-  }
+/* حقول عامة */
+.field{ margin:8px 0 }
+.field label{ display:block; font-weight:700; margin:4px 0; line-height:1.6 }
+.field input,.field select{
+  width:100%; padding:10px; border-radius:10px; box-sizing:border-box;
+  border:1px solid rgba(59,130,246,.35);
+}
 
-  /* شبكة الحقول */
-  .grid2{ display:grid; gap:12px; grid-template-columns:1fr }
-  @media (min-width:900px){ .grid2{ grid-template-columns:1fr 1fr } }
+/* شبكة الحقول */
+.grid2{ display:grid; gap:12px; grid-template-columns:1fr }
+@media (min-width:900px){ .grid2{ grid-template-columns:1fr 1fr } }
 
-  /* مسافات مريحة بين الكروت */
-  .card{ margin-bottom:18px; position:relative }
+/* مسافات مريحة بين الكروت */
+.card{ margin-bottom:18px; position:relative }
 
-  /* شريط الأزرار */
-  .actions-row{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px }
+/* شريط الأزرار */
+.actions-row{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px }
 
-  /* “التذكير” بعد “التحكمات” */
-  .controls + #reminder-card{ margin-top:22px }
+/* “التذكير” بعد “التحكمات” */
+.controls + #reminder-card{ margin-top:22px }
 
-  /* تنسيق خاص لقسم التذكير */
-  #reminder-card .grid2{ align-items:center }
-  #reminder-card .field.inline{ display:flex; align-items:center; gap:10px }
-  #reminder-card .field.inline label{ margin:0; font-weight:700 }
-  #reminder-card .muted{ opacity:.8; font-size:.95rem }
+/* تنسيق أساسي لقسم التذكير */
+#reminder-card .grid2{ align-items:center }
+#reminder-card .field.inline{ display:flex; align-items:center; gap:10px }
+#reminder-card .field.inline label{ margin:0; font-weight:700 }
+#reminder-card .muted{ opacity:.8; font-size:.95rem }
 
-  /* قائمة المواعيد */
-  .events{ margin-top:12px }
-  .ev{
-    background:var(--card);
-    border:1px solid rgba(59,130,246,.22);
-    border-radius:12px; padding:10px;
-    display:flex; align-items:center; justify-content:space-between;
-    gap:8px; margin-bottom:8px
-  }
-  .ev .meta{ display:flex; gap:8px; flex-wrap:wrap; font-size:.9rem; opacity:.9 }
-  .color{ width:14px; height:14px; border-radius:4px; border:1px solid rgba(0,0,0,.1) }
+/* ===== النسخة النحيفة لقسم التذكير ===== */
+#reminder-card.card.compact { padding:16px 18px; }
+#reminder-card .title { font-size:1.15rem; margin:0 0 10px; }
 
-  /* تلميحات */
-  .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:.9rem }
-  .legend .pill{ padding:.18rem .5rem; border-radius:999px; border:1px solid rgba(59,130,246,.25) }
+/* صف مُدمج للخيارات */
+#reminder-card .row{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
 
-  .print-note{ text-align:center; margin-top:8px; opacity:.8 }
+/* توضيح تحت العنوان */
+#reminder-card .hint{
+  margin-top:8px; opacity:.85; font-size:.9rem;
+}
 
-  /* طباعة */
-  @media print{
-    .topbar,.actions-row,.controls,.btn,.toast{ display:none !important }
-    .ev{ page-break-inside:avoid }
-  }
+/* حجم القائمة */
+#reminder-card select{ max-width:220px; }
+
+/* زر الحفظ ومسافته */
+#reminder-card .actions-row{ margin-top:12px; }
+
+/* قائمة المواعيد */
+.events{ margin-top:12px }
+.ev{
+  background:var(--card);
+  border:1px solid rgba(59,130,246,.22);
+  border-radius:12px; padding:10px;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:8px; margin-bottom:8px;
+}
+.ev .meta{ display:flex; gap:8px; flex-wrap:wrap; font-size:.9rem; opacity:.9 }
+.color{ width:14px; height:14px; border-radius:4px; border:1px solid rgba(0,0,0,.1) }
+
+/* تلميحات */
+.legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:.9rem }
+.legend .pill{ padding:.18rem .5rem; border-radius:999px; border:1px solid rgba(59,130,246,.25) }
+
+.print-note{ text-align:center; margin-top:8px; opacity:.8 }
+
+/* طباعة */
+@media print{
+  .topbar,.actions-row,.controls,.btn,.toast{ display:none !important }
+  .ev{ page-break-inside:avoid }
+}
 </style>
 </head>
 <body>
@@ -123,21 +143,29 @@
         </div>
       </section>
 
-      <!-- بطاقة إعدادات التذكير عبر الإيميل -->
-  <section class="card" id="reminder-card">
-  <h2 class="title">التذكير عبر البريد ✉️</h2>
-
-  <div class="grid2">
-    <div class="field inline">
-      <label>
-        <input type="checkbox" id="rem-enable" style="margin-inline-start:8px">
-        تفعيل التذكير بالإيميل
-      </label>
-      <div class="muted">سنرسل تذكيرًا عبر البريد الإلكتروني قبل الموعد بعدد الأيام الذي يتم تحديده .</div>
+      <!-- قائمة المواعيد -->
+      <section class="card">
+        <h2 class="title">مواعيد الفصل الدراسي ⏰</h2>
+        <div class="legend">
+          <span class="pill">رتّب حسب اليوم والحصة</span>
+          <span class="pill">كل موعد يظهر معه اللون + المادة + الفصل</span>
+        </div>
+        <div class="events" id="list"></div>
+        <p class="print-note">هذا اليوم سيمضي… وسيبقى منه الأثـر 🌿</p>
+      </section>
     </div>
+    <!-- بطاقة إعدادات التذكير عبر الإيميل (نحيفة) -->
+<section class="card compact" id="reminder-card">
+  <h2 class="title">التذكير عبر البريد</h2>
 
-    <div class="field">
-      <label for="rem-days">قبل الموعد بـ</label>
+  <div class="row">
+    <label class="field inline" style="display:flex;align-items:center;gap:8px;margin:0">
+      <input type="checkbox" id="rem-enable">
+      <span>تفعيل التذكير عبر البريد الإلكتروني</span>
+    </label>
+
+    <div class="field" style="margin:0">
+      <label for="rem-days" style="margin:0 0 4px">قبل الموعد بـ</label>
       <select id="rem-days">
         <option value="1">يوم واحد</option>
         <option value="2" selected>يومين</option>
@@ -150,23 +178,13 @@
     </div>
   </div>
 
+  <div class="hint">سنرسل تذكيرًا قبل الموعد بعدد الأيام الذي تختارينه.</div>
+
   <div class="actions-row">
     <button class="btn" id="rem-save">حفظ إعدادات التذكير</button>
     <span id="rem-status" class="muted"></span>
   </div>
 </section>
-
-      <!-- قائمة المواعيد -->
-      <section class="card">
-        <h2 class="title">مواعيد الفصل الدراسي ⏰</h2>
-        <div class="legend">
-          <span class="pill">رتّب حسب اليوم والحصة</span>
-          <span class="pill">كل موعد يظهر معه اللون + المادة + الفصل</span>
-        </div>
-        <div class="events" id="list"></div>
-        <p class="print-note">هذا اليوم سيمضي… وسيبقى منه الأثـر 🌿</p>
-      </section>
-    </div>
   </main>
 
   <footer>
