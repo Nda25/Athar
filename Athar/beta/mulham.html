@@ -9,8 +9,14 @@
 <meta name="color-scheme" content="dark light" />
 <style>
   :root{ --accent:#3b82f6; }
-  .field{ margin:10px 0 } .field label{ display:block; font-weight:700; margin:6px 0 }
-  .field input,.field select{ width:100%; padding:12px; border-radius:12px; border:1px solid rgba(59,130,246,.35) }
+  .field{ margin:10px 0 }
+  .field label{ display:block; font-weight:700; margin:6px 0 }
+  .field input,.field select{
+    width:100%; padding:12px; border-radius:12px;
+    border:1px solid rgba(59,130,246,.35)
+  }
+
+  /* شبكة المدخلات */
   .cols-3{ display:grid; gap:12px; grid-template-columns:1fr }
   @media(min-width:900px){ .cols-3{ grid-template-columns:1fr 1fr 1fr } }
 
@@ -29,10 +35,11 @@
 
   .diff-box{ background:color-mix(in oklab, var(--accent) 10%, #fff); border-radius:8px; padding:8px; margin-top:8px; font-size:.95rem }
 
-  .btn[disabled]{ opacity:.5; cursor:not-allowed }
+  .btn[disabled]{ opacity:.6; cursor:not-allowed }
 
+  /* طباعة: نظهر البطاقات فقط */
   @media print{
-    .topbar, .actions-row, .field, .btn, .cols-3, .toast { display:none !important }
+    .topbar, .actions-row, .field, .btn, .cols-3, .toast, header, footer { display:none !important }
     .card{ box-shadow:none; border:none }
     @page { size:A4 portrait; margin:10mm }
     .printable{ border-color:#999 }
@@ -65,9 +72,13 @@
         <form id="mulham-form">
           <div class="cols-3">
             <div class="field"><label>المادة</label><input id="s-subj" name="s-subj" placeholder="مثال: رياضيات"></div>
+
             <div class="field"><label>الوقت المتاح (دقيقة)</label>
-              <select id="s-time" name="s-time"><option>10</option><option selected>20</option><option>30</option><option>40</option></select>
+              <select id="s-time" name="s-time">
+                <option>10</option><option selected>20</option><option>30</option><option>40</option>
+              </select>
             </div>
+
             <div class="field"><label>مستوى بلوم</label>
               <select id="s-bloom" name="s-bloom">
                 <option value="remember">تذكّر</option>
@@ -77,6 +88,12 @@
                 <option value="create">ابتكار</option>
               </select>
             </div>
+
+            <!-- الموضوع والمرحلة في صف واحد -->
+            <div class="field"><label>الموضوع</label>
+              <input id="s-topic" name="s-topic" required placeholder="اكتبي موضوع الدرس بدقة">
+            </div>
+
             <div class="field"><label>المرحلة</label>
               <select id="s-age" name="s-age">
                 <option value="p1">ابتدائي دُنيا</option>
@@ -86,30 +103,24 @@
               </select>
             </div>
 
-            <div class="field" style="grid-column:1/-1">
-              <label>الموضوع (اختياري)</label>
-              <input id="s-topic" name="s-topic" placeholder="الكسور / التجوية / الفاعل …">
-            </div>
-
-            <!-- قيود وتكييف -->
+            <!-- قيود وملاءمات -->
             <div class="field">
               <label><input type="checkbox" id="s-noTools"> بدون أدوات/كروت/قص ولصق (Zero-prep)</label>
             </div>
             <div class="field">
-              <label><input type="checkbox" id="s-adaptLow"> تكييف: لذوي التحفيز المنخفض</label>
+              <label><input type="checkbox" id="s-adaptLow"> ملاءمة للتحفيز المنخفض</label>
             </div>
             <div class="field">
-              <label><input type="checkbox" id="s-adaptDiff"> تكييف: فروق فردية</label>
+              <label><input type="checkbox" id="s-adaptDiff"> مراعاة الفروق الفردية</label>
             </div>
           </div>
         </form>
 
         <div class="actions-row">
-          <button class="btn primary" id="go">ولّدي الأنشطة الآن</button>
-          <button class="btn" id="more">بدائل أكثر</button>
+          <button class="btn primary" id="go">ولّدي أنشطة</button>
+          <button class="btn" id="more">أنشطة أخرى</button>
           <button class="btn" id="copy">نسخ</button>
-          <button class="btn" id="pdf" disabled title="قريبًا">بطاقات PDF</button>
-          <button class="btn" id="print">طباعة</button>
+          <button class="btn" id="print">طباعة البطاقات</button>
         </div>
       </section>
 
@@ -169,7 +180,7 @@
           </div>
 
           <div class="set-card">
-            <h3>تلميحات للتكييف</h3>
+            <h3>تلميحات</h3>
             <ul id="tips" class="list"></ul>
           </div>
 
@@ -180,7 +191,7 @@
   </main>
 
   <footer>
-    <p class="foot-line">أصغر فكرة، حين تُنفَّذ، تترك أثرًا أكبر.</p>
+    <p class="foot-line">التعليم شرارة صغيرة، لكنها تُشعل أثرًا كبيرًا.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
@@ -199,7 +210,7 @@
   <script defer src="app.js"></script>
 
   <script>
-window.$ = window.$ || ((s)=>document.querySelector(s));
+  window.$ = window.$ || ((s)=>document.querySelector(s));
   const liFill=(ul,items)=>{ ul.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ul.appendChild(li); }); }
   const olFill=(ol,items)=>{ ol.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ol.appendChild(li); }); }
 
@@ -212,29 +223,29 @@ window.$ = window.$ || ((s)=>document.querySelector(s));
   // أوتو-حفظ
   document.addEventListener('DOMContentLoaded', ()=>{ bindAutoSave('mulham', '#mulham-form'); });
 
-  // حفظ آخر إعدادات لإعادة استخدامها في "بدائل أكثر"
+  // حفظ آخر إعدادات لإعادة استخدامها في "أنشطة أخرى"
   let lastParams = null;
 
-async function callMulham(body) {
-  const res = await fetch("/.netlify/functions/mulham", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) throw new Error("Mulham function failed");
-  return res.json();
-}
+  async function callMulham(body) {
+    const res = await fetch("/.netlify/functions/mulham", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error("Mulham function failed");
+    return res.json();
+  }
 
   function readParams(withVariant=false){
     const subject = $('#s-subj').value.trim() || '';
-    const topic   = $('#s-topic').value.trim() || subject;
+    const topic   = $('#s-topic').value.trim() || subject; // صار required بس نخلي الاحتياط
     const time    = +$('#s-time').value || 20;
     const bloom   = $('#s-bloom').value || 'understand';
     const age     = $('#s-age').value || 'p2';
     const noTools = !!$('#s-noTools').checked;
     const adaptLow= !!$('#s-adaptLow').checked;
     const adaptDiff=!!$('#s-adaptDiff').checked;
-    const variant = withVariant ? Date.now() : ''; // يغيّر البذرة للتنويع
+    const variant = withVariant ? Date.now() : ''; // بذرة للتنويع
     return { subject, topic, time, bloom, age, noTools, adaptLow, adaptDiff, variant };
   }
 
@@ -251,7 +262,7 @@ async function callMulham(body) {
     if(showDiff && (set.diff?.lowMotivation || set.diff?.differentiation)){
       diffEl.style.display = '';
       diffEl.innerHTML = `
-        ${set.diff?.lowMotivation ? `<div><strong>لتحفيز منخفض:</strong> ${set.diff.lowMotivation}</div>` : ''}
+        ${set.diff?.lowMotivation ? `<div><strong>للتحفيز المنخفض:</strong> ${set.diff.lowMotivation}</div>` : ''}
         ${set.diff?.differentiation ? `<div style="margin-top:6px"><strong>فروق فردية:</strong> ${set.diff.differentiation}</div>` : ''}
       `;
     }else{
@@ -285,28 +296,38 @@ async function callMulham(body) {
   }
 
   async function generate(withVariant=false){
+    const goBtn   = document.getElementById('go');
+    const moreBtn = document.getElementById('more');
+    const busyBtn = withVariant ? moreBtn : goBtn;
+
     try{
+      // حالة انشغال
+      busyBtn.disabled = true;
+      const oldText = busyBtn.textContent;
+      busyBtn.textContent = 'جارٍ التفكير…';
+
       const params = readParams(withVariant);
       lastParams = params;
       const data = await callMulham(params);
       renderAll(data);
-      toast(withVariant ? 'تم توليد بدائل ✨' : 'تم توليد الأنشطة ✨');
+      toast(withVariant ? 'تم توليد أنشطة أخرى ✨' : 'تم توليد الأنشطة ✨');
       try{ await supaLogToolUsage('mulham'); }catch(_){}
+      // رجوع للنص
+      busyBtn.textContent = oldText;
+      busyBtn.disabled = false;
     }catch(e){
       console.error(e);
       toast('تعذّر التوليد، حاولي ثانية.');
+      // تأكيد فك التعطيل
+      if (busyBtn){ busyBtn.textContent = withVariant ? 'أنشطة أخرى' : 'ولّدي أنشطة'; busyBtn.disabled = false; }
     }
   }
 
   // أزرار
-  $('#go').addEventListener('click', ()=>generate(false));
-  $('#more').addEventListener('click', ()=>{
-    // لو فيه مخرجات موجودة، نعيد نفس المدخلات مع تنويع
-    const params = lastParams || readParams(true);
-    generate(true);
-  });
+  document.getElementById('go').addEventListener('click', ()=>generate(false));
+  document.getElementById('more').addEventListener('click', ()=>generate(true));
 
-  $('#copy').addEventListener('click', ()=>{
+  document.getElementById('copy').addEventListener('click', ()=>{
     const grab=(sel)=>$(sel)?.innerText?.trim() || '—';
     const pack=(sel)=>[...document.querySelectorAll(sel+' li')].map(li=>'- '+li.innerText).join('\n') || '—';
 
@@ -344,20 +365,14 @@ ${pack('#in-steps')}
 تذكرة خروج: ${grab('#in-exit')}
 الأثر المتوقع: ${grab('#in-impact')}
 
-[تكييفات مضمّنة إن وُجدت]
-${grab('#mv-diff')}
-${grab('#gr-diff')}
-${grab('#in-diff')}
-
-[نصائح]
+[تلميحات]
 ${pack('#tips')}
 `;
     navigator.clipboard.writeText(txt).then(()=>toast('تم النسخ ✅'));
   });
 
-  $('#print').addEventListener('click', ()=> window.print());
-  // زر PDF معطّل مؤقتًا
-  $('#pdf').addEventListener('click', ()=> toast('قريبًا: تصدير بطاقات PDF ✨'));
+  // زر الطباعة الموحّد
+  document.getElementById('print').addEventListener('click', ()=> window.print());
   </script>
 </body>
 </html>
