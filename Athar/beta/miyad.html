@@ -94,20 +94,24 @@
               </select>
             </div>
 
-            <div class="field"><label>الحصة رقم</label><input id="m-slot" type="number" min="1" max="10" value="1"></div>
+        <div class="field"><label>الحصة رقم</label>
+  <input id="m-slot" type="number" min="1" max="8" value="1">
+</div>
 
-            <div class="field"><label>تاريخ (اختياري)</label><input id="m-date" type="date"></div>
+<div class="field"><label>التاريخ (مهم للتذكيرات)</label>
+  <input id="m-date" type="text" placeholder="اختر التاريخ">
+</div>
 
-            <div class="field">
-              <label>لون</label>
-              <select id="m-color">
-                <option value="#60a5fa">أزرق</option>
-                <option value="#22c55e">أخضر</option>
-                <option value="#f59e0b">برتقالي</option>
-                <option value="#ef4444">أحمر</option>
-                <option value="#a78bfa">بنفسجي</option>
-              </select>
-            </div>
+<div class="field">
+  <label>لون</label>
+  <select id="m-color">
+    <option value="#60a5fa">أزرق</option>
+    <option value="#22c55e">أخضر</option>
+    <option value="#f59e0b">برتقالي</option>
+    <option value="#ef4444">أحمر</option>
+    <option value="#a78bfa">بنفسجي</option>
+  </select>
+</div>
           </div>
         </form>
 
@@ -129,7 +133,7 @@
         <input type="checkbox" id="rem-enable" style="margin-inline-start:8px">
         تفعيل التذكير بالإيميل
       </label>
-      <div class="muted">سنرسل تذكيرًا قبل الموعد بعدد الأيام الذي تختارينه.</div>
+      <div class="muted">سنرسل تذكيرًا عبر البريد الإلكتروني قبل الموعد بعدد الأيام الذي يتم تحديده .</div>
     </div>
 
     <div class="field">
@@ -219,7 +223,7 @@
         const slot=+document.getElementById('m-slot').value||1;
         const date=document.getElementById('m-date').value;
         const color=document.getElementById('m-color').value;
-        if(!subj||!cls){ toast('أدخلي المادة والفصل'); return; }
+        if(!subj||!cls){ toast('أدخل المادة والفصل'); return; }
         const list=load(); list.push({subj,cls,day,slot,date,color}); save(list); render(); toast('تمت الإضــافة ✅');
         logUse('miyad:add_event');
       });
@@ -332,5 +336,17 @@
   <!-- سكربتات المشروع -->
   <script defer src="assets/js/storage.js"></script>
   <script defer src="app.js"></script>
+  <!-- Flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    flatpickr("#m-date", {
+      locale: "ar",
+      dateFormat: "Y-m-d"
+    });
+  });
+</script>
 </body>
 </html>
