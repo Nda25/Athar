@@ -8,23 +8,52 @@
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
 <style>
+  /* حقول عامة */
   .field{ margin:8px 0 }
-  .field label{ display:block; font-weight:700; margin:4px 0 }
-  .field input,.field select{ width:100%; padding:10px; border-radius:10px; border:1px solid rgba(59,130,246,.35) }
+  .field label{ display:block; font-weight:700; margin:4px 0; line-height:1.6 }
+  .field input,.field select{
+    width:100%; padding:10px; border-radius:10px; box-sizing:border-box;
+    border:1px solid rgba(59,130,246,.35);
+  }
 
+  /* شبكة الحقول */
   .grid2{ display:grid; gap:12px; grid-template-columns:1fr }
-  @media(min-width:900px){ .grid2{ grid-template-columns:1fr 1fr } }
+  @media (min-width:900px){ .grid2{ grid-template-columns:1fr 1fr } }
 
+  /* مسافات مريحة بين الكروت */
+  .card{ margin-bottom:18px; position:relative }
+
+  /* شريط الأزرار */
+  .actions-row{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px }
+
+  /* “التذكير” بعد “التحكمات” */
+  .controls + #reminder-card{ margin-top:22px }
+
+  /* تنسيق خاص لقسم التذكير */
+  #reminder-card .grid2{ align-items:center }
+  #reminder-card .field.inline{ display:flex; align-items:center; gap:10px }
+  #reminder-card .field.inline label{ margin:0; font-weight:700 }
+  #reminder-card .muted{ opacity:.8; font-size:.95rem }
+
+  /* قائمة المواعيد */
   .events{ margin-top:12px }
-  .ev{ background:var(--card); border:1px solid rgba(59,130,246,.22); border-radius:12px; padding:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px }
+  .ev{
+    background:var(--card);
+    border:1px solid rgba(59,130,246,.22);
+    border-radius:12px; padding:10px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; margin-bottom:8px
+  }
   .ev .meta{ display:flex; gap:8px; flex-wrap:wrap; font-size:.9rem; opacity:.9 }
   .color{ width:14px; height:14px; border-radius:4px; border:1px solid rgba(0,0,0,.1) }
 
+  /* تلميحات */
   .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:.9rem }
   .legend .pill{ padding:.18rem .5rem; border-radius:999px; border:1px solid rgba(59,130,246,.25) }
 
   .print-note{ text-align:center; margin-top:8px; opacity:.8 }
 
+  /* طباعة */
   @media print{
     .topbar,.actions-row,.controls,.btn,.toast{ display:none !important }
     .ev{ page-break-inside:avoid }
@@ -91,38 +120,37 @@
       </section>
 
       <!-- بطاقة إعدادات التذكير عبر الإيميل -->
-      <section class="card" id="reminder-card" style="margin-top:14px">
-        <h2 class="title">التذكير عبر البريد ✉️</h2>
-        <div class="grid2">
-          <div class="field inline">
-            <label style="display:flex;align-items:center;gap:8px">
-              <input type="checkbox" id="rem-enable">
-              تفعيل التذكير بالإيميل
-            </label>
-            <div class="muted" style="margin-top:6px">
-              سنرسل تذكيرًا قبل الموعد بعدد الأيام الذي تختارينه.
-            </div>
-          </div>
+  <section class="card" id="reminder-card">
+  <h2 class="title">التذكير عبر البريد ✉️</h2>
 
-          <div class="field">
-            <label>قبل الموعد بـ</label>
-            <select id="rem-days">
-              <option value="1">يوم واحد</option>
-              <option value="2" selected>يومين</option>
-              <option value="3">3 أيام</option>
-              <option value="4">4 أيام</option>
-              <option value="5">5 أيام</option>
-              <option value="6">6 أيام</option>
-              <option value="7">7 أيام</option>
-            </select>
-          </div>
-        </div>
+  <div class="grid2">
+    <div class="field inline">
+      <label>
+        <input type="checkbox" id="rem-enable" style="margin-inline-start:8px">
+        تفعيل التذكير بالإيميل
+      </label>
+      <div class="muted">سنرسل تذكيرًا قبل الموعد بعدد الأيام الذي تختارينه.</div>
+    </div>
 
-        <div class="actions-row">
-          <button class="btn" id="rem-save">حفظ إعدادات التذكير</button>
-          <span id="rem-status" class="muted"></span>
-        </div>
-      </section>
+    <div class="field">
+      <label for="rem-days">قبل الموعد بـ</label>
+      <select id="rem-days">
+        <option value="1">يوم واحد</option>
+        <option value="2" selected>يومين</option>
+        <option value="3">3 أيام</option>
+        <option value="4">4 أيام</option>
+        <option value="5">5 أيام</option>
+        <option value="6">6 أيام</option>
+        <option value="7">7 أيام</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="actions-row">
+    <button class="btn" id="rem-save">حفظ إعدادات التذكير</button>
+    <span id="rem-status" class="muted"></span>
+  </div>
+</section>
 
       <!-- قائمة المواعيد -->
       <section class="card">
@@ -146,13 +174,13 @@
 
   <!-- ========== سكربت الصفحة: منطق ميعاد + التحليلات + إعدادات التذكير ========== -->
   <script>
-    // ====== أدوات بسيطة ======
+    /* ====== أدوات بسيطة ====== */
     const KEY='mi3ad:events';
     function toast(m){ const t=document.getElementById('toast'); if(!t) return; t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
     function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(_){ return [] } }
     function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
 
-    // رندر القائمة
+    /* رندر القائمة */
     function render(){
       const box=document.getElementById('list'); box.innerHTML='';
       const daysOrder={'الأحد':1,'الإثنين':2,'الثلاثاء':3,'الأربعاء':4,'الخميس':5};
@@ -173,24 +201,15 @@
       });
     }
 
-    // ====== تحليلات الاستخدام (يستدعي supaLogToolUsage إن وُجد) ======
+    /* ====== تحليلات الاستخدام (اختياري) ====== */
     function logUse(tag){
-      try {
-        if (typeof supaLogToolUsage === 'function') supaLogToolUsage(tag);
-      } catch(_) {}
+      try { if (typeof supaLogToolUsage === 'function') supaLogToolUsage(tag); } catch(_) {}
     }
 
-    // أحداث الأزرار الأساسية
+    /* أحداث الأزرار الأساسية */
     document.addEventListener('DOMContentLoaded', ()=>{
-      // تخزين تلقائي لمدخلات النموذج (الدالة موجودة عندك في storage.js)
-      if (typeof bindAutoSave === 'function') {
-        bindAutoSave('miyad', '#miyad-form');
-      }
-
-      // عرض أولي
+      if (typeof bindAutoSave === 'function') bindAutoSave('miyad', '#miyad-form');
       render();
-
-      // “مشاهدة الصفحة”
       logUse('miyad:view');
 
       document.getElementById('add').addEventListener('click', ()=>{
@@ -200,59 +219,51 @@
         const slot=+document.getElementById('m-slot').value||1;
         const date=document.getElementById('m-date').value;
         const color=document.getElementById('m-color').value;
-
         if(!subj||!cls){ toast('أدخلي المادة والفصل'); return; }
-
-        const list=load(); list.push({subj,cls,day,slot,date,color});
-        save(list); render(); toast('تمت الإضــافة ✅');
-
-        // تحليل
+        const list=load(); list.push({subj,cls,day,slot,date,color}); save(list); render(); toast('تمت الإضــافة ✅');
         logUse('miyad:add_event');
       });
 
       document.getElementById('list').addEventListener('click', (e)=>{
         const a=e.target.closest('a[data-i]'); if(!a) return; e.preventDefault();
         const i=+a.getAttribute('data-i'); const list=load(); list.splice(i,1); save(list); render();
-
-        // تحليل
         logUse('miyad:delete_event');
       });
 
       document.getElementById('export').addEventListener('click', ()=>{
         const txt=load().map(e=>`${e.day} | حصة ${e.slot} | ${e.subj} — فصل ${e.cls}${e.date?(' — '+e.date):''}`).join('\n');
-        navigator.clipboard.writeText(txt||'').then(()=>{
-          toast('تم النسخ ✅');
-          // تحليل
-          logUse('miyad:export');
-        });
+        navigator.clipboard.writeText(txt||'').then(()=>{ toast('تم النسخ ✅'); logUse('miyad:export'); });
       });
 
-      document.getElementById('print').addEventListener('click', ()=>{
-        window.print();
-        // تحليل
-        logUse('miyad:print');
-      });
+      document.getElementById('print').addEventListener('click', ()=>{ window.print(); logUse('miyad:print'); });
 
       document.getElementById('clear').addEventListener('click', ()=>{
-        if(confirm('حذف جميع مواعيد الفصل الدراسي؟')){
-          localStorage.removeItem(KEY); render();
-          // تحليل
-          logUse('miyad:clear_all');
-        }
+        if(confirm('حذف جميع مواعيد الفصل الدراسي؟')){ localStorage.removeItem(KEY); render(); logUse('miyad:clear_all'); }
       });
     });
 
-    // ====== إعدادات التذكير (سوبابيز + Auth0) ======
-    async function getAuthUser() {
-      try { return await window.auth?.getUser(); } catch (_) { return null; }
+    /* ====== إعدادات التذكير (Supabase + Auth0) ====== */
+    // نضمن أننا نرجع "client" فيه .from — وليس مكتبة supabase نفسها
+    function pickSupaClient(){
+      if (window.supa && typeof window.supa.from === 'function') return window.supa;
+      if (window.supabaseClient && typeof window.supabaseClient.from === 'function') return window.supabaseClient;
+      return null; // لا ترجّع window.supabase لأنها مجرد مكتبة createClient
     }
-    function getSupabase() {
-      return window.supa || window.supabase || window.supabaseClient || null;
+    async function waitForSupa(max=40){ // ~4 ثواني
+      for (let i=0;i<max;i++){
+        const c = pickSupaClient();
+        if (c) return c;
+        await new Promise(r=>setTimeout(r,100));
+      }
+      return null;
+    }
+    async function getAuthUser(){
+      try { return await window.auth?.getUser(); } catch(_) { return null; }
     }
 
     // تحميل الإعدادات
     async function loadReminderSettings() {
-      const sb = getSupabase();
+      const sb   = await waitForSupa();
       const user = await getAuthUser();
       if (!sb || !user) return;
 
@@ -260,12 +271,9 @@
         .from('miyad_settings')
         .select('reminders_enabled, remind_days_before')
         .eq('user_id', user.sub)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.warn('loadReminderSettings error:', error);
-        return;
-      }
+      if (error) { console.warn('loadReminderSettings error:', error); return; }
 
       const enable = data?.reminders_enabled ?? false;
       const days   = data?.remind_days_before ?? 2;
@@ -278,12 +286,9 @@
 
     // حفظ الإعدادات
     async function saveReminderSettings() {
-      const sb   = getSupabase();
+      const sb   = await waitForSupa();
       const user = await getAuthUser();
-      if (!sb || !user) {
-        (window.toast? toast('سجّلي دخولك أولًا') : alert('سجّلي دخولك أولًا'));
-        return;
-      }
+      if (!sb || !user) { (window.toast? toast('سجّلي دخولك أولًا') : alert('سجّلي دخولك أولًا')); return; }
 
       const cb   = document.getElementById('rem-enable');
       const sel  = document.getElementById('rem-days');
@@ -297,30 +302,18 @@
       };
 
       stat.textContent = 'جارٍ الحفظ…';
-      const { error } = await sb
-        .from('miyad_settings')
-        .upsert(payload, { onConflict: 'user_id' });
-
-      if (error) {
-        console.error('saveReminderSettings error:', error);
-        stat.textContent = 'تعذّر الحفظ';
-        (window.toast ? toast('تعذّر الحفظ') : null);
-        return;
-      }
+      const { error } = await sb.from('miyad_settings').upsert(payload, { onConflict: 'user_id' });
+      if (error) { console.error('saveReminderSettings error:', error); stat.textContent='تعذّر الحفظ'; toast('تعذّر الحفظ'); return; }
 
       stat.textContent = 'تم الحفظ ✓';
-      (window.toast ? toast('تم حفظ إعدادات التذكير ✓') : null);
+      toast('تم حفظ إعدادات التذكير ✓');
     }
 
     // ربط أزرار إعدادات التذكير + تحميل عند الجاهزية
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('rem-save')?.addEventListener('click', saveReminderSettings);
-
-      // من app.js يصدر حدث auth0:ready لما الـ SDK يجهز
       window.addEventListener('auth0:ready', loadReminderSettings);
-
-      // احتياط لو تأخر الحدث
-      setTimeout(loadReminderSettings, 1200);
+      setTimeout(loadReminderSettings, 1500); // احتياط
     });
   </script>
 
@@ -333,10 +326,10 @@
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
           onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-  <!-- حماية الصفحة (يتوقع وجود SDK جاهز) -->
+  <!-- حماية الصفحة -->
   <script defer src="assets/js/require-auth.js"></script>
 
-  <!-- سكربتات المشروع (لازم storage قبل app.js لأننا نستخدم bindAutoSave) -->
+  <!-- سكربتات المشروع -->
   <script defer src="assets/js/storage.js"></script>
   <script defer src="app.js"></script>
 </body>
