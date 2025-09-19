@@ -215,16 +215,15 @@
   // حفظ آخر إعدادات لإعادة استخدامها في "بدائل أكثر"
   let lastParams = null;
 
-  async function callMulham(params){
-    const res = await fetch('/.netlify/functions/mulham', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify(params),
-      cache: 'no-store'
-    });
-    if(!res.ok) throw new Error('Mulham function failed');
-    return await res.json();
-  }
+async function callMulham(body) {
+  const res = await fetch("/.netlify/functions/mulham", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error("Mulham function failed");
+  return res.json();
+}
 
   function readParams(withVariant=false){
     const subject = $('#s-subj').value.trim() || '';
