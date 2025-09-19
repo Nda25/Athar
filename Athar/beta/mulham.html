@@ -199,7 +199,7 @@
   <script defer src="app.js"></script>
 
   <script>
-const $ = window.$ ?? ((s)=>document.querySelector(s));
+window.$ = window.$ || ((s)=>document.querySelector(s));
   const liFill=(ul,items)=>{ ul.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ul.appendChild(li); }); }
   const olFill=(ol,items)=>{ ol.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ol.appendChild(li); }); }
 
