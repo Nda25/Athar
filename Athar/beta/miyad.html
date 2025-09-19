@@ -3,22 +3,32 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ميعاد </title>
+<title>ميعاد</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
 <style>
-  .field{ margin:8px 0 } .field label{ display:block; font-weight:700; margin:4px 0 }
+  .field{ margin:8px 0 }
+  .field label{ display:block; font-weight:700; margin:4px 0 }
   .field input,.field select{ width:100%; padding:10px; border-radius:10px; border:1px solid rgba(59,130,246,.35) }
-  .grid2{ display:grid; gap:12px; grid-template-columns:1fr } @media(min-width:900px){ .grid2{ grid-template-columns:1fr 1fr } }
+
+  .grid2{ display:grid; gap:12px; grid-template-columns:1fr }
+  @media(min-width:900px){ .grid2{ grid-template-columns:1fr 1fr } }
+
   .events{ margin-top:12px }
   .ev{ background:var(--card); border:1px solid rgba(59,130,246,.22); border-radius:12px; padding:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px }
   .ev .meta{ display:flex; gap:8px; flex-wrap:wrap; font-size:.9rem; opacity:.9 }
   .color{ width:14px; height:14px; border-radius:4px; border:1px solid rgba(0,0,0,.1) }
+
   .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:.9rem }
   .legend .pill{ padding:.18rem .5rem; border-radius:999px; border:1px solid rgba(59,130,246,.25) }
+
   .print-note{ text-align:center; margin-top:8px; opacity:.8 }
-  @media print{ .topbar,.actions-row,.controls,.btn,.toast{ display:none !important } .ev{ page-break-inside:avoid } }
+
+  @media print{
+    .topbar,.actions-row,.controls,.btn,.toast{ display:none !important }
+    .ev{ page-break-inside:avoid }
+  }
 </style>
 </head>
 <body>
@@ -40,28 +50,38 @@
 
   <main>
     <div class="container">
+      <!-- بطاقة إدخال المواعيد -->
       <section class="card controls">
         <h2 class="title">أضِف موعدًا إلى تقويم الفصل الدراسي</h2>
-        <div class="grid2">
-          <div class="field"><label>المادة</label><input id="m-subj" placeholder="مثال: علوم"></div>
-          <div class="field"><label>الفصل</label><input id="m-class" placeholder="مثال: 6/ب"></div>
-          <div class="field"><label>اليوم</label>
-            <select id="m-day">
-              <option>الأحد</option><option>الإثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option>
-            </select>
+        <form id="miyad-form">
+          <div class="grid2">
+            <div class="field"><label>المادة</label><input id="m-subj" placeholder="مثال: علوم"></div>
+            <div class="field"><label>الفصل</label><input id="m-class" placeholder="مثال: 6/ب"></div>
+
+            <div class="field">
+              <label>اليوم</label>
+              <select id="m-day">
+                <option>الأحد</option><option>الإثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option>
+              </select>
+            </div>
+
+            <div class="field"><label>الحصة رقم</label><input id="m-slot" type="number" min="1" max="10" value="1"></div>
+
+            <div class="field"><label>تاريخ (اختياري)</label><input id="m-date" type="date"></div>
+
+            <div class="field">
+              <label>لون</label>
+              <select id="m-color">
+                <option value="#60a5fa">أزرق</option>
+                <option value="#22c55e">أخضر</option>
+                <option value="#f59e0b">برتقالي</option>
+                <option value="#ef4444">أحمر</option>
+                <option value="#a78bfa">بنفسجي</option>
+              </select>
+            </div>
           </div>
-          <div class="field"><label>الحصة رقم</label><input id="m-slot" type="number" min="1" max="10" value="1"></div>
-          <div class="field"><label>تاريخ (اختياري)</label><input id="m-date" type="date"></div>
-          <div class="field"><label>لون</label>
-            <select id="m-color">
-              <option value="#60a5fa">أزرق</option>
-              <option value="#22c55e">أخضر</option>
-              <option value="#f59e0b">برتقالي</option>
-              <option value="#ef4444">أحمر</option>
-              <option value="#a78bfa">بنفسجي</option>
-            </select>
-          </div>
-        </div>
+        </form>
+
         <div class="actions-row">
           <button class="btn primary" id="add">إضافة موعد</button>
           <button class="btn" id="export">نسخ قائمة المواعيد</button>
@@ -70,6 +90,41 @@
         </div>
       </section>
 
+      <!-- بطاقة إعدادات التذكير عبر الإيميل -->
+      <section class="card" id="reminder-card" style="margin-top:14px">
+        <h2 class="title">التذكير عبر البريد ✉️</h2>
+        <div class="grid2">
+          <div class="field inline">
+            <label style="display:flex;align-items:center;gap:8px">
+              <input type="checkbox" id="rem-enable">
+              تفعيل التذكير بالإيميل
+            </label>
+            <div class="muted" style="margin-top:6px">
+              سنرسل تذكيرًا قبل الموعد بعدد الأيام الذي تختارينه.
+            </div>
+          </div>
+
+          <div class="field">
+            <label>قبل الموعد بـ</label>
+            <select id="rem-days">
+              <option value="1">يوم واحد</option>
+              <option value="2" selected>يومين</option>
+              <option value="3">3 أيام</option>
+              <option value="4">4 أيام</option>
+              <option value="5">5 أيام</option>
+              <option value="6">6 أيام</option>
+              <option value="7">7 أيام</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button class="btn" id="rem-save">حفظ إعدادات التذكير</button>
+          <span id="rem-status" class="muted"></span>
+        </div>
+      </section>
+
+      <!-- قائمة المواعيد -->
       <section class="card">
         <h2 class="title">مواعيد الفصل الدراسي ⏰</h2>
         <div class="legend">
@@ -83,87 +138,206 @@
   </main>
 
   <footer>
-    <p class="foot-line">التخطيط هدية للوقت… والأثر ثمرته.</p>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
 
   <div class="toast" id="toast"></div>
 
+  <!-- ========== سكربت الصفحة: منطق ميعاد + التحليلات + إعدادات التذكير ========== -->
   <script>
-  const KEY='mi3ad:events';
-  function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
-  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(_){ return [] } }
-  function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
-  function render(){
-    const box=document.getElementById('list'); box.innerHTML='';
-    const daysOrder={'الأحد':1,'الإثنين':2,'الثلاثاء':3,'الأربعاء':4,'الخميس':5};
-    const items=load().sort((a,b)=> (daysOrder[a.day]-daysOrder[b.day]) || (a.slot-b.slot));
-    if(!items.length){ box.innerHTML='<p class="muted">لا توجد مواعيد بعد.</p>'; return; }
-    items.forEach((e,i)=>{
-      const d=document.createElement('div'); d.className='ev';
-      d.innerHTML=`
-        <div class="meta">
-          <span class="color" style="background:${e.color}"></span>
-          <strong>${e.subj}</strong>
-          <span>— فصل ${e.cls}</span>
-          <span>— ${e.day} (حصة ${e.slot})</span>
-          ${e.date?`<span>— ${e.date}</span>`:''}
-        </div>
-        <a href="#" data-i="${i}" class="btn ghost" style="padding:6px 10px">حذف</a>`;
-      box.appendChild(d);
+    // ====== أدوات بسيطة ======
+    const KEY='mi3ad:events';
+    function toast(m){ const t=document.getElementById('toast'); if(!t) return; t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
+    function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(_){ return [] } }
+    function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
+
+    // رندر القائمة
+    function render(){
+      const box=document.getElementById('list'); box.innerHTML='';
+      const daysOrder={'الأحد':1,'الإثنين':2,'الثلاثاء':3,'الأربعاء':4,'الخميس':5};
+      const items=load().sort((a,b)=> (daysOrder[a.day]-daysOrder[b.day]) || (a.slot-b.slot));
+      if(!items.length){ box.innerHTML='<p class="muted">لا توجد مواعيد بعد.</p>'; return; }
+      items.forEach((e,i)=>{
+        const d=document.createElement('div'); d.className='ev';
+        d.innerHTML=`
+          <div class="meta">
+            <span class="color" style="background:${e.color}"></span>
+            <strong>${e.subj}</strong>
+            <span>— فصل ${e.cls}</span>
+            <span>— ${e.day} (حصة ${e.slot})</span>
+            ${e.date?`<span>— ${e.date}</span>`:''}
+          </div>
+          <a href="#" data-i="${i}" class="btn ghost" style="padding:6px 10px">حذف</a>`;
+        box.appendChild(d);
+      });
+    }
+
+    // ====== تحليلات الاستخدام (يستدعي supaLogToolUsage إن وُجد) ======
+    function logUse(tag){
+      try {
+        if (typeof supaLogToolUsage === 'function') supaLogToolUsage(tag);
+      } catch(_) {}
+    }
+
+    // أحداث الأزرار الأساسية
+    document.addEventListener('DOMContentLoaded', ()=>{
+      // تخزين تلقائي لمدخلات النموذج (الدالة موجودة عندك في storage.js)
+      if (typeof bindAutoSave === 'function') {
+        bindAutoSave('miyad', '#miyad-form');
+      }
+
+      // عرض أولي
+      render();
+
+      // “مشاهدة الصفحة”
+      logUse('miyad:view');
+
+      document.getElementById('add').addEventListener('click', ()=>{
+        const subj=document.getElementById('m-subj').value.trim();
+        const cls =document.getElementById('m-class').value.trim();
+        const day =document.getElementById('m-day').value;
+        const slot=+document.getElementById('m-slot').value||1;
+        const date=document.getElementById('m-date').value;
+        const color=document.getElementById('m-color').value;
+
+        if(!subj||!cls){ toast('أدخلي المادة والفصل'); return; }
+
+        const list=load(); list.push({subj,cls,day,slot,date,color});
+        save(list); render(); toast('تمت الإضــافة ✅');
+
+        // تحليل
+        logUse('miyad:add_event');
+      });
+
+      document.getElementById('list').addEventListener('click', (e)=>{
+        const a=e.target.closest('a[data-i]'); if(!a) return; e.preventDefault();
+        const i=+a.getAttribute('data-i'); const list=load(); list.splice(i,1); save(list); render();
+
+        // تحليل
+        logUse('miyad:delete_event');
+      });
+
+      document.getElementById('export').addEventListener('click', ()=>{
+        const txt=load().map(e=>`${e.day} | حصة ${e.slot} | ${e.subj} — فصل ${e.cls}${e.date?(' — '+e.date):''}`).join('\n');
+        navigator.clipboard.writeText(txt||'').then(()=>{
+          toast('تم النسخ ✅');
+          // تحليل
+          logUse('miyad:export');
+        });
+      });
+
+      document.getElementById('print').addEventListener('click', ()=>{
+        window.print();
+        // تحليل
+        logUse('miyad:print');
+      });
+
+      document.getElementById('clear').addEventListener('click', ()=>{
+        if(confirm('حذف جميع مواعيد الفصل الدراسي؟')){
+          localStorage.removeItem(KEY); render();
+          // تحليل
+          logUse('miyad:clear_all');
+        }
+      });
     });
-  }
-  document.getElementById('add').addEventListener('click', ()=>{
-    const subj=document.getElementById('m-subj').value.trim();
-    const cls =document.getElementById('m-class').value.trim();
-    const day =document.getElementById('m-day').value;
-    const slot=+document.getElementById('m-slot').value||1;
-    const date=document.getElementById('m-date').value;
-    const color=document.getElementById('m-color').value;
-    if(!subj||!cls){ toast('أدخلي المادة والفصل'); return; }
-    const list=load(); list.push({subj,cls,day,slot,date,color}); save(list); render(); toast('تمت الإضــافة ✅');
-  });
-  document.getElementById('list').addEventListener('click', (e)=>{
-    const a=e.target.closest('a[data-i]'); if(!a) return; e.preventDefault();
-    const i=+a.getAttribute('data-i'); const list=load(); list.splice(i,1); save(list); render();
-  });
-  document.getElementById('export').addEventListener('click', ()=>{
-    const txt=load().map(e=>`${e.day} | حصة ${e.slot} | ${e.subj} — فصل ${e.cls}${e.date?(' — '+e.date):''}`).join('\n');
-    navigator.clipboard.writeText(txt||'').then(()=>toast('تم النسخ ✅'));
-  });
-  document.getElementById('print').addEventListener('click', ()=>window.print());
-  document.getElementById('clear').addEventListener('click', ()=>{
-    if(confirm('حذف جميع مواعيد الفصل الدراسي؟')){ localStorage.removeItem(KEY); render(); }
-  });
-  render();
+
+    // ====== إعدادات التذكير (سوبابيز + Auth0) ======
+    async function getAuthUser() {
+      try { return await window.auth?.getUser(); } catch (_) { return null; }
+    }
+    function getSupabase() {
+      return window.supa || window.supabase || window.supabaseClient || null;
+    }
+
+    // تحميل الإعدادات
+    async function loadReminderSettings() {
+      const sb = getSupabase();
+      const user = await getAuthUser();
+      if (!sb || !user) return;
+
+      const { data, error } = await sb
+        .from('miyad_settings')
+        .select('reminders_enabled, remind_days_before')
+        .eq('user_id', user.sub)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.warn('loadReminderSettings error:', error);
+        return;
+      }
+
+      const enable = data?.reminders_enabled ?? false;
+      const days   = data?.remind_days_before ?? 2;
+
+      const cb  = document.getElementById('rem-enable');
+      const sel = document.getElementById('rem-days');
+      if (cb)  cb.checked = !!enable;
+      if (sel) sel.value  = String(days);
+    }
+
+    // حفظ الإعدادات
+    async function saveReminderSettings() {
+      const sb   = getSupabase();
+      const user = await getAuthUser();
+      if (!sb || !user) {
+        (window.toast? toast('سجّلي دخولك أولًا') : alert('سجّلي دخولك أولًا'));
+        return;
+      }
+
+      const cb   = document.getElementById('rem-enable');
+      const sel  = document.getElementById('rem-days');
+      const stat = document.getElementById('rem-status');
+
+      const payload = {
+        user_id: user.sub,
+        email:   user.email || null,
+        reminders_enabled: !!cb.checked,
+        remind_days_before: Number(sel.value || 2)
+      };
+
+      stat.textContent = 'جارٍ الحفظ…';
+      const { error } = await sb
+        .from('miyad_settings')
+        .upsert(payload, { onConflict: 'user_id' });
+
+      if (error) {
+        console.error('saveReminderSettings error:', error);
+        stat.textContent = 'تعذّر الحفظ';
+        (window.toast ? toast('تعذّر الحفظ') : null);
+        return;
+      }
+
+      stat.textContent = 'تم الحفظ ✓';
+      (window.toast ? toast('تم حفظ إعدادات التذكير ✓') : null);
+    }
+
+    // ربط أزرار إعدادات التذكير + تحميل عند الجاهزية
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('rem-save')?.addEventListener('click', saveReminderSettings);
+
+      // من app.js يصدر حدث auth0:ready لما الـ SDK يجهز
+      window.addEventListener('auth0:ready', loadReminderSettings);
+
+      // احتياط لو تأخر الحدث
+      setTimeout(loadReminderSettings, 1200);
+    });
   </script>
-<!-- Supabase -->
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
 
-<!-- Auth0 SDK (بدون defer لضمان الجاهزية قبل require-auth) -->
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+  <!-- ========== المكتبات بالترتيب الصحيح ========== -->
+  <!-- Supabase -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
 
-<!-- حماية الصفحة (يتوقع وجود SDK جاهز) -->
-<script defer src="assets/js/require-auth.js"></script>
+  <!-- Auth0 SDK (بدون defer لضمان الجاهزية قبل require-auth) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-<!-- سكربتات المشروع (لازم storage قبل app.js لأننا نستخدم bindAutoSave) -->
-<script defer src="assets/js/storage.js"></script>
-<script defer src="app.js"></script>
+  <!-- حماية الصفحة (يتوقع وجود SDK جاهز) -->
+  <script defer src="assets/js/require-auth.js"></script>
 
-<!-- كود الصفحة -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // أوتو-حفظ نموذج ميعاد
-    bindAutoSave('miyad', '#miyad-form');
-
-    // زر تشغيل الأداة
-    document.getElementById('go')?.addEventListener('click', async () => {
-      // ✅ الاسم الصحيح للدالة هو supaLogToolUsage
-      await supaLogToolUsage('miyad');
-    });
-  });
-</script>
+  <!-- سكربتات المشروع (لازم storage قبل app.js لأننا نستخدم bindAutoSave) -->
+  <script defer src="assets/js/storage.js"></script>
+  <script defer src="app.js"></script>
 </body>
 </html>
