@@ -392,3 +392,7 @@ input::placeholder{ color:#64748b }
   display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 0;
 }
 .card .mini-actions .btn{ padding:.55rem .9rem; border-radius:10px; }
+/* مسافة بين أقسام الصفحة التعريفية */
+main section {
+  margin-bottom: 28px;   /* المسافة اللي تناسبك */
+}
