@@ -114,7 +114,17 @@ async function initAuth0(){
     console.error("[Auth0] init error:", err);
   }
 }
-
+// يحفظ/يحدّث المستخدم في Supabase اعتماداً على بيانات Auth0
+async function supaEnsureUserFromAuth0() {
+  try {
+    const u = await window.auth?.getUser();
+    if (!u || !u.email) return;
+    await supaEnsureUser({
+      email: String(u.email).toLowerCase(),
+      full_name: u.name || u.nickname || null
+    });
+  } catch (_) {}
+}
 /* ============================== Entry ============================== */
 document.addEventListener('DOMContentLoaded', async () => {
   bindThemeToggle();
@@ -168,7 +178,29 @@ window.addEventListener('auth0:ready', async () => {
     setButtons(false);
   }
 }, { once: true });
+  
+// بعد جاهزية Auth0: احفظ المستخدم وسجّل مشاهدة الصفحة حسب اسم الملف
+window.addEventListener('auth0:ready', async () => {
+  await supaEnsureUserFromAuth0();
 
+  const path = location.pathname.toLowerCase();
+
+  const pageToTool = {
+    'miyad.html' : 'miyad',
+    'masar.html' : 'masar',
+    'ethraa.html': 'ethraa',
+    'mulham.html': 'mulham',
+    'athar.html' : 'muntalaq',
+    'darsi.html' : 'murtakaz'
+  };
+
+  for (const [file, tool] of Object.entries(pageToTool)) {
+    if (path.endsWith('/' + file) || path.endsWith(file)) {
+      supaLogToolUsage(`${tool}:view`);
+      break;
+    }
+  }
+});
 // فعليًا نهيّئ Auth0 (يطلق حدث auth0:ready داخله)
 await initAuth0();
 
