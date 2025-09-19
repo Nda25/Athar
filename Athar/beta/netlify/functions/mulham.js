@@ -26,9 +26,12 @@ exports.handler = async (event) => {
     const bloomLabel = {
       remember:"تذكّر", understand:"فهم", apply:"تطبيق", analyze:"تحليل", evaluate:"تقويم", create:"ابتكار"
     }[bloom] || bloom;
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+    
+    
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+}
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model  = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
