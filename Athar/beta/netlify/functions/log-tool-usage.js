@@ -1,55 +1,30 @@
-const { createClient } = require('@supabase/supabase-js');
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const serviceKey  = process.env.SUPABASE_SERVICE_ROLE;
-const supaAdmin   = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
-
+// يرسل السجل إلى Netlify Function
+async function supaLogToolUsage(toolName, meta = {}) {
   try {
-    const body = JSON.parse(event.body || '{}');
-    let   { tool_name, user_sub, path, meta } = body;
+    // نحاول جلب user_sub من Auth0 إن وُجد
+    let user_sub = null;
+    try {
+      const u = await window.auth?.getUser();
+      user_sub = u?.sub || null;
+    } catch (_) {}
 
-    if (!tool_name) {
-      return { statusCode: 400, body: 'missing tool_name' };
+    const res = await fetch('/.netlify/functions/log-tool-usage', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        tool_name: toolName,
+        user_sub,
+        path: location.pathname,
+        meta
+      })
+    });
+
+    if (!res.ok && res.status !== 204) {
+      // 204 = ما فيه مستخدم، ونتجاهل بهدوء
+      return { ok:false, error: await res.text() };
     }
-    if (!user_sub) {
-      // نكتفي بتجاهل التسجيل إذا ما فيه مستخدم مُسجّل
-      return { statusCode: 204, body: '' };
-    }
-
-    const ua = event.headers['user-agent'] || null;
-    const ip = event.headers['x-nf-client-connection-ip']
-            || event.headers['x-forwarded-for']
-            || event.headers['client-ip']
-            || null;
-
-    const payload = {
-      tool_name,
-      user_sub,
-      path: path || null,
-      meta: meta || {},
-      user_agent: ua,
-      ip
-    };
-
-    const { data, error } = await supaAdmin
-      .from('tool_usage')
-      .insert(payload)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('log-tool-usage error:', error);
-      return { statusCode: 500, body: error.message };
-    }
-
-    return { statusCode: 200, body: JSON.stringify({ ok: true, item: data }) };
+    return { ok:true, data: (res.status === 204 ? null : await res.json()) };
   } catch (e) {
-    console.error('log-tool-usage exception:', e);
-    return { statusCode: 500, body: 'server error' };
+    return { ok:false, error: e.message };
   }
-};
+}
