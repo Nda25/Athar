@@ -159,11 +159,11 @@ function setButtons(isAuth) {
   if (logoutBtn) {
     logoutBtn.onclick = () => window.auth?.logout();
   }
-// اسمعي الجاهزية قبل التهيئة (عشان ما يفوتنا الحدث)
+// اسمعي الجاهزية قبل التهيئة (عشان ما يفوتنا الحدث)// اسمعي الجاهزية قبل التهيئة (عشان ما يفوتنا الحدث)
 window.addEventListener('auth0:ready', async () => {
   try {
     const ok = await window.auth.isAuthenticated();
-    setButtons(ok); // setButtons تُظهر/تُخفي login/register/logout + #nav-profile
+    setButtons(ok); // تُظهر/تُخفي login/register/logout + #nav-profile
   } catch {
     setButtons(false);
   }
@@ -181,3 +181,4 @@ if (window.auth) {
     setButtons(false);
   }
 }
+});
