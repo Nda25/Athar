@@ -1,4 +1,4 @@
-<!-- محتوى هذا البلوك هو app.js وليس داخل HTML. فقط للصق في app.js -->
+
 /* أدوات صغيرة */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
