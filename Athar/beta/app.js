@@ -1,7 +1,8 @@
 
 /* أدوات صغيرة */
-const $  = (sel, root=document) => root.querySelector(sel);
-const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+// لا تعرّفي const/let مرّة ثانية؛ استخدمي حارس على window
+if (!window.$)  window.$  = (sel, root=document) => root.querySelector(sel);
+if (!window.$$) window.$$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
 /* ============================== Theme ============================== */
 (function unifyDarkClass(){
