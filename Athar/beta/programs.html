@@ -93,7 +93,15 @@
   </footer>
 
   <div class="toast" id="toast"></div>
-  <script src="app.js"></script>
+  <!-- SDKs -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+
+<!-- سكربتات مشروعك -->
+<script src="assets/js/supabase-client.js"></script>
+<script src="app.js"></script>
   <script>
   const quotes = [
     "كل بذرة معرفة تُزرع اليوم، ستثمر غدًا أثرًا لا يزول 🌱",
