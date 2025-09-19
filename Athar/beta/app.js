@@ -125,11 +125,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logoutBtn   = document.getElementById('logout');
 
   // حالة ابتدائية آمنة
-  function setButtons(isAuth) {
-    if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
-    if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
-    if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
-  }
+function setButtons(isAuth) {
+  if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
+  if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
+  if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
+
+  const profileLink = document.getElementById('nav-profile');
+  if (profileLink) profileLink.style.display = isAuth ? '' : 'none';
+}
   setButtons(false); // دخول/تسجيل ظاهر، خروج مخفي
 
   // نقرأ كود الدعوة من رابط الصفحة (إن وُجد)
