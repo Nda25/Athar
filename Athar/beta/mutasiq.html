@@ -8,8 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
-  <script defer src="app.js"></script>
-  <script defer src="assets/js/mutasiq.js"></script>
+
   <style>
     /* خصوصيات متَّسِق الخفيفة (تكمل style.css) */
     .wizard { display:grid; gap:14px }
@@ -282,7 +281,26 @@
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
   </footer>
+  <!-- Auth0 SDK -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
+  <!-- حماية الصفحة -->
+  <script defer src="assets/js/require-auth.js" data-plan="paid"></script>
+  <!-- لو الصفحة مجانية اشيل data-plan -->
+
+  <!-- Supabase -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
+
+  <!-- التخزين والأدوات العامة -->
+  <script defer src="assets/js/storage.js"></script>
+
+  <!-- أساس التطبيق -->
+  <script defer src="app.js"></script>
+
+  <!-- سكربت الأداة نفسها -->
+  <script defer src="assets/js/mutasiq.js"></script>
   <div id="toast" class="toast"></div>
 </body>
 </html>
