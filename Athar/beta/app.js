@@ -10,6 +10,9 @@ if (typeof window.AUTH0_CLIENT === 'undefined') {
 // لاحقًا عندما يستدعي الكود:
 const AUTH0_DOMAIN = window.AUTH0_DOMAIN;
 const AUTH0_CLIENT = window.AUTH0_CLIENT;
+/* أدوات صغيرة */
+const $  = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 /* ============================== Theme ============================== */
 (function unifyDarkClass(){
   const root = document.documentElement, body = document.body;
