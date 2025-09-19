@@ -156,27 +156,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (logoutBtn) {
     logoutBtn.onclick = () => window.auth?.logout();
   }
-
-  // اسمعي الجاهزية قبل التهيئة (عشان ما يفوتنا الحدث)
-  window.addEventListener('auth0:ready', async () => {
-    try {
-      const ok = await window.auth.isAuthenticated();
-      setButtons(ok);
-    } catch {
-      setButtons(false);
-    }
-  }, { once:true });
-
-  // فعليًا نهيّئ Auth0 (يطلق حدث auth0:ready داخله)
-  await initAuth0();
-
-  // باك-أب: لو الحدث فاتنا وكان window.auth جاهز، حدّثي الآن
-  if (window.auth) {
-    try {
-      const ok = await window.auth.isAuthenticated();
-      setButtons(ok);
-    } catch {
-      setButtons(false);
-    }
+// اسمعي الجاهزية قبل التهيئة (عشان ما يفوتنا الحدث)
+window.addEventListener('auth0:ready', async () => {
+  try {
+    const ok = await window.auth.isAuthenticated();
+    setButtons(ok); // setButtons تُظهر/تُخفي login/register/logout + #nav-profile
+  } catch {
+    setButtons(false);
   }
-});
+}, { once: true });
+
+// فعليًا نهيّئ Auth0 (يطلق حدث auth0:ready داخله)
+await initAuth0();
+
+// باك-أب: لو الحدث فاتنا وكان window.auth جاهز، حدّثي الآن
+if (window.auth) {
+  try {
+    const ok = await window.auth.isAuthenticated();
+    setButtons(ok);
+  } catch {
+    setButtons(false);
+  }
+}
