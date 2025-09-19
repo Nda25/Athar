@@ -13,28 +13,45 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
+  // ✅ تأكيد متغيرات البيئة
+  if (!supabaseUrl || !serviceKey) {
+    console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE');
+    return { statusCode: 500, body: 'server misconfigured' };
+  }
+
   try {
     const body = JSON.parse(event.body || '{}');
-    const { tool_name, user_email, meta } = body;
+    let { tool_name, user_email, meta } = body;
 
     if (!tool_name) {
       return { statusCode: 400, body: 'missing tool_name' };
     }
 
+    // ✅ تطبيع meta: خزّنيه كـ JSON صالح دائمًا
+    // لو عمودك في Supabase نوعه json/jsonb فهذا ممتاز.
+    // لو كان TEXT، غيّريه إلى jsonb أو فعلياً نخزّنه كسلسلة.
+    if (meta == null) meta = {};
+    if (typeof meta === 'string') {
+      try { meta = JSON.parse(meta); } catch { meta = { value: meta }; }
+    }
+    if (typeof meta !== 'object') {
+      meta = { value: String(meta) };
+    }
+
     const payload = {
-      tool_name,
-      user_email: user_email || null,
-      meta: meta || {}
+      tool_name: String(tool_name),
+      user_email: user_email ? String(user_email).toLowerCase() : null,
+      meta
     };
 
     const { data, error } = await supaAdmin
       .from('tool_usage')
-      .insert(payload)
+      .insert([payload])   // 👈 الأفضل كمصفوفة
       .select()
       .single();
 
     if (error) {
-      console.error(error);
+      console.error('Supabase insert error:', error);
       return { statusCode: 500, body: error.message };
     }
 
@@ -43,7 +60,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ ok: true, item: data })
     };
   } catch (e) {
-    console.error(e);
-    return { statusCode: 500, body: 'server error' };
+    console.error('handler error:', e);
+    return { statusCode: 500, body: e.message || 'server error' };
   }
 };
