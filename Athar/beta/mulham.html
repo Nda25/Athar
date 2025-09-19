@@ -3,18 +3,40 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>مُـلـهـم </title>
+<title>مُـلـهـم</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="dark light" />
 <style>
+  :root{ --accent:#3b82f6; }
   .field{ margin:10px 0 } .field label{ display:block; font-weight:700; margin:6px 0 }
   .field input,.field select{ width:100%; padding:12px; border-radius:12px; border:1px solid rgba(59,130,246,.35) }
-  .cols-3{ display:grid; gap:12px; grid-template-columns:1fr } @media(min-width:900px){ .cols-3{ grid-template-columns:1fr 1fr 1fr } }
-  .printable{ border:1px dashed rgba(59,130,246,.35); border-radius:12px; padding:14px; margin-top:8px; background:rgba(255,255,255,.5) }
-  .dark .printable{ background:rgba(17,24,39,.35) }
+  .cols-3{ display:grid; gap:12px; grid-template-columns:1fr }
+  @media(min-width:900px){ .cols-3{ grid-template-columns:1fr 1fr 1fr } }
+
+  .actions-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px }
+
+  .printable{
+    border:1px solid color-mix(in oklab, var(--accent) 40%, #cbd5e1);
+    border-radius:12px; padding:14px; margin-top:8px; background:var(--card)
+  }
+  .set-card{ border:1px dashed rgba(59,130,246,.35); border-radius:10px; padding:10px; margin-top:12px }
+  .set-card h3{ margin:0 0 6px }
+  .muted{ color: var(--muted) }
   .list{ margin:0; padding-inline-start:1.2rem }
-  @media print{ .topbar,.actions-row,.field,.btn{ display:none !important } }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 }
+  .chip{ background:color-mix(in oklab, var(--accent) 14%, #fff); padding:4px 8px; border-radius:999px; font-size:.9rem }
+
+  .diff-box{ background:color-mix(in oklab, var(--accent) 10%, #fff); border-radius:8px; padding:8px; margin-top:8px; font-size:.95rem }
+
+  .btn[disabled]{ opacity:.5; cursor:not-allowed }
+
+  @media print{
+    .topbar, .actions-row, .field, .btn, .cols-3, .toast { display:none !important }
+    .card{ box-shadow:none; border:none }
+    @page { size:A4 portrait; margin:10mm }
+    .printable{ border-color:#999 }
+  }
 </style>
 </head>
 <body>
@@ -30,43 +52,130 @@
   <header>
     <div class="hero">
       <h1 class="logo">مـُلـهـم</h1>
-      <div class="tag"><span class="dot"></span>كل دقيقة تحمل فكرة، وكل فكرة تُخلّد أثرًا </div>
+      <div class="tag"><span class="dot"></span>كل دقيقة تحمل فكرة، وكل فكرة تُخلّد أثرًا</div>
     </div>
   </header>
 
   <main>
     <div class="container">
+
+      <!-- المدخلات -->
       <section class="card">
         <h2 class="title">مدخلات سريعة</h2>
-        <div class="cols-3">
-          <div class="field"><label>المادة</label><input id="s-subj" placeholder="مثال: رياضيات"></div>
-          <div class="field"><label>الوقت المتاح (دقيقة)</label><select id="s-time"><option>10</option><option selected>20</option><option>30</option></select></div>
-          <div class="field"><label>مستوى بلوم</label>
-            <select id="s-bloom"><option value="remember">تذكّر</option><option value="understand" selected>فهم</option><option value="apply">تطبيق</option><option value="analyze">تحليل</option></select>
+        <form id="mulham-form">
+          <div class="cols-3">
+            <div class="field"><label>المادة</label><input id="s-subj" name="s-subj" placeholder="مثال: رياضيات"></div>
+            <div class="field"><label>الوقت المتاح (دقيقة)</label>
+              <select id="s-time" name="s-time"><option>10</option><option selected>20</option><option>30</option><option>40</option></select>
+            </div>
+            <div class="field"><label>مستوى بلوم</label>
+              <select id="s-bloom" name="s-bloom">
+                <option value="remember">تذكّر</option>
+                <option value="understand" selected>فهم</option>
+                <option value="apply">تطبيق</option>
+                <option value="analyze">تحليل</option>
+                <option value="create">ابتكار</option>
+              </select>
+            </div>
+            <div class="field"><label>المرحلة</label>
+              <select id="s-age" name="s-age">
+                <option value="p1">ابتدائي دُنيا</option>
+                <option value="p2" selected>ابتدائي عُليا</option>
+                <option value="m">متوسط</option>
+                <option value="h">ثانوي</option>
+              </select>
+            </div>
+
+            <div class="field" style="grid-column:1/-1">
+              <label>الموضوع (اختياري)</label>
+              <input id="s-topic" name="s-topic" placeholder="الكسور / التجوية / الفاعل …">
+            </div>
+
+            <!-- قيود وتكييف -->
+            <div class="field">
+              <label><input type="checkbox" id="s-noTools"> بدون أدوات/كروت/قص ولصق (Zero-prep)</label>
+            </div>
+            <div class="field">
+              <label><input type="checkbox" id="s-adaptLow"> تكييف: لذوي التحفيز المنخفض</label>
+            </div>
+            <div class="field">
+              <label><input type="checkbox" id="s-adaptDiff"> تكييف: فروق فردية</label>
+            </div>
           </div>
-          <div class="field"><label>المرحلة</label>
-            <select id="s-age"><option value="p1">ابتدائي دُنيا</option><option value="p2" selected>ابتدائي عُليا</option><option value="m">متوسط</option><option value="h">ثانوي</option></select>
-          </div>
-          <div class="field" style="grid-column:1/-1"><label>الموضوع (اختياري)</label><input id="s-topic" placeholder="الكسور / التجوية / الفاعل …"></div>
-        </div>
+        </form>
+
         <div class="actions-row">
-          <button class="btn primary" id="go">ولّدي النشاط الآن</button>
+          <button class="btn primary" id="go">ولّدي الأنشطة الآن</button>
+          <button class="btn" id="more">بدائل أكثر</button>
           <button class="btn" id="copy">نسخ</button>
+          <button class="btn" id="pdf" disabled title="قريبًا">بطاقات PDF</button>
           <button class="btn" id="print">طباعة</button>
         </div>
       </section>
 
+      <!-- المخرجات -->
       <section class="card" id="out" style="display:none">
-        <h2 class="title">النشاط المقترح</h2>
-        <div class="printable">
-          <h3 style="margin:0 0 6px">وصف مختصر</h3>
-          <p id="o-desc" class="muted">—</p>
-          <h3 style="margin:10px 0 6px">الخطوات</h3>
-          <ol id="o-steps" class="list" style="margin:0"></ol>
-          <h3 style="margin:10px 0 6px">تذكرة خروج</h3>
-          <p id="o-exit">—</p>
+        <h2 class="title">الحزم المقترحة</h2>
+        <div class="printable" id="printArea">
+
+          <div id="meta" class="chips"></div>
+
+          <div class="set-card" id="set-mv">
+            <h3>نشاط صفّي حركي</h3>
+            <p class="muted" id="mv-idea"><strong>مدخل الفكرة:</strong> —</p>
+            <p id="mv-desc" class="muted">—</p>
+            <div class="chips"><span class="chip" id="mv-dur">—</span></div>
+            <h4 style="margin:8px 0 4px">المواد</h4>
+            <ul id="mv-mats" class="list"></ul>
+            <h4 style="margin:8px 0 4px">الخطوات</h4>
+            <ol id="mv-steps" class="list"></ol>
+            <h4 style="margin:8px 0 4px">تذكرة خروج</h4>
+            <p id="mv-exit">—</p>
+            <h4 style="margin:8px 0 4px">الأثر المتوقع</h4>
+            <p id="mv-impact">—</p>
+            <div id="mv-diff" class="diff-box" style="display:none"></div>
+          </div>
+
+          <div class="set-card" id="set-gr">
+            <h3>نشاط صفّي جماعي</h3>
+            <p class="muted" id="gr-idea"><strong>مدخل الفكرة:</strong> —</p>
+            <p id="gr-desc" class="muted">—</p>
+            <div class="chips"><span class="chip" id="gr-dur">—</span></div>
+            <h4 style="margin:8px 0 4px">المواد</h4>
+            <ul id="gr-mats" class="list"></ul>
+            <h4 style="margin:8px 0 4px">الخطوات</h4>
+            <ol id="gr-steps" class="list"></ol>
+            <h4 style="margin:8px 0 4px">تذكرة خروج</h4>
+            <p id="gr-exit">—</p>
+            <h4 style="margin:8px 0 4px">الأثر المتوقع</h4>
+            <p id="gr-impact">—</p>
+            <div id="gr-diff" class="diff-box" style="display:none"></div>
+          </div>
+
+          <div class="set-card" id="set-in">
+            <h3>نشاط صفّي فردي</h3>
+            <p class="muted" id="in-idea"><strong>مدخل الفكرة:</strong> —</p>
+            <p id="in-desc" class="muted">—</p>
+            <div class="chips"><span class="chip" id="in-dur">—</span></div>
+            <h4 style="margin:8px 0 4px">المواد</h4>
+            <ul id="in-mats" class="list"></ul>
+            <h4 style="margin:8px 0 4px">الخطوات</h4>
+            <ol id="in-steps" class="list"></ol>
+            <h4 style="margin:8px 0 4px">تذكرة خروج</h4>
+            <p id="in-exit">—</p>
+            <h4 style="margin:8px 0 4px">الأثر المتوقع</h4>
+            <p id="in-impact">—</p>
+            <div id="in-diff" class="diff-box" style="display:none"></div>
+          </div>
+
+          <div class="set-card">
+            <h3>تلميحات للتكييف</h3>
+            <ul id="tips" class="list"></ul>
+          </div>
+
         </div>
       </section>
+
     </div>
   </main>
 
@@ -76,70 +185,180 @@
   </footer>
 
   <div class="toast" id="toast"></div>
-  <script src="app.js"></script>
-  <script>
-  const TEMPLATES={
-    remember:{desc:t=>`نشاط تذكّر ${t}: استرجاع سريع للمفاهيم الأساسية.`, steps:(age)=>[
-      'اعرضي 6 بطاقات مصطلحات (1 دقيقة).','لعبة: ارفعي بطاقة واسألي: من يذكر التعريف؟ (8 دقائق).','سجلي 3 أهم مصطلحات على السبورة (3 دقائق).'
-    ], exit:t=>`اذكري مصطلحين أساسيين في "${t}".`},
-    understand:{desc:t=>`نشاط فهم ${t}: شرح بفهم شخصي.`, steps:(age)=>[
-      'زوجي الطالبات: شاركي مثالًا واقعيًا للموضوع (3 دقائق).','كل ثنائي يصوغ شرحًا مبسطًا (8 دقائق).','مشاركة سريعة لثلاث ثنائيات (5 دقائق).'
-    ], exit:t=>`اشرحي "${t}" بجملة من صياغتك.`},
-    apply:{desc:t=>`نشاط تطبيق ${t}: استخدام الفكرة في مهمة قصيرة.`, steps:(age)=>[
-      'قدّمي مسألة/موقف حقيقي (3 دقائق).','حل فردي ثم تبادل الحلول مع زميلة (10 دقائق).','نقاش من 3 نقاط قوة في حلّين مختلفين (5 دقائق).'
-    ], exit:t=>`طبّقي "${t}" في مثال من واقعك.`},
-    analyze:{desc:t=>`نشاط تحليل ${t}: تفكيك ومقارنة.`, steps:(age)=>[
-      'خريطة مفاهيم ثنائية (5 دقائق).','قارني بين جزأين/حالتين (10 دقائق).','تلخيص الفرق بنقطتين (5 دقائق).'
-    ], exit:t=>`قارني بين عنصرين في "${t}" بنقطتين.`}
-  };
-  function fillList(id, arr){ const el=document.getElementById(id); el.innerHTML=''; arr.forEach(x=>{ const li=document.createElement('li'); li.textContent=x; el.appendChild(li); }); }
-  function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
 
-  document.getElementById('go').addEventListener('click',()=>{
-    const subj=(document.getElementById('s-subj').value||'مادتك').trim();
-    const topic=(document.getElementById('s-topic').value||subj).trim();
-    const bloom=document.getElementById('s-bloom').value;
-    const tpl=TEMPLATES[bloom]||TEMPLATES.understand;
-    document.getElementById('o-desc').textContent = tpl.desc(topic);
-    fillList('o-steps', tpl.steps());
-    document.getElementById('o-exit').textContent = tpl.exit(topic);
-    document.getElementById('out').style.display='';
-    toast('نشاط مُلهم جاهز ✨');
+  <!-- ترتيب السكربتات كالمعتاد -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
+
+  <!-- Auth0 SDK بدون defer -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+  <script defer src="assets/js/require-auth.js"></script>
+
+  <script defer src="assets/js/storage.js"></script>
+  <script defer src="app.js"></script>
+
+  <script>
+  const $ = (s)=>document.querySelector(s);
+  const liFill=(ul,items)=>{ ul.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ul.appendChild(li); }); }
+  const olFill=(ol,items)=>{ ol.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ol.appendChild(li); }); }
+
+  // توست بسيط
+  (function(){ const box = document.getElementById('toast'); if(!box) return;
+    window.toast = (msg, ms=1600)=>{ box.textContent = msg; box.style.display='block';
+      clearTimeout(window.__t); window.__t=setTimeout(()=>box.style.display='none', ms); };
+  })();
+
+  // أوتو-حفظ
+  document.addEventListener('DOMContentLoaded', ()=>{ bindAutoSave('mulham', '#mulham-form'); });
+
+  // حفظ آخر إعدادات لإعادة استخدامها في "بدائل أكثر"
+  let lastParams = null;
+
+  async function callMulham(params){
+    const res = await fetch('/.netlify/functions/mulham', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(params),
+      cache: 'no-store'
+    });
+    if(!res.ok) throw new Error('Mulham function failed');
+    return await res.json();
+  }
+
+  function readParams(withVariant=false){
+    const subject = $('#s-subj').value.trim() || '';
+    const topic   = $('#s-topic').value.trim() || subject;
+    const time    = +$('#s-time').value || 20;
+    const bloom   = $('#s-bloom').value || 'understand';
+    const age     = $('#s-age').value || 'p2';
+    const noTools = !!$('#s-noTools').checked;
+    const adaptLow= !!$('#s-adaptLow').checked;
+    const adaptDiff=!!$('#s-adaptDiff').checked;
+    const variant = withVariant ? Date.now() : ''; // يغيّر البذرة للتنويع
+    return { subject, topic, time, bloom, age, noTools, adaptLow, adaptDiff, variant };
+  }
+
+  function renderSet(prefix, set, showDiff){
+    $(`#${prefix}-idea`).innerHTML   = `<strong>مدخل الفكرة:</strong> ${set.ideaHook || '—'}`;
+    $(`#${prefix}-desc`).textContent = set.desc || '—';
+    $(`#${prefix}-dur`).textContent  = `المدة: ${set.duration ?? '—'} د`;
+    liFill($(`#${prefix}-mats`), set.materials || []);
+    olFill($(`#${prefix}-steps`), set.steps || []);
+    $(`#${prefix}-exit`).textContent    = set.exitTicket || '—';
+    $(`#${prefix}-impact`).textContent  = set.expectedImpact || '—';
+
+    const diffEl = $(`#${prefix}-diff`);
+    if(showDiff && (set.diff?.lowMotivation || set.diff?.differentiation)){
+      diffEl.style.display = '';
+      diffEl.innerHTML = `
+        ${set.diff?.lowMotivation ? `<div><strong>لتحفيز منخفض:</strong> ${set.diff.lowMotivation}</div>` : ''}
+        ${set.diff?.differentiation ? `<div style="margin-top:6px"><strong>فروق فردية:</strong> ${set.diff.differentiation}</div>` : ''}
+      `;
+    }else{
+      diffEl.style.display = 'none';
+      diffEl.innerHTML = '';
+    }
+  }
+
+  function renderAll(data){
+    const meta = data.meta || {};
+    const metaBox = $('#meta'); metaBox.innerHTML = '';
+    ['subject','topic','ageLabel','bloomLabel','timeMins'].forEach(k=>{
+      if(meta[k]!=null && meta[k] !== ''){
+        const chip=document.createElement('span');
+        chip.className='chip';
+        chip.textContent = (k==='timeMins') ? `زمن: ${meta[k]} د` :
+                           (k==='ageLabel') ? `مرحلة: ${meta[k]}` :
+                           (k==='bloomLabel') ? `بلوم: ${meta[k]}` : `${meta[k]}`;
+        metaBox.appendChild(chip);
+      }
+    });
+
+    const showDiff = !!(meta.adaptLow || meta.adaptDiff);
+
+    renderSet('mv', data.sets?.movement || {}, showDiff);
+    renderSet('gr', data.sets?.group || {}, showDiff);
+    renderSet('in', data.sets?.individual || {}, showDiff);
+
+    liFill($('#tips'), data.tips || []);
+    $('#out').style.display = '';
+  }
+
+  async function generate(withVariant=false){
+    try{
+      const params = readParams(withVariant);
+      lastParams = params;
+      const data = await callMulham(params);
+      renderAll(data);
+      toast(withVariant ? 'تم توليد بدائل ✨' : 'تم توليد الأنشطة ✨');
+      try{ await supaLogToolUsage('mulham'); }catch(_){}
+    }catch(e){
+      console.error(e);
+      toast('تعذّر التوليد، حاولي ثانية.');
+    }
+  }
+
+  // أزرار
+  $('#go').addEventListener('click', ()=>generate(false));
+  $('#more').addEventListener('click', ()=>{
+    // لو فيه مخرجات موجودة، نعيد نفس المدخلات مع تنويع
+    const params = lastParams || readParams(true);
+    generate(true);
   });
-  document.getElementById('copy').addEventListener('click',()=>{
-    const txt = `وصف: ${document.getElementById('o-desc').innerText}\nالخطوات:\n- `+
-      [...document.querySelectorAll('#o-steps li')].map(li=>li.innerText).join('\n- ')+
-      `\nتذكرة خروج: ${document.getElementById('o-exit').innerText}`;
+
+  $('#copy').addEventListener('click', ()=>{
+    const grab=(sel)=>$(sel)?.innerText?.trim() || '—';
+    const pack=(sel)=>[...document.querySelectorAll(sel+' li')].map(li=>'- '+li.innerText).join('\n') || '—';
+
+    const txt =
+`[مُلهم — ${new Date().toLocaleString()}]
+${$('#meta').innerText}
+
+[حركي]
+${grab('#mv-idea')}
+${grab('#mv-desc')}
+مواد:
+${pack('#mv-mats')}
+خطوات:
+${pack('#mv-steps')}
+تذكرة خروج: ${grab('#mv-exit')}
+الأثر المتوقع: ${grab('#mv-impact')}
+
+[جماعي]
+${grab('#gr-idea')}
+${grab('#gr-desc')}
+مواد:
+${pack('#gr-mats')}
+خطوات:
+${pack('#gr-steps')}
+تذكرة خروج: ${grab('#gr-exit')}
+الأثر المتوقع: ${grab('#gr-impact')}
+
+[فردي]
+${grab('#in-idea')}
+${grab('#in-desc')}
+مواد:
+${pack('#in-mats')}
+خطوات:
+${pack('#in-steps')}
+تذكرة خروج: ${grab('#in-exit')}
+الأثر المتوقع: ${grab('#in-impact')}
+
+[تكييفات مضمّنة إن وُجدت]
+${grab('#mv-diff')}
+${grab('#gr-diff')}
+${grab('#in-diff')}
+
+[نصائح]
+${pack('#tips')}
+`;
     navigator.clipboard.writeText(txt).then(()=>toast('تم النسخ ✅'));
   });
-  document.getElementById('print').addEventListener('click',()=>window.print());
+
+  $('#print').addEventListener('click', ()=> window.print());
+  // زر PDF معطّل مؤقتًا
+  $('#pdf').addEventListener('click', ()=> toast('قريبًا: تصدير بطاقات PDF ✨'));
   </script>
-<!-- Supabase -->
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
-
-<!-- Auth0 SDK (بدون defer لتفادي سباق التحميل) -->
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-
-<!-- حماية الصفحة (يفترض SDK جاهز) -->
-<script defer src="assets/js/require-auth.js"></script>
-
-<!-- سكربتات الواجهة (التخزين قبل app.js لأننا نستخدم bindAutoSave) -->
-<script defer src="assets/js/storage.js"></script>
-<script defer src="app.js"></script>
-
-<!-- كود الصفحة -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // أوتو-حفظ نموذج ملهم
-    bindAutoSave('mulham', '#mulham-form');
-
-    // زر تنفيذ الأداة (اسم الزر الصحيح: go)
-    document.getElementById('go')?.addEventListener('click', async () => {
-      // ✅ الاسم الصحيح للدالة حسب ملف supabase-client.js هو supaLogToolUsage
-      await supaLogToolUsage('mulham');
-    });
-  });
-</script>
 </body>
 </html>
