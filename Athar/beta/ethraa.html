@@ -193,9 +193,14 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('gen')?.addEventListener('click', async () => {
-if (typeof supaLogToolUsage === 'function') {
-  await supaLogToolUsage('ethraa');
-}
+      try {
+        if (typeof window.supaLogToolUsage === 'function') {
+          await window.supaLogToolUsage('ethraa');
+        }
+      } catch (e) {
+        // تجاهل الخطأ بهدوء
+        console.debug('log-tool-usage failed (ignored):', e);
+      }
     });
   });
 </script>
