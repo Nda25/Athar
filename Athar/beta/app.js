@@ -1,9 +1,15 @@
 
 /* أدوات صغيرة */
-// لا تعرّفي const/let مرّة ثانية؛ استخدمي حارس على window
-if (!window.$)  window.$  = (sel, root=document) => root.querySelector(sel);
-if (!window.$$) window.$$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+if (typeof window.AUTH0_DOMAIN === 'undefined') {
+  window.AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+}
+if (typeof window.AUTH0_CLIENT === 'undefined') {
+  window.AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+}
 
+// لاحقًا عندما يستدعي الكود:
+const AUTH0_DOMAIN = window.AUTH0_DOMAIN;
+const AUTH0_CLIENT = window.AUTH0_CLIENT;
 /* ============================== Theme ============================== */
 (function unifyDarkClass(){
   const root = document.documentElement, body = document.body;
@@ -52,8 +58,6 @@ $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
 }));
 
 /* ============================== Auth0 ============================== */
-const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
 
 let auth0Client = null;
 
