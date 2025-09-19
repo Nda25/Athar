@@ -393,6 +393,10 @@ input::placeholder{ color:#64748b }
 }
 .card .mini-actions .btn{ padding:.55rem .9rem; border-radius:10px; }
 /* مسافة بين أقسام الصفحة التعريفية */
-main section {
-  margin-bottom: 28px;   /* المسافة اللي تناسبك */
+.box {
+  margin-bottom: 28px; /* مسافة بين كل بلوك والتالي */
+}
+
+.box:last-child {
+  margin-bottom: 5; /* ما يترك فراغ آخر الصفحة */
 }
