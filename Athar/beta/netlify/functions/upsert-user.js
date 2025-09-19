@@ -1,12 +1,8 @@
-// netlify/functions/upsert-user.js
 const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const serviceKey  = process.env.SUPABASE_SERVICE_ROLE; // سرّي
-
-const supaAdmin = createClient(supabaseUrl, serviceKey, {
-  auth: { persistSession: false }
-});
+const serviceKey  = process.env.SUPABASE_SERVICE_ROLE;
+const supaAdmin   = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -15,38 +11,33 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const email = (body.email || '').toLowerCase();
-    const full_name = body.full_name || null;
-    const plan = body.plan || null;
+    // واجهي الواجهة بهذا الشكل:
+    // { sub, email, name, picture }
+    const { sub, email, name, picture } = body;
 
-    if (!email) {
-      return { statusCode: 400, body: 'missing email' };
-    }
+    if (!sub) return { statusCode: 400, body: 'missing auth0 sub' };
 
     const payload = {
-      email,
-      name: full_name,
-      plan,
-      source: 'auth0'
+      auth0_sub: sub,
+      email: email ? String(email).toLowerCase() : null,
+      name: name || null,
+      picture: picture || null
     };
 
     const { data, error } = await supaAdmin
       .from('users')
-      .upsert(payload, { onConflict: 'email' })
+      .upsert(payload, { onConflict: 'auth0_sub' })
       .select()
       .single();
 
     if (error) {
-      console.error(error);
+      console.error('upsert-user error:', error);
       return { statusCode: 500, body: error.message };
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ ok: true, user: data })
-    };
+    return { statusCode: 200, body: JSON.stringify({ ok: true, user: data }) };
   } catch (e) {
-    console.error(e);
+    console.error('upsert-user exception:', e);
     return { statusCode: 500, body: 'server error' };
   }
 };
