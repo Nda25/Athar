@@ -346,57 +346,28 @@ input::placeholder{ color:#64748b }
 /* يمين: زر الخطط لوحده */
 .tb-right{ justify-self:end; display:inline-flex; gap:10px; align-items:center; }
 
-/* موبايل: صفّين */
 @media (max-width:640px){
   .topbar{
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "left right"
-      "center center";
-    row-gap: 10px;
+    display: flex;             /* ← بدل grid إلى flex */
+    flex-wrap: wrap;           /* ← يسمح ينزل للسطر لو ضاق */
+    justify-content: center;   /* ← يخليهم بالوسط */
+    gap: 10px;                 /* ← مسافة واضحة بين الأزرار */
   }
-  .tb-left  { grid-area:left;  }
-  .tb-right { grid-area:right; }
-  .tb-center{ grid-area:center; }
+  .tb-left,
+  .tb-right,
+  .tb-center {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 }
 /* ===== مرتكز: تكبير الحقول والبطاقات ===== */
 
-/* حقول كبيرة مريحة مثل "منطلق" */
-.field input,
-.field textarea,
-.field select{
-  width:100%;
-  font-size:1rem;           /* تكبير النص */
-  line-height:1.35;
-  padding:.9rem 1rem;       /* نفس إحساس منطلق */
-  border-radius:12px;
-  border:1px solid rgba(59,130,246,.35);
-  background:#fff; color:#0f172a;
-}
-.dark .field input,
-.dark .field textarea,
-.dark .field select{
-  background:#0f172a; color:#f1f5f9; border-color:#3b82f6;
-}
-
-/* صناديق البطاقات المطبوعة نفس المظهر */
-.printable{
-  background:rgba(255,255,255,.6);
-  border:1px solid rgba(59,130,246,.25);
-  border-radius:14px; padding:14px 16px;
-}
-.dark .printable{ background:rgba(17,24,39,.35) }
-
-/* صف أزرار صغير تحت العناوين */
-.card .mini-actions{
-  display:flex; flex-wrap:wrap; gap:15px; margin:8px 0 0;
-}
-.card .mini-actions .btn{ padding:.55rem .9rem; border-radius:10px; }
 /* مسافة بين أقسام الصفحة التعريفية */
-.box {
-  margin-bottom: 8px; /* مسافة بين كل بلوك والتالي */
+.info-card {
+  margin-bottom: 24px; /* خلي المسافة أكبر شوي */
 }
 
-.box:last-child {
-  margin-bottom: 5; /* ما يترك فراغ آخر الصفحة */
+.info-card:last-child {
+  margin-bottom: 0; /* آخر عنصر ما يحتاج فراغ تحته */
 }
