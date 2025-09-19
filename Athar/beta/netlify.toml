@@ -1,8 +1,10 @@
 [build]
   publish   = "."
   functions = "netlify/functions"
-  node_version = "18"
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@google/generative-ai"]
+  external_node_modules = ["@google/generative-ai", "nodemailer"]
