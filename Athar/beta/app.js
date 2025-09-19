@@ -169,7 +169,7 @@ function setButtons(isAuth) {
   if (logoutBtn) {
     logoutBtn.onclick = () => window.auth?.logout();
   }
-// اسمعي الجاهزية قبل التهيئة (عشان ما يفوتنا الحدث)// اسمعي الجاهزية قبل التهيئة (عشان ما يفوتنا الحدث)
+// تحديث حالة الأزرار عند جاهزية Auth0 (مرّة واحدة)
 window.addEventListener('auth0:ready', async () => {
   try {
     const ok = await window.auth.isAuthenticated();
@@ -178,29 +178,28 @@ window.addEventListener('auth0:ready', async () => {
     setButtons(false);
   }
 }, { once: true });
-  
-// بعد جاهزية Auth0: احفظ المستخدم وسجّل مشاهدة الصفحة حسب اسم الملف
+
+// بعد جاهزية Auth0: احفظ المستخدم وسجّل مشاهدة الصفحة
 window.addEventListener('auth0:ready', async () => {
   await supaEnsureUserFromAuth0();
 
-  const path = location.pathname.toLowerCase();
+  // اسم الملف الحالي (مثلاً: /miyad.html → "miyad")
+  const file = (location.pathname.split('/').pop() || '').toLowerCase();
+  const base = file.replace('.html', '');
 
-  const pageToTool = {
-    'miyad.html' : 'miyad',
-    'masar.html' : 'masar',
-    'ethraa.html': 'ethraa',
-    'mulham.html': 'mulham',
-    'athar.html' : 'muntalaq',
-    'darsi.html' : 'murtakaz'
+  // خرائط أسماء مألوفة (لو تبين اسم أداة مختلف عن اسم الملف)
+  const aliases = {
+    athar: 'muntalaq',  // مُنطلق
+    darsi: 'murtakaz',  // مُرتكز
+    // البقية نفس اسم الملف: miyad, masar, ethraa, mulham
   };
 
-  for (const [file, tool] of Object.entries(pageToTool)) {
-    if (path.endsWith('/' + file) || path.endsWith(file)) {
-      supaLogToolUsage(`${tool}:view`);
-      break;
-    }
+  const tool = aliases[base] || base;
+  if (tool) {
+    supaLogToolUsage(`${tool}:view`);
   }
 });
+
 // فعليًا نهيّئ Auth0 (يطلق حدث auth0:ready داخله)
 await initAuth0();
 
