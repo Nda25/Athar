@@ -193,7 +193,9 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('gen')?.addEventListener('click', async () => {
-      await supaLogUsage('ethraa'); // يسجّل استخدام أداة إثراء
+if (typeof supaLogToolUsage === 'function') {
+  await supaLogToolUsage('ethraa');
+}
     });
   });
 </script>
