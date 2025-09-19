@@ -2,7 +2,7 @@
   "name": "athar",
   "private": true,
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
+    "@google/generative-ai": "^0.7.0",
     "@supabase/supabase-js": "^2.44.0"
   }
 }
