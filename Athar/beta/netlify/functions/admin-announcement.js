@@ -16,28 +16,37 @@ exports.handler = async (event) => {
   if (method === "GET") {
     const url = new URL(event.rawUrl);
 
-    // آخر إعلان منشور (غير منتهي)
+    // آخر إعلان منشور: active=true AND (start_at IS NULL OR start_at <= now) AND (expires_at IS NULL OR expires_at > now)
     if (url.searchParams.get("latest")) {
       const nowIso = new Date().toISOString();
       const { data, error } = await supabase
         .from("site_announcements")
         .select("*")
         .eq("active", true)
-        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+        .lte("start_at", nowIso)
+        .or(`start_at.is.null`)
+        .order("start_at", { ascending: false, nullsFirst: true })
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(50); // نجلب مجموعة صغيرة ونصفي يدويًا
+
       if (error) return res(500, error.message);
-      return res(200, { latest: data || null });
+
+      // صفّي محليًا شرط الانتهاء (لأن or/and مركّبة)
+      const latest = (data || [])
+        .filter(a => !a.start_at || new Date(a.start_at) <= new Date())
+        .filter(a => !a.expires_at || new Date(a.expires_at) > new Date())
+        .sort((a, b) => (new Date(b.start_at || b.created_at)) - (new Date(a.start_at || a.created_at)))[0] || null;
+
+      return res(200, { latest });
     }
 
-    // قائمة الإعلانات
     if (url.searchParams.get("list")) {
       const { data, error } = await supabase
         .from("site_announcements")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(20);
+
       if (error) return res(500, error.message);
       return res(200, { items: data || [] });
     }
@@ -45,7 +54,7 @@ exports.handler = async (event) => {
     return res(400, "bad request");
   }
 
-  // بقية العمليات تتطلب أدمن
+  // عمليات الكتابة تتطلب أدمن
   const gate = await requireAdmin(event);
   if (!gate.ok) return res(gate.status, gate.error);
 
@@ -54,13 +63,14 @@ exports.handler = async (event) => {
       const body = JSON.parse(event.body || "{}");
       const text    = (body.text || "").trim();
       const active  = !!body.active;
+      const start   = body.start   ? new Date(body.start).toISOString()   : null;
       const expires = body.expires ? new Date(body.expires).toISOString() : null;
-
       if (!text) return res(400, "text required");
 
       const payload = {
         text,
         active,
+        start_at: start,
         expires_at: expires,
         tenant_id: gate.org_id || null
       };
@@ -88,8 +98,8 @@ exports.handler = async (event) => {
       const patch = {};
       if (typeof body.active === "boolean") patch.active = body.active;
       if (typeof body.text === "string")   patch.text = body.text.trim();
-      if (body.expires !== undefined)
-        patch.expires_at = body.expires ? new Date(body.expires).toISOString() : null;
+      if (body.start   !== undefined) patch.start_at   = body.start   ? new Date(body.start).toISOString()   : null;
+      if (body.expires !== undefined) patch.expires_at = body.expires ? new Date(body.expires).toISOString() : null;
 
       const { data, error } = await supabase
         .from("site_announcements")
