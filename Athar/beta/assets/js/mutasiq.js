@@ -392,65 +392,95 @@ function buildSeparator(orient, title, color){
 }
 
 function buildClassTable(orient, cls, weeksArr){
-  const p = document.createElement('section');
-  p.className = 'a4 ' + (orient==='landscape'?'landscape':'');
-  const title = document.createElement('h2'); title.className='page-title'; title.textContent = cls.name || 'فصل';
-  p.appendChild(title);
+  const host = document.createElement('section');
+  host.className = 'a4 ' + (orient==='landscape'?'landscape':'');
+  const pageTitle = document.createElement('h2'); pageTitle.className='page-title'; pageTitle.textContent = cls.name || 'فصل';
+  host.appendChild(pageTitle);
 
   const visibleCols = state.columns.filter(c=>!c.hidden);
-  const tbl = document.createElement('table'); tbl.className='print-table'; tbl.style.borderRadius = state.rowRadius+'px';
+  const strips = chunk(weeksArr, 10);
 
-  // رأس 1: الاسم + أسابيع
-  const thead = document.createElement('thead');
-  const r1 = document.createElement('tr');
-  r1.innerHTML = `<th class="name-col">اسم الطالب</th>` + weeksArr.map(w=>`<th class="week-col">${w}</th>`).join('');
-  thead.appendChild(r1);
+  (cls.students||[]).forEach((studentName)=>{
+    strips.forEach((weeks10, stripIndex)=>{
+      const strip = document.createElement('div'); strip.className='strip';
 
-  // رأس 2: عناوين البنود داخل كل أسبوع
-  const r2 = document.createElement('tr');
-  r2.innerHTML = `<th></th>` + weeksArr.map(_=>{
-    const inner = visibleCols.map(col=>`<div style="display:inline-block;min-width:42px;margin:2px 3px;padding:2px 4px;border-radius:6px;background:${col.color}">${col.title}</div>`).join('');
-    return `<th>${inner}</th>`;
-  }).join('');
-  thead.appendChild(r2);
+      const head = document.createElement('div'); head.className='head';
+      head.innerHTML = `
+        <div>اسم الطالب</div>
+        <div>مشروع</div>
+        <div>اختبار</div>
+        <div>بونس</div>
+        <div>الأسابيع ${stripIndex*10+1}–${stripIndex*10+weeks10.length}</div>`;
+      strip.appendChild(head);
 
-  tbl.appendChild(thead);
+      const row = document.createElement('div'); row.className='row';
 
-  // الجسم
-  const tb = document.createElement('tbody');
-  (cls.students||[]).forEach(name=>{
-    const tr = document.createElement('tr');
-    const nameTd = `<td style="text-align:right;padding-inline:8px">${name}</td>`;
-    const cells = weeksArr.map(_=>`<td>${renderCellGroup(state.cellStyle, visibleCols.length)}</td>`).join('');
-    tr.innerHTML = nameTd + cells;
-    tb.appendChild(tr);
+      const cName = document.createElement('div'); cName.className='cell meta-title'; cName.textContent = studentName || '';
+      const cProj = document.createElement('div'); cProj.className='cell meta-box';
+      const cExam = document.createElement('div'); cExam.className='cell meta-box';
+      const cBonus= document.createElement('div'); cBonus.className='cell meta-box';
+
+      const cWeeks = document.createElement('div'); cWeeks.className='cell right';
+      const weeksGrid = document.createElement('div'); weeksGrid.className='weeks';
+
+      weeks10.forEach((wTitle)=>{
+        const w = document.createElement('div'); w.className='week';
+        const wt = document.createElement('div'); wt.className='wtitle'; wt.textContent = wTitle;
+        w.appendChild(wt);
+
+        const crits = document.createElement('div'); crits.className='criteria';
+        visibleCols.forEach(col=>{
+          const cr = document.createElement('div'); cr.className='crit';
+          const badge = document.createElement('span'); badge.className='badge-col';
+          badge.style.background = col.color; badge.textContent = col.title;
+          const d5 = fiveDaysCell(state.cellStyle);
+          cr.appendChild(badge); cr.appendChild(d5);
+          crits.appendChild(cr);
+        });
+
+        w.appendChild(crits);
+        weeksGrid.appendChild(w);
+      });
+
+      cWeeks.appendChild(weeksGrid);
+      row.appendChild(cName);
+      row.appendChild(cProj);
+      row.appendChild(cExam);
+      row.appendChild(cBonus);
+      row.appendChild(cWeeks);
+
+      strip.appendChild(row);
+      host.appendChild(strip);
+    });
   });
-  tbl.appendChild(tb);
 
-  p.appendChild(tbl);
-
-  // تذييل
-  const foot = document.createElement('div'); foot.style.position='absolute'; foot.style.bottom='10mm'; foot.style.insetInline='0'; foot.style.textAlign='center';
+  const foot = document.createElement('div');
+  foot.style.position='absolute'; foot.style.bottom='10mm'; foot.style.insetInline='0'; foot.style.textAlign='center';
   foot.innerHTML = `<div style="color:#475569; font-weight:700">${state.rem.footerLine}</div><div style="margin-top:4px; color:#334155">${state.rem.footerName}</div>`;
-  p.appendChild(foot);
+  host.appendChild(foot);
 
-  return p;
+  return host;
 }
-
-function renderCellGroup(style, count){
-  if(style==='empty') return '';
-  if(style==='dots'){
-    let s=''; for(let i=0;i<count;i++) s+=`<span class="cell-dot" style="margin:0 2px"></span>`;
-    return s;
-  }
-  if(style==='squares'){
-    let s=''; for(let i=0;i<count;i++) s+=`<span class="cell-square" style="margin:0 2px"></span>`;
-    return s;
-  }
+function fiveDaysCell(style){
+  const wrap = document.createElement('div'); wrap.className='d5';
   if(style==='marks'){
-    return `&nbsp;<span class="cell-mark">✓</span>&nbsp;<span class="cell-mark">✗</span>`;
+    wrap.innerHTML = '<span class="mk">✓</span><span class="mk">✗</span><span class="mk">&nbsp;</span><span class="mk">&nbsp;</span><span class="mk">&nbsp;</span>';
+    return wrap;
   }
-  return '';
+  for(let i=0;i<5;i++){
+    const d = document.createElement('span');
+    d.className = (style==='squares' ? 'sq' : 'dot');
+    wrap.appendChild(d);
+  }
+  return wrap;
+}
+function renderCellGroup(style, count){
+  if (style === 'empty') return '';
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += fiveDaysCell(style).outerHTML; // كل عمود تقييم = 5 أيام
+  }
+  return html;
 }
 
 function posToAlign(pos){ return pos==='right'?'right':pos==='left'?'left':'center'; }
@@ -553,9 +583,37 @@ function buildCsv(){
 
   return rows.map(r=>r.map(x=> `"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
 }
-
 // ===== أدوات مساعدة =====
-function fileToDataURL(file){ return new Promise((res,rej)=>{ if(!file) return res(null); const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); }); }
+function fileToDataURL(file){
+  return new Promise((res,rej)=>{
+    if(!file) return res(null);
+    const fr=new FileReader();
+    fr.onload = ()=> res(fr.result);
+    fr.onerror = rej;
+    fr.readAsDataURL(file);
+  });
+}
+
+function chunk(arr, size=10){
+  const out=[];
+  for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+  return out;
+}
+
+// 5 أيّام داخل كل خلية أسبوع (حسب النمط المختار)
+function fiveDaysCell(style){
+  const wrap = document.createElement('div'); wrap.className='d5';
+  if(style==='marks'){
+    wrap.innerHTML = '<span class="mk">✓</span><span class="mk">✗</span><span class="mk">&nbsp;</span><span class="mk">&nbsp;</span><span class="mk">&nbsp;</span>';
+    return wrap;
+  }
+  for(let i=0;i<5;i++){
+    const d = document.createElement('span');
+    d.className = (style==='squares' ? 'sq' : 'dot');
+    wrap.appendChild(d);
+  }
+  return wrap;
+}
 
 // تهيئة أولية// تهيئة أولية
 (function init(){
@@ -583,5 +641,3 @@ function fileToDataURL(file){ return new Promise((res,rej)=>{ if(!file) return r
   rem3Title.value=state.rem.r3.title; rem3Color.value=state.rem.r3.color;
   footerLine.value=state.rem.footerLine; footerName.value=state.rem.footerName;
 })();
-
-})(); // 
