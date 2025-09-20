@@ -423,3 +423,63 @@ input::placeholder{ color:#64748b }
 }
 .d5 .sq { border-radius:3px } /* مربعات */
 .d5 .mk { font-weight:800; line-height:1; }
+/* ====== Athar — Global Responsive Patch (ضعها في نهاية style.css) ====== */
+
+/* لا تمرير أفقي + إصلاح تكبير iOS */
+html, body { height:100%; overflow-x:hidden; -webkit-text-size-adjust:100%; }
+
+/* وسائط وصور مرنة */
+img, video, canvas, svg, iframe { max-width:100%; height:auto; display:block; }
+
+/* حاوية عامة موحّدة لكل الصفحات */
+.container { width:min(1100px, 92vw); margin-inline:auto; padding-inline:16px; }
+
+/* بطاقات: امنعي خروج العناصر */
+.card { overflow:hidden; }
+
+/* حقول النماذج: عرض كامل + منع تكبير iOS */
+input, select, textarea { max-width:100%; width:100%; font-size:16px; }
+
+/* لفّ الاختيارات الطويلة (checkbox/radio) بأناقة */
+.field.inline label{
+  display:flex; align-items:flex-start; gap:8px;
+  white-space:normal; flex-wrap:wrap; line-height:1.6;
+}
+.field.inline input[type="checkbox"],
+.field.inline input[type="radio"]{ margin-top:3px; flex:0 0 auto; }
+
+/* صف الأزرار يصبح مريح على الشاشات الصغيرة */
+.actions-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+@media (max-width:640px){
+  .actions-row{ justify-content:stretch; }
+  .actions-row .btn{ width:100%; }
+  main{ padding-inline:12px; }                  /* حواف داخلية للجوال */
+}
+
+/* شبكات جاهزة للاستعمال العام (سمّي بلوكاتك بها وخلاص) */
+.grid-2, .grid-3 { display:grid; gap:16px; }
+.grid-2 { grid-template-columns:1fr; }
+.grid-3 { grid-template-columns:1fr; }
+@media (min-width:900px){
+  .grid-2 { grid-template-columns:1fr 1fr; }
+  .grid-3 { grid-template-columns:1fr 1fr 1fr; }
+}
+
+/* جداول: تمرير أفقي لطيف عند الضيق بدون كسر الصفحة */
+.table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.table-wrap table{ width:100%; border-collapse:collapse; }
+
+/* شريط علوي: ضمان عدم اللخبطة على الموبايل */
+@media (max-width:640px){
+  .topbar{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+  .topbar > *{ flex-wrap:wrap; }
+}
+
+/* هوامش آمنة لحافة أجهزة iPhone */
+@supports (padding: env(safe-area-inset-bottom)){
+  body{ padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* تحسينات بصرية صغيرة */
+h1,h2,h3{ line-height:1.25; }
+button, .btn{ white-space:nowrap; }
