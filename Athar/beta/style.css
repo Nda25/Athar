@@ -51,7 +51,7 @@ body{
   z-index: -2;                   /* تحت المحتوى وفوق المتدرّج */
   pointer-events: none;          /* ما تمنع الضغط على العناصر */
   background: url('assets/img/bg.jpg') center/cover no-repeat;
-  opacity: .35;                  /* عدّلي الذوق بين .25 – .6 */
+  opacity: .25;                  /*  بين .25 – .6 */
 }
 
 /* المتدرّج تحت الصورة */
@@ -132,7 +132,7 @@ body{
 .btn.primary:hover{ background:var(--sea-400) }
 .btn.ghost{ background:transparent }
 
-/* تحسين نص الأزرار في الوضع الداكن ليكون أسود كما طلبت */
+/* تحسين نص الأزرار في الوضع الداكن ليكون أسود  */
 .dark .topbar .btn,
 .dark .topbar .btn:hover,
 .dark .topbar .btn:active{ color:#000 !important; text-shadow:none; }
