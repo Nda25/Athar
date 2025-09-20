@@ -380,3 +380,35 @@ input::placeholder{ color:#64748b }
 .info-card .lead a:hover {
   color: var(--sea-400);
 }
+/* شرائط الطالب */
+.strip { margin-bottom: 12px; border:1px solid #cbd5e1; border-radius:12px; overflow:hidden; }
+.strip .head { display:grid; grid-template-columns: 180px 120px 120px 120px 1fr; align-items:center; background:color-mix(in oklab, var(--sea-500) 16%, white); }
+.strip .head > div { padding:8px 10px; border-inline-start:1px solid #cbd5e1; font-weight:800; text-align:center; color:#0c4a6e }
+.dark .strip .head { background:color-mix(in oklab, var(--sea-500) 28%, black); color:#c7d2fe; }
+
+.strip .row { display:grid; grid-template-columns: 180px 120px 120px 120px 1fr; }
+.strip .row + .row { border-top:1px solid #e2e8f0 }
+.strip .cell { padding:8px 10px; border-inline-start:1px solid #e5e7eb; background:var(--card); }
+.strip .cell.right { overflow:auto }
+
+.meta-title{ font-weight:800; text-align:right }
+.meta-box  { background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; min-height:38px }
+
+.weeks { display:grid; grid-template-columns: repeat(10, minmax(48px,1fr)); gap:0; }
+.week { border-inline-start:1px solid #cbd5e1; border-bottom:1px solid #e2e8f0; }
+.week .wtitle{ background:#e2e8f0; text-align:center; font-weight:800; padding:2px 0; color:#1e293b }
+.dark .week .wtitle{ background:#1f2937; color:#e2e8f0 }
+
+.criteria { display:grid; grid-template-columns:1fr; gap:2px; padding:4px }
+.crit { display:flex; align-items:center; gap:6px; justify-content:center; padding:4px 0; }
+
+.badge-col { display:inline-block; padding:.15rem .5rem; border-radius:999px; border:1px solid rgba(59,130,246,.25); font-size:.72rem }
+
+/* 5 أيام داخل كل خلية أسبوع */
+.d5 { display:flex; gap:2px; }
+.d5 .dot, .d5 .sq {
+  width:10px; height:10px;
+  border:1.6px solid #64748b; border-radius:999px /* للدوائر */;
+}
+.d5 .sq { border-radius:3px } /* مربعات */
+.d5 .mk { font-weight:800; line-height:1; }
