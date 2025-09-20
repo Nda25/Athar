@@ -100,6 +100,22 @@
   const copyBtn = document.getElementById('copy');
   const printBtn = document.getElementById('print');
 
+    // — اربطي حساب Auth0 مع جدول users مرة واحدة (upsert) بعد تحميل كل السكربتات
+window.addEventListener('load', () => {
+  if (typeof supaEnsureUserProfile === 'function') {
+    try { supaEnsureUserProfile(); } catch(_) {}
+  }
+});
+
+// — لالتقاط الحالة الحالية كـ meta
+function ethraaMeta(){
+  return {
+    subject: (document.getElementById('subj')?.value || '').trim() || null,
+    stage: document.getElementById('stage')?.value || null,
+    focus: document.getElementById('focus')?.value || null
+  };
+}
+    
   function clean(t){ return String(t||'').replace(/\*\*?|##+|^\s*-\s*/gm,'').trim(); }
   function chip(t){ return `<span class="tag">${t}</span>`; }
   function toast(m){
@@ -127,51 +143,68 @@
     return res.json();
   }
 
-  document.getElementById('gen').addEventListener('click', async ()=>{
-    const s  = (document.getElementById('subj').value||'').trim();
-    const st = document.getElementById('stage').value;
-    const fc = document.getElementById('focus').value;
-    if(!s){ toast('اكتبي المادة أولًا'); return; }
+document.getElementById('gen').addEventListener('click', async ()=>{
+  const s  = (document.getElementById('subj').value||'').trim();
+  const st = document.getElementById('stage').value;
+  const fc = document.getElementById('focus').value;
+  if(!s){ toast('اكتبي المادة أولًا'); return; }
 
-    out.style.display='block';
-    showSkeleton(4);
-    copyBtn.disabled = true;
-    printBtn.disabled = true;
+  out.style.display='block';
+  showSkeleton(4);
+  copyBtn.disabled = true;
+  printBtn.disabled = true;
 
-    try{
-      const { ok, cards=[] } = await fetchEthraa(s, st, fc);
-      cardsWrap.innerHTML = '';
-      (cards.length? cards : []).forEach(c=>{
-        const title = clean(c.title)||'— بطاقة —';
-        const brief = clean(c.brief)||'—';
-        const idea  = clean(c.idea)||'—';
-        const source = c.source ? `<div class="muted" style="font-size:.82rem;margin-top:6px">مصدر/مرجع: <a href="${c.source}" target="_blank" rel="noopener" style="text-decoration:underline">${c.source}</a></div>` : '';
-        const card = document.createElement('div');
-        card.className = 'idea';
-        card.innerHTML = `
-          <h4>• ${title}</h4>
-          <p class="muted"><strong>لماذا؟</strong> ${brief}</p>
-          <p><strong>اقتراح:</strong> ${idea}</p>
-          ${source}
-          <div class="tags">
-            ${chip(s)} ${chip(STAGES[st]||st)} ${chip('إثراء')}
-          </div>`;
-        cardsWrap.appendChild(card);
-      });
-      copyBtn.disabled = cards.length === 0;
-      printBtn.disabled = cards.length === 0;
-      toast(ok ? 'تم ✨' : 'عُرض بديل');
-    }catch(e){
-      console.error(e);
-      cardsWrap.innerHTML = '<div class="muted">تعذّر جلب الإثراء الآن.</div>';
+  try{
+    const { ok, cards=[] } = await fetchEthraa(s, st, fc);
+    cardsWrap.innerHTML = '';
+    (cards.length? cards : []).forEach(c=>{
+      const title = clean(c.title)||'— بطاقة —';
+      const brief = clean(c.brief)||'—';
+      const idea  = clean(c.idea)||'—';
+      const source = c.source ? `<div class="muted" style="font-size:.82rem;margin-top:6px">مصدر/مرجع: <a href="${c.source}" target="_blank" rel="noopener" style="text-decoration:underline">${c.source}</a></div>` : '';
+      const card = document.createElement('div');
+      card.className = 'idea';
+      card.innerHTML = `
+        <h4>• ${title}</h4>
+        <p class="muted"><strong>لماذا؟</strong> ${brief}</p>
+        <p><strong>اقتراح:</strong> ${idea}</p>
+        ${source}
+        <div class="tags">
+          ${chip(s)} ${chip(STAGES[st]||st)} ${chip('إثراء')}
+        </div>`;
+      cardsWrap.appendChild(card);
+    });
+    copyBtn.disabled = cards.length === 0;
+    printBtn.disabled = cards.length === 0;
+    toast(ok ? 'تم ✨' : 'عُرض بديل');
+
+    // تتبّع: توليد بطاقات إثراء
+    if (typeof supaLogToolUsage === 'function') {
+      try { await supaLogToolUsage('ethraa_generate', ethraaMeta()); } catch(_){}
     }
-  });
+  }catch(e){
+    console.error(e);
+    cardsWrap.innerHTML = '<div class="muted">تعذّر جلب الإثراء الآن.</div>';
+  }
+});
+    
+copyBtn.addEventListener('click', async ()=>{
+  const text=[...document.querySelectorAll('.idea')].map(d=>d.innerText).join('\n\n— — —\n\n');
+  await navigator.clipboard.writeText(text);
+  toast('تم النسخ ✅');
+  // تتبّع النسخ
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('ethraa_copy', ethraaMeta()); } catch(_){}
+  }
+});
 
-  copyBtn.addEventListener('click',()=>{
-    const text=[...document.querySelectorAll('.idea')].map(d=>d.innerText).join('\n\n— — —\n\n');
-    navigator.clipboard.writeText(text).then(()=>toast('تم النسخ ✅'));
-  });
-  printBtn.addEventListener('click',()=>window.print());
+printBtn.addEventListener('click', async ()=>{
+  window.print();
+  // تتبّع الطباعة
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('ethraa_print', ethraaMeta()); } catch(_){}
+  }
+});
   </script>
 
   <!-- حماية الصفحة -->
@@ -189,20 +222,5 @@
 <!-- سكربتات المشروع -->
 <script defer src="app.js"></script>
 
-<!-- أكواد خاصة بصفحة إثراء -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('gen')?.addEventListener('click', async () => {
-      try {
-        if (typeof window.supaLogToolUsage === 'function') {
-          await window.supaLogToolUsage('ethraa');
-        }
-      } catch (e) {
-        // تجاهل الخطأ بهدوء
-        console.debug('log-tool-usage failed (ignored):', e);
-      }
-    });
-  });
-</script>
 </body>
 </html>
