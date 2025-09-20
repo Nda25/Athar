@@ -1,8 +1,9 @@
+// netlify/functions/upsert-user.js
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const serviceKey  = process.env.SUPABASE_SERVICE_ROLE;
-const supaAdmin   = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+const supabaseUrl = process.env.SUPABASE_URL;            // https://oywqpkzaudmzwvytxaop.supabase.co
+const serviceKey  = process.env.SUPABASE_SERVICE_ROLE;   // محفوظ في Netlify Env
+const supaAdmin   = createClient(supabaseUrl, serviceKey, { auth: { persistSession:false } });
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -11,18 +12,15 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    // واجهي الواجهة بهذا الشكل:
-    // { sub, email, name, picture }
-    const { sub, email, name, picture } = body;
+    // توقع: { sub, email, name, picture }
+    const sub     = body.sub;
+    const email   = body.email ? String(body.email).toLowerCase() : null;
+    const name    = body.name || null;
+    const picture = body.picture || null;
 
-    if (!sub) return { statusCode: 400, body: 'missing auth0 sub' };
+    if (!sub || !email) return { statusCode: 400, body: 'missing sub or email' };
 
-    const payload = {
-      auth0_sub: sub,
-      email: email ? String(email).toLowerCase() : null,
-      name: name || null,
-      picture: picture || null
-    };
+    const payload = { auth0_sub: sub, email, name, picture };
 
     const { data, error } = await supaAdmin
       .from('users')
@@ -35,7 +33,7 @@ exports.handler = async (event) => {
       return { statusCode: 500, body: error.message };
     }
 
-    return { statusCode: 200, body: JSON.stringify({ ok: true, user: data }) };
+    return { statusCode: 200, body: JSON.stringify({ ok:true, user:data }) };
   } catch (e) {
     console.error('upsert-user exception:', e);
     return { statusCode: 500, body: 'server error' };
