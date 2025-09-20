@@ -557,7 +557,7 @@ function buildCsv(){
 // ===== أدوات مساعدة =====
 function fileToDataURL(file){ return new Promise((res,rej)=>{ if(!file) return res(null); const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); }); }
 
-// تهيئة أولية
+// تهيئة أولية// تهيئة أولية
 (function init(){
   // تحميل من LocalStorage لو رغبتِ مستقبلًا
   renderCols(); renderMiniPreview();
@@ -583,3 +583,5 @@ function fileToDataURL(file){ return new Promise((res,rej)=>{ if(!file) return r
   rem3Title.value=state.rem.r3.title; rem3Color.value=state.rem.r3.color;
   footerLine.value=state.rem.footerLine; footerName.value=state.rem.footerName;
 })();
+
+})(); // 
