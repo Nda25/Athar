@@ -4,6 +4,8 @@
   "dependencies": {
     "@google/generative-ai": "^0.7.0",
     "@supabase/supabase-js": "^2.44.0",
-    "nodemailer": "^6.9.10"
+    "nodemailer": "^6.9.10",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.0.1"
   }
 }
