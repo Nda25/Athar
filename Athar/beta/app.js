@@ -121,13 +121,14 @@ async function initAuth0(){
     }
 
     // API مبسّطة على window.auth
-    const api = {
-      login:  (opts)=> auth0Client.loginWithRedirect(opts||{}),
-      logout: (opts)=> auth0Client.logout({ logoutParams:{ returnTo: window.location.origin }, ...(opts||{}) }),
-      isAuthenticated: ()=> auth0Client.isAuthenticated(),
-      getUser: ()=> auth0Client.getUser(),
-      getToken: (opts)=> auth0Client.getTokenSilently(opts||{})
-    };
+const api = {
+  login:  (opts)=> auth0Client.loginWithRedirect(opts||{}),
+  logout: (opts)=> auth0Client.logout({ logoutParams:{ returnTo: window.location.origin }, ...(opts||{}) }),
+  isAuthenticated: ()=> auth0Client.isAuthenticated(),
+  getUser: ()=> auth0Client.getUser(),
+  getToken: (opts)=> auth0Client.getTokenSilently(opts||{}),
+  getIdTokenClaims: ()=> auth0Client.getIdTokenClaims()  // ✅ أضفناها
+};
     window.auth = window.auth || api;
 
     // أعلن الجاهزية
