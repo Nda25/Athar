@@ -24,12 +24,19 @@
   /* شبكة إضافية للموضوع + المرحلة */
   .cols-2 { display:grid; gap:12px; grid-template-columns:1fr 1fr; }
 
-  /* لترتيب الخيارات (checkboxes) أفقياً */
-  .field.inline label {
-    display:flex; align-items:center; gap:6px;
-    white-space:nowrap;
+  /* ✅ ترتيب الخيارات (checkboxes) مع التفاف */
+  .field.inline label{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    white-space: normal;   /* كان nowrap */
+    flex-wrap: wrap;
+    line-height: 1.6;
   }
-  .field.inline input[type="checkbox"] { margin-top:0; }
+  .field.inline input[type="checkbox"]{
+    margin-top: 3px;       /* يوازن ارتفاع السطر */
+    flex: 0 0 auto;
+  }
 
   .actions-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px }
 
@@ -47,6 +54,15 @@
   .diff-box{ background:color-mix(in oklab, var(--accent) 10%, #fff); border-radius:8px; padding:8px; margin-top:8px; font-size:.95rem }
 
   .btn[disabled]{ opacity:.6; cursor:not-allowed }
+
+  /* ✅ على الشاشات الصغيرة: عمود واحد */
+  @media (max-width: 900px){
+    .cols-3{ grid-template-columns: 1fr; }
+    .cols-2{ grid-template-columns: 1fr; }
+  }
+
+  /* ✅ منع أي بروز خارج البطاقة */
+  .card{ overflow: hidden; }
 
   /* طباعة: نظهر البطاقات فقط */
   @media print{
