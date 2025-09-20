@@ -297,7 +297,27 @@
   window.$ = window.$ || ((s)=>document.querySelector(s));
   const liFill=(ul,items)=>{ ul.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ul.appendChild(li); }); }
   const olFill=(ol,items)=>{ ol.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ol.appendChild(li); }); }
+// — اربطي حساب Auth0 مع جدول users (upsert) بعد تحميل كل السكربتات
+window.addEventListener('load', () => {
+  if (typeof supaEnsureUserProfile === 'function') {
+    try { supaEnsureUserProfile(); } catch(_) {}
+  }
+});
 
+// — لالتقاط إعدادات "مُلهم" كـ meta للتتبّع
+function mulhamMeta(){
+  const get = id => document.getElementById(id);
+  return {
+    subject:  (get('s-subj')?.value || '').trim() || null,
+    topic:    (get('s-topic')?.value || '').trim() || null,
+    time:     Number(get('s-time')?.value || 0) || null,
+    bloom:    get('s-bloom')?.value || null,
+    age:      get('s-age')?.value || null,
+    noTools:  !!get('s-noTools')?.checked,
+    adaptLow: !!get('s-adaptLow')?.checked,
+    adaptDiff:!!get('s-adaptDiff')?.checked
+  };
+}
   // توست بسيط
   (function(){ const box = document.getElementById('toast'); if(!box) return;
     window.toast = (msg, ms=1600)=>{ box.textContent = msg; box.style.display='block';
@@ -379,43 +399,52 @@
     $('#out').style.display = '';
   }
 
-  async function generate(withVariant=false){
-    const goBtn   = document.getElementById('go');
-    const moreBtn = document.getElementById('more');
-    const busyBtn = withVariant ? moreBtn : goBtn;
+async function generate(withVariant=false){
+  const goBtn   = document.getElementById('go');
+  const moreBtn = document.getElementById('more');
+  const busyBtn = withVariant ? moreBtn : goBtn;
 
-    try{
-      // حالة انشغال
-      busyBtn.disabled = true;
-      const oldText = busyBtn.textContent;
-      busyBtn.textContent = 'جارٍ التفكير…';
+  try{
+    // حالة انشغال
+    busyBtn.disabled = true;
+    const oldText = busyBtn.textContent;
+    busyBtn.textContent = 'جارٍ التفكير…';
 
-      const params = readParams(withVariant);
-      lastParams = params;
-      const data = await callMulham(params);
-      renderAll(data);
-      toast(withVariant ? 'تم توليد أنشطة أخرى ✨' : 'تم توليد الأنشطة ✨');
-      try{ await supaLogToolUsage('mulham'); }catch(_){}
-      // رجوع للنص
-      busyBtn.textContent = oldText;
+    const params = readParams(withVariant);
+    lastParams = params;
+
+    const data = await callMulham(params);
+    renderAll(data);
+
+    toast(withVariant ? 'تم توليد أنشطة أخرى ✨' : 'تم توليد الأنشطة ✨');
+
+    // تتبّع: توليد (أولى/بدائل)
+    if (typeof supaLogToolUsage === 'function') {
+      const tag = withVariant ? 'mulham_more' : 'mulham_generate';
+      try { await supaLogToolUsage(tag, mulhamMeta()); } catch(_){}
+    }
+
+    // رجوع للنص
+    busyBtn.textContent = oldText;
+    busyBtn.disabled = false;
+  }catch(e){
+    console.error(e);
+    toast('تعذّر التوليد، حاولي ثانية.');
+    if (busyBtn){
+      busyBtn.textContent = withVariant ? 'أنشطة أخرى' : 'ولّد الأنشطة';
       busyBtn.disabled = false;
-    }catch(e){
-      console.error(e);
-      toast('تعذّر التوليد، حاولي ثانية.');
-      // تأكيد فك التعطيل
-      if (busyBtn){ busyBtn.textContent = withVariant ? 'أنشطة أخرى' : 'ولّدي أنشطة'; busyBtn.disabled = false; }
     }
   }
+}
 
   // أزرار
   document.getElementById('go').addEventListener('click', ()=>generate(false));
   document.getElementById('more').addEventListener('click', ()=>generate(true));
+document.getElementById('copy').addEventListener('click', async ()=>{
+  const grab=(sel)=>$(sel)?.innerText?.trim() || '—';
+  const pack=(sel)=>[...document.querySelectorAll(sel+' li')].map(li=>'- '+li.innerText).join('\n') || '—';
 
-  document.getElementById('copy').addEventListener('click', ()=>{
-    const grab=(sel)=>$(sel)?.innerText?.trim() || '—';
-    const pack=(sel)=>[...document.querySelectorAll(sel+' li')].map(li=>'- '+li.innerText).join('\n') || '—';
-
-    const txt =
+  const txt =
 `[مُلهم — ${new Date().toLocaleString()}]
 ${$('#meta').innerText}
 
@@ -452,11 +481,25 @@ ${pack('#in-steps')}
 [تلميحات]
 ${pack('#tips')}
 `;
-    navigator.clipboard.writeText(txt).then(()=>toast('تم النسخ ✅'));
-  });
+
+  await navigator.clipboard.writeText(txt);
+  toast('تم النسخ ✅');
+
+  // تتبّع: نسخ
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('mulham_copy', mulhamMeta()); } catch(_){}
+  }
+});
 
   // زر الطباعة الموحّد
-  document.getElementById('print').addEventListener('click', ()=> window.print());
+<script>
+document.getElementById('print').addEventListener('click', async ()=>{
+  window.print();
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('mulham_print', mulhamMeta()); } catch(_){}
+  }
+});
+</script>
   </script>
 </body>
 </html>
