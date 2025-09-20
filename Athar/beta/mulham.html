@@ -24,53 +24,102 @@
   /* شبكة إضافية للموضوع + المرحلة */
   .cols-2 { display:grid; gap:12px; grid-template-columns:1fr 1fr; }
 
-  /* ✅ ترتيب الخيارات (checkboxes) مع التفاف */
-  .field.inline label{
-    display:flex;
-    align-items:flex-start;
-    gap:8px;
-    white-space: normal;   /* كان nowrap */
-    flex-wrap: wrap;
-    line-height: 1.6;
-  }
-  .field.inline input[type="checkbox"]{
-    margin-top: 3px;       /* يوازن ارتفاع السطر */
-    flex: 0 0 auto;
-  }
+/* ===== خيارات على شكل سويتش مع نص خافت ===== */
 
-  .actions-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px }
+/* السطر يحتوي السويتش + النص */
+.field.inline label{
+  display:flex; align-items:center; gap:10px;
+  font-size:.95rem;            /* أصغر شوي */
+  font-weight:600;             /* أخفّ */
+  color: var(--muted);         /* كأنه تعليق */
+  line-height:1.5;
+  white-space:normal;
+}
 
-  .printable{
-    border:1px solid color-mix(in oklab, var(--accent) 40%, #cbd5e1);
-    border-radius:12px; padding:14px; margin-top:8px; background:var(--card)
-  }
-  .set-card{ border:1px dashed rgba(59,130,246,.35); border-radius:10px; padding:10px; margin-top:12px }
-  .set-card h3{ margin:0 0 6px }
-  .muted{ color: var(--muted) }
-  .list{ margin:0; padding-inline-start:1.2rem }
-  .chips{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 }
-  .chip{ background:color-mix(in oklab, var(--accent) 14%, #fff); padding:4px 8px; border-radius:999px; font-size:.9rem }
+/* السويتش (بدل شكل الـcheckbox) */
+.field.inline input[type="checkbox"]{
+  appearance:none; -webkit-appearance:none;
+  width:46px; height:26px;
+  border-radius:999px;
+  background:#e2e8f0;
+  border:1px solid #cbd5e1;
+  position:relative;
+  outline:none;
+  cursor:pointer;
+  transition: background .18s ease, border-color .18s ease;
+  flex:0 0 46px;
+  margin:0;
+}
 
-  .diff-box{ background:color-mix(in oklab, var(--accent) 10%, #fff); border-radius:8px; padding:8px; margin-top:8px; font-size:.95rem }
+/* كرة السويتش */
+.field.inline input[type="checkbox"]::after{
+  content:"";
+  position:absolute; top:1px; inset-inline-start:1px;
+  width:22px; height:22px; border-radius:50%;
+  background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.18);
+  transition: inset-inline-start .18s ease;
+}
 
-  .btn[disabled]{ opacity:.6; cursor:not-allowed }
+/* مفعّل */
+.field.inline input[type="checkbox"]:checked{
+  background:var(--sea-500); border-color:var(--sea-500);
+}
+.field.inline input[type="checkbox"]:checked::after{
+  inset-inline-start: calc(100% - 23px);
+}
 
-  /* ✅ على الشاشات الصغيرة: عمود واحد */
-  @media (max-width: 900px){
-    .cols-3{ grid-template-columns: 1fr; }
-    .cols-2{ grid-template-columns: 1fr; }
-  }
+/* تركيز لوحة المفاتيح */
+.field.inline input[type="checkbox"]:focus-visible{
+  box-shadow:0 0 0 3px rgba(59,130,246,.25);
+}
 
-  /* ✅ منع أي بروز خارج البطاقة */
-  .card{ overflow: hidden; }
+/* وضع داكن */
+.dark .field.inline input[type="checkbox"]{
+  background:#1f2937; border-color:#334155;
+}
+.dark .field.inline input[type="checkbox"]:checked{
+  background:#3b82f6; border-color:#3b82f6;
+}
 
-  /* طباعة: نظهر البطاقات فقط */
-  @media print{
-    .topbar, .actions-row, .field, .btn, .cols-3, .toast, header, footer { display:none !important }
-    .card{ box-shadow:none; border:none }
-    @page { size:A4 portrait; margin:10mm }
-    .printable{ border-color:#999 }
-  }
+/* الأزرار صف واحد بالوسط */
+.actions-row{
+  display:flex; justify-content:center; align-items:center;
+  gap:10px; flex-wrap:wrap; margin-top:12px;
+}
+.actions-row .btn{ min-width:140px; }
+@media (max-width:480px){ .actions-row .btn{ min-width:120px; } }
+
+/* منع أي خروج بصري من البطاقة */
+.card{ overflow:hidden; }
+
+/* ===== باقي القواعد التي كانت عندك (لا نحذفها) ===== */
+.printable{
+  border:1px solid color-mix(in oklab, var(--accent) 40%, #cbd5e1);
+  border-radius:12px; padding:14px; margin-top:8px; background:var(--card);
+}
+.set-card{ border:1px dashed rgba(59,130,246,.35); border-radius:10px; padding:10px; margin-top:12px }
+.set-card h3{ margin:0 0 6px }
+.muted{ color: var(--muted) }
+.list{ margin:0; padding-inline-start:1.2rem }
+.chips{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 }
+.chip{ background:color-mix(in oklab, var(--accent) 14%, #fff); padding:4px 8px; border-radius:999px; font-size:.9rem }
+.diff-box{ background:color-mix(in oklab, var(--accent) 10%, #fff); border-radius:8px; padding:8px; margin-top:8px; font-size:.95rem }
+.btn[disabled]{ opacity:.6; cursor:not-allowed }
+
+/* تجاوب: الأعمدة تصير عمود واحد على الشاشات الصغيرة */
+@media (max-width: 900px){
+  .cols-3{ grid-template-columns: 1fr !important; }
+  .cols-2{ grid-template-columns: 1fr !important; }
+}
+
+/* طباعة */
+@media print{
+  .topbar, .actions-row, .field, .btn, .cols-3, .toast, header, footer { display:none !important }
+  .card{ box-shadow:none; border:none }
+  @page { size:A4 portrait; margin:10mm }
+  .printable{ border-color:#999 }
+}
 </style>
 </head>
 <body>
