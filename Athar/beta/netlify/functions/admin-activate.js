@@ -6,37 +6,30 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
   auth: { persistSession: false }
 });
 
+function res(status, body) {
+  return { statusCode: status, body: typeof body === "string" ? body : JSON.stringify(body) };
+}
+
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
-  }
+  if (event.httpMethod !== "POST") return res(405, "Method Not Allowed");
 
   const gate = await requireAdmin(event);
-  if (!gate.ok) return { statusCode: gate.status, body: gate.error };
+  if (!gate.ok) return res(gate.status, gate.error);
 
   try {
     const body = JSON.parse(event.body || "{}");
     const email   = (body.email || "").toLowerCase() || null;
-    const user_id = body.user_id || null; // اختياري (auth0 sub)
-    const months  = Math.max(1, parseInt(body.months || 1, 10));
+    const user_id = body.user_id || null;
     const note    = body.note || null;
 
-    if (!email && !user_id) {
-      return { statusCode: 400, body: "email or user_id is required" };
-    }
+    if (!email && !user_id) return res(400, "email or user_id is required");
 
-    // لو عندك دالة RPC جاهزة في Supabase
-    // activate_membership(user_id_or_email, months, note, tenant_id)
-    // إن ما كانت عندك، تحت حطيت بديل "Upsert" بسيط في جدول memberships.
+    // دعم الشكل الجديد + توافق قديم
+    const amount = Math.max(1, parseInt(body.amount || body.months || 1, 10));
+    const unit   = (body.unit || (body.months ? "months" : "months")).toLowerCase(); // days|months|years
 
-    // مثال RPC (ألغيه إذا ما عندك الدالة):
-    // const { data, error } = await supabase.rpc("activate_membership", {
-    //   p_email: email, p_user_id: user_id, p_months: months, p_note: note, p_tenant_id: gate.org_id
-    // });
-
-    // بديل: كتابة مباشرة (جدول memberships)
-    // توقع جدول: memberships(email, user_id, expires_at, note, tenant_id, updated_at)
     const now = new Date();
+
     const { data: row } = await supabase
       .from("memberships")
       .select("expires_at")
@@ -46,11 +39,13 @@ exports.handler = async (event) => {
     let base = now;
     if (row && row.expires_at) {
       const cur = new Date(row.expires_at);
-      if (cur > now) base = cur; // نمدّد من تاريخ الانتهاء الحالي
+      if (cur > now) base = cur; // تمديد من التاريخ الحالي إن كان أبعد
     }
 
     const expires = new Date(base);
-    expires.setMonth(expires.getMonth() + months);
+    if (unit === "days")        expires.setDate(expires.getDate() + amount);
+    else if (unit === "years")  expires.setFullYear(expires.getFullYear() + amount);
+    else                        expires.setMonth(expires.getMonth() + amount); // months (default)
 
     const payload = {
       email,
@@ -69,9 +64,9 @@ exports.handler = async (event) => {
 
     if (error) throw error;
 
-    return { statusCode: 200, body: JSON.stringify({ ok:true, expires_at: data.expires_at }) };
+    return res(200, { ok: true, expires_at: data.expires_at });
   } catch (e) {
     console.error("admin-activate", e);
-    return { statusCode: 500, body: "server error" };
+    return res(500, "server error");
   }
 };
