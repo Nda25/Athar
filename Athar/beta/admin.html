@@ -1,0 +1,234 @@
+<!-- admin.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>لوحة الأدمِن</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<meta name="color-scheme" content="dark light" />
+<style>
+  .card{ margin:16px 0 }
+  .grid{ display:grid; gap:12px; grid-template-columns:1fr }
+  @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr } }
+  .field{ margin:10px 0 }
+  .field label{ display:block; font-weight:700; margin:6px 0 }
+  .field input,.field select, .field textarea{
+    width:100%; padding:12px; border-radius:12px; border:1px solid rgba(59,130,246,.35)
+  }
+  .muted{ opacity:.8 }
+  .hidden{ display:none !important }
+  .actions-row{ margin-top:8px; display:flex; gap:10px; flex-wrap:wrap }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
+    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
+    <div class="user"><span class="muted" id="whoami"></span></div>
+  </div>
+
+  <header>
+    <div class="hero">
+      <h1 class="logo">لوحة الأدمِن</h1>
+      <div class="tag"><span class="dot"></span>إدارة الاشتراكات والإعلانات</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- رسالة رفض -->
+    <section class="card" id="denyCard" style="display:none">
+      <h2 class="title">الوصول مرفوض</h2>
+      <p>هذه الصفحة للمشرفين فقط.</p>
+    </section>
+
+    <!-- لوحة الأدمن -->
+    <section class="card" id="adminCard" style="display:none">
+      <h2 class="title">التفعيل اليدوي للاشتراك</h2>
+      <div class="grid">
+        <div class="field">
+          <label>البريد الإلكتروني للمستخدم</label>
+          <input id="act-email" type="email" placeholder="example@email.com" />
+        </div>
+        <div class="field">
+          <label>UID (اختياري)</label>
+          <input id="act-userid" type="text" placeholder="Auth0 sub إن كان متاحًا" />
+        </div>
+        <div class="field">
+          <label>المدة (أشهر)</label>
+          <input id="act-months" type="number" min="1" value="12" />
+        </div>
+        <div class="field">
+          <label>ملاحظة (اختياري)</label>
+          <input id="act-note" type="text" placeholder="سبب/مرجع"/>
+        </div>
+      </div>
+      <div class="actions-row">
+        <button class="btn primary" id="btn-activate">تفعيل/تمديد</button>
+        <span id="act-status" class="muted"></span>
+      </div>
+    </section>
+
+    <section class="card" id="annCard" style="display:none">
+      <h2 class="title">إعلان عام</h2>
+      <div class="field">
+        <label>نص الإعلان</label>
+        <textarea id="ann-text" rows="4" placeholder="سيظهر لمستخدمي الموقع"></textarea>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label>الحالة</label>
+          <select id="ann-active">
+            <option value="true" selected>مُفعّل</option>
+            <option value="false">موقّف</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>تاريخ انتهاء (اختياري)</label>
+          <input id="ann-expires" type="date" />
+        </div>
+      </div>
+      <div class="actions-row">
+        <button class="btn" id="btn-publish">نشر/تحديث</button>
+        <span id="ann-status" class="muted"></span>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3 class="title" style="margin:0 0 8px">آخر إعلان منشور</h3>
+        <pre id="ann-preview" class="muted" style="white-space:pre-wrap">—</pre>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- SDKs (نفس ترتيب مشروعك) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
+  <!-- الحارس: يجبر على تسجيل الدخول ويتأكد أنك أدمن -->
+  <script defer src="assets/js/require-auth.js"></script>
+  <!-- سكربت مشروعك العام (فيه initAuth0 وغيره) -->
+  <script defer src="app.js"></script>
+
+  <script>
+  // ——— إعدادات المطالبات (Claims) ———
+  const ADMIN_CLAIM = "https://athar/admin"; // نفس الاسم اللي ضفناه في Action
+  const toast = (m)=>{ const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',1400); };
+
+  async function isAdmin(){
+    try{
+      const u = await window.auth.getUser();
+      document.getElementById('whoami').textContent = u?.email || '';
+      if (!u) return false;
+
+      const claims = await window.auth.getIdTokenClaims();
+
+      // 1) roles = ['admin', ...]
+      const roles = (claims && claims["https://athar/roles"]) || [];
+      if (Array.isArray(roles) && roles.includes("admin")) return true;
+
+      // 2) فلاغ سريع
+      if (claims && (claims[ADMIN_CLAIM] === true || claims["https://athar/admin"] === true)) return true;
+
+      // 3) وايت ليست طوارئ (اختياري) — أفرغيها إن ما ودك
+      const ADMIN_EMAILS = []; // ["you@example.com"]
+      if (u.email && ADMIN_EMAILS.includes(String(u.email).toLowerCase())) return true;
+
+      return false;
+    }catch(_){ return false; }
+  }
+
+  async function fetchCurrentAnnouncement(){
+    try{
+      const res = await fetch('/.netlify/functions/admin-announcement?latest=1');
+      if(!res.ok) return;
+      const j = await res.json();
+      document.getElementById('ann-preview').textContent = j?.latest
+        ? JSON.stringify(j.latest, null, 2)
+        : '—';
+    }catch(_){}
+  }
+
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    // بعد ما app.js يجهّز Auth0 بيرسل حدث auth0:ready. كاحتياط ننتظر شوي.
+    const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
+    for (let i=0; i<30 && !window.auth; i++) { await wait(100); }
+
+    const ok = await isAdmin();
+    document.getElementById('adminCard').style.display = ok ? '' : 'none';
+    document.getElementById('annCard').style.display   = ok ? '' : 'none';
+    document.getElementById('denyCard').style.display  = ok ? 'none' : '';
+
+    if (!ok) return;
+
+    await fetchCurrentAnnouncement();
+
+    // ——— تفعيل/تمديد ———
+    document.getElementById('btn-activate').addEventListener('click', async ()=>{
+      const email   = document.getElementById('act-email').value.trim();
+      const user_id = document.getElementById('act-userid').value.trim();
+      const months  = Math.max(1, Number(document.getElementById('act-months').value||'12')|0);
+      const note    = document.getElementById('act-note').value.trim() || null;
+
+      const stat = document.getElementById('act-status');
+      stat.textContent = 'جارٍ التفعيل…';
+      try{
+        // خذي Access Token بأودينس Athar API
+        const token = await window.auth.getToken({ audience: "https://api.athar" });
+
+        const res = await fetch('/.netlify/functions/admin-activate', {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ email: email || null, user_id: user_id || null, months, note })
+        });
+        const j = await res.json();
+        if(!res.ok) throw new Error(j?.error || 'failed');
+        stat.textContent = `تم التفعيل ✓ ينتهي: ${j.expires_at || '—'}`;
+        toast('تم التفعيل');
+      }catch(e){
+        console.error(e);
+        stat.textContent = 'تعذّر التفعيل';
+        toast('تعذّر التفعيل');
+      }
+    });
+
+    // ——— نشر إعلان ———
+    document.getElementById('btn-publish').addEventListener('click', async ()=>{
+      const text    = document.getElementById('ann-text').value.trim();
+      const active  = document.getElementById('ann-active').value === 'true';
+      const expires = document.getElementById('ann-expires').value || null;
+      const stat = document.getElementById('ann-status');
+      stat.textContent = 'جارٍ النشر…';
+
+      try{
+        const token = await window.auth.getToken({ audience: "https://api.athar" });
+
+        const res = await fetch('/.netlify/functions/admin-announcement', {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ text, active, expires })
+        });
+        const j = await res.json();
+        if(!res.ok) throw new Error(j?.error || 'failed');
+        stat.textContent = 'نُشر ✓';
+        toast('تم نشر/تحديث الإعلان');
+        document.getElementById('ann-preview').textContent = JSON.stringify(j.latest || j, null, 2);
+      }catch(e){
+        console.error(e);
+        stat.textContent = 'تعذّر النشر';
+        toast('تعذّر النشر');
+      }
+    });
+  });
+  </script>
+</body>
+</html>
