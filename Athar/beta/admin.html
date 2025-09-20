@@ -18,7 +18,6 @@
     width:100%; padding:12px; border-radius:12px; border:1px solid rgba(59,130,246,.35)
   }
   .muted{ opacity:.8 }
-  .hidden{ display:none !important }
   .actions-row{ margin-top:8px; display:flex; gap:10px; flex-wrap:wrap }
   .pill{ background:rgba(59,130,246,.12); padding:2px 8px; border-radius:999px; }
 </style>
@@ -38,13 +37,13 @@
   </header>
 
   <main class="container">
-    <!-- رسالة رفض -->
+    <!-- الوصول مرفوض -->
     <section class="card" id="denyCard" style="display:none">
       <h2 class="title">الوصول مرفوض</h2>
       <p>هذه الصفحة للمشرفين فقط.</p>
     </section>
 
-    <!-- لوحة الأدمن -->
+    <!-- التفعيل -->
     <section class="card" id="adminCard" style="display:none">
       <h2 class="title">التفعيل اليدوي للاشتراك</h2>
       <div class="grid">
@@ -78,12 +77,15 @@
       </div>
     </section>
 
+    <!-- الإعلانات -->
     <section class="card" id="annCard" style="display:none">
       <h2 class="title">إعلان عام</h2>
+
       <div class="field">
         <label>نص الإعلان</label>
         <textarea id="ann-text" rows="4" placeholder="سيظهر لمستخدمي الموقع"></textarea>
       </div>
+
       <div class="grid">
         <div class="field">
           <label>الحالة</label>
@@ -94,15 +96,26 @@
         </div>
 
         <div class="field">
-          <label>تاريخ انتهاء (اختياري)</label>
+          <label>تاريخ البدء (اختياري)</label>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-            <select id="ann-cal" style="max-width:140px">
+            <select id="ann-start-cal" style="max-width:140px">
               <option value="greg" selected>ميلادي</option>
               <option value="hijri">هجري</option>
             </select>
-            <input id="ann-expires-g" type="date" />
-            <input id="ann-expires-h" type="text" inputmode="numeric" placeholder="مثال: 1447-02-15" style="display:none" />
-            <small class="muted">الهجري بصيغة <code>YYYY-MM-DD</code></small>
+            <input id="ann-start-g" type="date" />
+            <input id="ann-start-h" type="text" inputmode="numeric" placeholder="مثال: 1447-02-10" style="display:none" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>تاريخ الانتهاء (اختياري)</label>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+            <select id="ann-end-cal" style="max-width:140px">
+              <option value="greg" selected>ميلادي</option>
+              <option value="hijri">هجري</option>
+            </select>
+            <input id="ann-end-g" type="date" />
+            <input id="ann-end-h" type="text" inputmode="numeric" placeholder="مثال: 1447-02-15" style="display:none" />
           </div>
         </div>
       </div>
@@ -130,14 +143,14 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-client.js"></script>
 
-  <!-- لحماية الصفحة -->
+  <!-- الحارس -->
   <script src="assets/js/require-auth.js"></script>
 
-  <!-- moment + hijri للتحويل -->
+  <!-- moment + hijri -->
   <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/moment-hijri@2.3.1/moment-hijri.js"></script>
 
-  <!-- سكربت مشروعك العام -->
+  <!-- سكربت عام -->
   <script src="app.js"></script>
 
   <script>
@@ -154,39 +167,39 @@
       const roles = (claims && claims["https://athar/roles"]) || [];
       if (Array.isArray(roles) && roles.includes("admin")) return true;
       if (claims && (claims[ADMIN_CLAIM] === true || claims["https://athar/admin"] === true)) return true;
-
       return false;
     }catch(_){ return false; }
   }
 
-  function toIsoFromPicker() {
-    const mode = document.getElementById('ann-cal').value;
+  function toIso(calSelId, gId, hId) {
+    const mode = document.getElementById(calSelId).value;
     if (mode === 'greg') {
-      const v = document.getElementById('ann-expires-g').value;
+      const v = document.getElementById(gId).value;
       if (!v) return null;
       return new Date(v + 'T00:00:00Z').toISOString();
     } else {
-      const v = document.getElementById('ann-expires-h').value.trim();
+      const v = document.getElementById(hId).value.trim();
       if (!v) return null;
       const m = moment(v, 'iYYYY-iMM-iDD', true);
       if (!m.isValid()) return null;
-      const g = new Date(m.format('YYYY-MM-DD') + 'T00:00:00Z');
-      return g.toISOString();
+      return new Date(m.format('YYYY-MM-DD') + 'T00:00:00Z').toISOString();
     }
   }
 
   document.addEventListener('DOMContentLoaded', async ()=>{
-    // تبديل مدخلات الهجري/الميلادي
-    const calSel = document.getElementById('ann-cal');
-    const gIn = document.getElementById('ann-expires-g');
-    const hIn = document.getElementById('ann-expires-h');
-    calSel.addEventListener('change', ()=>{
-      const useHijri = calSel.value === 'hijri';
-      gIn.style.display = useHijri ? 'none' : '';
-      hIn.style.display = useHijri ? '' : 'none';
-    });
+    // تبديل الحقول حسب النمط
+    const hook = (selId, gId, hId)=>{
+      const sel = document.getElementById(selId), g = document.getElementById(gId), h = document.getElementById(hId);
+      sel.addEventListener('change', ()=>{
+        const hijri = sel.value === 'hijri';
+        g.style.display = hijri ? 'none' : '';
+        h.style.display = hijri ? '' : 'none';
+      });
+    };
+    hook('ann-start-cal','ann-start-g','ann-start-h');
+    hook('ann-end-cal','ann-end-g','ann-end-h');
 
-    // انتظر تهيئة Auth0 من app.js
+    // ننتظر window.auth من app.js
     const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
     for (let i=0; i<30 && !window.auth; i++) { await wait(100); }
 
@@ -217,6 +230,10 @@
         const wrap = document.getElementById('ann-list');
         wrap.innerHTML = '';
         list.forEach(a=>{
+          const liveNow = a.active
+            && (!a.start_at   || new Date(a.start_at)   <= new Date())
+            && (!a.expires_at || new Date(a.expires_at) >  new Date());
+
           const card = document.createElement('div');
           card.className = 'card';
           card.innerHTML = `
@@ -224,8 +241,9 @@
               <div>
                 <div><strong>${a.active ? '✅' : '⏸️'} ${a.text}</strong></div>
                 <div class="muted" style="font-size:.9em">
-                  ${a.expires_at ? ('ينتهي: ' + new Date(a.expires_at).toLocaleDateString('ar-SA')) : 'بلا انتهاء'}
-                  ${a.active ? '<span class="pill" style="margin-inline-start:6px">منشور حاليًا</span>' : ''}
+                  يبدأ: ${a.start_at ? new Date(a.start_at).toLocaleDateString('ar-SA') : 'فوري'}
+                  • ينتهي: ${a.expires_at ? new Date(a.expires_at).toLocaleDateString('ar-SA') : '—'}
+                  ${liveNow ? '<span class="pill" style="margin-inline-start:6px">منشور حاليًا</span>' : ''}
                 </div>
               </div>
               <div class="actions-row" style="margin:0">
@@ -241,7 +259,7 @@
         wrap.querySelectorAll('[data-repub]').forEach(b=>{
           b.onclick = async ()=>{
             const id = b.getAttribute('data-repub');
-            await updateAnnouncement({ id, active:true });
+            await updateAnnouncement({ id, active:true, start:null }); // يبدأ فوريًا
             await fetchAnnouncements();
           };
         });
@@ -282,11 +300,12 @@
       return res.json();
     }
 
-    // نشر/تحديث إعلان
+    // نشر/تحديث
     document.getElementById('btn-publish').addEventListener('click', async ()=>{
       const text    = document.getElementById('ann-text').value.trim();
       const active  = document.getElementById('ann-active').value === 'true';
-      const expires = toIsoFromPicker(); // يدعم هجري/ميلادي
+      const start   = toIso('ann-start-cal','ann-start-g','ann-start-h'); // قد تكون null
+      const expires = toIso('ann-end-cal','ann-end-g','ann-end-h');       // قد تكون null
       const stat = document.getElementById('ann-status');
       stat.textContent = 'جارٍ النشر…';
 
@@ -294,7 +313,7 @@
         const res = await fetch('/.netlify/functions/admin-announcement', {
           method:'POST',
           headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await authToken()}` },
-          body: JSON.stringify({ text, active, expires })
+          body: JSON.stringify({ text, active, start, expires })
         });
         const j = await res.json();
         if(!res.ok) throw new Error(j?.error || 'failed');
@@ -322,7 +341,7 @@
       try{
         const res = await fetch('/.netlify/functions/admin-activate', {
           method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await authToken()}` },
+          headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await await window.auth.getToken({ audience: "https://api.athar" })}` },
           body: JSON.stringify({ email: email || null, user_id: user_id || null, amount, unit, note })
         });
         const j = await res.json();
@@ -336,7 +355,6 @@
       }
     });
 
-    // أول تحميل
     await fetchAnnouncements();
   });
   </script>
