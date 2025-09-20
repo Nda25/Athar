@@ -641,3 +641,4 @@ function fiveDaysCell(style){
   rem3Title.value=state.rem.r3.title; rem3Color.value=state.rem.r3.color;
   footerLine.value=state.rem.footerLine; footerName.value=state.rem.footerName;
 })();
+})(); // إغلاق القوس الكبير
