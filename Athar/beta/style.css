@@ -33,35 +33,40 @@
 /* قواعد عامة */
 *{ box-sizing:border-box }
 html,body{ height:100% }
+/* body بدون خلفية صلبة عشان الصورة تبين */
 body{
   margin:0;
   font-family:"Cairo",system-ui,Tahoma,Arial;
   color:var(--ink);
-  background-color:var(--bg);
+  background: transparent;       /* بدل background-color */
   overflow-x:hidden;
   line-height:1.9;
   font-size:17px;
 }
-.global-bg {
+
+/* خلفية الصورة العامة لكل الصفحات */
+.global-bg{
   position: fixed;
   inset: 0;
-  z-index: -10;
+  z-index: -2;                   /* تحت المحتوى وفوق المتدرّج */
+  pointer-events: none;          /* ما تمنع الضغط على العناصر */
   background: url('assets/img/bg.jpg') center/cover no-repeat;
-  opacity: 2; /* عدلي الشفافية حسب ذوقك */
+  opacity: .35;                  /* عدّلي الذوق بين .25 – .6 */
 }
-/* خلفية متدرجة ناعمة (طبقة خلفية) */
+
+/* المتدرّج تحت الصورة */
 .backdrop{
-  position:fixed; inset:0; z-index:-2; pointer-events:none;
+  position:fixed; inset:0; z-index:-3; pointer-events:none;
   background:linear-gradient(160deg, #f0f9ff 0%, #e6f2ff 40%, #fdfdfd 100%);
 }
 .dark .backdrop{
   background:linear-gradient(160deg, #0b1220 0%, #111827 50%, #1e293b 100%);
 }
 
-/* خلفية ورود كبيرة خافتة (طبقة فوق المتدرج) */
+/* الزخرفة فوق الصورة (لو تبينها) */
 .pattern{
   position:fixed; inset:0; z-index:-1; pointer-events:none;
-  opacity:.14;            /* خافت */
+  opacity:.14;
   background-repeat:repeat;
   background-size:220px 220px;
   background-image:url('data:image/svg+xml;utf8,\
