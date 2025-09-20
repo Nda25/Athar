@@ -45,9 +45,9 @@ body{
 .global-bg {
   position: fixed;
   inset: 0;
-  z-index: -4;
+  z-index: -10;
   background: url('assets/img/bg.jpg') center/cover no-repeat;
-  opacity: 0.6; /* عدلي الشفافية حسب ذوقك */
+  opacity: 2; /* عدلي الشفافية حسب ذوقك */
 }
 /* خلفية متدرجة ناعمة (طبقة خلفية) */
 .backdrop{
