@@ -6,11 +6,18 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
   auth: { persistSession: false }
 });
 
+function res(status, body) {
+  return { statusCode: status, body: typeof body === "string" ? body : JSON.stringify(body) };
+}
+
 exports.handler = async (event) => {
-  if (event.httpMethod === "GET") {
-    // ?latest=1 → آخر إعلان مفعّل وغير منتهي
-    const latest = new URL(event.rawUrl).searchParams.get("latest");
-    if (latest) {
+  const method = event.httpMethod;
+
+  if (method === "GET") {
+    const url = new URL(event.rawUrl);
+
+    // آخر إعلان منشور (غير منتهي)
+    if (url.searchParams.get("latest")) {
       const nowIso = new Date().toISOString();
       const { data, error } = await supabase
         .from("site_announcements")
@@ -20,46 +27,103 @@ exports.handler = async (event) => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-
-      if (error) return { statusCode: 500, body: error.message };
-      return { statusCode: 200, body: JSON.stringify({ latest: data || null }) };
+      if (error) return res(500, error.message);
+      return res(200, { latest: data || null });
     }
-    return { statusCode: 400, body: "bad request" };
+
+    // قائمة الإعلانات
+    if (url.searchParams.get("list")) {
+      const { data, error } = await supabase
+        .from("site_announcements")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) return res(500, error.message);
+      return res(200, { items: data || [] });
+    }
+
+    return res(400, "bad request");
   }
 
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
-  }
-
+  // بقية العمليات تتطلب أدمن
   const gate = await requireAdmin(event);
-  if (!gate.ok) return { statusCode: gate.status, body: gate.error };
+  if (!gate.ok) return res(gate.status, gate.error);
 
-  try {
-    const body = JSON.parse(event.body || "{}");
-    const text    = (body.text || "").trim();
-    const active  = !!body.active;
-    const expires = body.expires ? new Date(body.expires).toISOString() : null;
+  if (method === "POST") {
+    try {
+      const body = JSON.parse(event.body || "{}");
+      const text    = (body.text || "").trim();
+      const active  = !!body.active;
+      const expires = body.expires ? new Date(body.expires).toISOString() : null;
 
-    if (!text) return { statusCode: 400, body: "text required" };
+      if (!text) return res(400, "text required");
 
-    const payload = {
-      text,
-      active,
-      expires_at: expires,
-      tenant_id: gate.org_id || null
-    };
+      const payload = {
+        text,
+        active,
+        expires_at: expires,
+        tenant_id: gate.org_id || null
+      };
 
-    const { data, error } = await supabase
-      .from("site_announcements")
-      .insert(payload)
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from("site_announcements")
+        .insert(payload)
+        .select()
+        .single();
 
-    if (error) throw error;
-
-    return { statusCode: 200, body: JSON.stringify(data) };
-  } catch (e) {
-    console.error("admin-announcement", e);
-    return { statusCode: 500, body: "server error" };
+      if (error) throw error;
+      return res(200, data);
+    } catch (e) {
+      console.error("admin-announcement POST", e);
+      return res(500, "server error");
+    }
   }
+
+  if (method === "PUT") {
+    try {
+      const body = JSON.parse(event.body || "{}");
+      const id = body.id;
+      if (!id) return res(400, "id required");
+
+      const patch = {};
+      if (typeof body.active === "boolean") patch.active = body.active;
+      if (typeof body.text === "string")   patch.text = body.text.trim();
+      if (body.expires !== undefined)
+        patch.expires_at = body.expires ? new Date(body.expires).toISOString() : null;
+
+      const { data, error } = await supabase
+        .from("site_announcements")
+        .update(patch)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return res(200, data);
+    } catch (e) {
+      console.error("admin-announcement PUT", e);
+      return res(500, "server error");
+    }
+  }
+
+  if (method === "DELETE") {
+    try {
+      const url = new URL(event.rawUrl);
+      const id = url.searchParams.get("id");
+      if (!id) return res(400, "id required");
+
+      const { error } = await supabase
+        .from("site_announcements")
+        .delete()
+        .eq("id", id);
+
+      if (error) return res(500, error.message);
+      return res(200, { ok: true });
+    } catch (e) {
+      console.error("admin-announcement DELETE", e);
+      return res(500, "server error");
+    }
+  }
+
+  return res(405, "Method Not Allowed");
 };
