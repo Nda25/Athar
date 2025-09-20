@@ -249,6 +249,23 @@
     function toast(m){ const t=document.getElementById('toast'); if(!t) return; t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
     function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(_){ return [] } }
     function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
+<!-- — اربطي حساب Auth0 مع جدول users (upsert) بعد تحميل كل السكربتات -->
+window.addEventListener('load', () => {
+  if (typeof supaEnsureUserProfile === 'function') {
+    try { supaEnsureUserProfile(); } catch(_) {}
+  }
+});
+
+/* — ميتا خفيفة عن آخر إدخال (للتتبّع) */
+function miyadMetaSnapshot(){
+  const subj = (document.getElementById('m-subj')?.value||'').trim() || null;
+  const cls  = (document.getElementById('m-class')?.value||'').trim() || null;
+  const day  = document.getElementById('m-day')?.value || null;
+  const slot = Number(document.getElementById('m-slot')?.value || 0) || null;
+  const date = (document.getElementById('m-date')?.value||'').trim() || null;
+  const color= document.getElementById('m-color')?.value || null;
+  return { subj, cls, day, slot, date, color };
+}
 
     /* رندر القائمة */
     function render(){
@@ -281,18 +298,26 @@
       if (typeof bindAutoSave === 'function') bindAutoSave('miyad', '#miyad-form');
       render();
       logUse('miyad:view');
+document.getElementById('add').addEventListener('click', async ()=>{
+  const subj = document.getElementById('m-subj').value.trim();
+  const cls  = document.getElementById('m-class').value.trim();
+  const day  = document.getElementById('m-day').value;
+  const slot = +document.getElementById('m-slot').value || 1;
+  const date = document.getElementById('m-date').value;
+  const color= document.getElementById('m-color').value;
 
-      document.getElementById('add').addEventListener('click', ()=>{
-        const subj=document.getElementById('m-subj').value.trim();
-        const cls =document.getElementById('m-class').value.trim();
-        const day =document.getElementById('m-day').value;
-        const slot=+document.getElementById('m-slot').value||1;
-        const date=document.getElementById('m-date').value;
-        const color=document.getElementById('m-color').value;
-        if(!subj||!cls){ toast('أدخل المادة والفصل'); return; }
-        const list=load(); list.push({subj,cls,day,slot,date,color}); save(list); render(); toast('تمت الإضــافة ✅');
-        logUse('miyad:add_event');
-      });
+  if(!subj || !cls){ toast('أدخل المادة والفصل'); return; }
+
+  const list = load(); list.push({subj,cls,day,slot,date,color}); save(list);
+  render(); toast('تمت الإضــافة ✅');
+
+  // تتبّع: إضافة موعد
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('miyad_add', { subj, cls, day, slot, date: date||null, color }); } catch(_) {}
+  }
+  // (الإبقاء على التتبّع البسيط القديم اختياري)
+  logUse('miyad:add_event');
+});
 
       document.getElementById('list').addEventListener('click', (e)=>{
         const a=e.target.closest('a[data-i]'); if(!a) return; e.preventDefault();
@@ -355,29 +380,37 @@
     }
 
     // حفظ الإعدادات
-    async function saveReminderSettings() {
-      const sb   = await waitForSupa();
-      const user = await getAuthUser();
-      if (!sb || !user) { (window.toast? toast('سجّلي دخولك أولًا') : alert('سجّلي دخولك أولًا')); return; }
+async function saveReminderSettings() {
+  const sb   = await waitForSupa();
+  const user = await getAuthUser();
+  if (!sb || !user) { (window.toast? toast('سجّلي دخولك أولًا') : alert('سجّلي دخولك أولًا')); return; }
 
-      const cb   = document.getElementById('rem-enable');
-      const sel  = document.getElementById('rem-days');
-      const stat = document.getElementById('rem-status');
+  const cb   = document.getElementById('rem-enable');
+  const sel  = document.getElementById('rem-days');
+  const stat = document.getElementById('rem-status');
 
-      const payload = {
-        user_id: user.sub,
-        email:   user.email || null,
-        reminders_enabled: !!cb.checked,
-        remind_days_before: Number(sel.value || 2)
-      };
+  const enabled = !!cb.checked;
+  const days_before = Number(sel.value || 2);
 
-      stat.textContent = 'جارٍ الحفظ…';
-      const { error } = await sb.from('miyad_settings').upsert(payload, { onConflict: 'user_id' });
-      if (error) { console.error('saveReminderSettings error:', error); stat.textContent='تعذّر الحفظ'; toast('تعذّر الحفظ'); return; }
+  const payload = {
+    user_id: user.sub,
+    email:   user.email || null,
+    reminders_enabled: enabled,
+    remind_days_before: days_before
+  };
 
-      stat.textContent = 'تم الحفظ ✓';
-      toast('تم حفظ إعدادات التذكير ✓');
-    }
+  stat.textContent = 'جارٍ الحفظ…';
+  const { error } = await sb.from('miyad_settings').upsert(payload, { onConflict: 'user_id' });
+  if (error) { console.error('saveReminderSettings error:', error); stat.textContent='تعذّر الحفظ'; toast('تعذّر الحفظ'); return; }
+
+  stat.textContent = 'تم الحفظ ✓';
+  toast('تم حفظ إعدادات التذكير ✓');
+
+  // تتبّع: إعداد التذكير
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('miyad_reminder_save', { enabled, days_before }); } catch(_) {}
+  }
+}
 
     // ربط أزرار إعدادات التذكير + تحميل عند الجاهزية
     document.addEventListener('DOMContentLoaded', () => {
