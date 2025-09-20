@@ -200,38 +200,39 @@
         <div class="events" id="list"></div>
         <p class="print-note">هذا اليوم سيمضي… وسيبقى منه الأثـر 🌿</p>
       </section>
-    </div>
-    <!-- بطاقة إعدادات التذكير عبر الإيميل (نحيفة) -->
-<section class="card" id="reminder-card">
-  <h2 class="title">التذكير عبر البريد الإلكتروني📩 </h2>
-  <p class="hint">تأكد من تفعيل اشعارات البريد الإلكتروني.</p>
 
-  <div class="row">
-    <div class="label">تفعيل التذكير عبر البريد الإلكتروني</div>
-    <label class="switch" aria-label="تفعيل التذكير عبر البريد">
-      <input type="checkbox" id="rem-enable">
-      <span class="slider"></span>
-    </label>
-  </div>
+      <!-- بطاقة إعدادات التذكير عبر الإيميل -->
+      <section class="card" id="reminder-card">
+        <h2 class="title">التذكير عبر البريد الإلكتروني 📩</h2>
+        <p class="hint">تأكد من تفعيل إشعارات البريد الإلكتروني.</p>
 
-  <div class="row">
-    <div class="label">قبل الموعد بـ</div>
-    <select id="rem-days" aria-label="قبل الموعد بـ">
-      <option value="1">يوم واحد</option>
-      <option value="2" selected>يومين</option>
-      <option value="3">3 أيام</option>
-      <option value="4">4 أيام</option>
-      <option value="5">5 أيام</option>
-      <option value="6">6 أيام</option>
-      <option value="7">7 أيام</option>
-    </select>
-  </div>
+        <div class="row">
+          <div class="label">تفعيل التذكير عبر البريد الإلكتروني</div>
+          <label class="switch" aria-label="تفعيل التذكير عبر البريد">
+            <input type="checkbox" id="rem-enable">
+            <span class="slider"></span>
+          </label>
+        </div>
 
-  <div class="actions-row">
-    <button class="btn" id="rem-save">حفظ إعدادات التذكير</button>
-    <span id="rem-status" class="muted"></span>
-  </div>
-</section>
+        <div class="row">
+          <div class="label">قبل الموعد بـ</div>
+          <select id="rem-days" aria-label="قبل الموعد بـ">
+            <option value="1">يوم واحد</option>
+            <option value="2" selected>يومين</option>
+            <option value="3">3 أيام</option>
+            <option value="4">4 أيام</option>
+            <option value="5">5 أيام</option>
+            <option value="6">6 أيام</option>
+            <option value="7">7 أيام</option>
+          </select>
+        </div>
+
+        <div class="actions-row">
+          <button class="btn" id="rem-save">حفظ إعدادات التذكير</button>
+          <span id="rem-status" class="muted"></span>
+        </div>
+      </section>
+    </div> <!-- هنا إغلاق الـ container -->
   </main>
 
   <footer>
