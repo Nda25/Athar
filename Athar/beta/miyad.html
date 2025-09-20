@@ -310,7 +310,24 @@ document.getElementById('add').addEventListener('click', async ()=>{
 
   const list = load(); list.push({subj,cls,day,slot,date,color}); save(list);
   render(); toast('تمت الإضــافة ✅');
+// حفظ الموعد في Supabase (تجاهل الخطأ بهدوء)
+try{
+  const sb   = await (async function waitForSupa(max=40){ 
+    for (let i=0;i<max;i++){
+      if (window.supa && typeof window.supa.from === 'function') return window.supa;
+      if (window.supabaseClient && typeof window.supabaseClient.from === 'function') return window.supabaseClient;
+      await new Promise(r=>setTimeout(r,100));
+    } 
+    return null; 
+  })();
+  const user = await (async()=>{ try{ return await window.auth?.getUser(); }catch(_){ return null; } })();
 
+  if (sb && user?.sub) {
+    await sb.from('miyad_events').insert({
+      user_id: user.sub, subj, class: cls, day, slot, date: date || null, color
+    });
+  }
+}catch(e){ console.debug('skip supabase insert', e); }
   // تتبّع: إضافة موعد
   if (typeof supaLogToolUsage === 'function') {
     try { await supaLogToolUsage('miyad_add', { subj, cls, day, slot, date: date||null, color }); } catch(_) {}
