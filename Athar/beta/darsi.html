@@ -377,7 +377,27 @@
     const pillAge  = document.getElementById('pill-age');
 
     let CURRENT = { subject:'', topic:'', main:'understand', sup:'', age:'p2', duration:45, goals:[], success:'', activities:[], assessment:[], structure:[], oneMin:'', notes:'', adaptMsg:'' };
+// نشغّل الربط بعد تحميل السكربتات (Supabase/Auth0) أكيد
+window.addEventListener('load', () => {
+  if (typeof supaEnsureUserProfile === 'function') {
+    supaEnsureUserProfile().catch(()=>{});
+  }
+});
 
+// — لالتقاط بيانات الحالة وإرسالها كـ meta
+function metaSnapshot(){
+  return {
+    mode: document.getElementById('f-mode').value,
+    subject: (document.getElementById('f-subject')?.value||'').trim() || null,
+    topic: (document.getElementById('f-topic')?.value||'').trim() || null,
+    age: document.getElementById('f-age').value,
+    duration: +document.getElementById('f-duration').value || null,
+    bloom_main: document.getElementById('f-bloom-main').value,
+    bloom_support: document.getElementById('f-bloom-support').value || null,
+    goal_count: +document.getElementById('f-goal-count').value || null,
+    adapt: document.getElementById('f-adapt').value === 'on'
+  };
+}
     /* ===== إظهار/إخفاء المدخلات ===== */
     function toggleInputsView(){
       inputsWrap.classList.toggle('collapsed');
@@ -397,15 +417,21 @@
       }
       return 'understand';
     }
-    btnAnalyze.addEventListener('click', ()=>{
-      const mode = document.getElementById('f-mode').value;
-      if(mode!=='text'){ toastMsg('اختر: نص للتحليل أولًا'); return; }
-      const text = document.getElementById('f-text').value || '';
-      if(!text.trim()){ toastMsg('الصقي فقرة للتحليل'); return; }
-      const inferred = inferBloomFrom(text);
-      fMain.value = inferred;
-      toastMsg(`تم الاستدلال على مستوى بلوم: ${inferred}`);
-    });
+    btnAnalyze.addEventListener('click', async ()=>{
+  const mode = document.getElementById('f-mode').value;
+  if(mode!=='text'){ toastMsg('اختر: نص للتحليل أولًا'); return; }
+  const text = document.getElementById('f-text').value || '';
+  if(!text.trim()){ toastMsg('الصقي فقرة للتحليل'); return; }
+
+  const inferred = inferBloomFrom(text);
+  fMain.value = inferred;
+  toastMsg(`تم الاستدلال على مستوى بلوم: ${inferred}`);
+
+  // تتبّع التحليل
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('murtakaz_analyze', { ...metaSnapshot(), inferred }); } catch(_) {}
+  }
+});
 
     /* ===== نداء Gemini عبر Netlify Function ===== */
     btnGen.addEventListener('click', async ()=>{
@@ -522,11 +548,17 @@
           if (toggleInputs2) toggleInputs2.textContent = 'إظهار مدخلاتي';
         }
 
-        toastMsg('تم توليد خطة ذكية 🎉');
-        window.scrollTo({ top: outSummary.offsetTop - 10, behavior:'smooth' });
+toastMsg('تم توليد خطة ذكية 🎉');
 
-      }catch(err){
-        console.error(err);
+// تتبّع: توليد خطة
+if (typeof supaLogToolUsage === 'function') {
+  try { await supaLogToolUsage('murtakaz_generate', metaSnapshot()); } catch(_) {}
+}
+
+window.scrollTo({ top: outSummary.offsetTop - 10, behavior:'smooth' });
+
+}catch(err){
+  console.error(err);
         toastMsg('تعذّر توليد الخطة. تحقّقي من المفتاح أو أعيدي المحاولة.');
       }finally{
         btnGen.disabled = false; btnGen.textContent = btnGen.dataset._label || 'ولّد لي الخطة ✨';
@@ -562,26 +594,26 @@
       toastMsg('تم تطبيق التكيّف ✅');
     });
 
-    /* ===== نسخ/طباعة/تصدير ===== */
-    const AGE_LABEL = k => (AGE_NAME[k]||k);
-    function exportFullText(S){
-      const lines = [];
-      lines.push(`العنوان: ${S.topic} — (${S.subject})`);
-      if(S.adaptMsg) lines.push(S.adaptMsg);
-      lines.push(`الزمن: ${S.duration} دقيقة — العمر: ${AGE_LABEL(S.age)}`);
-      lines.push(`بلوم (أساسي): ${S.main}${S.sup?(' + '+S.sup):''}`);
-      if(S.notes) lines.push(`ملاحظات المعلم: ${S.notes}`);
-      lines.push('\nالأهداف:'); (S.goals||[]).forEach((g)=>lines.push(`- ${g}`));
-      lines.push('\nمخطط الدرس:'); (S.structure||[]).forEach(s=>lines.push(`- ${s}`));
-      lines.push('\nأنشطة:'); (S.activities||[]).forEach(a=>lines.push(`- ${a}`));
-      lines.push('\nتقويم سريع:'); (S.assessment||[]).forEach(a=>lines.push(`- ${a}`));
-      lines.push('\nتمايز:'); (S.diff||[]).forEach(a=>lines.push(`- ${a}`));
-      lines.push('\nالدقيقة الواحدة:'); lines.push(`- ${S.oneMin}`);
-      lines.push('\nمعايير النجاح:'); lines.push(`- ${S.success}`);
-      return lines.join('\n');
-    }
-    function exportClassroom(S){
-      return [
+/* ===== نسخ/طباعة/تصدير (مع تتبّع) ===== */
+const AGE_LABEL = k => (AGE_NAME[k]||k);
+function exportFullText(S){
+  const lines = [];
+  lines.push(`العنوان: ${S.topic} — (${S.subject})`);
+  if(S.adaptMsg) lines.push(S.adaptMsg);
+  lines.push(`الزمن: ${S.duration} دقيقة — العمر: ${AGE_LABEL(S.age)}`);
+  lines.push(`بلوم (أساسي): ${S.main}${S.sup?(' + '+S.sup):''}`);
+  if(S.notes) lines.push(`ملاحظات المعلم: ${S.notes}`);
+  lines.push('\nالأهداف:'); (S.goals||[]).forEach((g)=>lines.push(`- ${g}`));
+  lines.push('\nمخطط الدرس:'); (S.structure||[]).forEach(s=>lines.push(`- ${s}`));
+  lines.push('\nأنشطة:'); (S.activities||[]).forEach(a=>lines.push(`- ${a}`));
+  lines.push('\nتقويم سريع:'); (S.assessment||[]).forEach(a=>lines.push(`- ${a}`));
+  lines.push('\nتمايز:'); (S.diff||[]).forEach(a=>lines.push(`- ${a}`));
+  lines.push('\nالدقيقة الواحدة:'); lines.push(`- ${S.oneMin}`);
+  lines.push('\nمعايير النجاح:'); lines.push(`- ${S.success}`);
+  return lines.join('\n');
+}
+function exportClassroom(S){
+  return [
 `[Google Classroom]
 العنوان: ${S.topic} — ${S.subject}`,
 `التعليمات:
@@ -596,10 +628,10 @@
 `تمايز:
 - دعم: ${(S.diff||[])[0]||'-'}
 - إثراء: ${(S.diff||[])[1]||'-'}`
-      ].join('\n');
-    }
-    function exportTeams(S){
-      return [
+  ].join('\n');
+}
+function exportTeams(S){
+  return [
 `[Microsoft Teams Assignment]
 Title: ${S.topic} — ${S.subject}
 Instructions:
@@ -608,47 +640,72 @@ Instructions:
 - Exit Ticket: ${S.assessment?.[0]||'-'}
 Rubric: (paste from page)
 Due: (set by teacher)`
-      ].join('\n');
-    }
+  ].join('\n');
+}
+function copyText(txt){ navigator.clipboard.writeText(txt).then(()=>toastMsg('تم النسخ ✅')); }
 
-    function copyText(txt){ navigator.clipboard.writeText(txt).then(()=>toastMsg('تم النسخ ✅')); }
-    document.getElementById('btn-copy-full').addEventListener('click', ()=> copyText(exportFullText(CURRENT)));
-    document.getElementById('btn-classroom').addEventListener('click', ()=> copyText(exportClassroom(CURRENT)));
-    document.getElementById('btn-teams').addEventListener('click', ()=> copyText(exportTeams(CURRENT)));
-    document.getElementById('btn-print').addEventListener('click', ()=> window.print());
+btnCopy.addEventListener('click', async ()=>{
+  copyText(exportFullText(CURRENT));
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('murtakaz_copy_full', metaSnapshot()); } catch(_) {}
+  }
+});
+btnClass.addEventListener('click', async ()=>{
+  copyText(exportClassroom(CURRENT));
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('murtakaz_copy_classroom', metaSnapshot()); } catch(_) {}
+  }
+});
+btnTeams.addEventListener('click', async ()=>{
+  copyText(exportTeams(CURRENT));
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('murtakaz_copy_teams', metaSnapshot()); } catch(_) {}
+  }
+});
+btnPrint.addEventListener('click', async ()=>{
+  window.print();
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('murtakaz_print', metaSnapshot()); } catch(_) {}
+  }
+});
 
-    // نسخ/طباعة بطاقة الأهداف فقط
-    function copyGoalsCard(){
-      const el = document.getElementById('goalsCard'); if(!el) return;
-      const txt = el.innerText.trim(); navigator.clipboard.writeText(txt).then(()=> toastMsg('تم نسخ بطاقة الأهداف ✅'));
-    }
-    function printElementById(id, title='بطاقة الأهداف'){
-      const node = document.getElementById(id); if(!node) return;
-      const w = window.open('', '_blank');
-      w.document.open();
-      w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head>
-        <meta charset="utf-8"><title>${title}</title>
-        <style>
-          body{font-family:"Cairo",system-ui,-apple-system,Segoe UI,Roboto; color:#0f172a; margin:20px}
-          .box{border:1px solid #93c5fd80; border-radius:12px; padding:14px}
-          h3{margin:0 0 6px; font-weight:700}
-          ul{margin:0; padding-inline-start:1.2rem}
-          strong{font-weight:700}
-          @media print{ @page{margin:12mm} }
-        </style>
-      </head><body>
-        <div class="box">${node.innerHTML}</div>
-        <script>window.onload=()=>window.print()<\/script>
-      </body></html>`);
-      w.document.close();
-    }
-    document.getElementById('btn-goals-copy')?.addEventListener('click', copyGoalsCard);
-    document.getElementById('btn-goals-print')?.addEventListener('click', ()=> printElementById('goalsCard'));
-
-    // تسجيل استخدام الأداة (اختياري)
-    document.getElementById('btn-generate')?.addEventListener('click', async () => {
-      if (typeof supaLogUsage === 'function') { try { await supaLogUsage('murtakaz'); } catch(_){} }
-    });
+// نسخ/طباعة بطاقة الأهداف فقط
+function copyGoalsCard(){
+  const el = document.getElementById('goalsCard'); if(!el) return;
+  const txt = el.innerText.trim(); navigator.clipboard.writeText(txt).then(()=> toastMsg('تم نسخ بطاقة الأهداف ✅'));
+}
+function printElementById(id, title='بطاقة الأهداف'){
+  const node = document.getElementById(id); if(!node) return;
+  const w = window.open('', '_blank');
+  w.document.open();
+  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head>
+    <meta charset="utf-8"><title>${title}</title>
+    <style>
+      body{font-family:"Cairo",system-ui,-apple-system,Segoe UI,Roboto; color:#0f172a; margin:20px}
+      .box{border:1px solid #93c5fd80; border-radius:12px; padding:14px}
+      h3{margin:0 0 6px; font-weight:700}
+      ul{margin:0; padding-inline-start:1.2rem}
+      strong{font-weight:700}
+      @media print{ @page{margin:12mm} }
+    </style>
+  </head><body>
+    <div class="box">${node.innerHTML}</div>
+    <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  w.document.close();
+}
+document.getElementById('btn-goals-copy')?.addEventListener('click', async ()=>{
+  copyGoalsCard();
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('murtakaz_goals_copy', metaSnapshot()); } catch(_) {}
+  }
+});
+document.getElementById('btn-goals-print')?.addEventListener('click', async ()=>{
+  printElementById('goalsCard');
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('murtakaz_goals_print', metaSnapshot()); } catch(_) {}
+  }
+});
 </script>
 
 <!-- Supabase -->
