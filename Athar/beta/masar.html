@@ -289,7 +289,31 @@
     const mixInp      = document.getElementById('tblIntensity');
     const borderInp   = document.getElementById('tblBorderIntensity');
     const tableWrap   = $('#tableWrap');
+// — اربطي حساب Auth0 مع جدول users (upsert) بعد تحميل كل السكربتات
+window.addEventListener('load', () => {
+  if (typeof supaEnsureUserProfile === 'function') {
+    try { supaEnsureUserProfile(); } catch(_) {}
+  }
+});
 
+// — لالتقاط إعدادات "مَسار" كـ meta للتتبّع
+function masarMeta(){
+  const get = (id, def=null)=> (document.getElementById(id)?.value ?? def);
+  const saved = (window.userDB?.get && userDB.get('masar', {})) || {};
+  const meta  = saved.__meta || {};
+
+  const daysValue = get('days','sun-thu');
+  const daysCount = daysValue === 'sun-wed' ? 4 : 5;
+
+  return {
+    days: daysCount,
+    periods: parseInt(get('periods', meta.periods ?? 7), 10) || 7,
+    start_at: get('startTime', meta.startAt ?? '07:00'),
+    slot_mins: parseInt(get('slotMins', meta.slotMin ?? 50), 10) || 50,
+    orient: get('orient', meta.orient ?? 'periods-rows'),
+    colors_on: !!meta.colorsOn
+  };
+}
     const DB_KEY = 'masar';
     const DEFAULT_DAYS = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس'];
 
@@ -489,11 +513,33 @@
       const saved=getSaved(); Object.keys(saved).forEach(k=>{ if(/^r\d+c\d+$/.test(k)) delete saved[k]; });
       setSaved(saved); buildTable(); if(window.toast) toast('تم المسح ✓');
     });
+$('#print').addEventListener('click', async ()=>{
+  printArea(false);
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('masar_print', masarMeta()); } catch(_) {}
+  }
+});
 
-    $('#print').addEventListener('click', ()=>printArea(false));
-    $('#printCompact').addEventListener('click', ()=>printArea(true));
-    $('#exportCsv').addEventListener('click', downloadCsv);
-    $('#savePng').addEventListener('click', saveTableAsPng);
+$('#printCompact').addEventListener('click', async ()=>{
+  printArea(true);
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('masar_print_compact', masarMeta()); } catch(_) {}
+  }
+});
+
+$('#exportCsv').addEventListener('click', async ()=>{
+  downloadCsv();
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('masar_export_csv', masarMeta()); } catch(_) {}
+  }
+});
+
+$('#savePng').addEventListener('click', async ()=>{
+  await saveTableAsPng();
+  if (typeof supaLogToolUsage === 'function') {
+    try { await supaLogToolUsage('masar_save_png', masarMeta()); } catch(_) {}
+  }
+});
 
     $('#toggleColors').addEventListener('click', ()=>{
       window.__colorsOn = !window.__colorsOn;
