@@ -1,3 +1,26 @@
+/* ====== Athar Hard Reset (once) ====== */
+(function hardResetOnce(){
+  try {
+    const FLAG = "ATHAR_V2_READY";   // اسم علامة الإصدار الجديد
+    if (!localStorage.getItem(FLAG)) {
+      // امسحي كل التخزين المحلي والـ session
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // حاولي حذف قواعد IndexedDB (لو المتصفح يدعم)
+      if ('indexedDB' in window && indexedDB.databases) {
+        indexedDB.databases().then(dbs => {
+          dbs.forEach(db => { if (db && db.name) indexedDB.deleteDatabase(db.name); });
+        });
+      }
+
+      // ثبّتي العلامة حتى ما يتكرر المسح كل مرة
+      localStorage.setItem(FLAG, "1");
+      console.log("[Athar] One-time storage reset done.");
+    }
+  } catch (_) {}
+})();
+
 if (typeof window.AUTH0_DOMAIN === 'undefined') {
   window.AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
 }
