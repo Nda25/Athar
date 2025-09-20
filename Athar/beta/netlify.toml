@@ -7,4 +7,6 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@google/generative-ai", "nodemailer"]
+  # تأكد من تثبيتهم في package.json أيضًا
+  external_node_modules = ["@supabase/supabase-js", "jwks-rsa", "jsonwebtoken", "nodemailer", "@google/generative-ai"]
+  included_files = ["netlify/functions/**"]
