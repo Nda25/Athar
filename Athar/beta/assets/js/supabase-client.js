@@ -1,108 +1,91 @@
-
-// إعداد Supabase (مفتاح anon مخصص للمتصفح)
-const SUPABASE_URL = "https://oywqpkzaudmzwvytxaop.supabase.co";
+// ===== إعداد Supabase للمتصفح =====
+const SUPABASE_URL      = "https://oywqpkzaudmzwvytxaop.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d3Fwa3phdWRtend2eXR4YW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4OTczMTYsImV4cCI6MjA3MzQ3MzMxNn0.nhjbZMiHPkWvcPnNDeGu3sGSP2TloC0jESZjQ03FnyM";
 
-// عميل Supabase للعميل (Frontend)
-// (مع RLS المشدد لن تُسمح قراءات/كتابات إلا عبر دوال الخادم)
+// عميل Supabase للفرونت (نستخدمه للقراءات البسيطة إن احتجنا فقط)
 const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Helpers صغيرة
+const auth0SafeGetUser = async () => {
+  try {
+    if (window.auth?.getUser) return await window.auth.getUser();
+    if (window.auth0Client?.getUser) return await window.auth0Client.getUser();
+  } catch(_) {}
+  return null;
+};
+
 /** -------------------------------------------
- * upsert-user (Frontend helper)
- * يستدعي دالة Netlify لكتابة/تحديث المستخدم في جدول users
- * عبر service_role (على الخادم)
+ * upsert-user عبر Function (service role)
+ * body المتوقع: { sub, email, name, picture }
  * ------------------------------------------ */
-async function supaEnsureUser(u = {}) {
-  if (!u.email) return { ok:false, error: "missing email" };
+async function supaEnsureUserProfile(profile = {}) {
+  if (!profile.sub || !profile.email) {
+    // نحاول نقرأ من Auth0 تلقائيًا
+    const u = await auth0SafeGetUser();
+    if (!u) return { ok:false, error:"no auth0 user" };
+    profile = {
+      sub: u.sub,
+      email: String(u.email||"").toLowerCase(),
+      name: u.name || u.nickname || null,
+      picture: u.picture || null
+    };
+  }
 
   try {
     const res = await fetch('/.netlify/functions/upsert-user', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      // عدلي الحقول هنا حسب ما تقبله الدالة الخادمية upsert-user
-      body: JSON.stringify({
-        email: String(u.email).toLowerCase(),
-        full_name: u.full_name || null,
-        picture: u.picture || null,
-        plan: u.plan || null
-      })
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(profile)
     });
-
-    if (!res.ok) {
-      const msg = await res.text();
-      return { ok:false, error: msg || 'server error' };
-    }
+    if (!res.ok) return { ok:false, error: await res.text() };
     const json = await res.json();
-    return { ok:true, data: json.user || json };
+    return { ok:true, data: json.user };
   } catch (e) {
     return { ok:false, error: e.message || 'network error' };
   }
 }
 
 /** -------------------------------------------
- * يقرأ مستخدم Auth0 ويعمل upsert في Supabase (بالبريد)
- * تناديها بعد auth0:ready
- * ------------------------------------------ */
-async function supaEnsureUserFromAuth0() {
-  try {
-    const u = await window.auth?.getUser();
-    if (!u || !u.email) return { ok:false, error:'no auth0 email' };
-
-    return await supaEnsureUser({
-      email: String(u.email).toLowerCase(),
-      full_name: u.name || u.nickname || null,
-      picture: u.picture || null
-    });
-  } catch (e) {
-    return { ok:false, error: e.message };
-  }
-}
-
-/** -------------------------------------------
- * تسجيل استخدام أداة (يعتمد على البريد)
- * يستدعي Netlify Function: /.netlify/functions/log-tool-usage
- * المتوقّع في الخادم: { tool_name, user_email, meta }
- * الخادم ممكن يرجّع 204 لو ما فيه مستخدم مسجل الدخول.
+ * تسجيل استخدام أداة (log-tool-usage)
+ * يمرّر: tool_name + meta (+ نحاول تمرير email وsub للمطابقة)
+ * الخادم سيحوّلها إلى user_sub ويُدخلها في الجدول.
  * ------------------------------------------ */
 async function supaLogToolUsage(toolName, meta = {}) {
   try {
-    // نحاول جلب الإيميل من Auth0
-    let user_email = null;
-    try {
-      const u = await window.auth?.getUser();
-      user_email = u?.email ? String(u.email).toLowerCase() : null;
-    } catch (_) {}
-
+    const u = await auth0SafeGetUser();
+    const payload = {
+      tool_name: toolName,
+      user_email: u?.email ? String(u.email).toLowerCase() : null,
+      user_sub:   u?.sub || null,
+      meta
+    };
     const res = await fetch('/.netlify/functions/log-tool-usage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tool_name: toolName,
-        user_email,        // ← المفتاح هنا صار بالإيميل
-        meta: meta || {}
-      })
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
     });
-
+    // 204 يعني تجاهل بلا أخطاء (ما فيه مستخدم)
     if (!res.ok && res.status !== 204) {
-      // 204 = لا يوجد مستخدم (نتجاهل بهدوء)
       return { ok:false, error: await res.text() };
     }
-    return { ok:true, data: (res.status === 204 ? null : await res.json()) };
+    return { ok:true, data: res.status===204 ? null : await res.json() };
   } catch (e) {
     return { ok:false, error: e.message };
   }
 }
 
-/** -------------------------------------------
- * (اختياري) قراءة المستخدم من جدول users عبر الإيميل
- * ستنجح فقط إذا لديك سياسة READ مناسبة في RLS
- * أو لو تنفذينها من دالة خادمية.
- * ------------------------------------------ */
+// (اختياري) قراءة مستخدم عبر الإيميل إن أضفتِ سياسة قراءة لاحقًا
 async function supaGetUserByEmail(email){
   const { data, error } = await supa
-    .from("users")
-    .select("*")
-    .eq("email", String(email).toLowerCase())
+    .from('users')
+    .select('*')
+    .eq('email', String(email).toLowerCase())
     .single();
   return { ok: !error, data, error };
 }
+
+// تعريض بعض الدوال عالميًا
+window.supaEnsureUserProfile = supaEnsureUserProfile;
+window.supaLogToolUsage = supaLogToolUsage;
+window.supaGetUserByEmail = supaGetUserByEmail;
+window.supa = supa;
