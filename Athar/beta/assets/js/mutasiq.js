@@ -2,10 +2,17 @@
    يعمل مع style.css و app.js
    لا يحتاج مكتبات خارجية.  */
 
-// أدوات صغيرة
-const $  = (s, r=document)=> r.querySelector(s);
-const $$ = (s, r=document)=> Array.from(r.querySelectorAll(s));
-const toast = (m)=>{ const t=$('#toast'); if(!t) return; t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); };
+// assets/js/mutasiq.js
+(() => {
+  const $  = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const toast = (m)=>{
+    const t = $('#toast');
+    if(!t) return;
+    t.textContent = m;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1800);
+  };
 
 // تبويب بسيط
 document.addEventListener('DOMContentLoaded', () => {
