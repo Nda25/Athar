@@ -6,46 +6,52 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
   auth: { persistSession: false }
 });
 
-function res(status, body) {
-  return { statusCode: status, body: typeof body === "string" ? body : JSON.stringify(body) };
-}
-
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return res(405, "Method Not Allowed");
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
+  }
 
+  // بوابة الأدمن (JWT من Auth0)
   const gate = await requireAdmin(event);
-  if (!gate.ok) return res(gate.status, gate.error);
+  if (!gate.ok) return { statusCode: gate.status, body: gate.error };
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const email   = (body.email || "").toLowerCase() || null;
-    const user_id = body.user_id || null;
+
+    const email   = (body.email || "").toLowerCase() || null;   // اختياري
+    const user_id = body.user_id || null;                       // اختياري (auth0 sub)
+    const amount  = Math.max(1, parseInt(body.amount || 1, 10)); // عدد الوحدات
+    const unit    = (body.unit || "months");                    // days | months | years
     const note    = body.note || null;
 
-    if (!email && !user_id) return res(400, "email or user_id is required");
+    if (!email && !user_id) {
+      return { statusCode: 400, body: "email or user_id is required" };
+    }
+    if (!["days","months","years"].includes(unit)) {
+      return { statusCode: 400, body: "invalid unit (allowed: days|months|years)" };
+    }
 
-    // دعم الشكل الجديد + توافق قديم
-    const amount = Math.max(1, parseInt(body.amount || body.months || 1, 10));
-    const unit   = (body.unit || (body.months ? "months" : "months")).toLowerCase(); // days|months|years
-
+    // نجيب الاشتراك الحالي (إن وُجد)
     const now = new Date();
-
-    const { data: row } = await supabase
+    const { data: row, error: selErr } = await supabase
       .from("memberships")
       .select("expires_at")
       .or(`email.eq.${email},user_id.eq.${user_id}`)
       .maybeSingle();
+    if (selErr) throw selErr;
 
+    // قاعدة التمديد: لو فيه انتهاء بالمستقبل نبدأ منه، غير كذا نبدأ من الآن
     let base = now;
     if (row && row.expires_at) {
       const cur = new Date(row.expires_at);
-      if (cur > now) base = cur; // تمديد من التاريخ الحالي إن كان أبعد
+      if (cur > now) base = cur;
     }
 
+    // نضيف المدة حسب الوحدة المختارة
     const expires = new Date(base);
-    if (unit === "days")        expires.setDate(expires.getDate() + amount);
-    else if (unit === "years")  expires.setFullYear(expires.getFullYear() + amount);
-    else                        expires.setMonth(expires.getMonth() + amount); // months (default)
+    if (unit === "days")   expires.setDate(expires.getDate() + amount);
+    if (unit === "months") expires.setMonth(expires.getMonth() + amount);
+    if (unit === "years")  expires.setFullYear(expires.getFullYear() + amount);
 
     const payload = {
       email,
@@ -64,9 +70,9 @@ exports.handler = async (event) => {
 
     if (error) throw error;
 
-    return res(200, { ok: true, expires_at: data.expires_at });
+    return { statusCode: 200, body: JSON.stringify({ ok: true, expires_at: data.expires_at }) };
   } catch (e) {
     console.error("admin-activate", e);
-    return res(500, "server error");
+    return { statusCode: 500, body: "server error" };
   }
 };
