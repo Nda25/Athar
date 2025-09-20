@@ -1,10 +1,18 @@
-// Node 18+
-import fetch from 'node-fetch';
+// netlify/functions/miyad-cron.js  (ESM)
 import { createClient } from '@supabase/supabase-js';
 
-const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, { global:{ headers:{ Authorization:`Bearer ${process.env.SUPABASE_ANON_KEY}` } } });
+// استخدمي SERVICE_ROLE هنا (يفك RLS ويقرأ كل المستخدمين)
+const sb = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE,
+  {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE}` } }
+  }
+);
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM     = process.env.EMAIL_FROM;
+const EMAIL_FROM     = process.env.EMAIL_FROM; // <-- غيّرت الاسم ليتطابق مع المتغير
 
 function todayUTC(){ const d=new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); }
 function addDaysUTC(base, days){ const d=new Date(base); d.setUTCDate(d.getUTCDate()+days); return d; }
@@ -19,7 +27,7 @@ async function sendEmail(to, subject, html){
   if(!res.ok) throw new Error(await res.text());
 }
 
-export default async () => {
+export const handler = async () => {
   const { data: settings, error: sErr } = await sb
     .from('miyad_settings')
     .select('user_id,email,reminders_enabled,remind_days_before')
@@ -48,8 +56,12 @@ export default async () => {
       <h2>تذكير مِيعاد — بعد ${daysBefore} يوم(أيام)</h2>
       <ul>${rows}</ul>
     </div>`;
+
     try{ await sendEmail(st.email, `تذكير مواعيد — بعد ${daysBefore} يوم`, html); }catch(e){ console.error(e); }
   }
 
   return { statusCode:200, body:'ok' };
 };
+
+// شغّليها يوميًا 06:00 UTC (عدّلي الوقت حسب حاجتك)
+export const config = { schedule: '0 6 * * *' };
