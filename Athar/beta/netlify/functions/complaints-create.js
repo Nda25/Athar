@@ -1,12 +1,14 @@
+// netlify/functions/complaints-create.js
 // POST /.netlify/functions/complaints-create
 // body: { email, name?, subject, type: 'complaint'|'suggestion', message, order_number? }
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
   try {
-    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
+    const { SUPABASE_URL, SUPABASE_SERVICE_KEY, WHATSAPP_NUMBER } = process.env;
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       return { statusCode: 500, body: "Missing Supabase envs" };
     }
@@ -31,6 +33,7 @@ exports.handler = async (event) => {
       "Prefer": "return=representation"
     };
 
+    // 1) إنشاء الشكوى / الاقتراح
     const res = await fetch(url, {
       method: "POST",
       headers: hdrs,
@@ -51,7 +54,7 @@ exports.handler = async (event) => {
       return { statusCode: res.status, body: JSON.stringify(out) };
     }
 
-    // (اختياري) خزّن أول رسالة في complaint_messages أيضاً
+    // 2) إضافة الرسالة الأولى لجدول complaint_messages
     const created = out && out[0];
     if (created && created.id) {
       await fetch(`${SUPABASE_URL}/rest/v1/complaint_messages`, {
@@ -65,9 +68,16 @@ exports.handler = async (event) => {
       });
     }
 
+    // 3) بناء رابط واتساب (إن وجد)
+    let waLink = null;
+    if (WHATSAPP_NUMBER) {
+      const num = WHATSAPP_NUMBER.replace(/\D+/g, ""); // تأكد أنه أرقام فقط
+      waLink = `https://wa.me/${num}`;
+    }
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ ok: true, complaint: out[0] })
+      body: JSON.stringify({ ok: true, complaint: out[0], whatsapp: waLink })
     };
   } catch (e) {
     return { statusCode: 500, body: e.message || "Server error" };
