@@ -1,126 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <title>أثــر — سياسة الخصوصية والشروط</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>أثر – سياسة الخصوصية</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet" />
   <style>
     :root{
-      --primary:#2563eb;
-      --bg1:#0f172a;
-      --bg2:#1e293b;
-      --card:#0b1220cc;
-      --text:#e5e7eb;
-      --muted:#cbd5e1;
-      --radius:18px;
+      --bg1:#0f172a; --bg2:#1e293b; --card:#0b1220cc;
+      --text:#e5e7eb; --muted:#cbd5e1; --accent:#93c5fd; --primary:#2563eb;
+      --radius:18px; --max:900px;
     }
-    html,body{height:100%;margin:0}
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;}
     body{
-      font-family:"Cairo",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      background:
-        radial-gradient(1200px 800px at 50% -10%, rgba(59,130,246,.35), transparent 60%),
-        radial-gradient(1000px 700px at 100% 20%, rgba(147,197,253,.25), transparent 60%),
-        linear-gradient(180deg,var(--bg1),var(--bg2));
+      font-family:"Cairo",system-ui,Segoe UI,Roboto,Arial;
       color:var(--text);
-      min-height:100%;
+      background:
+        radial-gradient(1200px 800px at 50% -10%, rgba(59,130,246,.25), transparent 60%),
+        radial-gradient(1000px 700px at 100% 20%, rgba(147,197,253,.18), transparent 60%),
+        linear-gradient(180deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      padding:32px 16px;
     }
-    .wrap{max-width:980px;margin:0 auto;padding:32px 16px}
-    .topbar{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px
+    .wrap{max-width:var(--max);margin:0 auto}
+    header{text-align:center;margin-bottom:22px}
+    .logo{width:64px;height:64px;border-radius:18px;display:block;margin:0 auto 10px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+    h1{margin:0 0 6px;font-weight:800;font-size:clamp(24px,4.2vw,36px)}
+    .subtitle{margin:0;color:var(--muted);font-size:clamp(14px,2.2vw,18px)}
+    .card{
+      background:var(--card); border:1px solid rgba(148,163,184,.25);
+      border-radius:var(--radius); box-shadow:0 18px 40px rgba(0,0,0,.35), 0 6px 14px rgba(2,6,23,.4);
+      padding:22px; line-height:1.9;
     }
-    .topbar a{
-      color:#93c5fd;text-decoration:none;border:1px solid rgba(148,163,184,.25);
-      padding:8px 12px;border-radius:999px;background:#0b1220;
-    }
-    .hero{text-align:center;margin:8px 0 16px}
-    .hero .logo{
-      width:64px;height:64px;border-radius:18px;display:block;margin:0 auto 8px;
-      box-shadow:0 6px 18px rgba(0,0,0,.35)
-    }
-    .hero h1{font-size:clamp(26px,4.5vw,40px);margin:0 0 6px;font-weight:800}
-    .hero p{margin:0;color:var(--muted);font-size:clamp(14px,2.2vw,18px)}
-
-    .panel{
-      margin:18px auto 0;max-width:900px;background:var(--card);
-      border:1px solid rgba(148,163,184,.25);border-radius:var(--radius);
-      box-shadow:0 18px 40px rgba(0,0,0,.35),0 6px 14px rgba(2,6,23,.4);
-      padding:18px 16px
-    }
-    .panel h2{margin:16px 0 8px;font-weight:800}
-    .panel p{color:#cbd5e1;line-height:1.9;margin:0 0 10px}
-    .muted{color:#94a3b8}
-    .kicker{font-size:13px;color:#a8b4c7;margin-top:6px}
-    .list{padding-inline-start:18px}
-    .list li{margin:6px 0;color:#cbd5e1}
-    .badge{
-      display:inline-block;margin-inline-start:8px;font-size:12px;
-      color:#93c5fd;border:1px solid rgba(148,163,184,.25);padding:2px 8px;border-radius:999px
-    }
-    .footer-note{ text-align:center;margin:16px 0 0;color:#a8b4c7;font-size:12px }
-    a.inline{ color:#93c5fd; text-decoration:underline }
+    h2{margin:26px 0 10px;font-size:22px}
+    h3{margin:18px 0 8px;font-size:18px}
+    p{margin:10px 0}
+    ul{margin:8px 20px}
+    a{color:var(--accent);text-decoration:underline}
+    .muted{color:var(--muted)}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .btn{background:#0b1220;border:1px solid rgba(148,163,184,.35);color:#fff;padding:10px 16px;border-radius:999px;text-decoration:none}
+    .btn.primary{background:var(--primary);border-color:var(--primary)}
+    footer{margin-top:22px;text-align:center;color:#a8b4c7;font-size:12px}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="topbar">
-      <a href="index.html">الرئيسية</a>
-      <span class="kicker">آخر تحديث: <span id="last-upd"></span></span>
-    </div>
+    <header>
+      <img class="logo" src="assets/icon.png" alt="أثر">
+      <h1>سياسة الخصوصية</h1>
+      <p class="subtitle">نحترم خصوصيتك، ونبني كل شيء على مبدأ الحدّ الأدنى من جمع البيانات.</p>
+    </header>
 
-    <div class="hero">
-      <img class="logo" src="https://n-athar.co/favicon.ico" alt="أثــر">
-      <h1>سياسة الخصوصية والشروط — <span style="color:#93c5fd">أثــر</span></h1>
-      <p>نلتزم بحماية بياناتك وتقديم تجربة تعليمية آمنة وملهمة.</p>
-    </div>
+    <article class="card">
+      <p class="muted">آخر تحديث: 2025-09-21</p>
 
-    <main class="panel">
-      <h2>١) المسؤولية والاستخدام</h2>
-      <p>المنصة أداة مساعدة للمعلم وليست بديلًا عن دوره التربوي. <strong>المعلم مسؤول مسؤولية كاملة</strong> عن مراجعة المحتوى والدروس والأنشطة والجداول التي يتم إنشاؤها عبر المنصة قبل مشاركتها مع الطلاب. لا تتحمل منصة <strong>أثــر</strong> أي تبعات ناتجة عن إدخال بيانات غير صحيحة أو اعتماد محتوى غير مُراجع.</p>
-      <p>يُمنع استخدام المنصة لأي أغراض غير تعليمية أو في أنشطة مخالفة للقانون أو القيم التربوية أو حقوق الآخرين. أي إساءة استخدام قد تعرض حسابك للإيقاف.</p>
+      <h2>أولًا: ما الذي نجمعه؟</h2>
+      <p>نكتفي بالحدّ الأدنى اللازم لتشغيل الحساب والخدمة، مثل: الاسم، البريد الإلكتروني، وإعدادات الحساب. لا نطلب منك معلومات لا نحتاجها.</p>
 
-      <h2>٢) الحسابات والاشتراكات</h2>
-      <ul class="list">
-        <li>التسجيل متاح عبر البريد الإلكتروني وكلمة المرور، مع إمكانية استخدام <strong>رمز ترويجي</strong> عند توفره.</li>
-        <li>الرموز الترويجية اختيارية، محدودة العدد والاستخدام، ولا تُستبدل بمبالغ مالية.</li>
-        <li>أي تلاعب بالأكواد أو مشاركة بيانات الدخول مع الآخرين يؤدي إلى إيقاف الحساب.</li>
-        <li>الاشتراكات المدفوعة أو المفعّلة عبر الأكواد خاصة بصاحب الحساب ولا يجوز بيعها أو إعارتها.</li>
+      <h2>ثانيًا: كيف نستخدم البيانات؟</h2>
+      <ul>
+        <li>إنشاء حسابك وتفعيل الدخول وإدارة الجلسة.</li>
+        <li>تشغيل الميزات التعليمية وحفظ تفضيلاتك.</li>
+        <li>التواصل بخصوص التحديثات الهامّة أو الأعطال.</li>
       </ul>
 
-      <h2>٣) حماية البيانات والخصوصية</h2>
-      <p>نلتزم بحماية بيانات المستخدمين وتخزينها بشكل آمن، واتخاذ الإجراءات المعقولة لمنع الوصول غير المصرّح به.</p>
-      <p>لا تتم مشاركة بياناتك الشخصية مع أي طرف ثالث <strong>إلا إذا تطلّب الأمر قانونيًا</strong>. قد نستخدم بيانات عامّة ومجهولة الهوية لأغراض التحسين والتطوير.</p>
+      <h2>ثالثًا: كيف نحمي بياناتك؟</h2>
+      <p>نستخدم ممارسات أمنية معيارية، وتقسيم صلاحيات، وتشفير أثناء النقل، ومراجعات داخلية دورية. الوصول للبيانات مقيد بفريق التشغيل لأغراض الدعم فقط وعند الضرورة.</p>
 
-      <h2>٤) حقوق الملكية</h2>
-      <p>جميع البرمجيات، التصاميم، المحتوى النصي، والمواد التعليمية ضمن منصة <strong>أثــر</strong> محمية بحقوق الملكية الفكرية. لا يُسمح بنسخها أو إعادة توزيعها إلا بإذن كتابي مسبق.</p>
+      <h2>رابعًا: مشاركة البيانات</h2>
+      <p><strong>لا نبيع بياناتك ولا نشاركها مع طرف ثالث لأغراض تسويقية.</strong> قد نستخدم مزودي خدمات بنية تحتية أو دفع أو بريد—لكن ضمن حدود تشغيل الخدمة وفقط بقدر الحاجة، ومع التزامات سرية وأمان تناسبية.</p>
 
-      <h2>٥) الدعم الفني والاستخدام السليم</h2>
-      <p>تُقدَّم المنصة "كما هي" <span class="badge">As-Is</span>، ونسعى باستمرار لتحسين الأداء وتجربة المستخدم. في حال واجهت مشكلة تقنية أو محتوى غير لائق، يُرجى التواصل عبر البريد الداعم.</p>
+      <h2>خامسًا: ملفات السجل وملفات الارتباط</h2>
+      <p>قد نستخدم ملفات تقنية بسيطة لتحسين الأداء وحفظ تفضيلات الواجهة. يمكنك التحكم بها من متصفحك، مع ملاحظة أن تعطيل بعضها قد يؤثر على بعض الميزات.</p>
 
-      <h2>٦) إخلاء المسؤولية</h2>
-      <p>الغرض من المنصة تعليمي. <strong>المعلم وحده مسؤول</strong> عن مراجعة صحة المعلومات والأنشطة والمواد قبل اعتمادها داخل الصف. لا تتحمّل المنصة نتائج أي استخدام خاطئ أو غير مقصود.</p>
+      <h2>سادسًا: حقوقك</h2>
+      <ul>
+        <li>الاطلاع على بياناتك الأساسية.</li>
+        <li>تحديث معلومات الحساب وتصحيحها.</li>
+        <li>طلب حذف الحساب (سيؤدي لحذف أو إخفاء بياناتك ما لم يلزم الاحتفاظ القانوني).</li>
+      </ul>
 
-      <h2>٧) التعديلات على السياسة</h2>
-      <p>تحتفظ منصة <strong>أثــر</strong> بحق تعديل هذه السياسة والشروط في أي وقت. سيتم إشعار المستخدمين بالتغييرات عبر البريد الإلكتروني أو إشعارات داخل المنصة. استمرارك في الاستخدام يعني موافقتك على النسخة الأحدث.</p>
+      <h2>سابعًا: الاحتفاظ بالبيانات</h2>
+      <p>نحتفظ بالبيانات طالما كان حسابك نشطًا أو حسب ما يقتضيه تشغيل الخدمة والامتثال للأنظمة. عند الحذف، نعالج الطلب خلال مدة معقولة ونزيل البيانات من الأنظمة الفعّالة والنسخ الاحتياطية وفق جداول الحذف.</p>
 
-      <h2>٨) التواصل</h2>
-      <p>للاستفسارات أو طلبات حذف الحساب أو التقارير، راسلنا على: <a class="inline" href="mailto:team@n-athar.co">team@n-athar.co</a></p>
+      <h2>ثامنًا: المحتوى الذي تنشئه</h2>
+      <p>المحتوى التعليمي الذي تُنشئه يخصك. نستخدمه لتقديم الخدمة وتحسين تجربتك فقط. يحق لك تنزيله أو حذفه ضمن إمكانات المنصة.</p>
 
-      <p class="footer-note">باستخدامك للمنصة فأنت تقرّ بقراءتك وفهمك وموافقتك على هذه السياسة.</p>
-    </main>
+      <h2>تاسعًا: التحديثات على هذه السياسة</h2>
+      <p>قد نُحدّث هذه الصفحة عند الحاجة. سنشير إلى “آخر تحديث” بالأعلى، وقد نرسل إشعارًا بالتغييرات الجوهرية.</p>
+
+      <h2>تواصل</h2>
+      <p>لأي استفسار متعلق بالخصوصية: <a href="mailto:support@n-athar.co">support@n-athar.co</a></p>
+
+      <div class="btns">
+        <a href="/" class="btn">العودة للصفحة الرئيسية</a>
+        <a href="terms.html" class="btn primary">الشروط والأحكام</a>
+      </div>
+    </article>
+
+    <footer>© أثـَــر — كل الحقوق محفوظة.</footer>
   </div>
-
-  <script>
-    // عرض تاريخ آخر تحديث بالتقويم الهجري/الميلادي (حسب دعم المتصفح)
-    try{
-      const now = new Date();
-      const opt = { year:'numeric', month:'long', day:'numeric' };
-      const greg = new Intl.DateTimeFormat('ar-SA', opt).format(now);
-      document.getElementById('last-upd').textContent = greg;
-    }catch(_){
-      document.getElementById('last-upd').textContent = new Date().toLocaleDateString('ar-SA');
-    }
-  </script>
 </body>
 </html>
