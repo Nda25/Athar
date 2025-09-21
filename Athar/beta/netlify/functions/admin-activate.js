@@ -11,7 +11,7 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // بوابة الأدمن (JWT من Auth0)
+  // بوابة الأدمن (JWT من مزود الهوية)
   const gate = await requireAdmin(event);
   if (!gate.ok) return { statusCode: gate.status, body: gate.error };
 
@@ -31,23 +31,23 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: "invalid unit (allowed: days|months|years)" };
     }
 
-    // نجيب الاشتراك الحالي (إن وُجد)
+    // الاشتراك الحالي (إن وُجد)
     const now = new Date();
     const { data: row, error: selErr } = await supabase
       .from("memberships")
-      .select("expires_at")
+      .select("expires_at,email,user_id")
       .or(`email.eq.${email},user_id.eq.${user_id}`)
       .maybeSingle();
     if (selErr) throw selErr;
 
-    // قاعدة التمديد: لو فيه انتهاء بالمستقبل نبدأ منه، غير كذا نبدأ من الآن
+    // قاعدة التمديد
     let base = now;
     if (row && row.expires_at) {
       const cur = new Date(row.expires_at);
       if (cur > now) base = cur;
     }
 
-    // نضيف المدة حسب الوحدة المختارة
+    // أضف المدة
     const expires = new Date(base);
     if (unit === "days")   expires.setDate(expires.getDate() + amount);
     if (unit === "months") expires.setMonth(expires.getMonth() + amount);
@@ -62,9 +62,12 @@ exports.handler = async (event) => {
       updated_at: new Date().toISOString()
     };
 
+    // **نقطة مهمّة**: لو نملك user_id نستعمله كمفتاح فريد، وإلا فالبريد
+    const conflictKey = user_id ? "user_id" : "email";
+
     const { data, error } = await supabase
       .from("memberships")
-      .upsert(payload, { onConflict: "email" })
+      .upsert(payload, { onConflict: conflictKey })
       .select()
       .single();
 
