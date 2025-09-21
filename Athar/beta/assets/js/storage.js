@@ -1,4 +1,4 @@
-<!-- assets/js/storage.js -->
+// assets/js/storage.js
 // مفتاح التخزين الموحّد
 function userKey(){ return 'athar:data'; }
 
@@ -130,10 +130,8 @@ window.bindAutoSave = function bindAutoSave(pageKey, container){
   const root = (typeof container === 'string') ? document.querySelector(container) : container;
   if (!root) return;
 
-  // املئي القيم المحفوظة أولًا
   window.fillForm(root, window.userDB.get(pageKey, {}));
 
-  // debounce بسيط للحفظ
   let t = null;
   const save = () => {
     clearTimeout(t);
@@ -145,4 +143,154 @@ window.bindAutoSave = function bindAutoSave(pageKey, container){
 
   root.addEventListener('input', save);
   root.addEventListener('change', save);
+};
+
+
+// ===== إعداد Supabase للمتصفح =====
+const SUPABASE_URL      = "https://oywqpkzaudmzwvytxaop.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d3Fwa3phdWRtend2eXR4YW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4OTczMTYsImV4cCI6MjA3MzQ3MzMxNn0.nhjbZMiHPkWvcPnNDeGu3sGSP2TloC0jESZjQ03FnyM";
+
+// عميل Supabase للفرونت (قراءات بسيطة)
+const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Helpers صغيرة
+const auth0SafeGetUser = async () => {
+  try {
+    if (window.auth?.getUser) return await window.auth.getUser();
+    if (window.auth0Client?.getUser) return await window.auth0Client.getUser();
+  } catch(_) {}
+  return null;
+};
+
+// **جديد**: الحصول على توكن وصول لاستخدامه مع وظائف الخادم المحمية
+window.auth0SafeGetToken = async function auth0SafeGetToken(){
+  try{
+    if (window.auth0Client?.getTokenSilently) {
+      const aud = (window.__CFG && window.__CFG.api_audience) || "https://api.athar";
+      return await window.auth0Client.getTokenSilently({ authorizationParams: { audience: aud } });
+    }
+  }catch(_){}
+  return null;
+};
+
+/** -------------------------------------------
+ * upsert-user عبر Function (service role)
+ * body المتوقع: { sub, email, name, picture }
+ * ------------------------------------------ */
+async function supaEnsureUserProfile(profile = {}) {
+  if (!profile.sub || !profile.email) {
+    const u = await auth0SafeGetUser();
+    if (!u) return { ok:false, error:"no auth0 user" };
+    profile = {
+      sub: u.sub,
+      email: String(u.email||"").toLowerCase(),
+      name: u.name || u.nickname || null,
+      picture: u.picture || null
+    };
+  }
+
+  try {
+    const res = await fetch('/.netlify/functions/upsert-user', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(profile)
+    });
+    if (!res.ok) return { ok:false, error: await res.text() };
+    const json = await res.json();
+    return { ok:true, data: json.user };
+  } catch (e) {
+    return { ok:false, error: e.message || 'network error' };
+  }
+}
+
+/** -------------------------------------------
+ * تسجيل استخدام أداة (log-tool-usage)
+ * ------------------------------------------ */
+async function supaLogToolUsage(toolName, meta = {}) {
+  try {
+    const u = await auth0SafeGetUser();
+    const payload = {
+      tool_name: toolName,
+      user_email: u?.email ? String(u.email).toLowerCase() : null,
+      user_sub:   u?.sub || null,
+      meta
+    };
+    const res = await fetch('/.netlify/functions/log-tool-usage', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok && res.status !== 204) {
+      return { ok:false, error: await res.text() };
+    }
+    return { ok:true, data: res.status===204 ? null : await res.json() };
+  } catch (e) {
+    return { ok:false, error: e.message };
+  }
+}
+
+// قراءة مستخدم عبر الإيميل إن احتجتِ
+async function supaGetUserByEmail(email){
+  const { data, error } = await supa
+    .from('users')
+    .select('*')
+    .eq('email', String(email).toLowerCase())
+    .single();
+  return { ok: !error, data, error };
+}
+
+window.supaEnsureUserProfile = supaEnsureUserProfile;
+window.supaLogToolUsage = supaLogToolUsage;
+window.supaGetUserByEmail = supaGetUserByEmail;
+window.supa = supa;
+
+
+// ===== الثيم =====
+(function unifyDarkClass(){
+  var root = document.documentElement;
+  var body = document.body;
+  if (!body) return;
+  if (body.classList.contains('dark')) {
+    body.classList.remove('dark');
+    root.classList.add('dark');
+  }
+})();
+
+(function initTheme(){
+  var root  = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('theme'); } catch(_) {}
+  if (saved === 'dark') root.classList.add('dark');
+  else root.classList.remove('dark');
+})();
+
+window.bindThemeToggle = function bindThemeToggle(){
+  const root = document.documentElement;
+  const btn  = document.getElementById('themeToggle');
+  if (!btn) return;
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const dark = root.classList.toggle('dark');
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(_){}
+    if (typeof window.toast === 'function') {
+      toast(dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح');
+    }
+  });
+};
+
+// مودالات + توست
+window.openModal  = (id) => { const n = $(id); if (n) n.classList.add('show'); };
+window.closeModal = (id) => { const n = $(id); if (n) n.classList.remove('show'); };
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.modal [data-close]');
+  if(!btn) return;
+  e.preventDefault();
+  const m = btn.closest('.modal'); if(m) m.classList.remove('show');
+});
+window.toast = (msg)=>{
+  let t = document.querySelector('.toast');
+  if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 1800);
 };
