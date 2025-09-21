@@ -1,20 +1,111 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>سياسة الاسترجاع والاستبدال — أثــر</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <meta name="color-scheme" content="dark light">
+  <style>
+    /* تحسينات بسيطة داخلية للفقرة والقائمة */
+    .policy-wrap{max-width:860px;margin:0 auto}
+    .policy-wrap .lead{color:var(--muted);margin:6px 0 16px}
+    .policy-wrap ul{margin:0 0 8px 0;padding-inline-start:1.25rem}
+    .policy-wrap li{margin:.35rem 0}
+    .note{background:#0b1220cc;border:1px solid rgba(148,163,184,.25);border-radius:14px;padding:12px;margin-top:12px}
+    .contact a{color:#93c5fd;text-decoration:underline}
+  </style>
 </head>
 <body>
-  <header><h1>📜 سياسة الاسترجاع والاستبدال</h1></header>
+  <!-- خلفيات النمط -->
+  <div class="global-bg"></div>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
+
+  <!-- الشريط العلوي (موحّد) -->
+  <div class="topbar">
+    <div class="left-actions">
+      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
+    </div>
+    <div class="actions">
+      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+    </div>
+    <div class="user">
+      <span id="nav-auth" style="display:none; gap:10px">
+        <!-- يعبّيها app.js إن رغبتِ لاحقًا -->
+        <button id="loginBtn" class="btn" style="display:none">تسجيل الدخول</button>
+        <button id="registerBtn" class="btn" style="display:none">إنشاء حساب</button>
+        <button id="logout" class="btn" style="display:none">تسجيل الخروج</button>
+      </span>
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+    </div>
+  </div>
+
+  <!-- الهيرو -->
+  <header>
+    <div class="hero">
+      <h1 class="logo">سياسة الاسترجاع والاستبدال</h1>
+      <div class="tag"><span class="dot"></span>سياسة واضحة ومكتوبة لراحة العميل</div>
+    </div>
+  </header>
+
   <main>
-    <p>نظرًا لطبيعة خدماتنا الرقمية في منصة <strong>أثــر</strong>، فإن الاشتراكات تُفعّل فور الدفع.</p>
-    <ul>
-      <li>لا يمكن استرجاع المبلغ بعد التفعيل.</li>
-      <li>يمكن استرداد المبلغ كاملًا إذا لم يتم التفعيل خلال 7 أيام من الدفع.</li>
-      <li>في حال وجود خطأ تقني أو عدم إمكانية الوصول للخدمة، نلتزم بإرجاع المبلغ كاملًا.</li>
-    </ul>
-    <p>لمزيد من المعلومات تواصلوا معنا: <a href="mailto:team@athar.co">team@athar.co</a></p>
+    <div class="container policy-wrap">
+      <section class="card">
+        <h2 class="title">نطاق السياسة</h2>
+        <p class="lead">
+          نظرًا لطبيعة خدماتنا الرقمية في منصة <strong>أثــر</strong>، يتم تفعيل الاشتراكات فور إتمام عملية الدفع.
+        </p>
+
+        <h3>أحكام الاسترجاع</h3>
+        <ul>
+          <li>لا يحق استرجاع المبلغ بعد تفعيل الاشتراك بنجاح.</li>
+          <li>يحق للعميل استرداد المبلغ كاملًا إذا لم يتم <strong>تفعيل</strong> الاشتراك خلال <strong>7 أيام</strong> من تاريخ الدفع.</li>
+          <li>في حال وجود خطأ تقني يمنع الوصول للخدمة، نلتزم بإرجاع المبلغ كاملًا بعد التحقق.</li>
+        </ul>
+
+        <div class="note">
+          <strong>ملاحظات إضافية:</strong>
+          <ul style="margin-top:6px">
+            <li>الاشتراك يخص حسابًا واحدًا ولا يجوز نقله إلى حساب آخر بعد التفعيل.</li>
+            <li>إن وُجد عرض أو رمز ترويجي، تُحتسب الاستفادة حسب شروط العرض وقت الشراء.</li>
+          </ul>
+        </div>
+
+        <h3 style="margin-top:18px">قنوات التواصل ورفع الشكاوى</h3>
+        <p class="contact">
+          لأي استفسار أو طلب استرجاع، تواصلي معنا عبر:
+          <br>📧 البريد: <a href="mailto:team@n-athar.co">team@n-athar.co</a>
+          <br>💬 واتساب: <a href="https://wa.me/966556795993" target="_blank" rel="noopener">اضغط هنا</a>
+          <br>📝 نموذج الشكاوى والاقتراحات: <a href="complaints.html">من هنا</a>
+        </p>
+      </section>
+    </div>
   </main>
+
+  <!-- فوتر موحّد -->
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
+    <div class="foot-links">
+      <a href="privacy.html">سياسة الخصوصية</a>
+      <span class="sep">|</span>
+      <a href="terms.html">الشروط والأحكام</a>
+      <span class="sep">|</span>
+      <a href="refund-policy.html">سياسة الاسترجاع والاستبدال</a>
+      <span class="sep">|</span>
+      <a href="complaints.html">الشكاوى والاقتراحات</a>
+      <span class="sep">|</span>
+      <a href="whatsapp.html">تواصل عبر واتساب</a>
+    </div>
+  </footer>
+
+  <!-- SDKs اللازمة لـ app.js (بدون حارس لأن الصفحة عامة) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
