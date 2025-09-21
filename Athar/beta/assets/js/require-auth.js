@@ -10,7 +10,6 @@
 
   // صفحات البرامج (مقفلة إلا لو status=active أو Admin)
   const PROGRAM_PAGES = new Set([
-    "programs.html",   // قائمة البرامج نفسها
     "athar.html",      // مُنطلق
     "darsi.html",      // مُرتكز
     "masar.html",      // مسار
