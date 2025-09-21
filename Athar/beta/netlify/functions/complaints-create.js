@@ -1,7 +1,6 @@
 // netlify/functions/complaints-create.js
 // POST /.netlify/functions/complaints-create
 // body: { email, name?, subject, type: 'complaint'|'suggestion', message, order_number? }
-// ملاحظة: الآن تتطلب "مستخدمًا مسجّلًا ومشتركًا فعّالاً"
 
 const { requireUser } = require("./_auth");
 const { createClient } = require("@supabase/supabase-js");
@@ -15,7 +14,7 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // بوابة المستخدم
+  // يتطلب مستخدمًا مسجّلًا
   const gate = await requireUser(event);
   if (!gate.ok) return { statusCode: gate.status, body: gate.error };
 
@@ -25,7 +24,7 @@ exports.handler = async (event) => {
       return { statusCode: 500, body: "Missing Supabase envs" };
     }
 
-    // تحقق الاشتراك الفعّال من جدول memberships
+    // تحقق حالة الاشتراك
     const emailFromToken = (gate.user.email || "").toLowerCase();
     const userSub        = gate.user.sub;
 
@@ -40,7 +39,6 @@ exports.handler = async (event) => {
       return { statusCode: 403, body: "Only active subscribers can send complaints/suggestions" };
     }
 
-    // حمل الطلب
     const data = JSON.parse(event.body || "{}");
     const email   = (data.email || emailFromToken || "").trim().toLowerCase();
     const name    = (data.name || gate.user.name || "").trim();
@@ -79,11 +77,9 @@ exports.handler = async (event) => {
     });
 
     const out = await res.json();
-    if (!res.ok) {
-      return { statusCode: res.status, body: JSON.stringify(out) };
-    }
+    if (!res.ok) return { statusCode: res.status, body: JSON.stringify(out) };
 
-    // 2) إضافة الرسالة الأولى
+    // 2) الرسالة الأولى
     const created = out && out[0];
     if (created && created.id) {
       await fetch(`${SUPABASE_URL}/rest/v1/complaint_messages`, {
@@ -93,7 +89,7 @@ exports.handler = async (event) => {
       });
     }
 
-    // 3) رابط واتساب (اختياري)
+    // 3) رابط واتساب
     let waLink = null;
     if (WHATSAPP_NUMBER) {
       const num = WHATSAPP_NUMBER.replace(/\D+/g, "");
