@@ -1,24 +1,21 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>الملف الشخصي — أثــر</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<meta name="color-scheme" content="dark light">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>الملف الشخصي — أثــر</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <meta name="color-scheme" content="dark light">
 </head>
 <body>
-  <!-- خلفيات النمط -->
-    <div class="global-bg"></div>
+  <div class="global-bg"></div>
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط العلوي الموحد -->
   <div class="topbar">
     <div class="left-actions">
       <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-
     </div>
     <div class="actions">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
@@ -26,7 +23,6 @@
     </div>
   </div>
 
-  <!-- الهيدر -->
   <header>
     <div class="hero">
       <div class="hero-plate"></div>
@@ -41,114 +37,93 @@
         <h2 class="title">بيانات الحساب</h2>
 
         <div class="grid">
-          <!-- بطاقة المعلومات الأساسية -->
           <div class="box">
             <h3>المعلومات الأساسية</h3>
             <p><strong>الاسم:</strong> <span class="js-user-name">—</span></p>
             <p><strong>البريد:</strong> <span id="u-email">—</span></p>
-            <p><strong>الجوال:</strong> <span id="u-phone">—</span></p>
-            <p><strong>المدرسة:</strong> <span id="u-school">—</span></p>
-            <p><strong>تاريخ التسجيل:</strong> <span id="u-created">—</span></p>
+            <p><strong>المعرّف:</strong> <span id="u-sub">—</span></p>
+            <p><strong>الحالة:</strong> <span id="u-status">—</span></p>
           </div>
 
-          <!-- بطاقة الاشتراك -->
           <div class="box">
             <h3>الاشتراك</h3>
             <p id="sub-state" class="badge" style="display:none"></p>
-            <p><strong>الخطة:</strong> <span id="s-plan">—</span></p>
-            <p><strong>تاريخ البداية:</strong> <span id="s-start">—</span></p>
-            <p><strong>تاريخ الانتهاء:</strong> <span id="s-end">—</span></p>
-
-            <hr style="margin:14px 0; border:none; border-top:1px solid #e5e7eb44">
-
-            <!-- المتبقي من اشتراكي -->
-            <h3>المتبقي من اشتراكي</h3>
-            <p><strong>عدد الاستراتيجيات المتبقية:</strong> <span id="t-left">—</span></p>
-            <p><strong>تاريخ الانتهاء:</strong> <span id="t-exp">—</span></p>
+            <p class="muted">للتفعيل أو الترقية تفضلي إلى صفحة <a href="pricing.html">الدفع والإشتراك</a>.</p>
           </div>
         </div>
 
         <div class="actions-row" style="margin-top:18px">
           <button id="logout" class="btn">تسجيل الخروج</button>
-          <button id="delete" class="btn" style="background:#ef4444;color:#fff;border:0">حذف الحساب</button>
         </div>
       </section>
     </div>
   </main>
 
-<footer>
-  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-  <p class="foot-name">ندى المجيرش</p>
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
+    <nav class="foot-links">
+      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+      <a href="complaints.html">الشكاوى والاقتراحات</a>
+    </nav>
+    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
+  </footer>
 
-  <nav class="foot-links">
-    <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-    <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-    <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-    <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-    <a href="complaints.html">الشكاوى والاقتراحات</a>
-  </nav>
-
-  <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-</footer>
-
-<script>
-  // سنة تلقائية في الفوتر
-  (function(){
-    var y=document.getElementById('year');
-    if(y) y.textContent=new Date().getFullYear();
-  })();
-</script>
+  <script>
+    (function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();
+  </script>
 
   <div class="toast"></div>
 
   <!-- سكربتات -->
   <script src="app.js"></script>
+  <script src="assets/js/storage.js"></script>
   <script>
-    // حماية الوصول: لو مو مسجلة دخول يرجّعك للرئيسية
-    document.addEventListener('DOMContentLoaded', ()=>{
-      if(localStorage.getItem('athar:auth') !== '1'){ location.href = 'index.html'; return; }
+    // ننتظر جاهزية عميل الهوية من require-auth.js
+    async function initProfile(){
+      const client = window.auth0Client;
+      if (!client) return; // سيعاد النداء عند حدث الجاهزية
 
-      try{
-        const u = JSON.parse(localStorage.getItem('athar:user')   || 'null');
-        const s = JSON.parse(localStorage.getItem('athar:sub')    || 'null');
-        const t = JSON.parse(localStorage.getItem('athar:trial')  || 'null');
-
-        // تعبئة معلومات المستخدم
-        if(u){
-          document.querySelectorAll('.js-user-name').forEach(n=> n.textContent = u.name || '—');
-          document.getElementById('u-email').textContent   = u.email  || '—';
-          document.getElementById('u-phone').textContent   = u.phone  || '—';
-          document.getElementById('u-school').textContent  = u.school || '—';
-          document.getElementById('u-created').textContent = u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-SA') : '—';
-        }
-
-        // الاشتراك
-        if(s){
-          const active = new Date() <= new Date(s.endsAt);
-          const badge = document.getElementById('sub-state');
-          badge.style.display = 'inline-block';
-          badge.textContent   = active ? 'نشط' : 'منتهي';
-          badge.style.background = active ? '#dcfce7' : '#fee2e2';
-          badge.style.color      = active ? '#166534' : '#991b1b';
-          badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
-
-          document.getElementById('s-plan').textContent  =
-            ({weekly:'أسبوعي', monthly:'شهري', semi:'نصف سنوي', annual:'سنوي'})[s.plan] || '—';
-          document.getElementById('s-start').textContent = s.startedAt ? new Date(s.startedAt).toLocaleDateString('ar-SA') : '—';
-          document.getElementById('s-end').textContent   = s.endsAt    ? new Date(s.endsAt)   .toLocaleDateString('ar-SA') : '—';
-        }
-
-        // المتبقي من اشتراكي:
-        // - عدد الاستراتيجيات المتبقية: من التجربة (trial.remaining) إن وجدت، وإلا "—"
-        // - تاريخ الانتهاء: من الاشتراك إن وجد؛ وإلا من صلاحية التجربة
-        const remaining = (t && typeof t.remaining === 'number') ? t.remaining : '—';
-        const expiry    = ( (s && s.endsAt) ? s.endsAt : (t && t.expiresAt ? t.expiresAt : '') );
-        document.getElementById('t-left').textContent = remaining;
-        document.getElementById('t-exp').textContent  = expiry ? new Date(expiry).toLocaleDateString('ar-SA') : '—';
-      }catch(e){
-        console.warn(e);
+      // لو ما هو مسجّل → نوجّه لتسجيل الدخول
+      const ok = await client.isAuthenticated().catch(()=>false);
+      if (!ok) {
+        await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
+        return;
       }
-    });
+
+      // بيانات المستخدم
+      let user = null, claims = null;
+      try { user = await client.getUser(); } catch(_){}
+      try { claims = await client.getIdTokenClaims(); } catch(_){}
+
+      document.querySelectorAll('.js-user-name').forEach(n=> n.textContent = user?.name || user?.nickname || '—');
+      document.getElementById('u-email').textContent = user?.email || '—';
+      document.getElementById('u-sub').textContent   = user?.sub   || '—';
+
+      const st = (claims && (claims["https://athar.co/status"] || claims["https://athar/status"])) || '';
+      document.getElementById('u-status').textContent = st || '—';
+
+      const badge = document.getElementById('sub-state');
+      if (st) {
+        const active = (st === 'active');
+        badge.style.display = 'inline-block';
+        badge.textContent   = active ? 'نشط' : 'غير نشط';
+        badge.style.background = active ? '#dcfce7' : '#fee2e2';
+        badge.style.color      = active ? '#166534' : '#991b1b';
+        badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+      }
+
+      // أزرار
+      document.getElementById('logout').addEventListener('click', () => {
+        client.logout({ logoutParams:{ returnTo: window.location.origin } });
+      });
+    }
+
+    window.addEventListener('auth0:ready', initProfile);
+    if (window.auth0Client) initProfile(); // في حال كان جاهزًا أصلاً
   </script>
   <script src="assets/js/require-auth.js"></script>
 </body>
