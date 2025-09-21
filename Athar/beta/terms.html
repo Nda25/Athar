@@ -12,7 +12,7 @@
       --radius:18px; --max:900px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;height:100%;}
+    html,body{margin:0;height:100%}
     body{
       font-family:"Cairo",system-ui,Segoe UI,Roboto,Arial;
       color:var(--text);
@@ -20,6 +20,7 @@
         radial-gradient(1200px 800px at 50% -10%, rgba(59,130,246,.25), transparent 60%),
         radial-gradient(1000px 700px at 100% 20%, rgba(147,197,253,.18), transparent 60%),
         linear-gradient(180deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
       padding:32px 16px;
     }
     .wrap{max-width:var(--max);margin:0 auto}
@@ -115,28 +116,24 @@
       </div>
     </article>
 
-<footer>
-  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-  <p class="foot-name">ندى المجيرش</p>
+    <footer>
+      <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+      <p class="foot-name">ندى المجيرش</p>
 
-  <nav class="foot-links">
-    <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-    <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-    <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-    <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-    <a href="complaints.html">الشكاوى والاقتراحات</a>
-  </nav>
+      <nav class="foot-links">
+        <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+        <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+        <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+        <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+        <a href="complaints.html">الشكاوى والاقتراحات</a>
+      </nav>
 
-  <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-</footer>
-
-<script>
-  // سنة تلقائية في الفوتر
-  (function(){
-    var y=document.getElementById('year');
-    if(y) y.textContent=new Date().getFullYear();
-  })();
-</script>
+      <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
+    </footer>
   </div>
+
+  <script>
+    (function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();
+  </script>
 </body>
 </html>
