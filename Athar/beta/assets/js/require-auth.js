@@ -1,47 +1,30 @@
-// assets/js/require-auth.js — guard with 3 public pages
+// assets/js/require-auth.js — Athar Guard (status-based)
 (async () => {
-  const AUTH0_DOMAIN   = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-  const AUTH0_CLIENT   = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-  const AUTH0_AUDIENCE = "https://api.athar";
-  const REDIRECT_URI   = window.location.origin + "/";
+  const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+  const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+  const REDIRECT_URI = window.location.origin + "/";
+  const NS = "https://athar.co/"; // نفس الـ namespace المستخدم في الأكشن
 
-  // ✅ الصفحات المسموحة لغير المشترك: الرئيسية + الأسعار + قائمة البرامج
-  const PUBLIC_FILES = new Set(["", "index.html", "pricing.html", "programs.html"]);
+  // صفحات عامة (بدون تسجيل دخول)
+  const PUBLIC = new Set(["", "index.html", "pricing.html"]);
 
-  // خطط مسموح بها (عدّليها لو عندك خطط ثانية)
-  const ALLOW_PLANS = new Set(["trial", "free", "lifetime_free", "pro", "school"]);
+  // صفحات البرامج (مقفلة إلا لو status=active أو Admin)
+  const PROGRAM_PAGES = new Set([
+    "programs.html",   // قائمة البرامج نفسها
+    "athar.html",      // مُنطلق
+    "darsi.html",      // مُرتكز
+    "masar.html",      // مسار
+    "miyad.html",      // ميعاد
+    "ethraa.html",     // إثراء
+    "mulham.html"      // مُلهم
+  ]);
 
-  // أسماء الـ claims
-  const CLAIM_ADMIN_FLAG = "https://athar/admin";
-  const CLAIM_ROLES      = "https://athar/roles";
-  const CLAIM_APP_META   = "https://n-athar.co/app_metadata";
-
-  // —— Helpers ——
-  function currentFile() {
+  function fileName() {
     const path = location.pathname.replace(/\/+$/, "");
-    const file = path.split("/").pop();
-    return file || "";
-  }
-  function goPricing() { location.replace("/pricing.html"); }
-
-  function isAdminFromClaims(claims) {
-    const roles = (claims && claims[CLAIM_ROLES]) || [];
-    const hasRole = Array.isArray(roles) && roles.includes("admin");
-    const flag    = !!(claims && claims[CLAIM_ADMIN_FLAG] === true);
-    const meta    = (claims && claims[CLAIM_APP_META]) || {};
-    return hasRole || flag || (meta && meta.role === "admin");
-  }
-  function getPlanFromClaims(claims) {
-    const meta = (claims && claims[CLAIM_APP_META]) || {};
-    return meta.plan || "free";
+    const f = path.split("/").pop();
+    return f || "";
   }
 
-  async function waitForWindowAuth(max = 50) {
-    for (let i = 0; i < max && !(window.auth && typeof window.auth.isAuthenticated === "function"); i++) {
-      await new Promise(r => setTimeout(r, 100));
-    }
-    return !!(window.auth && typeof window.auth.isAuthenticated === "function");
-  }
   async function ensureAuth0Sdk() {
     if (window.auth0 && typeof window.auth0.createAuth0Client === "function") return true;
     await new Promise((resolve, reject) => {
@@ -51,70 +34,98 @@
     });
     return true;
   }
-  async function buildTempClient() {
+  async function tempClient() {
     await ensureAuth0Sdk();
     return await window.auth0.createAuth0Client({
       domain: AUTH0_DOMAIN,
       clientId: AUTH0_CLIENT,
       cacheLocation: "localstorage",
-      authorizationParams: { redirect_uri: REDIRECT_URI, audience: AUTH0_AUDIENCE, scope: "openid profile email" }
+      authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email" }
     });
   }
-  async function cleanupRedirectIfNeeded(client) {
+  async function cleanupRedirect(client) {
     if (location.search.includes("code=") && location.search.includes("state=")) {
-      try { await client.handleRedirectCallback(); history.replaceState({}, document.title, location.pathname + location.hash); } catch {}
+      try {
+        await client.handleRedirectCallback();
+        history.replaceState({}, document.title, location.pathname + location.hash);
+      } catch {}
     }
   }
+  async function waitWindowAuth(max = 50) {
+    for (let i = 0; i < max && !(window.auth && window.auth.isAuthenticated); i++) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+    return !!(window.auth && window.auth.isAuthenticated);
+  }
 
-  // —— 0) صفحات عامة: اسمحي بها ونظّفي العودة من Auth0 ——
-  const file = currentFile();
-  if (PUBLIC_FILES.has(file)) {
-    try { const tmp = await buildTempClient(); await cleanupRedirectIfNeeded(tmp); } catch {}
+  function go(to) { location.replace(to); }
+  function goProfile(reason) {
+    const q = reason ? `?reason=${encodeURIComponent(reason)}` : "";
+    go("/profile.html" + q);
+  }
+  function goLogin(currentUrl) {
+    if (window.auth && window.auth.login) {
+      return window.auth.login({ authorizationParams: { screen_hint: "login", redirect_uri: currentUrl } });
+    }
+    // fallback
+    return tempClient().then(c => c.loginWithRedirect({
+      authorizationParams: { screen_hint: "login", redirect_uri: currentUrl }
+    }));
+  }
+
+  // 0) عام: سماح للصفحات العامة + تنظيف العودة إن وجدت
+  const file = fileName();
+  if (PUBLIC.has(file)) {
+    try { const c = await tempClient(); await cleanupRedirect(c); } catch {}
     return;
   }
 
-  // —— 1) صفحات محمية: لازم تسجيل دخول + تحقق صلاحيات ——
-  let client = null, isAuth = false, claims = null, user = null;
+  // 1) لازم تسجيل دخول لبقية الصفحات
+  let isAuth = false, claims = null, user = null;
   try {
-    if (await waitForWindowAuth()) {
+    if (await waitWindowAuth()) {
       isAuth = await window.auth.isAuthenticated();
-      if (!isAuth) { await window.auth.login({ authorizationParams:{ screen_hint:"login", redirect_uri: window.location.href } }); return; }
+      if (!isAuth) return goLogin(window.location.href);
       claims = await window.auth.getIdTokenClaims();
       user   = await window.auth.getUser();
     } else {
-      client = await buildTempClient(); await cleanupRedirectIfNeeded(client);
-      isAuth = await client.isAuthenticated();
-      if (!isAuth) { await client.loginWithRedirect({ authorizationParams:{ screen_hint:"login", redirect_uri: window.location.href } }); return; }
-      claims = await client.getIdTokenClaims();
-      user   = await client.getUser();
+      const c = await tempClient();
+      await cleanupRedirect(c);
+      isAuth = await c.isAuthenticated();
+      if (!isAuth) return goLogin(window.location.href);
+      claims = await c.getIdTokenClaims();
+      user   = await c.getUser();
     }
   } catch (e) {
-    console.warn("[Guard] auth check error:", e);
-    return goPricing();
+    console.warn("[Guard] auth error:", e);
+    return go("/index.html");
   }
-  if (!isAuth) return goPricing();
 
-  // —— 2) سياسة الوصول ——
-  const adminRequired = location.pathname.endsWith("/admin.html");
-  const isAdmin = isAdminFromClaims(claims);
-  if (adminRequired && !isAdmin) return goPricing(); // admin.html للأدمن فقط
+  // 2) استخرج الصلاحيات والحالة
+  const roles  = (claims && claims[NS + "roles"]) || [];
+  const isAdmin = Array.isArray(roles) && roles.includes("admin") || claims?.[NS + "admin"] === true;
+  const status = (claims && claims[NS + "status"]) || "pending";
 
-  // باقي الصفحات المحمية: لازم خطة مسموح بها أو أدمن
-  const plan = getPlanFromClaims(claims);
-  const allowed = isAdmin || ALLOW_PLANS.has(plan);
-  if (!allowed) return goPricing();
+  // 3) سياسة الوصول:
+  // - admin.html للأدمن فقط
+  if (location.pathname.endsWith("/admin.html")) {
+    if (!isAdmin) return go("/index.html");
+    return; // تمام
+  }
 
-  // —— 3) حدّث/أدرج المستخدم في قاعدة البيانات ——
-  try {
-    const u = user || {};
-    if (u.sub && u.email) {
-      await fetch("/.netlify/functions/upsert-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sub: u.sub, email: String(u.email).toLowerCase(), name: u.name || u.nickname || null, picture: u.picture || null })
-      });
-    }
-  } catch (e) { console.warn("[Guard] upsert-user call failed:", e); }
+  // - profile.html: مسموح لأي مستخدم مسجّل (حتى pending)
+  if (file === "profile.html") {
+    return; // السماح
+  }
 
-  // وصلنا هنا؟ المستخدم مخوّل 👌
+  // - صفحات البرامج: لازم status=active (أو Admin)
+  if (PROGRAM_PAGES.has(file)) {
+    if (isAdmin || status === "active") return; // سماح
+    return goProfile("not_active");
+  }
+
+  // الصفحات الأخرى (إن وُجدت) خلّها تتبع نفس شرط البرامج افتراضيًا
+  if (!isAdmin && status !== "active") {
+    return goProfile("not_active");
+  }
 })();
