@@ -1,18 +1,74 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>التواصل عبر واتساب — أثــر</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg1:#0f172a; --bg2:#1e293b; --card:#0b1220cc;
+      --text:#e5e7eb; --muted:#cbd5e1; --accent:#93c5fd; --primary:#25D366;
+      --radius:18px; --max:900px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{
+      font-family:"Cairo",system-ui,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 50% -10%, rgba(59,130,246,.25), transparent 60%),
+        radial-gradient(1000px 700px at 100% 20%, rgba(147,197,253,.18), transparent 60%),
+        linear-gradient(180deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      padding:32px 16px;
+    }
+    .wrap{max-width:var(--max);margin:0 auto}
+    header{text-align:center;margin-bottom:22px}
+    .logo{width:64px;height:64px;border-radius:18px;display:block;margin:0 auto 10px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+    h1{margin:0 0 6px;font-weight:800;font-size:clamp(24px,4.2vw,36px)}
+    .subtitle{margin:0;color:var(--muted);font-size:clamp(14px,2.2vw,18px)}
+    .card{
+      background:var(--card); border:1px solid rgba(148,163,184,.25);
+      border-radius:var(--radius); box-shadow:0 18px 40px rgba(0,0,0,.35), 0 6px 14px rgba(2,6,23,.4);
+      padding:22px; line-height:1.9; text-align:center;
+    }
+    .btn{display:inline-block; background:var(--primary); color:#fff; padding:12px 20px; border-radius:12px; text-decoration:none; font-weight:800}
+    .muted{color:var(--muted)}
+    footer{margin-top:22px;text-align:center;color:#a8b4c7;font-size:12px}
+    .foot-links a{color:#93c5fd; text-decoration:underline; margin:0 4px}
+    .sep{color:#64748b}
+  </style>
 </head>
 <body>
-  <header><h1>💬 التواصل عبر واتساب</h1></header>
-  <main style="text-align:center; margin-top:40px">
-    <p>للتواصل الفوري عبر واتساب:</p>
-    <a href="https://wa.me/966556795993" style="font-size:20px; padding:12px 20px; background:#25D366; color:#fff; border-radius:8px; text-decoration:none;">
-      اضغط هنا للتواصل 📲
-    </a>
-    <p style="margin-top:10px">رقمنا: 0556795993</p>
-  </main>
+  <div class="wrap">
+    <header>
+      <img class="logo" src="assets/icon.png" alt="أثر">
+      <h1>التواصل عبر واتساب</h1>
+      <p class="subtitle">لخدمتكم مباشرة وبأقصر طريق.</p>
+    </header>
+
+    <article class="card">
+      <p>للتواصل الفوري عبر واتساب:</p>
+      <p>
+        <a class="btn" href="https://wa.me/966556795993" target="_blank" rel="noopener">اضغط هنا للتواصل 📲</a>
+      </p>
+      <p class="muted" style="margin-top:10px">رقمنا: 0556795993</p>
+    </article>
+
+    <footer>
+      <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+      <p class="foot-name">ندى المجيرش</p>
+      <nav class="foot-links">
+        <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+        <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+        <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+        <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+        <a href="complaints.html">الشكاوى والاقتراحات</a>
+      </nav>
+      <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
+    </footer>
+  </div>
+  <script>(function(){var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();})();</script>
 </body>
 </html>
