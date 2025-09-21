@@ -227,19 +227,16 @@ window.addEventListener('auth0:ready', async () => {
   // فعليًا نهيّئ Auth0 (يطلق حدث auth0:ready داخله)
   await initAuth0();
 
-  // ✅ التحقق من دور الأدمن لإظهار زر لوحة التحكم
-  try {
-    const claims = await auth0Client.getIdTokenClaims();
-    const roles  = claims?.["https://athar/roles"] || [];
-    const isAdmin = roles.includes("admin") || claims?.["https://athar/admin"] === true;
-
-    const adminBtn = document.getElementById("adminBtn");
-    if (adminBtn) {
-      adminBtn.style.display = isAdmin ? "inline-flex" : "none";
-    }
-  } catch (err) {
-    console.error("Error checking admin role:", err);
-  }
+// ✅ التحقق من دور الأدمن لإظهار زر لوحة التحكم (استخدمي نفس الـ namespace)
+try {
+  const claims = await auth0Client.getIdTokenClaims();
+  const roles  = claims?.["https://athar.co/roles"] || [];   // ← هنا التصحيح
+  const isAdmin = roles.includes("admin") || claims?.["https://athar.co/admin"] === true; // ← وهنا
+  const adminBtn = document.getElementById("adminBtn");
+  if (adminBtn) adminBtn.style.display = isAdmin ? "inline-flex" : "none";
+} catch (err) { 
+  console.error("Error checking admin role:", err); 
+}
 
   // باك-أب: لو الحدث فاتنا وكان window.auth جاهز، حدّثي الآن
   if (window.auth) {
