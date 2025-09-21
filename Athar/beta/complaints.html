@@ -1,144 +1,155 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>الشكاوى والاقتراحات — أثــر</title>
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
   <meta name="color-scheme" content="dark light">
-  <style>
-    .card{background:rgba(11,18,32,.75);border:1px solid #1f2a44;border-radius:16px;padding:16px;margin:12px 0}
-    .field{margin:10px 0}
-    .field label{display:block;font-weight:700;margin:6px 0}
-    .field input,.field textarea,.field select{
-      width:100%;padding:12px;border-radius:12px;border:1px solid rgba(59,130,246,.35);background:#0b1220;color:#fff
-    }
-    .actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.9em}
-    .status-active{background:#dcfce7;color:#166534}
-    .status-pending{background:#fef9c3;color:#713f12}
-    .status-cancelled{background:#fee2e2;color:#7f1d1d}
-    .muted{opacity:.85}
-    .hidden{display:none}
-    .btn{padding:10px 14px;border:1px solid rgba(59,130,246,.4);border-radius:12px;background:#0b1220;color:#fff;cursor:pointer}
-    .btn.primary{background:#2563eb;border-color:#2563eb}
-    .btn[disabled]{opacity:.6;cursor:not-allowed}
-    a.link{color:#93c5fd;text-decoration:underline}
-  </style>
 </head>
 <body>
-  <!-- يمكن تضمين نفس الهيدر/الفوتر الموحدين لو رغبتِ -->
-  <header class="card" style="text-align:center">
-    <h1 style="margin:0 0 6px">📩 الشكاوى والاقتراحات</h1>
-    <div class="muted">حرصًا على رضاكم، يمكنكم إرسال شكوى أو اقتراح عبر النموذج التالي.</div>
-    <div id="account-info" class="muted" style="margin-top:6px"></div>
+  <!-- خلفيات أثــر -->
+  <div class="global-bg"></div>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
+
+  <!-- الشريط العلوي الموحد -->
+  <div class="topbar">
+    <div class="left-actions">
+      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
+    </div>
+    <div class="actions">
+      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+    </div>
+    <div class="user">
+      <span id="nav-auth" style="display:none;gap:10px"></span>
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
+    </div>
+  </div>
+
+  <!-- الهيرو -->
+  <header>
+    <div class="hero">
+      <h1 class="logo">الشكاوى والاقتراحات</h1>
+      <div class="tag"><span class="dot"></span>حرصًا على رضاكم… صوتكم يهمّنا ✨</div>
+    </div>
   </header>
 
-  <main class="container">
-    <section class="card">
-      <form id="complaintForm" novalidate>
-        <div class="field">
-          <label>نوع المراسلة</label>
-          <select name="type" id="f-type" required>
-            <option value="complaint">شكوى</option>
-            <option value="suggestion">اقتراح</option>
-          </select>
-        </div>
+  <main>
+    <div class="container">
+      <!-- نموذج المراسلة -->
+      <section class="card">
+        <h2 class="title" style="margin-top:0">أرسل رسالة</h2>
+        <p id="account-info" class="muted" style="margin:-6px 0 12px"></p>
 
-        <div class="field">
-          <label>العنوان</label>
-          <input type="text" name="subject" id="f-subject" placeholder="اكتب عنوانًا مختصرًا" required>
-        </div>
+        <form id="complaintForm" class="form" novalidate>
+          <div class="grid" style="grid-template-columns:1fr 1fr">
+            <div class="field">
+              <label>نوع المراسلة</label>
+              <select id="f-type" required>
+                <option value="complaint">شكوى</option>
+                <option value="suggestion">اقتراح</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>العنوان</label>
+              <input id="f-subject" type="text" placeholder="اكتب عنوانًا مختصرًا" required />
+            </div>
+            <div class="field">
+              <label>الاسم</label>
+              <input id="f-name" type="text" placeholder="اسمك" required />
+            </div>
+            <div class="field">
+              <label>البريد الإلكتروني</label>
+              <input id="f-email" type="email" placeholder="example@email.com" required />
+            </div>
+          </div>
 
-        <div class="field">
-          <label>الاسم</label>
-          <input type="text" name="name" id="f-name" placeholder="اسمك" required>
-        </div>
+          <div class="field">
+            <label>الرسالة</label>
+            <textarea id="f-message" rows="6" placeholder="اكتب التفاصيل هنا…" required></textarea>
+          </div>
 
-        <div class="field">
-          <label>البريد الإلكتروني</label>
-          <input type="email" name="email" id="f-email" placeholder="example@email.com" required>
-        </div>
+          <div class="field">
+            <label>رقم الطلب (اختياري)</label>
+            <input id="f-order" type="text" placeholder="إن وجد" />
+          </div>
 
-        <div class="field">
-          <label>الرسالة</label>
-          <textarea name="message" id="f-message" rows="6" placeholder="اكتب التفاصيل هنا…" required></textarea>
-        </div>
+          <div class="actions-row" style="margin-top:10px">
+            <button type="button" id="btn-login" class="btn">تسجيل الدخول</button>
+            <button type="submit" id="btn-send" class="btn primary">إرسال</button>
+            <span id="form-status" class="muted"></span>
+          </div>
+        </form>
+      </section>
 
-        <div class="field">
-          <label>رقم الطلب (اختياري)</label>
-          <input type="text" name="order_number" id="f-order" placeholder="إن وجد">
-        </div>
+      <!-- طرق بديلة -->
+      <section class="card">
+        <h2 class="title" style="margin-top:0">طرق بديلة لتقديم الشكاوى</h2>
+        <p>📞 الهاتف: <strong>0556795993</strong></p>
+        <p>📧 البريد: <a class="link" href="mailto:team@n-athar.co">team@n-athar.co</a></p>
+        <p>💬 واتساب: <a class="link" href="https://wa.me/966556795993" target="_blank" rel="noopener">اضغط هنا</a></p>
+        <p>📱 X (تويتر): <a class="link" href="https://x.com/" target="_blank" rel="noopener">@n-athar</a></p>
+      </section>
 
-        <div class="actions-row">
-          <button type="button" id="btn-login" class="btn">تسجيل الدخول</button>
-          <button type="submit" id="btn-send" class="btn primary">إرسال</button>
-          <span id="form-status" class="muted"></span>
-        </div>
-      </form>
-    </section>
-
-    <section class="card">
-      <h2 style="margin-top:0">طرق بديلة لتقديم الشكاوى</h2>
-      <p>📞 الهاتف: <strong>0556795993</strong></p>
-      <p>📧 البريد: <a class="link" href="mailto:team@n-athar.co">team@n-athar.co</a></p>
-      <p>💬 عبر واتساب: <a class="link" href="https://wa.me/966556795993" target="_blank" rel="noopener">اضغط هنا</a></p>
-      <p>📱 عبر X (تويتر): <a class="link" href="https://x.com/" target="_blank" rel="noopener">@n-athar</a></p>
-    </section>
-
-    <section class="card">
-      <h2 style="margin-top:0">مواعيد الرد والمعالجة</h2>
-      <p>⏳ يتم الرد خلال <strong>48 ساعة عمل</strong>.</p>
-      <p>⚖️ تتم معالجة الشكوى خلال <strong>7 أيام عمل</strong>.</p>
-    </section>
+      <!-- المدد الزمنية المطلوبة -->
+      <section class="card">
+        <h2 class="title" style="margin-top:0">مواعيد الرد والمعالجة</h2>
+        <p>⏳ الرد خلال <strong>48 ساعة عمل</strong>.</p>
+        <p>⚖️ معالجة الشكوى خلال <strong>7 أيام عمل</strong>.</p>
+      </section>
+    </div>
   </main>
 
-  <footer class="card" style="text-align:center">
-    <p style="margin:0">© 2025 منصة أثــر</p>
+  <!-- فوتر أثــر الموحد -->
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
+    <div class="foot-links">
+      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+      <a href="complaints.html">الشكاوى والاقتراحات</a>
+    </div>
   </footer>
 
-  <!-- Auth0 SDK (نستخدمه لتعبئة البريد والاسم والحصول على التوكن) -->
+  <div class="toast" id="toast"></div>
+
+  <!-- SDKs + سكربتات المشروع (بدون require-auth لأن الصفحة عامة) -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
           onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-
-  <!-- سكربت التهيئة العام لديك (يوفّر window.auth) -->
+  <script src="assets/js/supabase-client.js"></script>
   <script src="app.js"></script>
 
   <script>
-    (function(){
+    (function () {
       const CLAIM_NS = "https://athar.co/";
-      const form = document.getElementById('complaintForm');
+      const form     = document.getElementById('complaintForm');
       const btnLogin = document.getElementById('btn-login');
       const btnSend  = document.getElementById('btn-send');
       const statusEl = document.getElementById('form-status');
+      const infoEl   = document.getElementById('account-info');
 
-      const nameEl   = document.getElementById('f-name');
-      const emailEl  = document.getElementById('f-email');
-      const typeEl   = document.getElementById('f-type');
-      const subjEl   = document.getElementById('f-subject');
-      const msgEl    = document.getElementById('f-message');
-      const orderEl  = document.getElementById('f-order');
+      const nameEl  = document.getElementById('f-name');
+      const emailEl = document.getElementById('f-email');
+      const typeEl  = document.getElementById('f-type');
+      const subjEl  = document.getElementById('f-subject');
+      const msgEl   = document.getElementById('f-message');
+      const orderEl = document.getElementById('f-order');
 
-      const accountInfo = document.getElementById('account-info');
-
-      function showStatus(msg){ statusEl.textContent = msg || ''; }
-      function setLocked(locked){
-        btnSend.disabled = locked;
-        btnLogin.disabled = locked;
-      }
-
-      // ننتظر window.auth من app.js
       const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
-      async function waitAuth(){
-        for(let i=0;i<50 && !window.auth;i++){ await wait(100); }
-        return !!window.auth;
-      }
+      async function waitAuth(){ for(let i=0;i<50 && !window.auth;i++){ await wait(100);} }
+
+      function setStatus(m){ statusEl.textContent = m||''; }
+      function setLocked(v){ btnSend.disabled=v; btnLogin.disabled=v; }
 
       async function fillFromAuth(){
         try{
           const ok = await window.auth.isAuthenticated();
           if (!ok) {
-            accountInfo.innerHTML = '<span class="badge status-cancelled">غير مسجل دخول</span> — سجّل الدخول لإرسال الشكوى.';
+            infoEl.innerHTML = '<span class="badge">غير مسجل دخول</span> — سجّل الدخول لإرسال الشكوى.';
             btnLogin.style.display = '';
             return;
           }
@@ -146,52 +157,34 @@
 
           const u = await window.auth.getUser();
           const claims = await window.auth.getIdTokenClaims();
-          const status = claims?.[CLAIM_NS + 'status'] || '';
+          const status = claims?.[CLAIM_NS+'status'] || '';
 
-          // حالة الحساب
-          let badge = '';
-          if (status === 'active') badge = '<span class="badge status-active">حسابك نشط</span>';
-          else if (status === 'pending') badge = '<span class="badge status-pending">حسابك معلّق</span>';
-          else badge = '<span class="badge status-cancelled">غير نشط</span>';
-          accountInfo.innerHTML = badge + (u?.email ? ' — ' + u.email : '');
+          const badge =
+            status==='active'  ? '<span class="badge status-active">حسابك نشط</span>' :
+            status==='pending' ? '<span class="badge status-pending">حسابك معلّق</span>' :
+                                 '<span class="badge status-cancelled">غير نشط</span>';
 
-          // تعبئة الاسم والبريد
-          if (u?.name && !nameEl.value)  nameEl.value  = u.name;
+          infoEl.innerHTML = badge + (u?.email ? ' — ' + u.email : '');
+          if (u?.name && !nameEl.value)  nameEl.value = u.name;
           if (u?.email && !emailEl.value) emailEl.value = u.email;
 
-          // تمكين/تعطيل الإرسال حسب الحالة
           if (status !== 'active') {
             btnSend.disabled = true;
-            showStatus('لا يمكن إرسال الشكوى إلا من حساب نشط.');
+            setStatus('لا يمكن إرسال الشكوى إلا من حساب نشط.');
           }
-        }catch(e){
-          console.warn(e);
-        }
+        }catch{}
       }
 
-      // تسجيل الدخول
       btnLogin.addEventListener('click', ()=>{
-        window.auth?.login({
-          authorizationParams:{ screen_hint:'login', redirect_uri: window.location.href }
-        });
+        window.auth?.login({ authorizationParams:{ screen_hint:'login', redirect_uri: window.location.href }});
       });
 
-      // إرسال النموذج → Netlify Function
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
-        showStatus('');
+        if (!subjEl.value.trim() || !msgEl.value.trim()) { setStatus('الرجاء تعبئة العنوان والرسالة'); return; }
 
-        // تحقق بسيط في الواجهة
-        if (!subjEl.value.trim() || !msgEl.value.trim()) {
-          showStatus('الرجاء تعبئة العنوان والرسالة');
-          return;
-        }
-
-        // لازم توكن (الدالة الخلفية سترفض بدون توكن/أو لو الحساب غير نشط)
         try{
-          setLocked(true);
-          showStatus('جارٍ الإرسال…');
-
+          setLocked(true); setStatus('جارٍ الإرسال…');
           const token = await window.auth.getToken({ audience: "https://api.athar" });
 
           const payload = {
@@ -205,45 +198,36 @@
 
           const res = await fetch('/.netlify/functions/complaints-create', {
             method: 'POST',
-            headers:{
-              'Content-Type':'application/json',
-              'Authorization': 'Bearer ' + token
-            },
+            headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify(payload)
           });
-
           const j = await res.json().catch(()=> ({}));
 
           if (!res.ok) {
-            if (res.status === 403) {
-              showStatus('لا يمكن الإرسال: حسابك غير نشط.');
-            } else if (res.status === 401) {
-              showStatus('يرجى تسجيل الدخول أولًا.');
-              btnLogin.style.display = '';
-            } else {
-              showStatus('تعذّر الإرسال، حاول لاحقًا.');
-            }
-            setLocked(false);
-            return;
+            if (res.status === 403) setStatus('لا يمكن الإرسال: حسابك غير نشط.');
+            else if (res.status === 401) { setStatus('يرجى تسجيل الدخول أولًا.'); btnLogin.style.display=''; }
+            else setStatus('تعذّر الإرسال، حاول لاحقًا.');
+            setLocked(false); return;
           }
 
-          // نجاح
-          showStatus('تم استلام الشكوى ✓');
+          setStatus('تم استلام الرسالة ✓');
           form.reset();
-        }catch(err){
-          console.error(err);
-          showStatus('تعذّر الإرسال، حاول لاحقًا.');
-        }finally{
-          setLocked(false);
-        }
+        }catch{
+          setStatus('تعذّر الإرسال، حاول لاحقًا.');
+        }finally{ setLocked(false); }
       });
 
-      // تشغيل
-      (async function run(){
-        await waitAuth();
-        await fillFromAuth();
-      })();
+      (async function run(){ await waitAuth(); await fillFromAuth(); })();
     })();
   </script>
+
+  <style>
+    /* شارات الحالة بنفس لغة ألوان الموقع */
+    .badge{display:inline-block;padding:2px 10px;border-radius:999px;background:#e5e7eb22;border:1px solid #e5e7eb33}
+    .status-active{background:#dcfce733;color:#166534;border-color:#bbf7d066}
+    .status-pending{background:#fef9c333;color:#713f12;border-color:#fde68a66}
+    .status-cancelled{background:#fee2e233;color:#7f1d1d;border-color:#fecaca66}
+    .muted{opacity:.85}
+  </style>
 </body>
 </html>
