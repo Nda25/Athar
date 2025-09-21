@@ -275,12 +275,12 @@
       if (!u) return false;
 
       const claims = await window.auth.getIdTokenClaims();
-      const roles = claims?.["https://athar.co/roles"] || claims?.["https://athar/roles"] || [];
-      const flag  = claims?.["https://athar.co/admin"] === true || claims?.["https://athar/admin"] === true;
+      const roles = claims?.["https://n-athar.co/roles"] || claims?.["https://n-athar/roles"] || [];
+      const flag  = claims?.["https://n-athar.co/admin"] === true || claims?.["https://athar/admin"] === true;
       return (Array.isArray(roles) && roles.includes("admin")) || flag;
     }catch(_){ return false; }
   }
-  async function authToken(){ return await window.auth.getToken({ audience: "https://api.athar" }); }
+  async function authToken(){ return await window.auth.getToken({ audience: "https://api.n-athar" }); }
 
   // ===== أدوات مساعدة
   function toIso(calSelId, gId, hId) {
