@@ -15,7 +15,7 @@ async function sendEmail(to, subject, html) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      from: "فريق أثر <team@athar.co>",
+      from: "فريق أثر <team@n-athar.co>",
       to: [to],
       subject,
       html
@@ -93,7 +93,7 @@ exports.handler = async (event) => {
           <strong>${complaint.subject}</strong></p>
           <p style="white-space:pre-line">${message}</p>
           <hr>
-          <p style="color:#666;font-size:12px">فريق أثر — team@athar.co</p>
+          <p style="color:#666;font-size:12px">فريق أثر — team@n-athar.co</p>
         </div>`;
       await sendEmail(emailTo, subject, html);
     }
@@ -119,7 +119,7 @@ async function sendEmail(to, subject, html) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      from: "فريق أثر <team@athar.co>",
+      from: "فريق أثر <team@n-athar.co>",
       to: [to],
       subject,
       html
@@ -197,7 +197,7 @@ exports.handler = async (event) => {
           <strong>${complaint.subject}</strong></p>
           <p style="white-space:pre-line">${message}</p>
           <hr>
-          <p style="color:#666;font-size:12px">فريق أثر — team@athar.co</p>
+          <p style="color:#666;font-size:12px">فريق أثر — team@n-athar.co</p>
         </div>`;
       await sendEmail(emailTo, subject, html);
     }
