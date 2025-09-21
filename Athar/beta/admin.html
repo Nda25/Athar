@@ -4,14 +4,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>صفحة المديرة الكبيرة ندو</title>
+<title>لوحة الإدارة — أثر</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light" />
 <style>
   .card{ margin:16px 0 }
   .grid{ display:grid; gap:12px; grid-template-columns:1fr }
-  @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr } }
+  @media(min-width:1100px){ .grid-2{ grid-template-columns:1fr 1fr } .grid-3{ grid-template-columns: 1fr 1fr 1fr } }
   .field{ margin:10px 0 }
   .field label{ display:block; font-weight:700; margin:6px 0 }
   .field input,.field select, .field textarea{
@@ -20,6 +20,15 @@
   .muted{ opacity:.8 }
   .actions-row{ margin-top:8px; display:flex; gap:10px; flex-wrap:wrap }
   .pill{ background:rgba(59,130,246,.12); padding:2px 8px; border-radius:999px; }
+  .table{ width:100%; border-collapse:collapse; }
+  .table th,.table td{ padding:10px; border-bottom:1px solid #e5e7eb33; vertical-align:top }
+  .table th{ text-align:right; font-weight:700 }
+  .status-new{background:#fef9c3; color:#713f12}
+  .status-in_progress{background:#e0f2fe; color:#0c4a6e}
+  .status-resolved{background:#dcfce7; color:#14532d}
+  .status-rejected{background:#fee2e2; color:#7f1d1d}
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  .hidden{display:none}
 </style>
 </head>
 <body>
@@ -31,8 +40,8 @@
 
   <header>
     <div class="hero">
-      <h1 class="logo">صفحة المديرة الكبيرة ندو</h1>
-      <div class="tag"><span class="dot"></span>انتي أعظم أدمن بالعالم</div>
+      <h1 class="logo">لوحة الإدارة</h1>
+      <div class="tag"><span class="dot"></span>فريق أثر</div>
     </div>
   </header>
 
@@ -43,10 +52,19 @@
       <p>هذه الصفحة للمشرفين فقط.</p>
     </section>
 
+    <!-- تبويبات -->
+    <section class="card" id="tabsCard" style="display:none">
+      <div class="actions-row" style="gap:6px">
+        <button class="btn" data-tab="t-activate">التفعيل اليدوي</button>
+        <button class="btn" data-tab="t-ann">الإعلانات</button>
+        <button class="btn primary" data-tab="t-complaints">الشكاوى والاقتراحات</button>
+      </div>
+    </section>
+
     <!-- التفعيل -->
-    <section class="card" id="adminCard" style="display:none">
+    <section class="card" id="t-activate" style="display:none">
       <h2 class="title">التفعيل اليدوي للاشتراك</h2>
-      <div class="grid">
+      <div class="grid grid-3">
         <div class="field">
           <label>البريد الإلكتروني للمستخدم</label>
           <input id="act-email" type="email" placeholder="example@email.com" />
@@ -66,7 +84,7 @@
             </select>
           </div>
         </div>
-        <div class="field">
+        <div class="field" style="grid-column:1/-1">
           <label>ملاحظة (اختياري)</label>
           <input id="act-note" type="text" placeholder="سبب/مرجع"/>
         </div>
@@ -78,15 +96,14 @@
     </section>
 
     <!-- الإعلانات -->
-    <section class="card" id="annCard" style="display:none">
+    <section class="card" id="t-ann" style="display:none">
       <h2 class="title">إعلان عام</h2>
-
       <div class="field">
         <label>نص الإعلان</label>
-        <textarea id="ann-text" rows="4" placeholder="سيظهر لمستخدمي الموقع"></textarea>
+        <textarea id="ann-text" rows="3" placeholder="سيظهر لمستخدمي الموقع"></textarea>
       </div>
 
-      <div class="grid">
+      <div class="grid grid-3">
         <div class="field">
           <label>الحالة</label>
           <select id="ann-active">
@@ -131,6 +148,89 @@
         <div id="ann-list" class="grid" style="grid-template-columns:1fr"></div>
       </div>
     </section>
+
+    <!-- الشكاوى والاقتراحات -->
+    <section class="card" id="t-complaints" style="display:none">
+      <h2 class="title">الشكاوى والاقتراحات</h2>
+
+      <!-- شريط أدوات -->
+      <div class="toolbar">
+        <select id="c-type">
+          <option value="">الكل</option>
+          <option value="complaint">شكاوى</option>
+          <option value="suggestion">اقتراحات</option>
+        </select>
+
+        <select id="c-status">
+          <option value="">كل الحالات</option>
+          <option value="new">جديدة</option>
+          <option value="in_progress">قيد المعالجة</option>
+          <option value="resolved">مغلقة</option>
+          <option value="rejected">مرفوضة</option>
+        </select>
+
+        <input id="c-q" type="search" placeholder="بحث (عنوان/نص/إيميل)" style="flex:1;min-width:200px">
+        <button class="btn" id="c-refresh">تحديث</button>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:12px">
+        <!-- القائمة -->
+        <div class="card">
+          <table class="table" id="c-table">
+            <thead>
+              <tr>
+                <th>العنوان</th>
+                <th>المرسل</th>
+                <th>النوع</th>
+                <th>الحالة</th>
+                <th>التاريخ</th>
+              </tr>
+            </thead>
+            <tbody id="c-rows">
+              <tr><td colspan="5" class="muted">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- التفاصيل -->
+        <div class="card" id="c-detail">
+          <h3 style="margin-top:0">التفاصيل</h3>
+          <div id="c-empty" class="muted">اختر عنصرًا من القائمة…</div>
+
+          <div id="c-box" class="hidden">
+            <p><strong>العنوان:</strong> <span id="cd-subject">—</span></p>
+            <p><strong>المرسل:</strong> <span id="cd-user">—</span></p>
+            <p><strong>الطلب:</strong> <span id="cd-kind">—</span></p>
+            <p><strong>الحالة:</strong> <span id="cd-status" class="pill">—</span></p>
+            <div class="field">
+              <label>سجل الرسائل</label>
+              <div id="cd-thread" style="border:1px solid #e5e7eb33;border-radius:10px;padding:10px;max-height:340px;overflow:auto"></div>
+            </div>
+
+            <div class="grid">
+              <div class="field">
+                <label>تغيير الحالة</label>
+                <select id="cd-next">
+                  <option value="">لا تغيير</option>
+                  <option value="in_progress">قيد المعالجة</option>
+                  <option value="resolved">مغلقة</option>
+                  <option value="rejected">مرفوضة</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>الرد على المرسل</label>
+              <textarea id="cd-reply" rows="4" placeholder="اكتب الرد هنا…"></textarea>
+            </div>
+            <div class="actions-row">
+              <button class="btn primary" id="cd-send">إرسال الرد</button>
+              <span id="cd-statusmsg" class="muted"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div class="toast" id="toast"></div>
@@ -139,11 +239,11 @@
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
           onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-  <!-- Supabase -->
+  <!-- Supabase (مطلوب للإعلانات/التفعيل إن كان لديك استدعاءات مباشرة) -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-client.js"></script>
 
-  <!-- الحارس -->
+  <!-- الحارس العام إن رغبت -->
   <script src="assets/js/require-auth.js"></script>
 
   <!-- moment + hijri -->
@@ -154,9 +254,20 @@
   <script src="app.js"></script>
 
   <script>
-  const ADMIN_CLAIM = "https://athar/admin";
   const toast = (m)=>{ const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',1400); };
 
+  // ===== تبويبات بسيطة
+  const tabs = ["t-activate","t-ann","t-complaints"];
+  function showTab(id){
+    tabs.forEach(x=> document.getElementById(x).style.display = (x===id)?'':'none');
+    document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('primary', b.dataset.tab===id));
+  }
+  document.addEventListener('click',(e)=>{
+    const b = e.target.closest('[data-tab]'); if(!b) return;
+    showTab(b.dataset.tab);
+  });
+
+  // ===== صلاحيات الأدمن
   async function isAdmin(){
     try{
       const u = await window.auth.getUser();
@@ -164,13 +275,14 @@
       if (!u) return false;
 
       const claims = await window.auth.getIdTokenClaims();
-      const roles = (claims && claims["https://athar/roles"]) || [];
-      if (Array.isArray(roles) && roles.includes("admin")) return true;
-      if (claims && (claims[ADMIN_CLAIM] === true || claims["https://athar/admin"] === true)) return true;
-      return false;
+      const roles = claims?.["https://athar.co/roles"] || claims?.["https://athar/roles"] || [];
+      const flag  = claims?.["https://athar.co/admin"] === true || claims?.["https://athar/admin"] === true;
+      return (Array.isArray(roles) && roles.includes("admin")) || flag;
     }catch(_){ return false; }
   }
+  async function authToken(){ return await window.auth.getToken({ audience: "https://api.athar" }); }
 
+  // ===== أدوات مساعدة
   function toIso(calSelId, gId, hId) {
     const mode = document.getElementById(calSelId).value;
     if (mode === 'greg') {
@@ -186,176 +298,277 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', async ()=>{
-    // تبديل الحقول حسب النمط
-    const hook = (selId, gId, hId)=>{
-      const sel = document.getElementById(selId), g = document.getElementById(gId), h = document.getElementById(hId);
-      sel.addEventListener('change', ()=>{
-        const hijri = sel.value === 'hijri';
-        g.style.display = hijri ? 'none' : '';
-        h.style.display = hijri ? '' : 'none';
-      });
-    };
-    hook('ann-start-cal','ann-start-g','ann-start-h');
-    hook('ann-end-cal','ann-end-g','ann-end-h');
+  // ===== إعلانات (ربط مع admin-announcement*)
+  async function fetchAnnouncements() {
+    try {
+      const [latestRes, listRes] = await Promise.all([
+        fetch('/.netlify/functions/admin-announcement?latest=1'),
+        fetch('/.netlify/functions/admin-announcement?list=1')
+      ]);
+      const latest = latestRes.ok ? (await latestRes.json()).latest : null;
+      const list = listRes.ok ? (await listRes.json()).items || [] : [];
 
-    // ننتظر window.auth من app.js
-    const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
-    for (let i=0; i<30 && !window.auth; i++) { await wait(100); }
+      const curBox = document.getElementById('ann-current');
+      curBox.innerHTML = latest ? `المنشور الحالي: <span class="pill">${latest.text}</span>` : 'لا يوجد إعلان منشور حاليًا.';
 
-    const ok = await isAdmin();
-    document.getElementById('adminCard').style.display = ok ? '' : 'none';
-    document.getElementById('annCard').style.display   = ok ? '' : 'none';
-    document.getElementById('denyCard').style.display  = ok ? 'none' : '';
-    if (!ok) return;
-
-    async function authToken() {
-      return await window.auth.getToken({ audience: "https://api.athar" });
-    }
-
-    async function fetchAnnouncements() {
-      try {
-        const [latestRes, listRes] = await Promise.all([
-          fetch('/.netlify/functions/admin-announcement?latest=1'),
-          fetch('/.netlify/functions/admin-announcement?list=1')
-        ]);
-        const latest = latestRes.ok ? (await latestRes.json()).latest : null;
-        const list = listRes.ok ? (await listRes.json()).items || [] : [];
-
-        const curBox = document.getElementById('ann-current');
-        curBox.innerHTML = latest
-          ? `المنشور الحالي: <span class="pill">${latest.text}</span>`
-          : 'لا يوجد إعلان منشور حاليًا.';
-
-        const wrap = document.getElementById('ann-list');
-        wrap.innerHTML = '';
-        list.forEach(a=>{
-          const liveNow = a.active
-            && (!a.start_at   || new Date(a.start_at)   <= new Date())
-            && (!a.expires_at || new Date(a.expires_at) >  new Date());
-
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
-              <div>
-                <div><strong>${a.active ? '✅' : '⏸️'} ${a.text}</strong></div>
-                <div class="muted" style="font-size:.9em">
-                  يبدأ: ${a.start_at ? new Date(a.start_at).toLocaleDateString('ar-SA') : 'فوري'}
-                  • ينتهي: ${a.expires_at ? new Date(a.expires_at).toLocaleDateString('ar-SA') : '—'}
-                  ${liveNow ? '<span class="pill" style="margin-inline-start:6px">منشور حاليًا</span>' : ''}
-                </div>
-              </div>
-              <div class="actions-row" style="margin:0">
-                <button class="btn" data-repub="${a.id}">إعادة نشر</button>
-                ${a.active ? '<button class="btn" data-stop="'+a.id+'">إيقاف</button>' : ''}
-                <button class="btn" data-del="${a.id}">حذف</button>
+      const wrap = document.getElementById('ann-list');
+      wrap.innerHTML = '';
+      list.forEach(a=>{
+        const liveNow = a.active && (!a.start_at || new Date(a.start_at)<=new Date()) && (!a.expires_at || new Date(a.expires_at)>new Date());
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+            <div>
+              <div><strong>${a.active ? '✅' : '⏸️'} ${a.text}</strong></div>
+              <div class="muted" style="font-size:.9em">
+                يبدأ: ${a.start_at ? new Date(a.start_at).toLocaleDateString('ar-SA') : 'فوري'}
+                • ينتهي: ${a.expires_at ? new Date(a.expires_at).toLocaleDateString('ar-SA') : '—'}
+                ${liveNow ? '<span class="pill" style="margin-inline-start:6px">منشور حاليًا</span>' : ''}
               </div>
             </div>
-          `;
-          wrap.appendChild(card);
-        });
+            <div class="actions-row" style="margin:0">
+              <button class="btn" data-repub="${a.id}">إعادة نشر</button>
+              ${a.active ? '<button class="btn" data-stop="'+a.id+'">إيقاف</button>' : ''}
+              <button class="btn" data-del="${a.id}">حذف</button>
+            </div>
+          </div>
+        `;
+        wrap.appendChild(card);
+      });
 
-        wrap.querySelectorAll('[data-repub]').forEach(b=>{
-          b.onclick = async ()=>{
-            const id = b.getAttribute('data-repub');
-            await updateAnnouncement({ id, active:true, start:null }); // يبدأ فوريًا
-            await fetchAnnouncements();
-          };
-        });
-        wrap.querySelectorAll('[data-stop]').forEach(b=>{
-          b.onclick = async ()=>{
-            const id = b.getAttribute('data-stop');
-            await updateAnnouncement({ id, active:false });
-            await fetchAnnouncements();
-          };
-        });
-        wrap.querySelectorAll('[data-del]').forEach(b=>{
-          b.onclick = async ()=>{
-            const id = b.getAttribute('data-del');
-            if (!confirm('حذف الإعلان؟')) return;
-            await deleteAnnouncement(id);
-            await fetchAnnouncements();
-          };
-        });
+      wrap.querySelectorAll('[data-repub]').forEach(b=>{
+        b.onclick = async ()=>{
+          const id = b.getAttribute('data-repub');
+          await updateAnnouncement({ id, active:true, start:null }); // يبدأ فوريًا
+          await fetchAnnouncements();
+        };
+      });
+      wrap.querySelectorAll('[data-stop]').forEach(b=>{
+        b.onclick = async ()=>{
+          const id = b.getAttribute('data-stop');
+          await updateAnnouncement({ id, active:false });
+          await fetchAnnouncements();
+        };
+      });
+      wrap.querySelectorAll('[data-del]').forEach(b=>{
+        b.onclick = async ()=>{
+          const id = b.getAttribute('data-del');
+          if (!confirm('حذف الإعلان؟')) return;
+          await deleteAnnouncement(id);
+          await fetchAnnouncements();
+        };
+      });
 
-      } catch(e) { console.warn(e); }
-    }
+    } catch(e) { console.warn(e); }
+  }
+  async function updateAnnouncement(payload) {
+    const res = await fetch('/.netlify/functions/admin-announcement', {
+      method:'PUT',
+      headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await authToken()}` },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  }
+  async function deleteAnnouncement(id) {
+    const res = await fetch('/.netlify/functions/admin-announcement?id='+encodeURIComponent(id), {
+      method:'DELETE',
+      headers:{ 'Authorization': `Bearer ${await authToken()}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  }
 
-    async function updateAnnouncement(payload) {
+  // نشر/تحديث إعلان
+  document.addEventListener('click', async (e)=>{
+    if(e.target.id !== 'btn-publish') return;
+    const text    = document.getElementById('ann-text').value.trim();
+    const active  = document.getElementById('ann-active').value === 'true';
+    const start   = toIso('ann-start-cal','ann-start-g','ann-start-h');
+    const expires = toIso('ann-end-cal','ann-end-g','ann-end-h');
+    const stat = document.getElementById('ann-status');
+    stat.textContent = 'جارٍ النشر…';
+    try{
       const res = await fetch('/.netlify/functions/admin-announcement', {
-        method:'PUT',
+        method:'POST',
         headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await authToken()}` },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ text, active, start, expires })
       });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
+      const j = await res.json();
+      if(!res.ok) throw new Error(j?.error || 'failed');
+      stat.textContent = 'نُشر ✓';
+      toast('تم نشر/تحديث الإعلان');
+      document.getElementById('ann-text').value = '';
+      await fetchAnnouncements();
+    }catch(err){
+      console.error(err);
+      stat.textContent = 'تعذّر النشر';
+      toast('تعذّر النشر');
     }
-    async function deleteAnnouncement(id) {
-      const res = await fetch('/.netlify/functions/admin-announcement?id='+encodeURIComponent(id), {
-        method:'DELETE',
-        headers:{ 'Authorization': `Bearer ${await authToken()}` }
+  });
+
+  // ===== تفعيل/تمديد عضوية
+  document.addEventListener('click', async (e)=>{
+    if(e.target.id !== 'btn-activate') return;
+    const email   = document.getElementById('act-email').value.trim();
+    const user_id = document.getElementById('act-userid').value.trim();
+    const amount  = Math.max(1, Number(document.getElementById('act-amount').value||'1')|0);
+    const unit    = document.getElementById('act-unit').value;
+    const note    = document.getElementById('act-note').value.trim() || null;
+    const stat = document.getElementById('act-status');
+    stat.textContent = 'جارٍ التفعيل…';
+    try{
+      const res = await fetch('/.netlify/functions/admin-activate', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await authToken()}` },
+        body: JSON.stringify({ email: email || null, user_id: user_id || null, amount, unit, note })
       });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
+      const j = await res.json();
+      if(!res.ok) throw new Error(j?.error || 'failed');
+      stat.textContent = `تم التفعيل ✓ ينتهي: ${j.expires_at || '—'}`;
+      toast('تم التفعيل');
+    }catch(err){
+      console.error(err);
+      stat.textContent = 'تعذّر التفعيل';
+      toast('تعذّر التفعيل');
     }
+  });
 
-    // نشر/تحديث
-    document.getElementById('btn-publish').addEventListener('click', async ()=>{
-      const text    = document.getElementById('ann-text').value.trim();
-      const active  = document.getElementById('ann-active').value === 'true';
-      const start   = toIso('ann-start-cal','ann-start-g','ann-start-h'); // قد تكون null
-      const expires = toIso('ann-end-cal','ann-end-g','ann-end-h');       // قد تكون null
-      const stat = document.getElementById('ann-status');
-      stat.textContent = 'جارٍ النشر…';
+  // ===== الشكاوى/الاقتراحات (ربط مع complaints-*)
+  let currentComplaintId = null;
 
-      try{
-        const res = await fetch('/.netlify/functions/admin-announcement', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await authToken()}` },
-          body: JSON.stringify({ text, active, start, expires })
-        });
-        const j = await res.json();
-        if(!res.ok) throw new Error(j?.error || 'failed');
-        stat.textContent = 'نُشر ✓';
-        toast('تم نشر/تحديث الإعلان');
-        document.getElementById('ann-text').value = '';
-        await fetchAnnouncements();
-      }catch(e){
-        console.error(e);
-        stat.textContent = 'تعذّر النشر';
-        toast('تعذّر النشر');
-      }
+  async function loadComplaints(){
+    const type = document.getElementById('c-type').value;
+    const status = document.getElementById('c-status').value;
+    const q = document.getElementById('c-q').value.trim();
+    const qs = new URLSearchParams();
+    if (type) qs.set('type', type);
+    if (status) qs.set('status', status);
+    if (q) qs.set('q', q);
+    const res = await fetch('/.netlify/functions/complaints-list?'+qs.toString(), {
+      headers: { 'Authorization': `Bearer ${await authToken()}` }
+    });
+    const j = await res.json();
+    const tbody = document.getElementById('c-rows');
+    tbody.innerHTML = '';
+    (j.rows || []).forEach(row=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><a href="#" data-open="${row.id}">${row.subject}</a></td>
+        <td>${row.user_name || '—'}<br><span class="muted">${row.user_email}</span></td>
+        <td>${row.type === 'complaint' ? 'شكوى' : 'اقتراح'}</td>
+        <td><span class="pill status-${row.status}">${row.status}</span></td>
+        <td>${new Date(row.created_at).toLocaleString('ar-SA')}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    if ((j.rows || []).length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="5" class="muted">لا توجد نتائج</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  async function openComplaint(id){
+    currentComplaintId = id;
+    const res = await fetch('/.netlify/functions/complaints-get?id='+encodeURIComponent(id), {
+      headers: { 'Authorization': `Bearer ${await authToken()}` }
+    });
+    const j = await res.json();
+    const c = j.complaint;
+    const msgs = j.messages || [];
+
+    document.getElementById('c-empty').classList.add('hidden');
+    document.getElementById('c-box').classList.remove('hidden');
+
+    document.getElementById('cd-subject').textContent = c.subject;
+    document.getElementById('cd-user').textContent = (c.user_name? c.user_name+' — ' : '') + c.user_email;
+    document.getElementById('cd-kind').textContent = (c.type === 'complaint' ? 'شكوى' : 'اقتراح');
+    const st = document.getElementById('cd-status');
+    st.textContent = c.status;
+    st.className = 'pill status-'+c.status;
+
+    const thread = document.getElementById('cd-thread');
+    thread.innerHTML = '';
+    msgs.forEach(m=>{
+      const bubble = document.createElement('div');
+      bubble.style.margin = '8px 0';
+      bubble.innerHTML = `
+        <div class="pill" style="display:inline-block;${m.sender==='admin'?'background:#e2e8f0;color:#0f172a;':'background:#f1f5f9;color:#0f172a;'}">
+          ${m.sender==='admin'?'فريق أثر':'العميل'}
+        </div>
+        <div>${(m.body||'').replace(/\n/g,'<br>')}</div>
+        <div class="muted" style="font-size:.85em">${new Date(m.created_at).toLocaleString('ar-SA')}</div>
+      `;
+      thread.appendChild(bubble);
     });
 
-    // تفعيل/تمديد
-    document.getElementById('btn-activate').addEventListener('click', async ()=>{
-      const email   = document.getElementById('act-email').value.trim();
-      const user_id = document.getElementById('act-userid').value.trim();
-      const amount  = Math.max(1, Number(document.getElementById('act-amount').value||'1')|0);
-      const unit    = document.getElementById('act-unit').value; // days | months | years
-      const note    = document.getElementById('act-note').value.trim() || null;
+    document.getElementById('cd-reply').value = '';
+    document.getElementById('cd-next').value = '';
+    document.getElementById('cd-statusmsg').textContent = '';
+  }
 
-      const stat = document.getElementById('act-status');
-      stat.textContent = 'جارٍ التفعيل…';
-      try{
-        const res = await fetch('/.netlify/functions/admin-activate', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await await window.auth.getToken({ audience: "https://api.athar" })}` },
-          body: JSON.stringify({ email: email || null, user_id: user_id || null, amount, unit, note })
-        });
-        const j = await res.json();
-        if(!res.ok) throw new Error(j?.error || 'failed');
-        stat.textContent = `تم التفعيل ✓ ينتهي: ${j.expires_at || '—'}`;
-        toast('تم التفعيل');
-      }catch(e){
-        console.error(e);
-        stat.textContent = 'تعذّر التفعيل';
-        toast('تعذّر التفعيل');
-      }
-    });
+  // أحداث القائمة/الفلترة
+  document.getElementById('c-refresh').addEventListener('click', loadComplaints);
+  document.getElementById('c-type').addEventListener('change', loadComplaints);
+  document.getElementById('c-status').addEventListener('change', loadComplaints);
+  document.getElementById('c-q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') loadComplaints(); });
+  document.getElementById('c-rows').addEventListener('click', (e)=>{
+    const a = e.target.closest('[data-open]'); if(!a) return;
+    e.preventDefault();
+    openComplaint(a.getAttribute('data-open'));
+  });
 
+  // إرسال الرد
+  document.getElementById('cd-send').addEventListener('click', async ()=>{
+    if (!currentComplaintId) return;
+    const msg  = document.getElementById('cd-reply').value.trim();
+    const next = document.getElementById('cd-next').value || null;
+    const stat = document.getElementById('cd-statusmsg');
+    if (!msg) { toast('أكتب الرد'); return; }
+    stat.textContent = 'جارٍ الإرسال…';
+    try{
+      const res = await fetch('/.netlify/functions/complaints-reply', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization': `Bearer ${await authToken()}`
+        },
+        body: JSON.stringify({ complaint_id: currentComplaintId, message: msg, next_status: next })
+      });
+      const j = await res.json();
+      if(!res.ok) throw new Error(j?.error || 'failed');
+      stat.textContent = 'تم الإرسال ✓';
+      toast('تم إرسال الرد');
+      await openComplaint(currentComplaintId);
+      await loadComplaints();
+    }catch(err){
+      console.error(err);
+      stat.textContent = 'تعذّر الإرسال';
+      toast('تعذّر الإرسال');
+    }
+  });
+
+  // ===== تشغيل الصفحة
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    // انتظار تهيئة window.auth من app.js
+    for (let i=0; i<50 && !window.auth; i++) { await new Promise(r=>setTimeout(r,100)); }
+
+    // تحقق أدمن
+    const ok = await isAdmin();
+    document.getElementById('tabsCard').style.display = ok ? '' : 'none';
+    document.getElementById('denyCard').style.display = ok ? 'none' : '';
+    if (!ok) return;
+
+    // افتحي تبويب الشكاوى افتراضيًا
+    showTab('t-complaints');
+
+    // جهزي الإعلانات
     await fetchAnnouncements();
+
+    // حمّلي الشكاوى
+    await loadComplaints();
   });
   </script>
 </body>
