@@ -9,29 +9,23 @@
 <meta name="color-scheme" content="dark light">
 </head>
 <body>
-  <!-- خلفيات الهوية -->
   <div class="global-bg"></div>
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- الشريط العلوي — صفحة الخطط -->
   <div class="topbar">
     <div class="left-actions">
       <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
     </div>
-
     <div class="actions">
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
     </div>
-
-    <!-- CTA الحساب -->
     <div class="user" style="gap:10px">
       <button class="btn" id="login">الدخول / إنشاء حساب</button>
       <button class="btn ghost" id="logout" style="display:none">تسجيل الخروج</button>
     </div>
   </div>
 
-  <!-- الهيدر -->
   <header>
     <div class="hero">
       <div class="hero-plate"></div>
@@ -45,149 +39,86 @@
       <section class="card" style="margin-top:-14px">
         <h2 class="title">الاشتراكات</h2>
         <p class="lead">كل الخطط تمنحك وصولًا كاملًا للأدوات والمزايا.</p>
-
-        <!-- شارة توضيحية للمستخدم بعد تسجيل الدخول -->
         <p id="whoami" class="muted" style="text-align:center; margin:8px 0 0; display:none"></p>
 
         <div id="choose-plan" class="plans" style="margin-top:22px">
-          <div class="plan">
-            <h4>أسبوعي</h4>
-            <div class="price">12.99 ر.س</div>
-            <button class="btn primary" data-plan="weekly">اشترك الآن</button>
+          <div class="plan"><h4>أسبوعي</h4><div class="price">12.99 ر.س</div><button class="btn primary" data-plan="weekly">اشترك الآن</button></div>
+          <div class="plan"><h4>شهري</h4><div class="price">29.99 ر.س</div><button class="btn primary" data-plan="monthly">اشترك الآن</button></div>
+          <div class="plan"><h4>نصف سنوي</h4><div class="price">169.99 ر.س</div><button class="btn primary" data-plan="semi">اشترك الآن</button></div>
+          <div class="plan"><h4>سنوي</h4><div class="price">339.99 ر.س</div><button class="btn primary" data-plan="annual">اشترك الآن</button></div>
+        </div>
+
+        <div class="box" style="margin-top:18px">
+          <h3>لديك رمز ترويجي؟</h3>
+          <div class="form-row">
+            <label for="promo">أدخل الرمز</label>
+            <input id="promo" name="promo" placeholder="مثال: ATHAR30" />
           </div>
-          <div class="plan">
-            <h4>شهري</h4>
-            <div class="price">29.99 ر.س</div>
-            <button class="btn primary" data-plan="monthly">اشترك الآن</button>
-          </div>
-          <div class="plan">
-            <h4>نصف سنوي</h4>
-            <div class="price">169.99 ر.س</div>
-            <button class="btn primary" data-plan="semi">اشترك الآن</button>
-          </div>
-          <div class="plan">
-            <h4>سنوي</h4>
-            <div class="price">339.99 ر.س</div>
-            <button class="btn primary" data-plan="annual">اشترك الآن</button>
+          <div class="actions-row" style="justify-content:flex-start;margin-top:10px">
+            <button id="redeem" class="btn">تفعيل الرمز</button>
+            <small class="muted" id="redeem-msg"></small>
           </div>
         </div>
       </section>
 
       <section class="grid">
-  <div class="box">
-  <h3>لماذا «أثــر»؟</h3>
-  <p>
-    لأن وقتك أثمن من أن يُستهلك في التنسيق والبحث المتكرر. 
-    يجمع «أثــر» أدوات التحضير في مكان واحد لتختصر الوقت، 
-    وترفع جودة درسك، وتمنح نفسك فسحة أكبر للإبداع داخل الصف.
-  </p>
-  <p>
-    من الاستراتيجية إلى خطة الدرس، ومن الجدول إلى التذكير، ومن الأنشطة إلى الأفكار الحديثة—
-    كل ما تحتاجه بين يديك.
-  </p>
-</div>
-
-<div class="box">
-  <h3>خطوات سلسة</h3>
-  <p>
-    بعد اختيار الخطة وتأكيد الحساب، يتم تفعيل الاشتراك وربط الأدوات بحسابك بشكل
-    منظم، لتبدأ استخدام «أثــر» دون أي تعقيدات.
-  </p>
-</div>
-
+        <div class="box">
+          <h3>لماذا «أثــر»؟</h3>
+          <p>لأن وقتك أثمن من أن يُستهلك في التنسيق والبحث المتكرر. يجمع «أثــر» أدوات التحضير في مكان واحد لتختصر الوقت، وترفع جودة درسك، وتمنح نفسك فسحة أكبر للإبداع داخل الصف.</p>
+          <p>من الاستراتيجية إلى خطة الدرس، ومن الجدول إلى التذكير، ومن الأنشطة إلى الأفكار الحديثة— كل ما تحتاجه بين يديك.</p>
+        </div>
+        <div class="box">
+          <h3>خطوات سلسة</h3>
+          <p>بعد اختيار الخطة وتأكيد الحساب، يتم تفعيل الاشتراك وربط الأدوات بحسابك بشكل منظم، لتبدأ استخدام «أثــر» دون أي تعقيدات.</p>
+        </div>
         <div class="box full">
           <h3>لماذا الاشتراك مدفوع؟</h3>
-          <p>
-            «أثر» ليس مشروعًا ربحيًا، بل مبادرة تعليمية تهدف إلى دعم المعلم وتطوير
-            الممارسات الصفية. المبلغ الرمزي المدفوع يذهب لتغطية تكاليف التشغيل فقط
-            (خوادم، صيانة، تطوير مستمر)، ليبقى المشروع متاحًا ويقدّم خدمة مستقرة
-            وموثوقة لكم 🌿.
-          </p>
+          <p>«أثر» مبادرة تعليمية تدعم المعلم وتطوّر الممارسات الصفية. المقابل الرمزي يغطي التشغيل (خوادم، صيانة، تطوير) ليبقى المشروع مستقرًا وموثوقًا 🌿.</p>
         </div>
       </section>
     </div>
   </main>
 
-<footer>
-  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-  <p class="foot-name">ندى المجيرش</p>
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
+    <nav class="foot-links">
+      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+      <a href="complaints.html">الشكاوى والاقتراحات</a>
+    </nav>
+    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
+  </footer>
 
-  <nav class="foot-links">
-    <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-    <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-    <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-    <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-    <a href="complaints.html">الشكاوى والاقتراحات</a>
-  </nav>
-
-  <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-</footer>
-
-<script>
-  // سنة تلقائية في الفوتر
-  (function(){
-    var y=document.getElementById('year');
-    if(y) y.textContent=new Date().getFullYear();
-  })();
-</script>
-
+  <script>(function(){var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();})();</script>
   <div class="toast" id="toast"></div>
 
-  <!-- ========== المكتبات بنفس نسخ المشروع ========== -->
-  <!-- Auth0 SDK -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/supabase-client.js"></script>
+  <script src="assets/js/storage.js"></script>
 
-  <!-- Supabase (اختياري لحفظ “نية الاشتراك” في قاعدة البيانات) -->
-  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="/assets/js/supabase-client.js"></script>
-
-  <!-- أدوات عامة / ثيم -->
-  <script defer src="assets/js/storage.js"></script>
-  <script defer src="app.js"></script>
-
-  <!-- ========== منطق الصفحة ========== -->
   <script>
   (async function(){
-    // ========= ضبط Auth0 =========
-    // حاول القراءة من window.__CFG (لو تُحقن من require-auth.js)، وإلا استخدم القيم أدناه
-    const AUTH0_DOMAIN   = (window.__CFG && window.__CFG.auth0_domain)   || "YOUR_DOMAIN.auth0.com";
-    const AUTH0_CLIENTID = (window.__CFG && window.__CFG.auth0_clientId) || "YOUR_CLIENT_ID";
-    const REDIRECT_URI   = window.location.origin + window.location.pathname; // يرجع لنفس صفحة الخطط
+    const $ = (s)=>document.querySelector(s);
+    const toast = (m)=>{ const t=$('#toast'); if(!t){alert(m);return;} t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1300); };
 
-    // إنشاء عميل Auth0
-    const auth0 = await createAuth0Client({
-      domain: AUTH0_DOMAIN,
-      clientId: AUTH0_CLIENTID,
-      authorizationParams: { redirect_uri: REDIRECT_URI }
-    });
+    const AUTH0_DOMAIN   = (window.__CFG && window.__CFG.auth0_domain)   || "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+    const AUTH0_CLIENTID = (window.__CFG && window.__CFG.auth0_clientId) || "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+    const REDIRECT_URI   = window.location.origin + window.location.pathname;
 
-    // معالجة الرجوع من Auth0 (code/state)
+    const auth0 = await createAuth0Client({ domain: AUTH0_DOMAIN, clientId: AUTH0_CLIENTID, authorizationParams: { redirect_uri: REDIRECT_URI } });
+
     if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
       try {
         const { appState } = await auth0.handleRedirectCallback();
         if (appState?.plan) localStorage.setItem('intended_plan', appState.plan);
-      } catch(e) {
-        console.warn("Auth0 callback error:", e);
-      } finally {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+      } catch(e) { console.warn("Auth0 callback error:", e); }
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // ========== أدوات صغيرة ==========
-    const $ = (s)=>document.querySelector(s);
-    function toast(m){
-      const t = document.getElementById('toast');
-      if (!t) { alert(m); return; }
-      t.textContent = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 1300);
-    }
-
-    // Supabase client (بنفس أسلوب مشروعك)
-    const sb = (window.supa && typeof window.supa.from==='function') ? window.supa
-             : (window.supabaseClient && typeof window.supabaseClient.from==='function') ? window.supabaseClient
-             : null;
-
-    // حالة الدخول + تهيئة واجهة الأزرار
     async function isLogged(){ try { return await auth0.isAuthenticated(); } catch(_) { return false; } }
     async function refreshAuthUI(){
       const logged = await isLogged();
@@ -208,76 +139,69 @@
         if (whoami) whoami.style.display='none';
       }
 
-      // تعديل نص زر الخطة حسب الحالة
       document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(btn=>{
         btn.textContent = logged ? 'إكمال الاشتراك' : 'اشترك الآن';
       });
     }
 
-    // أزرار Auth
-    $('#login')?.addEventListener('click', () =>
-      auth0.loginWithRedirect({ appState: { plan: localStorage.getItem('intended_plan') || null } })
-    );
-    $('#logout')?.addEventListener('click', () =>
-      auth0.logout({ logoutParams:{ returnTo: window.location.origin }})
-    );
+    $('#login')?.addEventListener('click', () => auth0.loginWithRedirect({ appState: { plan: localStorage.getItem('intended_plan') || null } }));
+    $('#logout')?.addEventListener('click', () => auth0.logout({ logoutParams:{ returnTo: window.location.origin }}) );
 
-    // حفظ “نية الاشتراك”
     async function saveIntent(plan){
-      // محاولة جلب المستخدم
       let email=null, sub=null;
-      try {
-        const user = await auth0.getUser();
-        email = user?.email || null;
-        sub   = user?.sub   || null;
-      } catch(_) {}
+      try { const user = await auth0.getUser(); email=user?.email||null; sub=user?.sub||null; } catch(_){}
+      const payload = { plan, user_id: sub, email, status:'pending', created_at:new Date().toISOString() };
 
-      const payload = {
-        plan,
-        user_id: sub,
-        email: email,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      };
+      const sb = (window.supa && typeof window.supa.from==='function') ? window.supa
+               : (window.supabaseClient && typeof window.supabaseClient.from==='function') ? window.supabaseClient
+               : null;
 
       if (sb) {
-        try{
-          const { error } = await sb.from('payment_intents').insert(payload);
-          if (error) throw error;
-          toast('تم تسجيل طلب الاشتراك ✓ سيتم تفعيل حسابك قريبًا.');
-          return;
-        }catch(err){
-          console.warn('saveIntent supabase error -> fallback to localStorage', err);
-        }
+        try{ const { error } = await sb.from('payment_intents').insert(payload); if (error) throw error; toast('تم تسجيل طلب الاشتراك ✓'); return; }
+        catch(err){ console.warn('saveIntent supabase error -> fallback to localStorage', err); }
       }
-      // بديل محلي
-      const list = JSON.parse(localStorage.getItem('athar:intents')||'[]');
-      list.push(payload);
+      const list = JSON.parse(localStorage.getItem('athar:intents')||'[]'); list.push(payload);
       localStorage.setItem('athar:intents', JSON.stringify(list));
-      toast('تم تسجيل طلب الاشتراك ✓ سيتم تفعيل حسابك قريبًا.');
+      toast('تم تسجيل طلب الاشتراك ✓');
     }
 
-    // سلوك أزرار الخطط
     document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         const plan = btn.getAttribute('data-plan');
-        localStorage.setItem('intended_plan', plan); // نخزّنه مؤقتًا
-
-        if (!(await isLogged())) {
-          // مو مسجّل → نذهب لتسجيل الدخول ثم نرجع
-          await auth0.loginWithRedirect({ appState: { plan } });
-          return;
-        }
-        // مسجّل → نسجّل النية
+        localStorage.setItem('intended_plan', plan);
+        if (!(await isLogged())) { await auth0.loginWithRedirect({ appState: { plan } }); return; }
         await saveIntent(plan);
       });
     });
 
-    // تفعيل الواجهة
+    // تفعيل الرمز الترويجي
+    $('#redeem')?.addEventListener('click', async ()=>{
+      const code = ($('#promo')?.value || '').trim();
+      const msgEl = $('#redeem-msg'); msgEl.textContent = '';
+      if (!code){ msgEl.textContent = 'الرجاء إدخال الرمز'; return; }
+
+      try{
+        // نطلب توكن وصول مع audience المناسب
+        const token = await window.auth0SafeGetToken?.() || await auth0.getTokenSilently({ authorizationParams: { audience: (window.__CFG && window.__CFG.api_audience) || 'https://api.athar' }});
+        const res = await fetch('/.netlify/functions/promo-redeem', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ code })
+        });
+        const out = await res.text();
+        if (!res.ok) { msgEl.textContent = out || 'تعذر تفعيل الرمز'; return; }
+        const j = JSON.parse(out);
+        msgEl.textContent = 'تم التفعيل ✓، تاريخ الانتهاء: ' + (new Date(j.expires_at)).toLocaleDateString('ar-SA');
+      }catch(e){
+        msgEl.textContent = 'تعذر تفعيل الرمز';
+      }
+    });
+
     await refreshAuthUI();
-    // لو عندك require-auth.js يطلق حدثًا مخصصًا؛ تقدرين تربطيه هنا.
     window.addEventListener('auth0:ready', refreshAuthUI);
   })();
   </script>
+
+  <script src="assets/js/require-auth.js"></script>
 </body>
 </html>
