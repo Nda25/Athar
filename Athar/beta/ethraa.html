@@ -225,20 +225,19 @@ printBtn.addEventListener('click', async ()=>{
 });
   </script>
 
-  <!-- حماية الصفحة -->
-<!-- Auth0 SDK -->
+<!-- Auth0 SDK (اختياري - يُفضّل إبقاؤه مع فولباك) -->
 <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
         onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
 <!-- Supabase -->
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
+<script defer src="/assets/js/supabase-client.js"></script>
 
-<!-- حماية الصفحة -->
-<script defer src="assets/js/require-auth.js"></script>
+<!-- الحماية (يجب أن يسبق أي كود يعتمد على تسجيل الدخول) -->
+<script defer src="/assets/js/require-auth.js"></script>
 
-<!-- سكربتات المشروع -->
-<script defer src="app.js"></script>
+<!-- سكربتات مشروعك -->
+<script defer src="/app.js"></script>
 
 </body>
 </html>
