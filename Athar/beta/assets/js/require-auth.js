@@ -1,18 +1,23 @@
 // /assets/js/require-auth.js
 // =============================================
-// Athar - Unified front-end guard for all pages
+// Athar - Front-end Guard (with debug logs)
 // - يمنع فلاش المحتوى في الصفحات المحمية
 // - يتحقق من هوية المستخدم + صلاحياته + حالة الاشتراك
 // - يعالج ثغرة زر الرجوع (bfcache/pageshow)
-// - يرسل غير المصرح لهم إلى pricing.html مع رسالة
+// - يسجّل خطوات واضحة في Console لمعرفة سبب المنع
 // =============================================
-
 (function AtharGuard(){
-  // ===== إعداد Auth0 (ثابتة حسب مشروعك) =====
+  // ===== إعداد Auth0 =====
   const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
   const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-  const API_AUDIENCE = "https://api.athar"; // إن احتجتِه لاحقًا لدوال API محمية
+  const API_AUDIENCE = "https://api.athar"; // (اختياري) لنداءات API
   const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+  // DEBUG: فعّلي السجل التفصيلي (اعيديها false لإسكاته)
+  const DEBUG = true;
+  const log = (...a)=>{ if (DEBUG) console.info("[AtharGuard]", ...a); };
+  const warn = (...a)=>{ console.warn("[AtharGuard]", ...a); };
+  const err  = (...a)=>{ console.error("[AtharGuard]", ...a); };
 
   // نعرّضها عموميًا لو احتاجتها صفحات أخرى
   window.__CFG = Object.assign({}, window.__CFG || {}, {
@@ -26,8 +31,17 @@
     "", "index.html", "pricing.html", "programs.html",
     "privacy.html", "terms.html", "refund-policy.html", "whatsapp.html"
   ]);
-  const LOGIN_ONLY_FILES = new Set(["profile.html"]); // يحتاج تسجيل دخول فقط
-  const TOOL_FILES = new Set(["athar.html","darsi.html","masar.html","miyad.html","ethraa.html","mulham.html"]);
+
+  // يحتاج تسجيل دخول فقط (بدون اشتراك نشط)
+  const LOGIN_ONLY_FILES = new Set(["profile.html"]);
+
+  // الأدوات — تتطلب status=active
+  const TOOL_FILES = new Set([
+    "athar.html","darsi.html","masar.html","miyad.html","ethraa.html","mulham.html"
+    // لو عندك صفحة "منطلق" باسم معين ضيفيها هنا بالضبط مثل اسم الملف
+    // "muntaq.html"
+  ]);
+
   const ADMIN_FILE = "admin.html";
 
   // ===== Claims namespace =====
@@ -37,13 +51,15 @@
   const CLAIM_ADMIN  = NS + "admin";    // boolean
 
   // ===== Helpers =====
-  const curFile = () => location.pathname.replace(/\/+$/, "").split("/").pop() || "";
+  const curFile = () => {
+    const f = location.pathname.replace(/\/+$/,"").split("/").pop() || "";
+    return f;
+  };
   const toPricing = (msg) => {
     try { if (msg) sessionStorage.setItem("athar:msg", msg); } catch {}
     location.replace("/pricing.html");
   };
   const addMetaNoStore = () => {
-    // تقليل فرص عرض صفحة محمية من الكاش
     const metas = [
       ['Cache-Control','no-store, no-cache, must-revalidate, max-age=0'],
       ['Pragma','no-cache'],
@@ -80,7 +96,7 @@
 
   // تحميل مكتبة Auth0 SPA إن لم تكن موجودة
   async function ensureAuth0SDK(){
-    if (window.auth0?.createAuth0Client) return;
+    if (window.auth0?.createAuth0Client || window.createAuth0Client) return;
     await new Promise((res, rej) => {
       const sc = document.createElement("script");
       sc.src = "https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js";
@@ -90,24 +106,29 @@
 
   async function buildClient(){
     await ensureAuth0SDK();
-    const c = await window.auth0.createAuth0Client({
+    const f = window.auth0?.createAuth0Client || window.createAuth0Client;
+    if (!f) throw new Error("Auth0 SPA SDK not available");
+    const options = {
       domain: AUTH0_DOMAIN,
       clientId: AUTH0_CLIENT,
       cacheLocation: "localstorage",
       useRefreshTokens: true,
       authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email" }
-    });
-    window.auth0Client = c;
-    window.auth = c; // توافق مع كود قديم
+    };
+    if (API_AUDIENCE) options.authorizationParams.audience = API_AUDIENCE;
+    const c = await f(options);
+    window.auth0Client = c; window.auth = c;
     return c;
   }
 
   async function cleanupRedirectIfNeeded(client){
-    // معالجة العودة من Auth0 (code/state)
     if (location.search.includes("code=") && location.search.includes("state=")) {
       try {
         await client.handleRedirectCallback();
-      } catch {}
+        log("Handled Auth0 redirect callback");
+      } catch (e) {
+        warn("Auth0 callback error:", e?.message || e);
+      }
       history.replaceState({}, document.title, location.pathname + location.hash);
     }
   }
@@ -118,54 +139,83 @@
   };
   const userStatus = (claims) => claims?.[CLAIM_STATUS] || "";
 
-  // ===== المنطق الأساسي =====
   async function enforce(){
-    addMetaNoStore();         // تقليل الرجوع من الكاش
-    mountGuardOverlay();      // حاجب فوري
+    addMetaNoStore();
+    mountGuardOverlay();
     const file = curFile();
+    log("File:", file);
 
     // الصفحات العامة: فقط نظّف العودة من Auth0 لو موجودة ثم اسمح بالعرض
     if (PUBLIC_FILES.has(file)) {
-      try { const tmp = await buildClient(); await cleanupRedirectIfNeeded(tmp); } catch {}
+      try {
+        const tmp = await buildClient();
+        await cleanupRedirectIfNeeded(tmp);
+      } catch (e) {
+        warn("Public page: build/cleanup error:", e?.message || e);
+      }
+      log("Public page -> allowed");
       unmountGuardOverlay();
       return;
     }
 
     // باقي الصفحات تتطلب تحقق
-    const client = await buildClient();
-    await cleanupRedirectIfNeeded(client);
+    let client;
+    try {
+      client = await buildClient();
+      await cleanupRedirectIfNeeded(client);
+    } catch (e) {
+      err("Failed to init Auth0 client:", e?.message || e);
+      unmountGuardOverlay();
+      return;
+    }
 
-    let authed = false, claims = null;
-    try { authed = await client.isAuthenticated(); } catch {}
+    let authed = false, claims = null, user = null;
+    try { authed = await client.isAuthenticated(); } catch (e) { warn("isAuthenticated error:", e?.message || e); }
 
-    const redirectToLogin = async () => {
-      try {
-        await client.loginWithRedirect({
-          authorizationParams: { screen_hint:"login", redirect_uri: REDIRECT_URI }
-        });
-      } catch {
-        toPricing("الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.");
-      }
-    };
-
-    // صفحات تسجيل الدخول فقط
     if (LOGIN_ONLY_FILES.has(file)) {
-      if (!authed) return redirectToLogin();
+      // profile.html: يكفي تسجيل الدخول
+      if (!authed) {
+        log("profile.html requires login -> redirecting to login");
+        try {
+          await client.loginWithRedirect({ authorizationParams: { screen_hint: "login", redirect_uri: REDIRECT_URI } });
+          return;
+        } catch (e) {
+          warn("Login redirect failed:", e?.message || e);
+          return toPricing("الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.");
+        }
+      }
+      try { user = await client.getUser(); } catch {}
+      log("profile.html allowed for user:", user?.email || user?.sub || "(unknown)");
       unmountGuardOverlay();
       return;
     }
 
     // أدوات + أدمن = تتطلب تسجيل دخول
-    if (!authed) return redirectToLogin();
+    if (!authed) {
+      log("Protected page requires login -> redirecting to login");
+      try {
+        await client.loginWithRedirect({ authorizationParams: { screen_hint: "login", redirect_uri: REDIRECT_URI } });
+        return;
+      } catch (e) {
+        warn("Login redirect failed:", e?.message || e);
+        return toPricing("الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.");
+      }
+    }
 
     // اجلب Claims
-    try { claims = await client.getIdTokenClaims(); } catch {}
+    try { claims = await client.getIdTokenClaims(); } catch (e) { warn("getIdTokenClaims failed:", e?.message || e); }
+    try { user = await client.getUser(); } catch {}
+
+    log("User:", user?.email || user?.sub || "(unknown)");
+    log("status claim:", userStatus(claims), "| isAdmin:", isAdmin(claims));
 
     // أدمن
     if (file === ADMIN_FILE) {
       if (!isAdmin(claims)) {
+        warn("admin.html blocked: missing admin role/claim");
         return toPricing("هذه الصفحة متاحة للمشرفين فقط.");
       }
+      log("admin.html allowed");
       unmountGuardOverlay();
       return;
     }
@@ -174,8 +224,10 @@
     if (TOOL_FILES.has(file)) {
       const st = userStatus(claims);
       if (st !== "active") {
+        warn("Tool blocked: status not active (status=", st, ")");
         return toPricing("حسابك غير مُفعّل بعد. الرجاء الاشتراك أو انتظار التفعيل.");
       }
+      log("Tool allowed");
       unmountGuardOverlay();
       return;
     }
@@ -183,12 +235,13 @@
     // أي صفحة أخرى غير مصنفة = نعاملها كأداة (احترازياً)
     const st = userStatus(claims);
     if (st !== "active") {
+      warn("Unlisted protected page blocked: status not active");
       return toPricing("هذه الصفحة للمشتركين النشطين فقط.");
     }
+    log("Unlisted protected page allowed");
     unmountGuardOverlay();
   }
 
-  // تشغيل أولي
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", enforce);
   } else {
@@ -197,8 +250,8 @@
 
   // معالجة ثغرة الرجوع من الكاش (bfcache)
   window.addEventListener("pageshow", function(e){
-    // لو الصفحة رجعت من الكاش، نعيد الفحص والرديركت إن لزم
     if (e.persisted) {
+      log("pageshow (bfcache) -> re-enforce");
       enforce();
     }
   });
