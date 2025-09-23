@@ -60,15 +60,25 @@ exports.handler = async (event) => {
     if (unit === "years")  expires.setFullYear(expires.getFullYear() + amount);
 
     // 👇 التفعيل اليدوي = مجاني
-    const payload = {
-      email,
-      user_id,
-      expires_at: expires.toISOString(),
-      note,
-      tenant_id: gate.org_id || null,
-      updated_at: new Date().toISOString(),
-      plan: 'free' // التفعيل اليدوي دائمًا مجاني
-    };
+// جهّزي التواريخ
+const nowIso = new Date().toISOString();
+const endIso = expires.toISOString(); // نهاية الاشتراك المحسوبة
+
+const payload = {
+  email,
+  user_id,
+  // أعمدة الجدول المطلوبة
+  plan: 'free',            // التفعيل اليدوي مجاني
+  status: 'active',        // فعّال
+  start_at: nowIso,        // يبدأ الآن
+  end_at: endIso,          // نهاية الاشتراك (مطابقة لـ expires)
+  // نحافظ أيضاً على expires_at لو كان مستخدم في فيو/أكواد أخرى
+  expires_at: endIso,
+
+  note,
+  tenant_id: gate.org_id || null,
+  updated_at: nowIso
+};
 
     // مفتاح التعارض حسب المتوفر
     const conflictKey = user_id ? "user_id" : "email";
