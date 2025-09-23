@@ -23,7 +23,7 @@ exports.handler = async (event) => {
     const email   = (body.email || "").trim().toLowerCase() || null; // اختياري
     const user_id = (body.user_id || "").trim() || null;             // اختياري
     const amount  = Math.max(1, parseInt(body.amount || 1, 10));     // عدد الوحدات
-    const unit    = (body.unit || "months");                          // days | months | years
+    const unit    = (body.unit || "months");                         // days | months | years
     const note    = (body.note || null);
 
     if (!email && !user_id) {
@@ -59,13 +59,15 @@ exports.handler = async (event) => {
     if (unit === "months") expires.setMonth(expires.getMonth() + amount);
     if (unit === "years")  expires.setFullYear(expires.getFullYear() + amount);
 
+    // 👇 التفعيل اليدوي = مجاني
     const payload = {
       email,
       user_id,
       expires_at: expires.toISOString(),
       note,
       tenant_id: gate.org_id || null,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      plan: 'free' // التفعيل اليدوي دائمًا مجاني
     };
 
     // مفتاح التعارض حسب المتوفر
@@ -85,7 +87,6 @@ exports.handler = async (event) => {
     };
   } catch (e) {
     console.error("admin-activate error:", e);
-    // أظهري الرسالة أثناء التصحيح، وبعد ما يزبط ارجعي لرسالة عامة
     return { statusCode: 500, body: String(e.message || e) };
   }
 };
