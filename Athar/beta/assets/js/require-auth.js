@@ -112,7 +112,7 @@ const API_AUDIENCE = "https://api.n-athar";
       clientId: AUTH0_CLIENT,
       cacheLocation: "localstorage",
       useRefreshTokens: true,
-      authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email" }
+authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email offline_access" }
     };
     if (API_AUDIENCE) options.authorizationParams.audience = API_AUDIENCE;
     const c = await f(options);
