@@ -168,19 +168,21 @@
     window.__ATHAR_STORAGE_LOADED__ = !!window.__ATHAR_STORAGE_LOADED__;
   </script>
 
-  <!-- SDKs أولاً (نفس النسخ في كل الصفحات) -->
-  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"></script>
+<!-- SDKs أولاً (نفس النسخ في كل الصفحات) -->
+<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script defer src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"></script>
 
-  <!-- سكربتات مشروعك (مرتبة وبـ defer) -->
-  <!-- ملاحظة: storage.js يفضّل أن يكون "آمن عند التكرار" داخليًا -->
-  <script defer src="assets/js/supabase-client.js"></script>
-  <script defer src="assets/js/ui.js"></script>
-  <script defer src="assets/js/theme.js"></script>
-  <script defer src="assets/js/storage.js" onload="window.__ATHAR_STORAGE_LOADED__=true"></script>
+<!-- سكربتات مشروعك (مرتبة وبـ defer) -->
+<script defer src="assets/js/supabase-client.js"></script>
+<script defer src="assets/js/ui.js"></script>
+<script defer src="assets/js/theme.js"></script>
+<script defer src="assets/js/storage.js" onload="window.__ATHAR_STORAGE_LOADED__=true"></script>
 
-  <!-- أخيراً: سكربت التطبيق العام -->
-  <script defer src="app.js"></script>
+<!-- الحارس: ينشئ window.auth ويطلق auth0:ready -->
+<script defer src="assets/js/require-auth.js"></script>
+
+<!-- أخيراً: سكربت التطبيق العام -->
+<script defer src="app.js"></script>
 
   <!-- تلميح: لإظهار زر لوحة التحكم للأدمن + زر الملف الشخصي للمسجّل -->
   <script>
