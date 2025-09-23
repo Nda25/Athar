@@ -281,21 +281,39 @@ async function isAdmin(){
 
     const claims = await window.auth.getIdTokenClaims();
     // roles/admin من أي namespace متوفر
+  
+    console.log('[admin] claims:', claims);
     const roles = claims?.[NS + "roles"] || claims?.[ALT + "roles"] || [];
     const flag  = claims?.[NS + "admin"] === true || claims?.[ALT + "admin"] === true;
-
+console.log('[admin] roles:', claims?.[NS+"roles"] || claims?.[ALT+"roles"]);
+console.log('[admin] admin flag:', claims?.[NS+"admin"] ?? claims?.[ALT+"admin"]);
     return (Array.isArray(roles) && roles.includes("admin")) || flag;
   }catch(_){
     return false;
   }
 }
 
-async function authToken() {
-  // خذي الـ audience من الكونفيج إن وُجد، وإلا استخدمي الافتراضي
-  const aud = (window.__CFG && window.__CFG.api_audience) || "https://api.n-athar";
-  return await window.auth.getTokenSilently({
-    authorizationParams: { audience: aud }
-  });
+const API_AUDIENCE = (window.__CFG && window.__CFG.api_audience) || "https://api.n-athar";
+
+async function authToken(){
+  try {
+    return await window.auth.getTokenSilently({
+      authorizationParams: {
+        audience: API_AUDIENCE,
+        scope: "openid profile email offline_access"
+      }
+    });
+  } catch (err) {
+    console.warn("getTokenSilently failed; requesting consent/login", err);
+    await window.auth.loginWithRedirect({
+      authorizationParams: {
+        audience: API_AUDIENCE,
+        scope: "openid profile email offline_access",
+        prompt: "consent"
+      }
+    });
+    throw err; // يرجع للصفحة بعد تسجيل الدخول
+  }
 }
   // ===== أدوات مساعدة
   function toIso(calSelId, gId, hId) {
