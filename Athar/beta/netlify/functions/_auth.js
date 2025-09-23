@@ -1,20 +1,32 @@
-// netlify/functions/_auth.js
+// /netlify/functions/_auth.js
 // ==========================
 // Auth0 JWT verifier + helpers
 // Env Vars needed:
-// - AUTH0_DOMAIN       e.g. dev-2f0fmbtj6u8o7en4.us.auth0.com
-// - AUTH0_AUDIENCE     e.g. https://api.athar
-// - CLAIM_NAMESPACE    e.g. https://athar.co/  (must end with /)
+// - AUTH0_DOMAIN        e.g. dev-2f0fmbtj6u8o7en4.us.auth0.com
+// - AUTH0_AUDIENCE      e.g. https://api.n-athar
+// - AUTH0_ISSUER        e.g. https://dev-2f0fmbtj6u8o7en4.us.auth0.com/   (optional but recommended; MUST end with '/')
+// - CLAIM_NAMESPACE     e.g. https://n-athar.co/                          (must end with '/')
 // ==========================
 
 const jwksRsa = require("jwks-rsa");
 const jwt = require("jsonwebtoken");
 
-// Namespace (fallback to https://athar.co/) and ensure it ends with '/'
-const NS = (process.env.CLAIM_NAMESPACE || "https://athar.co/").replace(/\/?$/, "/");
+// --- Validate essential env ---
+const DOMAIN   = process.env.AUTH0_DOMAIN;
+const AUDIENCE = process.env.AUTH0_AUDIENCE;
+if (!DOMAIN)   throw new Error("Missing env: AUTH0_DOMAIN");
+if (!AUDIENCE) throw new Error("Missing env: AUTH0_AUDIENCE");
 
+// Prefer AUTH0_ISSUER if provided, else build from DOMAIN (and ensure trailing slash)
+const ISSUER = (process.env.AUTH0_ISSUER || `https://${DOMAIN}/`).replace(/\/?$/, "/");
+
+// Namespace (prefer new, keep compat with old). Ensure trailing slash.
+const NS_NEW = (process.env.CLAIM_NAMESPACE || "https://n-athar.co/").replace(/\/?$/, "/");
+const NS_OLD = "https://athar.co/";
+
+// Build JWKS client from ISSUER
 const client = jwksRsa({
-  jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
+  jwksUri: `${ISSUER}.well-known/jwks.json`,
   cache: true,
   cacheMaxEntries: 5,
   cacheMaxAge: 10 * 60 * 1000
@@ -34,8 +46,8 @@ function decodeJwt(token) {
       token,
       getKey,
       {
-        audience: process.env.AUTH0_AUDIENCE,
-        issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+        audience: AUDIENCE,
+        issuer: ISSUER,
         algorithms: ["RS256"]
       },
       (err, decoded) => (err ? reject(err) : resolve(decoded))
@@ -43,10 +55,12 @@ function decodeJwt(token) {
   });
 }
 
-// Read a claim from our namespace; keep backward compat with "https://athar/"
+// Read a claim from our namespace(s)
 function pickNs(payload, key) {
-  return payload[NS + key] ??
-         payload[`https://athar/${key}`] ??
+  // try new NS first, then old; support both raw & namespaced just in case
+  return payload[NS_NEW + key] ??
+         payload[NS_OLD + key] ??
+         payload[key] ??
          null;
 }
 
@@ -75,7 +89,7 @@ exports.requireAdmin = async function requireAdmin(event) {
         name:  pickNs(payload, "full_name") || payload.name  || null
       }
     };
-  } catch {
+  } catch (e) {
     return { ok:false, status:401, error:"Bad token" };
   }
 };
@@ -98,7 +112,7 @@ exports.requireUser = async function requireUser(event) {
       },
       roles: pickNs(payload, "roles") || []
     };
-  } catch {
+  } catch (e) {
     return { ok:false, status:401, error:"Bad token" };
   }
 };
