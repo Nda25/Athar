@@ -153,7 +153,6 @@
     <section class="card" id="t-complaints" style="display:none">
       <h2 class="title">الشكاوى والاقتراحات</h2>
 
-      <!-- شريط أدوات -->
       <div class="toolbar">
         <select id="c-type">
           <option value="">الكل</option>
@@ -174,7 +173,6 @@
       </div>
 
       <div class="grid grid-2" style="margin-top:12px">
-        <!-- القائمة -->
         <div class="card">
           <table class="table" id="c-table">
             <thead>
@@ -192,7 +190,6 @@
           </table>
         </div>
 
-        <!-- التفاصيل -->
         <div class="card" id="c-detail">
           <h3 style="margin-top:0">التفاصيل</h3>
           <div id="c-empty" class="muted">اختر عنصرًا من القائمة…</div>
@@ -250,13 +247,13 @@
   <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/moment-hijri@2.3.1/moment-hijri.js"></script>
 
-  <!-- سكربت عام -->
+  <!-- سكربت عام (ثيم/أزرار) -->
   <script src="app.js"></script>
 
   <script>
   const toast = (m)=>{ const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',1400); };
 
-  // ===== تبويبات بسيطة
+  // ===== تبويبات
   const tabs = ["t-activate","t-ann","t-complaints"];
   function showTab(id){
     tabs.forEach(x=> document.getElementById(x).style.display = (x===id)?'':'none');
@@ -291,9 +288,8 @@
     }
   }
 
-  // === Token + Fetch حارسين قياسيين ===
+  // === Token + Fetch
   const API_AUDIENCE = (window.__CFG?.api_audience) || "https://api.n-athar";
-
   async function authToken(){
     try {
       return await window.auth.getTokenSilently({
@@ -308,14 +304,12 @@
         authorizationParams: {
           audience: API_AUDIENCE,
           scope: "openid profile email offline_access",
-          prompt: "consent",
-          redirect_uri: window.location.href
+          prompt: "consent"
         }
       });
       throw err;
     }
   }
-
   async function apiFetch(url, opts = {}) {
     const token = await authToken();
     const res = await fetch(url, {
@@ -326,10 +320,8 @@
         "Content-Type": (opts.headers && opts.headers["Content-Type"]) || "application/json"
       }
     });
-
     const ct = res.headers.get("content-type") || "";
     const bodyText = await res.text();
-
     if (!res.ok) {
       console.error("API error", res.status, bodyText);
       throw new Error(bodyText || `HTTP ${res.status}`);
@@ -353,13 +345,11 @@
     }
   }
 
-  // ===== الإعلانات (ربط مع admin-announcement*)
+  // ===== الإعلانات
   async function fetchAnnouncements() {
     try {
-      const [latestRes, listRes] = await Promise.all([
-        apiFetch('/.netlify/functions/admin-announcement?latest=1'),
-        apiFetch('/.netlify/functions/admin-announcement?list=1')
-      ]);
+      const latestRes = await apiFetch('/.netlify/functions/admin-announcement?latest=1');
+      const listRes   = await apiFetch('/.netlify/functions/admin-announcement?list=1');
 
       const latest = latestRes?.latest || null;
       const list = listRes?.items || [];
@@ -418,23 +408,19 @@
 
     } catch(e) { console.warn(e); }
   }
-
   async function updateAnnouncement(payload) {
-    const j = await apiFetch('/.netlify/functions/admin-announcement', {
+    return await apiFetch('/.netlify/functions/admin-announcement', {
       method:'PUT',
       body: JSON.stringify(payload)
     });
-    return j;
   }
-
   async function deleteAnnouncement(id) {
-    const j = await apiFetch('/.netlify/functions/admin-announcement?id='+encodeURIComponent(id), {
+    return await apiFetch('/.netlify/functions/admin-announcement?id='+encodeURIComponent(id), {
       method:'DELETE'
     });
-    return j;
   }
 
-  // نشر/تحديث إعلان
+  // ===== نشر/تحديث إعلان
   document.addEventListener('click', async (e)=>{
     if(e.target.id !== 'btn-publish') return;
     const text    = document.getElementById('ann-text').value.trim();
@@ -483,76 +469,93 @@
     }
   });
 
-  // ===== الشكاوى/الاقتراحات (complaints-*)
+  // ===== الشكاوى/الاقتراحات
   let currentComplaintId = null;
 
   async function loadComplaints(){
-    const type = document.getElementById('c-type').value;
-    const status = document.getElementById('c-status').value;
-    const q = document.getElementById('c-q').value.trim();
-    const qs = new URLSearchParams();
-    if (type) qs.set('type', type);
-    if (status) qs.set('status', status);
-    if (q) qs.set('q', q);
+    try{
+      const type = document.getElementById('c-type').value;
+      const status = document.getElementById('c-status').value;
+      const q = document.getElementById('c-q').value.trim();
+      const qs = new URLSearchParams();
+      if (type) qs.set('type', type);
+      if (status) qs.set('status', status);
+      if (q) qs.set('q', q);
 
-    const j = await apiFetch('/.netlify/functions/complaints-list?'+qs.toString());
+      const j = await apiFetch('/.netlify/functions/complaints-list?'+qs.toString());
 
-    const tbody = document.getElementById('c-rows');
-    tbody.innerHTML = '';
-    (j.rows || []).forEach(row=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><a href="#" data-open="${row.id}">${row.subject}</a></td>
-        <td>${row.user_name || '—'}<br><span class="muted">${row.user_email}</span></td>
-        <td>${row.type === 'complaint' ? 'شكوى' : 'اقتراح'}</td>
-        <td><span class="pill status-${row.status}">${row.status}</span></td>
-        <td>${new Date(row.created_at).toLocaleString('ar-SA')}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-    if ((j.rows || []).length === 0) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="5" class="muted">لا توجد نتائج</td>`;
-      tbody.appendChild(tr);
+      const tbody = document.getElementById('c-rows');
+      tbody.innerHTML = '';
+      (j.rows || []).forEach(row=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><a href="#" data-open="${row.id}">${row.subject}</a></td>
+          <td>${row.user_name || '—'}<br><span class="muted">${row.user_email}</span></td>
+          <td>${row.type === 'complaint' ? 'شكوى' : 'اقتراح'}</td>
+          <td><span class="pill status-${row.status}">${row.status}</span></td>
+          <td>${new Date(row.created_at).toLocaleString('ar-SA')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if ((j.rows || []).length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="5" class="muted">لا توجد نتائج</td>`;
+        tbody.appendChild(tr);
+      }
+    }catch(err){
+      console.warn('loadComplaints failed', err);
     }
   }
 
   async function openComplaint(id){
-    currentComplaintId = id;
+    try{
+      currentComplaintId = id;
+      const j = await apiFetch('/.netlify/functions/complaints-get?id='+encodeURIComponent(id));
+      const c = j.complaint;
+      const msgs = j.messages || [];
 
-    const j = await apiFetch('/.netlify/functions/complaints-get?id='+encodeURIComponent(id));
-    const c = j.complaint;
-    const msgs = j.messages || [];
+      document.getElementById('c-empty').classList.add('hidden');
+      document.getElementById('c-box').classList.remove('hidden');
 
-    document.getElementById('c-empty').classList.add('hidden');
-    document.getElementById('c-box').classList.remove('hidden');
+      document.getElementById('cd-subject').textContent = c.subject;
+      document.getElementById('cd-user').textContent = (c.user_name? c.user_name+' — ' : '') + c.user_email;
+      document.getElementById('cd-kind').textContent = (c.type === 'complaint' ? 'شكوى' : 'اقتراح');
+      const st = document.getElementById('cd-status');
+      st.textContent = c.status;
+      st.className = 'pill status-'+c.status;
 
-    document.getElementById('cd-subject').textContent = c.subject;
-    document.getElementById('cd-user').textContent = (c.user_name? c.user_name+' — ' : '') + c.user_email;
-    document.getElementById('cd-kind').textContent = (c.type === 'complaint' ? 'شكوى' : 'اقتراح');
-    const st = document.getElementById('cd-status');
-    st.textContent = c.status;
-    st.className = 'pill status-'+c.status;
+      const thread = document.getElementById('cd-thread');
+      thread.innerHTML = '';
+      msgs.forEach(m=>{
+        const bubble = document.createElement('div');
+        bubble.style.margin = '8px 0';
+        bubble.innerHTML = `
+          <div class="pill" style="display:inline-block;${m.sender==='admin'?'background:#e2e8f0;color:#0f172a;':'background:#f1f5f9;color:#0f172a;'}">
+            ${m.sender==='admin'?'فريق أثر':'العميل'}
+          </div>
+          <div>${(m.body||'').replace(/\n/g,'<br>')}</div>
+          <div class="muted" style="font-size:.85em">${new Date(m.created_at).toLocaleString('ar-SA')}</div>
+        `;
+        thread.appendChild(bubble);
+      });
 
-    const thread = document.getElementById('cd-thread');
-    thread.innerHTML = '';
-    msgs.forEach(m=>{
-      const bubble = document.createElement('div');
-      bubble.style.margin = '8px 0';
-      bubble.innerHTML = `
-        <div class="pill" style="display:inline-block;${m.sender==='admin'?'background:#e2e8f0;color:#0f172a;':'background:#f1f5f9;color:#0f172a;'}">
-          ${m.sender==='admin'?'فريق أثر':'العميل'}
-        </div>
-        <div>${(m.body||'').replace(/\n/g,'<br>')}</div>
-        <div class="muted" style="font-size:.85em">${new Date(m.created_at).toLocaleString('ar-SA')}</div>
-      `;
-      thread.appendChild(bubble);
-    });
-
-    document.getElementById('cd-reply').value = '';
-    document.getElementById('cd-next').value = '';
-    document.getElementById('cd-statusmsg').textContent = '';
+      document.getElementById('cd-reply').value = '';
+      document.getElementById('cd-next').value = '';
+      document.getElementById('cd-statusmsg').textContent = '';
+    }catch(err){
+      console.warn('openComplaint failed', err);
+    }
   }
+
+  document.getElementById('c-refresh').addEventListener('click', loadComplaints);
+  document.getElementById('c-type').addEventListener('change', loadComplaints);
+  document.getElementById('c-status').addEventListener('change', loadComplaints);
+  document.getElementById('c-q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') loadComplaints(); });
+  document.getElementById('c-rows').addEventListener('click', (e)=>{
+    const a = e.target.closest('[data-open]'); if(!a) return;
+    e.preventDefault();
+    openComplaint(a.getAttribute('data-open'));
+  });
 
   // إرسال الرد
   document.getElementById('cd-send').addEventListener('click', async ()=>{
@@ -578,53 +581,29 @@
     }
   });
 
-  // ===== لا تواصلي لو مافي جلسة دخول مؤكدة
-  async function ensureLoggedIn() {
-    try {
-      const ok = await window.auth.isAuthenticated();
-      if (!ok) {
-        await window.auth.loginWithRedirect({
-          authorizationParams: {
-            audience: API_AUDIENCE,
-            scope: "openid profile email offline_access",
-            redirect_uri: window.location.href
-          }
-        });
-        return false;
-      }
-      return true;
-    } catch {
-      return false;
+  // ===== تشغيل الصفحة (نضمن جاهزية auth)
+  async function startAdmin(){
+    try{
+      // انتظر window.auth من require-auth.js
+      for (let i=0;i<50 && !window.auth;i++) { await new Promise(r=>setTimeout(r,100)); }
+
+      const authed = await window.auth.isAuthenticated?.();
+      if (!authed) { document.getElementById('denyCard').style.display=''; return; }
+
+      const ok = await isAdmin();
+      document.getElementById('tabsCard').style.display = ok ? '' : 'none';
+      document.getElementById('denyCard').style.display = ok ? 'none' : '';
+      if (!ok) return;
+
+      showTab('t-complaints');
+      fetchAnnouncements().catch(console.warn);
+      loadComplaints().catch(console.warn);
+    }catch(err){
+      console.warn(err);
+      document.getElementById('denyCard').style.display='';
     }
   }
-
-  // ===== تشغيل الصفحة
-  document.addEventListener('DOMContentLoaded', async ()=>{
-    // انتظار auth
-    for (let i=0; i<50 && !window.auth; i++) { await new Promise(r=>setTimeout(r,100)); }
-
-    // لا تواصلي لو مافي جلسة دخول مؤكدة
-    if (!(await ensureLoggedIn())) return;
-
-    // تحقق أدمن
-    const ok = await isAdmin();
-    document.getElementById('tabsCard').style.display = ok ? '' : 'none';
-    document.getElementById('denyCard').style.display = ok ? 'none' : '';
-    if (!ok) return;
-
-    // افتحي تبويب الشكاوى افتراضيًا
-    showTab('t-complaints');
-
-    // جهزي الإعلانات
-    await fetchAnnouncements();
-
-    // حمّلي الشكاوى
-    await loadComplaints();
-
-    // (اختياري للتشخيص فقط): اطبعي aud/roles للتأكد
-    try {
-      const t = await authToken();
-      const payload = JSON.parse(atob(t.split('.')[1]));
-      console.log('[debug aud]', payload.aud);
-      console.log('[debug iss]', payload.iss);
-      console.log('[debug roles]', payload['https://n
+  if (window.auth) startAdmin(); else window.addEventListener('auth0:ready', startAdmin, {once:true});
+  </script>
+</body>
+</html>
