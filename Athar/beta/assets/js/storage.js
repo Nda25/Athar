@@ -166,6 +166,8 @@
   // ==============================
   // Supabase للمتصفح (مع حارس منع تكرار التصريح)
   // ==============================
+
+  // تحضير قيم افتراضية فقط إذا ما كانت مضبوطة من قبل
   if (typeof window.SUPABASE_URL === "undefined") {
     window.SUPABASE_URL = "https://oywqpkzaudmzwvytxaop.supabase.co";
   }
@@ -173,8 +175,8 @@
     window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d3Fwa3phdWRtend2eXR4YW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4OTczMTYsImV4cCI6MjA3MzQ3MzMxNn0.nhjbZMiHPkWvcPnNDeGu3sGSP2TloC0jESZjQ03FnyM";
   }
 
-  // عميل واحد فقط (أعيدي استخدام الموجود إن تم إنشاؤه سابقًا)
-  const supa = window.supa || supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  // استخدمي عميل supa الموجود، وإلا أنشئي واحدًا إن توفر كائن supabase
+  const supa = window.supa || (window.supabase ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, { auth:{ persistSession:false }}) : null);
 
   // Helpers: قراءة مستخدم Auth0 بأمان
   const auth0SafeGetUser = async () => {
@@ -205,7 +207,14 @@
     };
   }
 
-  // upsert-user عبر Function (service role)
+  // ==============================
+  // دوال Supabase إضافية للتوافق مع البروفايل الجديد
+  // ==============================
+
+  /**
+   * supaEnsureUserProfile
+   * يستدعي Function (service role) لتأسيس/تحديث المستخدم في جدول users
+   */
   async function supaEnsureUserProfile(profile = {}) {
     if (!profile.sub || !profile.email) {
       const u = await auth0SafeGetUser();
@@ -232,7 +241,56 @@
     }
   }
 
-  // تسجيل استخدام أداة
+  /**
+   * supaSaveUserPrefs(partial)
+   * يحفظ (أو يحدّث) صف تفضيلات المستخدم في جدول user_prefs
+   * أمثلة partial:
+   *   { display_name: "ندى" }
+   *   { avatar_url: "https://..." }
+   *   { theme_color: "#f472b6" }
+   */
+  async function supaSaveUserPrefs(partial = {}) {
+    try {
+      if (!supa) return { ok:false, error:"supa unavailable" };
+      const u = await auth0SafeGetUser();
+      if (!u?.sub) return { ok:false, error:"no user" };
+
+      const row = Object.assign({ user_sub: u.sub }, partial);
+      const { data, error } = await supa
+        .from("user_prefs")
+        .upsert(row, { onConflict: "user_sub" })
+        .select()
+        .maybeSingle();
+      if (error) return { ok:false, error };
+      return { ok:true, data };
+    } catch (e) {
+      return { ok:false, error: e.message || e };
+    }
+  }
+
+  /**
+   * supaGetUserPrefs()
+   * يرجع صف التفضيلات لهذا المستخدم (إن وُجد)
+   */
+  async function supaGetUserPrefs() {
+    try {
+      if (!supa) return { ok:false, error:"supa unavailable" };
+      const u = await auth0SafeGetUser();
+      if (!u?.sub) return { ok:false, error:"no user" };
+
+      const { data, error } = await supa
+        .from("user_prefs")
+        .select("*")
+        .eq("user_sub", u.sub)
+        .maybeSingle();
+      if (error) return { ok:false, error };
+      return { ok:true, data };
+    } catch (e) {
+      return { ok:false, error:e.message || e };
+    }
+  }
+
+  // تسجيل استخدام أداة (كما هو)
   async function supaLogToolUsage(toolName, meta = {}) {
     try {
       const u = await auth0SafeGetUser();
@@ -259,6 +317,7 @@
 
   // قراءة مستخدم عبر الإيميل (اختياري)
   async function supaGetUserByEmail(email) {
+    if (!supa) return { ok:false, error:"supa unavailable" };
     const { data, error } = await supa
       .from("users")
       .select("*")
@@ -267,13 +326,19 @@
     return { ok: !error, data, error };
   }
 
-  // تعريض الدوال مرة واحدة
+  // تعريض الدوال مرة واحدة (بدون كسر تعريفات سابقة)
   window.supaEnsureUserProfile = window.supaEnsureUserProfile || supaEnsureUserProfile;
   window.supaLogToolUsage     = window.supaLogToolUsage     || supaLogToolUsage;
   window.supaGetUserByEmail   = window.supaGetUserByEmail   || supaGetUserByEmail;
-  window.supa                 = supa;
+  window.supaSaveUserPrefs    = window.supaSaveUserPrefs    || supaSaveUserPrefs;
+  window.supaGetUserPrefs     = window.supaGetUserPrefs     || supaGetUserPrefs;
+  window.supa                 = window.supa || supa;
 
-  // ===== الثيم =====
+  // ==============================
+  // الثيم (الوضع الداكن + لون الواجهة)
+  // ==============================
+
+  // توحيد "dark" على <html> بدل <body> (لو قديم)
   (function unifyDarkClass() {
     var root = document.documentElement;
     var body = document.body;
@@ -284,12 +349,14 @@
     }
   })();
 
-  (function initTheme() {
+  // تفعيل/تعطيل الوضع الداكن مع حفظ مفتاح "theme"
+  (function initDarkMode() {
     var root = document.documentElement;
     var saved = null;
     try { saved = localStorage.getItem("theme"); } catch (_) {}
     if (saved === "dark") root.classList.add("dark");
-    else root.classList.remove("dark");
+    else if (saved === "light") root.classList.remove("dark");
+    // إن كان null نتركه حسب النظام/الوضع الحالي
   })();
 
   if (!window.bindThemeToggle) {
@@ -308,7 +375,43 @@
     };
   }
 
-  // مودالات + توست
+  // لون الواجهة الأساسي (CSS var --primary) مفتاح محلي: athar:theme
+  (function initPrimaryColor() {
+    try {
+      var c = localStorage.getItem("athar:theme");
+      if (c) document.documentElement.style.setProperty("--primary", c);
+    } catch (_){}
+  })();
+
+  /**
+   * setPrimaryColor(color)
+   * يغير لون الواجهة ويخزّنه محليًا ويزامنه مع Supabase (user_prefs.theme_color)
+   */
+  if (!window.setPrimaryColor) {
+    window.setPrimaryColor = async function setPrimaryColor(color) {
+      try {
+        if (color) {
+          document.documentElement.style.setProperty("--primary", color);
+          localStorage.setItem("athar:theme", color);
+        } else {
+          // إعادة اللون الافتراضي (from :root --sea-600)
+          const def = getComputedStyle(document.documentElement).getPropertyValue("--sea-600") || "#1e40af";
+          document.documentElement.style.setProperty("--primary", def.trim() || "#1e40af");
+          localStorage.removeItem("athar:theme");
+        }
+      } catch (_){}
+
+      // مزامنة مع user_prefs (لا تفشل الصفحة لو supa غير متاح)
+      try {
+        const u = await auth0SafeGetUser();
+        if (u?.sub && supa) {
+          await supaSaveUserPrefs({ theme_color: color || null });
+        }
+      } catch (_){}
+    };
+  }
+
+  // مودالات + توست (كما هي)
   if (!window.openModal)  window.openModal  = (id) => { const n = $(id); if (n) n.classList.add("show"); };
   if (!window.closeModal) window.closeModal = (id) => { const n = $(id); if (n) n.classList.remove("show"); };
 
