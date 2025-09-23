@@ -21,18 +21,20 @@
   } catch (_) {}
 })();
 
+/* إعدادات Auth0 (احتياط لو احتجتها سكربتات ثانية) */
 if (typeof window.AUTH0_DOMAIN === 'undefined') {
   window.AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
 }
 if (typeof window.AUTH0_CLIENT === 'undefined') {
-  window.AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+  window.AUTH0_CLIENT = "rXaNXLwIkIOALVTWبRDA8SwJnERnI1NU";
 }
-
 const AUTH0_DOMAIN = window.AUTH0_DOMAIN;
 const AUTH0_CLIENT = window.AUTH0_CLIENT;
+
 /* أدوات صغيرة */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
 /* ============================== Theme ============================== */
 (function unifyDarkClass(){
   const root = document.documentElement, body = document.body;
@@ -80,75 +82,24 @@ $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
   const m = btn.closest('.modal'); if(m) m.classList.remove('show');
 }));
 
-/* ============================== Auth0 ============================== */
-
-let auth0Client = null;
-
-// ننتظر حتى تتوفر window.auth0.createAuth0Client
-async function waitForAuth0SDK(max = 50) {
-  for (let i = 0; i < max && !(window.auth0 && typeof window.auth0.createAuth0Client === 'function'); i++) {
-    await new Promise(r => setTimeout(r, 100)); // ~5 ثواني
-  }
-  return (window.auth0 && typeof window.auth0.createAuth0Client === 'function');
-}
-
-async function initAuth0(){
-  const ready = await waitForAuth0SDK();
-  if (!ready) {
-    console.error("[Auth0] SDK still not loaded");
-    return;
-  }
-
-  try {
-    auth0Client = await window.auth0.createAuth0Client({
-      domain: AUTH0_DOMAIN,
-      clientId: AUTH0_CLIENT,
-      cacheLocation: "localstorage",
-      authorizationParams: { 
-        redirect_uri: window.location.origin,
-        scope: "openid profile email offline_access"
-      }
-    });
-
-    // تنظيف العودة من Auth0
-    if (/[?&](code|state)=/.test(location.search)) {
-      try {
-        await auth0Client.handleRedirectCallback();
-        history.replaceState({}, document.title, location.pathname + location.hash);
-      } catch (e) {
-        console.warn("[Auth0] redirect cleanup:", e);
-      }
-    }
-
-    // API مبسّطة على window.auth
-const api = {
-  login:  (opts)=> auth0Client.loginWithRedirect(opts||{}),
-  logout: (opts)=> auth0Client.logout({ logoutParams:{ returnTo: window.location.origin }, ...(opts||{}) }),
-  isAuthenticated: ()=> auth0Client.isAuthenticated(),
-  getUser: ()=> auth0Client.getUser(),
-  getToken: (opts)=> auth0Client.getTokenSilently(opts||{}),
-  getIdTokenClaims: ()=> auth0Client.getIdTokenClaims()  // ✅ أضفناها
-};
-    window.auth = window.auth || api;
-
-    // أعلن الجاهزية
-    window.dispatchEvent(new CustomEvent("auth0:ready"));
-    console.log("[Auth0] ready");
-  } catch (err) {
-    console.error("[Auth0] init error:", err);
-  }
-}
-// يحفظ/يحدّث المستخدم في Supabase اعتماداً على بيانات Auth0
+/* ============================== Supabase Sync ============================== */
+/* يحفظ/يحدّث المستخدم في Supabase اعتماداً على بيانات Auth0 */
 async function supaEnsureUserFromAuth0() {
   try {
     const u = await window.auth?.getUser();
     if (!u || !u.email) return;
-    await supaEnsureUser({
-      email: String(u.email).toLowerCase(),
-      full_name: u.name || u.nickname || null
-    });
+    // استخدمي الدالة المعرّفة في assets/js/supabase-client.js
+    if (typeof window.supaEnsureUserProfile === 'function') {
+      await window.supaEnsureUserProfile({
+        sub: u.sub,
+        email: String(u.email).toLowerCase(),
+        name: u.name || u.nickname || null,
+        picture: u.picture || null
+      });
+    }
   } catch (_) {}
 }
+
 /* ============================== Entry ============================== */
 document.addEventListener('DOMContentLoaded', async () => {
   bindThemeToggle();
@@ -159,14 +110,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logoutBtn   = document.getElementById('logout');
 
   // حالة ابتدائية آمنة
-function setButtons(isAuth) {
-  if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
-  if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
-  if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
+  function setButtons(isAuth) {
+    if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
+    if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
+    if (logoutBtn)   logoutBtn.style.display   = isAuth ? ''     : 'none';
 
-  const profileLink = document.getElementById('nav-profile');
-  if (profileLink) profileLink.style.display = isAuth ? '' : 'none';
-}
+    const profileLink = document.getElementById('nav-profile');
+    if (profileLink) profileLink.style.display = isAuth ? '' : 'none';
+  }
   setButtons(false); // دخول/تسجيل ظاهر، خروج مخفي
 
   // نقرأ كود الدعوة من رابط الصفحة (إن وُجد)
@@ -193,52 +144,63 @@ function setButtons(isAuth) {
   if (logoutBtn) {
     logoutBtn.onclick = () => window.auth?.logout();
   }
-// تحديث حالة الأزرار عند جاهزية Auth0 (مرّة واحدة)
-window.addEventListener('auth0:ready', async () => {
-  try {
-    const ok = await window.auth.isAuthenticated();
-    setButtons(ok); // تُظهر/تُخفي login/register/logout + #nav-profile
-  } catch {
-    setButtons(false);
-  }
-}, { once: true });
 
-// بعد جاهزية Auth0: احفظ المستخدم وسجّل مشاهدة الصفحة
-window.addEventListener('auth0:ready', async () => {
-  await supaEnsureUserFromAuth0();
+  /* تحديث حالة الأزرار عند جاهزية Auth0 (مرّة واحدة) */
+  window.addEventListener('auth0:ready', async () => {
+    try {
+      const ok = await window.auth.isAuthenticated();
+      setButtons(ok); // تُظهر/تُخفي login/register/logout + #nav-profile
+    } catch {
+      setButtons(false);
+    }
+  }, { once: true });
 
-  // اسم الملف الحالي (مثلاً: /miyad.html → "miyad")
-  const file = (location.pathname.split('/').pop() || '').toLowerCase();
-  const base = file.replace('.html', '');
+  /* بعد جاهزية Auth0: احفظ المستخدم وسجّل مشاهدة الصفحة */
+  window.addEventListener('auth0:ready', async () => {
+    await supaEnsureUserFromAuth0();
 
-  // خرائط أسماء مألوفة (لو تبين اسم أداة مختلف عن اسم الملف)
-  const aliases = {
-    athar: 'muntalaq',  // مُنطلق
-    darsi: 'murtakaz',  // مُرتكز
-    // البقية نفس اسم الملف: miyad, masar, ethraa, mulham
-  };
+    // اسم الملف الحالي (مثلاً: /miyad.html → "miyad")
+    const file = (location.pathname.split('/').pop() || '').toLowerCase();
+    const base = file.replace('.html', '');
 
-  const tool = aliases[base] || base;
-  if (tool) {
-    supaLogToolUsage(`${tool}:view`);
-  }
-});
+    // خرائط أسماء مألوفة (لو تبين اسم أداة مختلف عن اسم الملف)
+    const aliases = {
+      athar: 'muntalaq',  // مُنطلق
+      darsi: 'murtakaz',  // مُرتكز
+      // البقية نفس اسم الملف: miyad, masar, ethraa, mulham
+    };
 
-  // فعليًا نهيّئ Auth0 (يطلق حدث auth0:ready داخله)
-  await initAuth0();
+    const tool = aliases[base] || base;
+    if (tool && typeof window.supaLogToolUsage === 'function') {
+      window.supaLogToolUsage(`${tool}:view`);
+    }
+  });
 
-// ✅ التحقق من دور الأدمن لإظهار زر لوحة التحكم (استخدمي نفس الـ namespace)
-try {
-  const claims = await auth0Client.getIdTokenClaims();
-  const roles  = claims?.["https://athar.co/roles"] || [];   // ← هنا التصحيح
-  const isAdmin = roles.includes("admin") || claims?.["https://athar.co/admin"] === true; // ← وهنا
-  const adminBtn = document.getElementById("adminBtn");
-  if (adminBtn) adminBtn.style.display = isAdmin ? "inline-flex" : "none";
-} catch (err) { 
-  console.error("Error checking admin role:", err); 
-}
+  /* ✅ إظهار زر لوحة التحكم إن كان الدور Admin (بدون لمس الأدوار نفسها) */
+  window.addEventListener('auth0:ready', async () => {
+    try {
+      const claims = await window.auth.getIdTokenClaims();
 
-  // باك-أب: لو الحدث فاتنا وكان window.auth جاهز، حدّثي الآن
+      // نفس الـ namespace المستخدم في Action
+      const NS  = "https://n-athar.co/";
+      // احتياطي لو بقايا توكن قديم
+      const ALT = "https://athar.co/";
+
+      console.log('[admin] claims:', claims);
+      console.log('[admin] roles:', claims?.[NS+"roles"] || claims?.[ALT+"roles"]);
+      console.log('[admin] admin flag:', claims?.[NS+"admin"] ?? claims?.[ALT+"admin"]);
+
+      const roles   = claims?.[NS+"roles"] || claims?.[ALT+"roles"] || [];
+      const isAdmin = roles.includes("admin") || (claims?.[NS+"admin"] === true) || (claims?.[ALT+"admin"] === true);
+
+      const adminBtn = document.getElementById("adminBtn");
+      if (adminBtn) adminBtn.style.display = isAdmin ? "inline-flex" : "none";
+    } catch (err) { 
+      console.error("Error checking admin role:", err); 
+    }
+  });
+
+  /* باك-أب: لو الحدث فاتنا وكان window.auth جاهز، حدّثي الآن */
   if (window.auth) {
     try {
       const ok = await window.auth.isAuthenticated();
@@ -247,4 +209,4 @@ try {
       setButtons(false);
     }
   }
-}); // ← إغلاق معالج DOMContentLoaded الأساسي فقط
+});
