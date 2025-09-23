@@ -5,19 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>معلومات صاحب الأثر — أثــر</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
+
+  <!-- حمّلي لون الواجهة المحفوظ مبكرًا جدًا لتفادي الوميض -->
+  <script>
+    (function(){
+      try{
+        var c = localStorage.getItem('athar:theme');
+        if (c) document.documentElement.style.setProperty('--primary', c);
+      }catch(_){}
+    })();
+  </script>
+
   <link rel="stylesheet" href="style.css">
   <meta name="color-scheme" content="dark light">
 
-  <!-- تحسينات CSS خفيفة خاصة بهذه الصفحة (لا تغيّر وظائف قديمة) -->
+  <!-- تحسينات بسيطة خاصة بهذه الصفحة (لا تغيّر هوية الموقع) -->
   <style>
-    :root { --primary: #6366f1; }
+    :root { --primary: var(--sea-600); }
     .card .title { display:flex; align-items:center; gap:10px; }
     .subheading { font-size:14px; color:#6b7280; font-weight:600; }
     .grid { display:grid; gap:16px; grid-template-columns: 1fr 1fr; }
     @media (max-width: 800px){ .grid { grid-template-columns: 1fr; } }
+
     .profile-box { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:center; }
-    .avatar-wrap { position:relative; width:92px; height:92px; }
-    .avatar { width:92px; height:92px; border-radius:50%; object-fit:cover; border:3px solid #eef; background:#f5f7ff; }
+    .avatar-wrap { position:relative; width:96px; height:96px; }
+    .avatar { width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid #eef; background:#f5f7ff; }
     .edit-badge { position:absolute; right:-6px; bottom:-6px; background:var(--primary); color:#fff; border-radius:16px; padding:4px 8px; font-size:12px; cursor:pointer; border:1px solid #fff; }
     .name-row { display:flex; align-items:center; gap:8px; font-weight:800; font-size:20px; }
     .icon-btn { border:1px solid #e5e7eb; background:#fff; cursor:pointer; padding:4px 8px; border-radius:8px; }
@@ -26,14 +38,19 @@
     .row-actions { display:flex; gap:10px; flex-wrap:wrap; }
     .btn.ghost { background:#fff; border:1px solid #e5e7eb; }
     .section-title { font-weight:800; margin-bottom:8px; }
-    .theme-picker { display:flex; gap:10px; }
-    .theme-picker button { width:28px; height:28px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer; }
-    .theme-note { font-size:12px; color:#6b7280; margin-top:6px; }
-    .pill { padding:6px 10px; border-radius:999px; font-weight:700; border:1px solid #e5e7eb; background:#fff; }
-    .divider { height:1px; background:#f1f5f9; margin:12px 0; }
 
-    /* زر فواتير "قريبًا" */
+    .theme-picker { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .theme-picker button[data-color] { width:28px; height:28px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer; }
+    .theme-note { font-size:12px; color:#6b7280; margin-top:6px; }
+    .divider { height:1px; background:#f1f5f9; margin:12px 0; }
     .soon { opacity:.6; cursor:not-allowed; }
+
+    /* وسم الحالة الملوّن (بدون تغيير الـ badge العامّة) */
+    .state { padding:6px 10px; border-radius:999px; font-weight:800; border:1px solid #e5e7eb; background:#fff; }
+
+    /* منع الوميض: نخفي محتوى البطاقة حتى تجهز البيانات */
+    .card[data-ready="0"] { opacity:.0; }
+    .card[data-ready="1"] { opacity:1; transition:opacity .18s ease; }
   </style>
 </head>
 
@@ -56,14 +73,14 @@
     <div class="hero">
       <div class="hero-plate"></div>
       <h1 class="logo">أثــر</h1>
-      <div class="tag"><span class="dot"></span>الصفحة الشخصية</div>
+      <div class="tag"><span class="dot"></span>صفحتك الشخصية</div>
     </div>
   </header>
 
   <main>
     <div class="container">
-      <section class="card">
-        <h2 class="title">معلومات صاحب الأثر <span class="subheading">— كل شيء يخص حسابك</span></h2>
+      <section class="card" id="profileCard" data-ready="0">
+        <h2 class="title">معلومات صاحب الأثر <span class="subheading">— كل ما يخص حسابك وتخصيص واجهتك</span></h2>
 
         <div class="grid">
           <!-- العمود الأيسر: الهوية -->
@@ -104,22 +121,22 @@
 
           <!-- العمود الأيمن: تخصيص -->
           <div class="box">
-            <h3 class="section-title">تخصيص لون الواجهة</h3>
-       <div id="themePicker" class="theme-picker" aria-label="اختيار لون البرنامج">
-  <button data-color="#6366f1" title="بنفسجي"></button>
-  <button data-color="#f472b6" title="زهري"></button>
-  <button data-color="#22c55e" title="أخضر"></button>
-  <button data-color="#06b6d4" title="سماوي"></button>
-  <button data-color="#f59e0b" title="برتقالي"></button>
-  <button data-reset="true" title="اللون الافتراضي">↺</button>
-</div>
-            <div class="theme-note">يرجى اختيار لونك المفضل لعنصر الواجهة الأساسي. يُحفظ تلقائيًا.</div>
+            <h3 class="section-title">تخصيص الواجهة</h3>
+            <div id="themePicker" class="theme-picker" aria-label="اختيار لون البرنامج">
+              <button data-color="#6366f1" title="بنفسجي"></button>
+              <button data-color="#f472b6" title="زهري"></button>
+              <button data-color="#22c55e" title="أخضر"></button>
+              <button data-color="#06b6d4" title="سماوي"></button>
+              <button data-color="#f59e0b" title="برتقالي"></button>
+              <button id="resetTheme" class="btn ghost" title="استعادة اللون الافتراضي">إرجاع اللون الافتراضي</button>
+            </div>
+            <div class="theme-note">اختر لونك المفضل لعنصر الواجهة الأساسي. يُحفظ تلقائيًا ويمكن مزامنته مع حسابك.</div>
 
             <div class="divider"></div>
 
             <h3 class="section-title">الاشتراك</h3>
-            <p class="muted">للتفعيل أو الترقية تفضل بزيارة صفحة <a href="pricing.html">الدفع والإشتراك</a>.</p>
-            <p class="muted">عند تفعيل بوابة الدفع ستظهر تفاصيل باقتك وفواتيرك هنا.</p>
+            <p class="muted">للتفعيل أو الترقية قم بزيارة صفحة <a href="pricing.html">الدفع والإشتراك</a>.</p>
+            <p class="muted">عند تفعيل بوابة الدفع ستظهر تفاصيل الباقة والفواتير هنا تلقائيًا.</p>
 
             <div class="divider"></div>
 
@@ -146,43 +163,55 @@
   </footer>
 
   <script>(function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();</script>
-  <div class="toast"></div>
+  <div class="toast" id="toast"></div>
 
-  <!-- Supabase SDK + تهيئة (قبل أي سكربت يستخدمه مثل storage.js) -->
+  <!-- Supabase SDK + عميل مشترك (نستفيد من ملفك assets/js/supabase-client.js إن وُجد) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase-client.js"></script>
   <script>
-    window.__CFG = Object.assign({}, window.__CFG || {}, {
-      supabase_url:  "YOUR_SUPABASE_URL",        // مثال: https://abcd1234.supabase.co
-      supabase_anon: "YOUR_SUPABASE_ANON_KEY"    // من Project Settings → API
-    });
-    window.supabase = window.supabase || supabase.createClient(
-      window.__CFG.supabase_url,
-      window.__CFG.supabase_anon,
-      { auth: { persistSession: false } }
-    );
+    // في حال ما كان عندك supabase-client.js يعرّف window.supa، نهيئ بديل بسيط
+    (function ensureSupa(){
+      if (!window.supa && window.supabase && window.__CFG && window.__CFG.supabase_url && window.__CFG.supabase_anon){
+        try{
+          window.supa = supabase.createClient(window.__CFG.supabase_url, window.__CFG.supabase_anon, { auth:{ persistSession:false }});
+        }catch(_){}
+      }
+    })();
   </script>
 
-  <!-- سكربتات عامة للموقع -->
+  <!-- سكربتات عامة -->
   <script src="app.js"></script>
   <script src="assets/js/storage.js"></script>
 
-  <!-- مناداة واجهة الهوية وملف التعريف -->
+  <!-- مناداة واجهة الهوية + منطق الصفحة -->
   <script>
-    async function initProfile(){
-      const client = window.auth0Client;
-      if (!client) return;
+    function toast(msg){
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'), 1800);
+    }
 
-      const logged = await client.isAuthenticated().catch(()=>false);
+    async function initProfile(){
+      const card = document.getElementById('profileCard');
+      card?.setAttribute('data-ready','0');
+
+      const client = window.auth0Client || window.auth;
+      if (!client) return; // سيُعاد النداء عند auth0:ready
+
+      const logged = await client.isAuthenticated?.().catch(()=>false);
       if (!logged) {
         await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
         return;
       }
 
-      // بيانات المستخدم + Claims
+      // جلب بيانات المستخدم و الـ claims
       let user=null, claims=null;
       try { user = await client.getUser(); } catch(_){}
       try { claims = await client.getIdTokenClaims(); } catch(_){}
 
+      // العرض الأساسي
       const name = user?.name || user?.nickname || '—';
       document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = name);
       document.getElementById('u-email').textContent = user?.email || '—';
@@ -190,14 +219,15 @@
       const joined = user?.updated_at || user?.created_at || null;
       document.getElementById('u-joined').textContent = joined ? new Date(joined).toLocaleDateString('ar-SA') : '—';
 
-      // الصورة (مع تفضيلات محفوظة إن وجدت)
+      // الصورة الافتراضية من Auth0، ثم من user_prefs (لو موجود)
       const avatarEl = document.getElementById('u-avatar');
       if (user?.picture) avatarEl.src = user.picture;
 
-      // حالة الاشتراك (NS جديد مع دعم القديم)
+      // حالة الاشتراك من الـ namespace الجديد + القديم
       const NS_NEW = "https://n-athar.co/";
       const NS_OLD = "https://athar.co/";
       const st = (claims && (claims[NS_NEW + "status"] || claims[NS_OLD + "status"])) || "";
+
       document.getElementById('u-status').textContent = st || '—';
 
       const colorBy = {
@@ -213,11 +243,12 @@
         badge.textContent=m.text; badge.style.background=m.bg; badge.style.color=m.fg; badge.style.borderColor=m.br;
       }
 
-      // جلب تفضيلات المستخدم (اسم/صورة/لون)
+      // تفضيلات المستخدم (اسم/صورة/لون) من Supabase إن وُجدت
       try {
-        if (window.supabase && user?.sub) {
-          const { data: pref } = await window.supabase
+        if (window.supa && user?.sub) {
+          const { data: pref } = await window.supa
             .from('user_prefs').select('*').eq('user_sub', user.sub).maybeSingle();
+
           if (pref?.display_name) document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = pref.display_name);
           if (pref?.avatar_url)   avatarEl.src = pref.avatar_url;
           if (pref?.theme_color)  document.documentElement.style.setProperty('--primary', pref.theme_color);
@@ -231,62 +262,84 @@
         if (!newName || !newName.trim()) return;
         document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = newName.trim());
         try {
-          if (window.supabase && user?.sub) {
-            await window.supabase.from('user_prefs').upsert(
+          if (window.supa && user?.sub) {
+            await window.supa.from('user_prefs').upsert(
               { user_sub: user.sub, display_name: newName.trim() },
               { onConflict: 'user_sub' }
             );
+            toast("تم تحديث الاسم ✓");
           }
-        } catch(e){ console.error(e); }
+        } catch(e){ console.error(e); toast("تعذر حفظ الاسم"); }
       };
 
       // رفع صورة شخصية إلى Storage (bucket: avatars)
       document.getElementById('avatarInput').onchange = async (ev) => {
         const file = ev.target.files?.[0]; if (!file) return;
         try {
-          const safe = user?.sub?.replace(/[|]/g,'_') || 'u';
+          if (!window.supa) throw new Error("Supabase unavailable");
+          const safe = (user?.sub || 'u').replace(/[|]/g,'_');
           const path = `${safe}/${Date.now()}_${file.name}`;
-          const up = await window.supabase.storage.from('avatars').upload(path, file, { upsert:true });
+          const up = await window.supa.storage.from('avatars').upload(path, file, { upsert:true });
           if (up.error) throw up.error;
-          const { data } = window.supabase.storage.from('avatars').getPublicUrl(path);
-          avatarEl.src = data.publicUrl;
-          await window.supabase.from('user_prefs').upsert({ user_sub: user.sub, avatar_url: data.publicUrl }, { onConflict: 'user_sub' });
-        } catch(e){ console.error(e); alert("تعذر رفع الصورة."); }
+          const { data } = window.supa.storage.from('avatars').getPublicUrl(path);
+          const url = data.publicUrl;
+          document.getElementById('u-avatar').src = url;
+          await window.supa.from('user_prefs').upsert({ user_sub: user.sub, avatar_url: url }, { onConflict: 'user_sub' });
+          toast("تم تحديث الصورة ✓");
+        } catch(e){ console.error(e); toast("تعذر رفع الصورة"); }
       };
+
+      // جاهز للعرض
+      card?.setAttribute('data-ready','1');
     }
 
-    // مُنتقي ألوان الواجهة (يحفظ محليًا وفي user_prefs)
+    // مُنتقي الألوان (يحفظ محليًا + في user_prefs)
     (function themeInit(){
-      const saved = localStorage.getItem('athar:theme');
-      if (saved) document.documentElement.style.setProperty('--primary', saved);
       const picker = document.getElementById('themePicker');
+      const reset  = document.getElementById('resetTheme');
       if (!picker) return;
+
       picker.addEventListener('click', async (e)=>{
         const btn = e.target.closest('button[data-color]'); if (!btn) return;
         const color = btn.getAttribute('data-color');
         document.documentElement.style.setProperty('--primary', color);
-        localStorage.setItem('athar:theme', color);
+        try { localStorage.setItem('athar:theme', color); } catch(_){}
         try {
           const u = await window.auth0Client?.getUser();
-          if (u?.sub && window.supabase) {
-            await window.supabase.from('user_prefs').upsert(
+          if (u?.sub && window.supa) {
+            await window.supa.from('user_prefs').upsert(
               { user_sub: u.sub, theme_color: color }, { onConflict: 'user_sub' }
             );
           }
         } catch(_){}
+      });
+
+      if (reset) reset.addEventListener('click', async ()=>{
+        const def = getComputedStyle(document.documentElement).getPropertyValue('--sea-600') || '#1e40af';
+        document.documentElement.style.setProperty('--primary', def.trim() || '#1e40af');
+        try { localStorage.removeItem('athar:theme'); } catch(_){}
+        try {
+          const u = await window.auth0Client?.getUser();
+          if (u?.sub && window.supa) {
+            await window.supa.from('user_prefs').upsert(
+              { user_sub: u.sub, theme_color: null }, { onConflict: 'user_sub' }
+            );
+          }
+        } catch(_){}
+        toast("رجعنا اللون الافتراضي ✓");
       });
     })();
 
     // زر الخروج
     document.addEventListener('click', (e)=>{
       if (e.target && e.target.id === 'logout') {
-        window.auth0Client?.logout({ logoutParams:{ returnTo: window.location.origin } });
+        (window.auth0Client || window.auth)?.logout({ logoutParams:{ returnTo: window.location.origin } });
       }
     });
 
-    // تشغيل بعد جاهزية الحارس
+    // شغّلي بعد جاهزية الحارس
     window.addEventListener('auth0:ready', initProfile);
-    if (window.auth0Client) initProfile();
+    if (window.auth0Client || window.auth) initProfile();
   </script>
 
   <!-- حارس الوصول -->
