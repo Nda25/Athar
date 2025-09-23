@@ -3,50 +3,59 @@
 // Auth0 JWT verifier + helpers
 // Env Vars needed:
 // - AUTH0_DOMAIN        e.g. dev-2f0fmbtj6u8o7en4.us.auth0.com
-// - AUTH0_AUDIENCE      e.g. https://api.n-athar
-// - AUTH0_ISSUER        e.g. https://dev-2f0fmbtj6u8o7en4.us.auth0.com/   (optional but recommended; MUST end with '/')
-// - CLAIM_NAMESPACE     e.g. https://n-athar.co/                          (must end with '/')
+// - AUTH0_AUDIENCE      e.g. https://api.n-athar[,https://api.athar]
+// - AUTH0_ISSUER        e.g. https://dev-2f0fmbtj6u8o7en4.us.auth0.com/  (RECOMMENDED; MUST end with '/')
+// - CLAIM_NAMESPACE     e.g. https://n-athar.co/                         (MUST end with '/')
 // ==========================
 
 const jwksRsa = require("jwks-rsa");
 const jwt = require("jsonwebtoken");
 
-// --- Validate essential env ---
-const DOMAIN   = process.env.AUTH0_DOMAIN;
-const AUDIENCE = process.env.AUTH0_AUDIENCE;
-if (!DOMAIN)   throw new Error("Missing env: AUTH0_DOMAIN");
-if (!AUDIENCE) throw new Error("Missing env: AUTH0_AUDIENCE");
+// ---- Validate essential env ----
+const DOMAIN = process.env.AUTH0_DOMAIN;
+if (!DOMAIN) throw new Error("Missing env: AUTH0_DOMAIN");
 
-// Prefer AUTH0_ISSUER if provided, else build from DOMAIN (and ensure trailing slash)
+// allow multiple audiences (comma-separated)
+const AUDIENCE_LIST = String(process.env.AUTH0_AUDIENCE || "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+
+if (AUDIENCE_LIST.length === 0) {
+  throw new Error("Missing env: AUTH0_AUDIENCE");
+}
+
+// Prefer AUTH0_ISSUER if provided, else build from DOMAIN; ensure trailing slash
 const ISSUER = (process.env.AUTH0_ISSUER || `https://${DOMAIN}/`).replace(/\/?$/, "/");
 
-// Namespace (prefer new, keep compat with old). Ensure trailing slash.
+// Namespaces (prefer new, keep compat with old). Ensure trailing slash for new.
 const NS_NEW = (process.env.CLAIM_NAMESPACE || "https://n-athar.co/").replace(/\/?$/, "/");
 const NS_OLD = "https://athar.co/";
 
-// Build JWKS client from ISSUER
-const client = jwksRsa({
-  jwksUri: `${ISSUER}.well-known/jwks.json`,
+// ---- Build JWKS client from ISSUER ----
+const jwksClient = jwksRsa({
+  jwksUri: `${ISSUER}.well-known/jwks.json`, // e.g. https://tenant/.well-known/jwks.json
   cache: true,
   cacheMaxEntries: 5,
   cacheMaxAge: 10 * 60 * 1000
 });
 
 function getKey(header, cb) {
-  client.getSigningKey(header.kid, function (err, key) {
+  jwksClient.getSigningKey(header.kid, function (err, key) {
     if (err) return cb(err);
     const signingKey = key.getPublicKey();
     cb(null, signingKey);
   });
 }
 
+// Verify + decode access token
 function decodeJwt(token) {
   return new Promise((resolve, reject) => {
     jwt.verify(
       token,
       getKey,
       {
-        audience: AUDIENCE,
+        audience: AUDIENCE_LIST.length === 1 ? AUDIENCE_LIST[0] : AUDIENCE_LIST,
         issuer: ISSUER,
         algorithms: ["RS256"]
       },
@@ -57,7 +66,7 @@ function decodeJwt(token) {
 
 // Read a claim from our namespace(s)
 function pickNs(payload, key) {
-  // try new NS first, then old; support both raw & namespaced just in case
+  // try new NS first, then old; also allow raw key fallback
   return payload[NS_NEW + key] ??
          payload[NS_OLD + key] ??
          payload[key] ??
