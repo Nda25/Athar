@@ -22,8 +22,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
-  <!-- (اختياري) Tailwind CDN للتجارب فقط -->
-  <script defer src="https://cdn.tailwindcss.com"></script>
 
   <!-- تهيئة الثيم المبكرة -->
   <script>
@@ -56,26 +54,25 @@
   <div class="pattern"></div>
 
   <!-- Topbar -->
-  <div class="topbar">
-    <div class="tb-left">
-      <button id="loginBtn" class="btn" type="button">تسجيل الدخول</button>
-      <button id="registerBtn" class="btn" type="button">إنشاء حساب جديد</button>
-      <button id="logout" class="btn" type="button">تسجيل خروج</button>
-    </div>
-
-    <div class="tb-center">
-      <!-- يظهر فقط للأدمن عبر app.js -->
-      <a id="adminBtn" href="/admin.html" style="display:none">لوحة التحكم</a>
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-      <a class="btn" href="programs.html">مساحة إبداعي</a>
-    </div>
-
-    <div class="tb-right">
-      <a class="btn" href="pricing.html">الدفع والإشتراك</a>
-      <!-- يظهر بعد تسجيل الدخول -->
-      <a id="nav-profile" class="btn" href="profile.html" style="display:none">ملفي الشخصي</a>
-    </div>
+<div class="topbar">
+  <div class="tb-left">
+    <button id="authCta" class="btn" type="button">الدخول / التسجيل</button>
+    <button id="logout" class="btn" type="button">تسجيل خروج</button>
   </div>
+
+  <div class="tb-center">
+    <!-- يظهر فقط للأدمن عبر app.js -->
+    <a id="adminBtn" href="/admin.html" style="display:none">لوحة التحكم</a>
+    <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+    <a class="btn" href="programs.html">مساحة إبداعي</a>
+  </div>
+
+  <div class="tb-right">
+    <a class="btn" href="pricing.html">الدفع والإشتراك</a>
+    <!-- يظهر بعد تسجيل الدخول -->
+    <a id="nav-profile" class="btn" href="profile.html" style="display:none">ملفي الشخصي</a>
+  </div>
+</div>
 
   <header>
     <div class="hero">
@@ -221,5 +218,21 @@
       } catch {}
     });
   </script>
+    <script>
+  document.addEventListener('auth0:ready', () => {
+    const btn = document.getElementById('authCta');
+    if (!btn || !window.auth) return;
+
+    btn.onclick = () => {
+      window.auth.loginWithRedirect({
+        authorizationParams: {
+          redirect_uri: window.location.origin + '/profile.html'
+          // لو تبغينه يفتح مباشرة على "التسجيل" بدل "الدخول" زيدي:
+          // screen_hint: 'signup'
+        }
+      });
+    };
+  });
+</script>
 </body>
 </html>
