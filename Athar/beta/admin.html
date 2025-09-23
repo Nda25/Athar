@@ -239,11 +239,11 @@
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
           onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-  <!-- Supabase (مطلوب للإعلانات/التفعيل إن كان لديك استدعاءات مباشرة) -->
+  <!-- Supabase -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-client.js"></script>
 
-  <!-- الحارس العام إن رغبت -->
+  <!-- الحارس العام -->
   <script src="assets/js/require-auth.js"></script>
 
   <!-- moment + hijri -->
@@ -268,53 +268,74 @@
   });
 
   // ===== صلاحيات الأدمن
-  // نفس الـ namespace المستخدم في Action
-const NS  = "https://n-athar.co/";
-// احتياطي لو بقايا توكن قديم
-const ALT = "https://athar.co/";
+  const NS  = "https://n-athar.co/";
+  const ALT = "https://athar.co/";
 
-async function isAdmin(){
-  try{
-    const u = await window.auth.getUser();
-    document.getElementById('whoami').textContent = u?.email || '';
-    if (!u) return false;
+  async function isAdmin(){
+    try{
+      const u = await window.auth.getUser();
+      document.getElementById('whoami').textContent = u?.email || '';
+      if (!u) return false;
 
-    const claims = await window.auth.getIdTokenClaims();
-    // roles/admin من أي namespace متوفر
-  
-    console.log('[admin] claims:', claims);
-    const roles = claims?.[NS + "roles"] || claims?.[ALT + "roles"] || [];
-    const flag  = claims?.[NS + "admin"] === true || claims?.[ALT + "admin"] === true;
-console.log('[admin] roles:', claims?.[NS+"roles"] || claims?.[ALT+"roles"]);
-console.log('[admin] admin flag:', claims?.[NS+"admin"] ?? claims?.[ALT+"admin"]);
-    return (Array.isArray(roles) && roles.includes("admin")) || flag;
-  }catch(_){
-    return false;
+      const claims = await window.auth.getIdTokenClaims();
+      console.log('[admin] claims:', claims);
+      console.log('[admin] roles:', claims?.[NS+"roles"] || claims?.[ALT+"roles"]);
+      console.log('[admin] admin flag:', claims?.[NS+"admin"] ?? claims?.[ALT+"admin"]);
+
+      const roles = claims?.[NS + "roles"] || claims?.[ALT + "roles"] || [];
+      const flag  = claims?.[NS + "admin"] === true || claims?.[ALT + "admin"] === true;
+
+      return (Array.isArray(roles) && roles.includes("admin")) || flag;
+    }catch(_){
+      return false;
+    }
   }
-}
 
-const API_AUDIENCE = (window.__CFG && window.__CFG.api_audience) || "https://api.n-athar";
+  // === Token + Fetch حارسين قياسيين ===
+  const API_AUDIENCE = (window.__CFG?.api_audience) || "https://api.n-athar";
 
-async function authToken(){
-  try {
-    return await window.auth.getTokenSilently({
-      authorizationParams: {
-        audience: API_AUDIENCE,
-        scope: "openid profile email offline_access"
+  async function authToken(){
+    try {
+      return await window.auth.getTokenSilently({
+        authorizationParams: {
+          audience: API_AUDIENCE,
+          scope: "openid profile email offline_access"
+        }
+      });
+    } catch (err) {
+      console.warn("getTokenSilently failed; requesting consent/login", err);
+      await window.auth.loginWithRedirect({
+        authorizationParams: {
+          audience: API_AUDIENCE,
+          scope: "openid profile email offline_access",
+          prompt: "consent"
+        }
+      });
+      throw err;
+    }
+  }
+
+  async function apiFetch(url, opts = {}) {
+    const token = await authToken();
+    const res = await fetch(url, {
+      ...opts,
+      headers: {
+        ...(opts.headers || {}),
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": (opts.headers && opts.headers["Content-Type"]) || "application/json"
       }
     });
-  } catch (err) {
-    console.warn("getTokenSilently failed; requesting consent/login", err);
-    await window.auth.loginWithRedirect({
-      authorizationParams: {
-        audience: API_AUDIENCE,
-        scope: "openid profile email offline_access",
-        prompt: "consent"
-      }
-    });
-    throw err; // يرجع للصفحة بعد تسجيل الدخول
+
+    const ct = res.headers.get("content-type") || "";
+    const bodyText = await res.text();
+
+    if (!res.ok) {
+      console.error("API error", res.status, bodyText);
+      throw new Error(bodyText || `HTTP ${res.status}`);
+    }
+    return ct.includes("application/json") ? JSON.parse(bodyText || "{}") : bodyText;
   }
-}
+
   // ===== أدوات مساعدة
   function toIso(calSelId, gId, hId) {
     const mode = document.getElementById(calSelId).value;
@@ -331,15 +352,16 @@ async function authToken(){
     }
   }
 
-  // ===== إعلانات (ربط مع admin-announcement*)
+  // ===== الإعلانات (ربط مع admin-announcement*)
   async function fetchAnnouncements() {
     try {
       const [latestRes, listRes] = await Promise.all([
-        fetch('/.netlify/functions/admin-announcement?latest=1'),
-        fetch('/.netlify/functions/admin-announcement?list=1')
+        apiFetch('/.netlify/functions/admin-announcement?latest=1'),
+        apiFetch('/.netlify/functions/admin-announcement?list=1')
       ]);
-      const latest = latestRes.ok ? (await latestRes.json()).latest : null;
-      const list = listRes.ok ? (await listRes.json()).items || [] : [];
+
+      const latest = latestRes?.latest || null;
+      const list = listRes?.items || [];
 
       const curBox = document.getElementById('ann-current');
       curBox.innerHTML = latest ? `المنشور الحالي: <span class="pill">${latest.text}</span>` : 'لا يوجد إعلان منشور حاليًا.';
@@ -373,7 +395,7 @@ async function authToken(){
       wrap.querySelectorAll('[data-repub]').forEach(b=>{
         b.onclick = async ()=>{
           const id = b.getAttribute('data-repub');
-          await updateAnnouncement({ id, active:true, start:null }); // يبدأ فوريًا
+          await updateAnnouncement({ id, active:true, start:null });
           await fetchAnnouncements();
         };
       });
@@ -395,22 +417,20 @@ async function authToken(){
 
     } catch(e) { console.warn(e); }
   }
+
   async function updateAnnouncement(payload) {
-    const res = await fetch('/.netlify/functions/admin-announcement', {
+    const j = await apiFetch('/.netlify/functions/admin-announcement', {
       method:'PUT',
-      headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await authToken()}` },
       body: JSON.stringify(payload)
     });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return j;
   }
+
   async function deleteAnnouncement(id) {
-    const res = await fetch('/.netlify/functions/admin-announcement?id='+encodeURIComponent(id), {
-      method:'DELETE',
-      headers:{ 'Authorization': `Bearer ${await authToken()}` }
+    const j = await apiFetch('/.netlify/functions/admin-announcement?id='+encodeURIComponent(id), {
+      method:'DELETE'
     });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return j;
   }
 
   // نشر/تحديث إعلان
@@ -423,13 +443,10 @@ async function authToken(){
     const stat = document.getElementById('ann-status');
     stat.textContent = 'جارٍ النشر…';
     try{
-      const res = await fetch('/.netlify/functions/admin-announcement', {
+      await apiFetch('/.netlify/functions/admin-announcement', {
         method:'POST',
-        headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await authToken()}` },
         body: JSON.stringify({ text, active, start, expires })
       });
-      const j = await res.json();
-      if(!res.ok) throw new Error(j?.error || 'failed');
       stat.textContent = 'نُشر ✓';
       toast('تم نشر/تحديث الإعلان');
       document.getElementById('ann-text').value = '';
@@ -452,13 +469,10 @@ async function authToken(){
     const stat = document.getElementById('act-status');
     stat.textContent = 'جارٍ التفعيل…';
     try{
-      const res = await fetch('/.netlify/functions/admin-activate', {
+      const j = await apiFetch('/.netlify/functions/admin-activate', {
         method:'POST',
-        headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${await authToken()}` },
         body: JSON.stringify({ email: email || null, user_id: user_id || null, amount, unit, note })
       });
-      const j = await res.json();
-      if(!res.ok) throw new Error(j?.error || 'failed');
       stat.textContent = `تم التفعيل ✓ ينتهي: ${j.expires_at || '—'}`;
       toast('تم التفعيل');
     }catch(err){
@@ -468,7 +482,7 @@ async function authToken(){
     }
   });
 
-  // ===== الشكاوى/الاقتراحات (ربط مع complaints-*)
+  // ===== الشكاوى/الاقتراحات (complaints-*)
   let currentComplaintId = null;
 
   async function loadComplaints(){
@@ -479,10 +493,9 @@ async function authToken(){
     if (type) qs.set('type', type);
     if (status) qs.set('status', status);
     if (q) qs.set('q', q);
-    const res = await fetch('/.netlify/functions/complaints-list?'+qs.toString(), {
-      headers: { 'Authorization': `Bearer ${await authToken()}` }
-    });
-    const j = await res.json();
+
+    const j = await apiFetch('/.netlify/functions/complaints-list?'+qs.toString());
+
     const tbody = document.getElementById('c-rows');
     tbody.innerHTML = '';
     (j.rows || []).forEach(row=>{
@@ -505,10 +518,8 @@ async function authToken(){
 
   async function openComplaint(id){
     currentComplaintId = id;
-    const res = await fetch('/.netlify/functions/complaints-get?id='+encodeURIComponent(id), {
-      headers: { 'Authorization': `Bearer ${await authToken()}` }
-    });
-    const j = await res.json();
+
+    const j = await apiFetch('/.netlify/functions/complaints-get?id='+encodeURIComponent(id));
     const c = j.complaint;
     const msgs = j.messages || [];
 
@@ -562,16 +573,10 @@ async function authToken(){
     if (!msg) { toast('أكتب الرد'); return; }
     stat.textContent = 'جارٍ الإرسال…';
     try{
-      const res = await fetch('/.netlify/functions/complaints-reply', {
+      await apiFetch('/.netlify/functions/complaints-reply', {
         method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization': `Bearer ${await authToken()}`
-        },
         body: JSON.stringify({ complaint_id: currentComplaintId, message: msg, next_status: next })
       });
-      const j = await res.json();
-      if(!res.ok) throw new Error(j?.error || 'failed');
       stat.textContent = 'تم الإرسال ✓';
       toast('تم إرسال الرد');
       await openComplaint(currentComplaintId);
