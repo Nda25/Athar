@@ -39,8 +39,19 @@
     .btn.ghost { background:#fff; border:1px solid #e5e7eb; }
     .section-title { font-weight:800; margin-bottom:8px; }
 
+    /* منتقي الألوان — دوائر مستقلة عن ستايل الأزرار العامة */
     .theme-picker { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .theme-picker button[data-color] { width:28px; height:28px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer; }
+    .theme-picker button{
+      all: unset;
+      display:inline-block;
+      width:28px; height:28px; border-radius:50%;
+      border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer;
+    }
+    .theme-picker button[data-reset]{ background:#111827; } /* زر اللون الافتراضي */
+    .theme-picker button.is-active{
+      outline: 3px solid color-mix(in oklab, var(--primary) 65%, white);
+      outline-offset: 2px;
+    }
     .theme-note { font-size:12px; color:#6b7280; margin-top:6px; }
     .divider { height:1px; background:#f1f5f9; margin:12px 0; }
     .soon { opacity:.6; cursor:not-allowed; }
@@ -122,15 +133,17 @@
           <!-- العمود الأيمن: تخصيص -->
           <div class="box">
             <h3 class="section-title">تخصيص الواجهة</h3>
-            <div id="themePicker" class="theme-picker" aria-label="اختيار لون البرنامج">
+
+            <!-- ✅ النسخة الجديدة من منتقي الألوان + وسم لمنع تشغيل السكربت القديم -->
+            <div id="themePicker" class="theme-picker" aria-label="اختيار لون البرنامج" data-v2="1">
+              <button data-reset title="اللون الافتراضي"></button>
               <button data-color="#6366f1" title="بنفسجي"></button>
               <button data-color="#f472b6" title="زهري"></button>
               <button data-color="#22c55e" title="أخضر"></button>
               <button data-color="#06b6d4" title="سماوي"></button>
               <button data-color="#f59e0b" title="برتقالي"></button>
-              <button id="resetTheme" class="btn ghost" title="استعادة اللون الافتراضي">إرجاع اللون الافتراضي</button>
             </div>
-            <div class="theme-note">اختر لونك المفضل لعنصر الواجهة الأساسي. يُحفظ تلقائيًا ويمكن مزامنته مع حسابك.</div>
+            <div class="theme-note">اختر لونك المفضل… 🪄.</div>
 
             <div class="divider"></div>
 
@@ -293,11 +306,74 @@
       card?.setAttribute('data-ready','1');
     }
 
-    // مُنتقي الألوان (يحفظ محليًا + في user_prefs)
+    /* مكوّن منتقي الألوان v2 — لا يحذف المنطق القديم، فقط يتجاوزه */
+    (function initThemePicker(){
+      const root   = document.documentElement;
+      const picker = document.getElementById('themePicker');
+      if (!picker) return;
+
+      // لو المحدد عليه data-v2، امنعي السكربت القديم من العمل (في دالة themeInit بالأسفل)
+      picker.dataset.v2 = '1';
+
+      const swatches = [...picker.querySelectorAll('button')];
+      swatches.forEach(b=>{
+        if (b.hasAttribute('data-color')) b.style.backgroundColor = b.dataset.color;
+        if (b.hasAttribute('data-reset')) b.style.background = '#111827';
+      });
+
+      // استرجاع اللون المحفوظ
+      const saved = localStorage.getItem('athar:theme');
+      if (saved) {
+        root.style.setProperty('--primary', saved);
+        (swatches.find(b=>b.dataset.color === saved) || swatches.find(b=>b.hasAttribute('data-reset')))?.classList.add('is-active');
+      } else {
+        swatches.find(b=>b.hasAttribute('data-reset'))?.classList.add('is-active');
+      }
+
+      // التعامل مع النقر
+      picker.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('button'); if (!btn) return;
+
+        if (btn.hasAttribute('data-reset')) {
+          localStorage.removeItem('athar:theme');
+          root.style.setProperty('--primary', getComputedStyle(root).getPropertyValue('--sea-600').trim() || '#1e40af');
+          swatches.forEach(b=>b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          return;
+        }
+
+        const color = btn.dataset.color;
+        if (!color) return;
+        root.style.setProperty('--primary', color);
+        localStorage.setItem('athar:theme', color);
+
+        swatches.forEach(b=>b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+      });
+    })();
+
+    // زر الخروج
+    document.addEventListener('click', (e)=>{
+      if (e.target && e.target.id === 'logout') {
+        (window.auth0Client || window.auth)?.logout({ logoutParams:{ returnTo: window.location.origin } });
+      }
+    });
+
+    // شغّلي بعد جاهزية الحارس
+    window.addEventListener('auth0:ready', initProfile);
+    if (window.auth0Client || window.auth) initProfile();
+  </script>
+
+  <!-- حارس الوصول -->
+  <script src="assets/js/require-auth.js"></script>
+
+  <!-- ⚠️ سكربتك القديم themeInit() ما حذفته. فقط أضفت له حارس ناعم هنا ليتوقف إذا كان data-v2 موجود -->
+  <script>
     (function themeInit(){
       const picker = document.getElementById('themePicker');
       const reset  = document.getElementById('resetTheme');
       if (!picker) return;
+      if (picker.dataset && picker.dataset.v2 === '1') return; // ← تجاوز لأن لدينا نسخه v2 أعلاه
 
       picker.addEventListener('click', async (e)=>{
         const btn = e.target.closest('button[data-color]'); if (!btn) return;
@@ -326,23 +402,9 @@
             );
           }
         } catch(_){}
-        toast("رجعنا اللون الافتراضي ✓");
+        toast && toast("رجعنا اللون الافتراضي ✓");
       });
     })();
-
-    // زر الخروج
-    document.addEventListener('click', (e)=>{
-      if (e.target && e.target.id === 'logout') {
-        (window.auth0Client || window.auth)?.logout({ logoutParams:{ returnTo: window.location.origin } });
-      }
-    });
-
-    // شغّلي بعد جاهزية الحارس
-    window.addEventListener('auth0:ready', initProfile);
-    if (window.auth0Client || window.auth) initProfile();
   </script>
-
-  <!-- حارس الوصول -->
-  <script src="assets/js/require-auth.js"></script>
 </body>
 </html>
