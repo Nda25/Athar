@@ -290,9 +290,12 @@ async function isAdmin(){
   }
 }
 
-async function authToken(){
-  // نفس الـ audience الموجود في إعدادات تطبيق Auth0 / الـ API
-  return await window.auth.getToken({ audience: "https://api.n-athar" });
+async function authToken() {
+  // خذي الـ audience من الكونفيج إن وُجد، وإلا استخدمي الافتراضي
+  const aud = (window.__CFG && window.__CFG.api_audience) || "https://api.n-athar";
+  return await window.auth.getTokenSilently({
+    authorizationParams: { audience: aud }
+  });
 }
   // ===== أدوات مساعدة
   function toIso(calSelId, gId, hId) {
