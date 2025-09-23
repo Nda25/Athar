@@ -11,7 +11,7 @@
   // ===== إعداد Auth0 =====
   const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
   const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-const API_AUDIENCE = "https://api.n-athar";
+  const API_AUDIENCE = "https://api.n-athar";
   const REDIRECT_URI = window.location.origin + window.location.pathname;
 
   // DEBUG
@@ -26,6 +26,14 @@ const API_AUDIENCE = "https://api.n-athar";
     auth0_clientId: AUTH0_CLIENT,
     api_audience: API_AUDIENCE
   });
+
+  // ===== إشارة جاهزية auth (يُستخدمها admin.html) =====
+  let __AUTH_READY_FIRED__ = false;
+  function fireAuthReady(){
+    if (__AUTH_READY_FIRED__) return;
+    __AUTH_READY_FIRED__ = true;
+    try { window.dispatchEvent(new Event("auth0:ready")); } catch(_) {}
+  }
 
   // ===== تحويل المسار إلى "slug" موحّد =====
   // "/" أو "/index" أو "/index.html" => "index"
@@ -112,11 +120,12 @@ const API_AUDIENCE = "https://api.n-athar";
       clientId: AUTH0_CLIENT,
       cacheLocation: "localstorage",
       useRefreshTokens: true,
-authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email offline_access" }
+      authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email offline_access" }
     };
     if (API_AUDIENCE) options.authorizationParams.audience = API_AUDIENCE;
     const c = await f(options);
     window.auth0Client = c; window.auth = c;
+    fireAuthReady(); // <— مهم: أعلن الجاهزية فور إنشاء العميل
     return c;
   }
 
@@ -145,6 +154,7 @@ authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email 
       try { const tmp = await buildClient(); await cleanupRedirectIfNeeded(tmp); } catch {}
       log("Public -> allowed");
       unmountGuardOverlay();
+      fireAuthReady(); // <— نعلن الجاهزية للصفحات العامة أيضًا
       return;
     }
 
@@ -168,6 +178,7 @@ authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email 
       }
       log("profile allowed");
       unmountGuardOverlay();
+      fireAuthReady();
       return;
     }
 
@@ -194,6 +205,7 @@ authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email 
       }
       log("admin allowed");
       unmountGuardOverlay();
+      fireAuthReady();
       return;
     }
 
@@ -206,6 +218,7 @@ authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email 
       }
       log("tool allowed");
       unmountGuardOverlay();
+      fireAuthReady();
       return;
     }
 
@@ -217,6 +230,7 @@ authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email 
     }
     log("unlisted protected page allowed");
     unmountGuardOverlay();
+    fireAuthReady();
   }
 
   if (document.readyState === "loading") {
