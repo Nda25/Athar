@@ -530,13 +530,22 @@ footer .foot-links .sep {
 .dark .badge.pending  { color:#fde68a; background:#3d2f08; border-color:#a16207 }
 .dark .badge.inactive { color:#fecaca; background:#450a0a; border-color:#7f1d1d }
 
-/* Theme picker (تخصيص اللون) */
-.theme-picker{ display:flex; gap:10px; flex-wrap:wrap }
+/* Theme picker (تخصيص اللون) — إصلاح تداخل ستايل .btn + تمييز النشط */
+.theme-picker{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 .theme-picker button{
-  width:28px; height:28px; border-radius:50%; border:2px solid #fff;
-  box-shadow:0 6px 16px rgba(0,0,0,.2); cursor:pointer;
+  all: unset;                 /* إزالة ستايل الزر الافتراضي وأي .btn */
+  display:inline-block;
+  width:28px; height:28px;
+  border-radius:50%;
+  border:2px solid #fff;
+  box-shadow:0 0 0 1px #e5e7eb;
+  cursor:pointer;
 }
-.theme-picker button[data-reset]{ width:auto; padding:0 10px; border-radius:999px; font-weight:800; background:#fff; color:#111827 }
+.theme-picker button[data-reset]{ background:#111827; } /* زر اللون الافتراضي */
+.theme-picker button.is-active{
+  outline: 3px solid color-mix(in oklab, var(--primary) 65%, white);
+  outline-offset: 2px;
+}
 
 /* عناصر الملف الشخصي (صورة + اسم قابل للتعديل) */
 .profile-header{ display:flex; gap:16px; align-items:center; flex-wrap:wrap }
