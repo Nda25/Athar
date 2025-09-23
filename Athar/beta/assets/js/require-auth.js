@@ -11,7 +11,7 @@
   // ===== إعداد Auth0 =====
   const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
   const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-  const API_AUDIENCE = "https://api.athar"; // (اختياري) لنداءات API
+const API_AUDIENCE = "https://api.n-athar";
   const REDIRECT_URI = window.location.origin + window.location.pathname;
 
   // DEBUG
