@@ -243,9 +243,9 @@
   <!-- الحارس العام -->
   <script src="assets/js/require-auth.js"></script>
 
-  <!-- moment + hijri -->
+  <!-- moment + hijri (مصحح: استخدمنا النسخة المبنية/المصغرة) -->
   <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/moment-hijri@2.3.1/moment-hijri.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment-hijri@2.3.1/build/moment-hijri.min.js"></script>
 
   <!-- سكربت عام (ثيم/أزرار) -->
   <script src="app.js"></script>
@@ -330,6 +330,7 @@
   }
 
   // ===== أدوات مساعدة
+  // toIso الآن يتحقق من توفر moment-hijri ويعمل fallback آمن إذا لم تتوفر
   function toIso(calSelId, gId, hId) {
     const mode = document.getElementById(calSelId).value;
     if (mode === 'greg') {
@@ -337,6 +338,14 @@
       if (!v) return null;
       return new Date(v + 'T00:00:00Z').toISOString();
     } else {
+      // تأكد أن moment + moment-hijri متاحان
+      const hasMoment = typeof window.moment === 'function';
+      const hasHijri = hasMoment && typeof moment.fn.iYear === 'function';
+      if (!hasHijri) {
+        // fallback: لو المستخدم اختار هجري لكن المكتبة غير متوفرة، نتجاهل التاريخ الهجري (آمن)
+        console.warn('moment-hijri غير محمّل؛ تجاهلت التاريخ الهجري');
+        return null;
+      }
       const v = document.getElementById(hId).value.trim();
       if (!v) return null;
       const m = moment(v, 'iYYYY-iMM-iDD', true);
@@ -596,8 +605,12 @@
       if (!ok) return;
 
       document.getElementById('tabsCard').style.display = '';
-document.getElementById('denyCard').style.display = 'none';
-showTab('t-complaints');
+      document.getElementById('denyCard').style.display = 'none';
+      showTab('t-complaints');
+
+      // جهزي الإعلانات والشكاوى بعد الإظهار
+      try { await fetchAnnouncements(); } catch(_) {}
+      try { await loadComplaints(); } catch(_) {}
     }catch(err){
       console.warn(err);
       document.getElementById('denyCard').style.display='';
