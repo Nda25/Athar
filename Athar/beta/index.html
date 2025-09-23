@@ -185,27 +185,40 @@
 <script defer src="app.js"></script>
 
   <!-- تلميح: لإظهار زر لوحة التحكم للأدمن + زر الملف الشخصي للمسجّل -->
+  <!-- سكربت صارم لإظهار زر لوحة التحكم للأدمن فقط -->
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      // انتظري auth من app.js / require-auth إن وُجد
-      for (let i=0; i<50 && !window.auth; i++) {
-        await new Promise(r=>setTimeout(r,100));
-      }
+    document.addEventListener('auth0:ready', async () => {
       const adminBtn = document.getElementById('adminBtn');
       const profBtn  = document.getElementById('nav-profile');
+
+      // إخفاء افتراضي
+      if (adminBtn) adminBtn.style.display = 'none';
       if (!window.auth) return;
 
+      // لا تواصلي لو مافي جلسة دخول مؤكدة
+      let authed = false;
+      try { authed = await window.auth.isAuthenticated(); } catch {}
+      if (!authed) return;
+
+      // أظهري رابط الملف الشخصي للمسجّل
       try {
-        const u = await auth.getUser();
+        const u = await window.auth.getUser();
         if (u && profBtn) profBtn.style.display = 'inline-flex';
+      } catch {}
 
-        const claims = await auth.getIdTokenClaims();
-        const NS = window.ATHAR_NS || 'https://n-athar.co/';
-        const roles = claims?.[NS + 'roles'] || [];
-        const isAdmin = roles.includes('admin') || claims?.[NS + 'admin'] === true;
+      // تحقّق الأدمن من الـ claims
+      try {
+        const claims = await window.auth.getIdTokenClaims();
+        const NS  = "https://n-athar.co/";
+        const ALT = "https://athar.co/";
 
-        if (isAdmin && adminBtn) adminBtn.style.display = 'inline';
-      } catch (_){}
+        const roles   = claims?.[NS + "roles"] || claims?.[ALT + "roles"] || [];
+        const isAdmin = (Array.isArray(roles) && roles.includes("admin"))
+                     || claims?.[NS + "admin"] === true
+                     || claims?.[ALT + "admin"] === true;
+
+        if (isAdmin && adminBtn) adminBtn.style.display = 'inline-flex';
+      } catch {}
     });
   </script>
 </body>
