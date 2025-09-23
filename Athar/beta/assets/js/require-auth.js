@@ -48,7 +48,7 @@
   const ADMIN = "admin";
 
   // ===== Claims namespace =====
-  const NS           = "https://athar.co/";
+  const NS           = "https://n-athar.co/";
   const CLAIM_STATUS = NS + "status";   // نتوقع 'active' لفتح الأدوات
   const CLAIM_ROLES  = NS + "roles";    // array
   const CLAIM_ADMIN  = NS + "admin";    // boolean
