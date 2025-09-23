@@ -308,7 +308,8 @@
         authorizationParams: {
           audience: API_AUDIENCE,
           scope: "openid profile email offline_access",
-          prompt: "consent"
+          prompt: "consent",
+          redirect_uri: window.location.href
         }
       });
       throw err;
@@ -553,17 +554,6 @@
     document.getElementById('cd-statusmsg').textContent = '';
   }
 
-  // أحداث القائمة/الفلترة
-  document.getElementById('c-refresh').addEventListener('click', loadComplaints);
-  document.getElementById('c-type').addEventListener('change', loadComplaints);
-  document.getElementById('c-status').addEventListener('change', loadComplaints);
-  document.getElementById('c-q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') loadComplaints(); });
-  document.getElementById('c-rows').addEventListener('click', (e)=>{
-    const a = e.target.closest('[data-open]'); if(!a) return;
-    e.preventDefault();
-    openComplaint(a.getAttribute('data-open'));
-  });
-
   // إرسال الرد
   document.getElementById('cd-send').addEventListener('click', async ()=>{
     if (!currentComplaintId) return;
@@ -588,10 +578,33 @@
     }
   });
 
+  // ===== لا تواصلي لو مافي جلسة دخول مؤكدة
+  async function ensureLoggedIn() {
+    try {
+      const ok = await window.auth.isAuthenticated();
+      if (!ok) {
+        await window.auth.loginWithRedirect({
+          authorizationParams: {
+            audience: API_AUDIENCE,
+            scope: "openid profile email offline_access",
+            redirect_uri: window.location.href
+          }
+        });
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   // ===== تشغيل الصفحة
   document.addEventListener('DOMContentLoaded', async ()=>{
-    // انتظار تهيئة window.auth من app.js
+    // انتظار auth
     for (let i=0; i<50 && !window.auth; i++) { await new Promise(r=>setTimeout(r,100)); }
+
+    // لا تواصلي لو مافي جلسة دخول مؤكدة
+    if (!(await ensureLoggedIn())) return;
 
     // تحقق أدمن
     const ok = await isAdmin();
@@ -607,7 +620,11 @@
 
     // حمّلي الشكاوى
     await loadComplaints();
-  });
-  </script>
-</body>
-</html>
+
+    // (اختياري للتشخيص فقط): اطبعي aud/roles للتأكد
+    try {
+      const t = await authToken();
+      const payload = JSON.parse(atob(t.split('.')[1]));
+      console.log('[debug aud]', payload.aud);
+      console.log('[debug iss]', payload.iss);
+      console.log('[debug roles]', payload['https://n
