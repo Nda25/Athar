@@ -93,7 +93,6 @@ async function supaEnsureUserFromAuth0() {
     const u = await window.auth?.getUser();
     if (!u || !u.email) return;
 
-    // نستخدم أي دالة متاحة لديك (supaEnsureUser أو supaEnsureUserProfile)
     if (typeof window.supaEnsureUser === 'function') {
       await window.supaEnsureUser({
         email: String(u.email).toLowerCase(),
@@ -111,23 +110,26 @@ async function supaEnsureUserFromAuth0() {
 }
 
 /* =============== زر لوحة التحكم (أدمن) =============== */
-/** إظهار/إخفاء زر لوحة التحكم حسب الـ claims */
+/** إظهار/إخفاء زر لوحة التحكم حسب الـ claims (بعد تأكد تسجيل الدخول) */
 async function toggleAdminButton() {
   const adminBtn = document.getElementById("adminBtn");
   if (!adminBtn) return;
 
   try {
-    // استخدم العميل المعروض من require-auth.js
-    const claims = (window.auth?.getIdTokenClaims)
-      ? await window.auth.getIdTokenClaims()
-      : (window.auth0Client?.getIdTokenClaims ? await window.auth0Client.getIdTokenClaims() : null);
-
-    if (!claims) {
+    // لا تواصلي لو مافي جلسة دخول مؤكدة
+    if (!window.auth?.isAuthenticated) {
+      adminBtn.style.display = "none";
+      return;
+    }
+    const authed = await window.auth.isAuthenticated();
+    if (!authed) {
       adminBtn.style.display = "none";
       return;
     }
 
-    // Namespace الرسمي + احتياطي لتوافق التوكنات
+    // بعدها فقط استرجعي الـ claims واحسبي isAdmin
+    const claims = await window.auth.getIdTokenClaims();
+
     const NS  = "https://n-athar.co/";
     const ALT = "https://athar.co/";
 
@@ -136,7 +138,7 @@ async function toggleAdminButton() {
     console.log('[admin] admin flag:', claims?.[NS+"admin"] ?? claims?.[ALT+"admin"]);
 
     const roles   = claims?.[NS+"roles"] || claims?.[ALT+"roles"] || [];
-    const isAdmin = Array.isArray(roles) && roles.includes("admin")
+    const isAdmin = (Array.isArray(roles) && roles.includes("admin"))
                  || claims?.[NS+"admin"] === true
                  || claims?.[ALT+"admin"] === true;
 
@@ -153,7 +155,6 @@ function bindAuthButtons() {
   const registerBtn = document.getElementById('registerBtn');
   const logoutBtn   = document.getElementById('logout');
 
-  // حالة ابتدائية آمنة
   function setButtons(isAuth) {
     if (loginBtn)    loginBtn.style.display    = isAuth ? 'none' : '';
     if (registerBtn) registerBtn.style.display = isAuth ? 'none' : '';
@@ -162,54 +163,54 @@ function bindAuthButtons() {
     const profileLink = document.getElementById('nav-profile');
     if (profileLink) profileLink.style.display = isAuth ? '' : 'none';
   }
-  // متاحة عالميًا إن احتجتيها في مكان آخر
   window.__setAuthButtons = setButtons;
+  setButtons(false);
 
-  setButtons(false); // قبل الجاهزية
-
-  // نقرأ كود الدعوة من رابط الصفحة (إن وُجد)
   const inviteCode = new URLSearchParams(location.search).get('code') || undefined;
 
   if (loginBtn) {
-    loginBtn.onclick = () => window.auth?.loginWithRedirect
-      ? window.auth.loginWithRedirect({
-          authorizationParams: {
-            screen_hint: 'login',
-            redirect_uri: window.location.origin
-          }
-        })
-      : window.auth?.login?.({
-          authorizationParams: {
-            screen_hint: 'login',
-            redirect_uri: window.location.origin
-          }
-        });
+    loginBtn.onclick = () =>
+      window.auth?.loginWithRedirect
+        ? window.auth.loginWithRedirect({
+            authorizationParams: {
+              screen_hint: 'login',
+              redirect_uri: window.location.origin
+            }
+          })
+        : window.auth?.login?.({
+            authorizationParams: {
+              screen_hint: 'login',
+              redirect_uri: window.location.origin
+            }
+          });
   }
   if (registerBtn) {
-    registerBtn.onclick = () => window.auth?.loginWithRedirect
-      ? window.auth.loginWithRedirect({
-          authorizationParams: {
-            screen_hint: 'signup',
-            redirect_uri: window.location.origin,
-            ...(inviteCode ? { code: inviteCode } : {})
-          }
-        })
-      : window.auth?.login?.({
-          authorizationParams: {
-            screen_hint: 'signup',
-            redirect_uri: window.location.origin,
-            ...(inviteCode ? { code: inviteCode } : {})
-          }
-        });
+    registerBtn.onclick = () =>
+      window.auth?.loginWithRedirect
+        ? window.auth.loginWithRedirect({
+            authorizationParams: {
+              screen_hint: 'signup',
+              redirect_uri: window.location.origin,
+              ...(inviteCode ? { code: inviteCode } : {})
+            }
+          })
+        : window.auth?.login?.({
+            authorizationParams: {
+              screen_hint: 'signup',
+              redirect_uri: window.location.origin,
+              ...(inviteCode ? { code: inviteCode } : {})
+            }
+          });
   }
   if (logoutBtn) {
     logoutBtn.onclick = () => {
       if (window.auth?.logout) return window.auth.logout();
-      if (window.auth0Client?.logout) return window.auth0Client.logout({ logoutParams:{ returnTo: window.location.origin }});
+      if (window.auth0Client?.logout) {
+        return window.auth0Client.logout({ logoutParams:{ returnTo: window.location.origin }});
+      }
     };
   }
 
-  // عند جاهزية Auth0
   window.addEventListener('auth0:ready', async () => {
     try {
       const ok = await (window.auth?.isAuthenticated ? window.auth.isAuthenticated() : window.auth0Client?.isAuthenticated());
@@ -219,7 +220,6 @@ function bindAuthButtons() {
     }
   }, { once: true });
 
-  // باك أب: لو كان window.auth جاهز أصلاً
   (async () => {
     try {
       if (window.auth?.isAuthenticated) {
@@ -238,7 +238,6 @@ async function logToolViewIfAny() {
     const file = (location.pathname.split('/').pop() || '').toLowerCase();
     const base = file.replace('.html', '');
 
-    // خرائط أسماء مألوفة (لو تبين اسم أداة مختلف عن اسم الملف)
     const aliases = {
       athar: 'muntalaq',  // مُنطلق
       darsi: 'murtakaz',  // مُرتكز
@@ -259,20 +258,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindThemeToggle();
   bindAuthButtons();
 
-  // سننتظر جاهزية عميل Auth0 من require-auth.js
   window.addEventListener('auth0:ready', async () => {
-    // حفظ/تحديث المستخدم في Supabase
-    await supaEnsureUserFromAuth0();
-
-    // أظهر زر الأدمن لو كنتِ Admin
-    await toggleAdminButton();
-
-    // سجّلي مشاهدة الصفحة كأداة (إن وجدت)
-    await logToolViewIfAny();
+    await supaEnsureUserFromAuth0();   // حفظ/تحديث المستخدم في Supabase
+    await toggleAdminButton();         // إظهار زر الأدمن إن وُجدت الصلاحية
+    await logToolViewIfAny();          // سجل مشاهدة الأداة (إن وُجدت)
   }, { once: true });
 
-  // في حال كان window.auth جاهز قبل الحدث (نادرًا)
-  if (window.auth) {
+  if (window.auth) {                   // في حال كان جاهز قبل الحدث
     await toggleAdminButton();
   }
 });
