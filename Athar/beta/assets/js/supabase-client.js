@@ -15,7 +15,13 @@
   }
 
   // أنشئي عميلًا واحدًا مشتركًا (أو أعيدي استخدام الموجود)
-  const supa = window.supa || supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  // التحصين: لو مكتبة supabase ما بعد لود، نخلي supa=null ونحذّر
+  const supa = window.supa || (window.supabase ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null);
+  if (!supa) {
+    console.warn("[Athar][supa] لم يتم تحميل مكتبة Supabase بعد. تأكدي من ترتيب السكربتات:\
+\n  1) https://unpkg.com/@supabase/supabase-js@2\
+\n  2) assets/js/supabase-client.js");
+  }
 
   // ===== Helpers صغيرة: قراءة مستخدم Auth0 بأمان =====
   const auth0SafeGetUser = async () => {
@@ -88,6 +94,9 @@
 
   // (اختياري) قراءة مستخدم عبر الإيميل إن أضفتِ سياسة قراءة لاحقًا
   async function supaGetUserByEmail(email){
+    if (!supa) {
+      return { ok:false, error:"supabase client not ready (script order)" };
+    }
     const { data, error } = await supa
       .from('users')
       .select('*')
