@@ -9,6 +9,7 @@
   <link rel="icon" type="image/png" href="assets/icon.png">
   <link rel="apple-touch-icon" href="assets/icon.png">
 
+  <!-- Open Graph / Twitter -->
   <meta property="og:title" content="أثـَـر">
   <meta property="og:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
   <meta property="og:image" content="https://n-athar.co/assets/icon.png">
@@ -21,8 +22,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
-  <!-- (اختياري) Tailwind CDN للتجارب -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- (اختياري) Tailwind CDN للتجارب فقط -->
+  <script defer src="https://cdn.tailwindcss.com"></script>
 
   <!-- تهيئة الثيم المبكرة -->
   <script>
@@ -50,26 +51,29 @@
   </script>
 </head>
 <body>
-      <div class="global-bg"></div>
+  <div class="global-bg"></div>
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
+  <!-- Topbar -->
   <div class="topbar">
     <div class="tb-left">
       <button id="loginBtn" class="btn" type="button">تسجيل الدخول</button>
       <button id="registerBtn" class="btn" type="button">إنشاء حساب جديد</button>
       <button id="logout" class="btn" type="button">تسجيل خروج</button>
     </div>
+
     <div class="tb-center">
-      <a id="adminBtn" href="/admin.html" style="display:none">
-  لوحة التحكم
-</a>
+      <!-- يظهر فقط للأدمن عبر app.js -->
+      <a id="adminBtn" href="/admin.html" style="display:none">لوحة التحكم</a>
       <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
       <a class="btn" href="programs.html">مساحة إبداعي</a>
     </div>
+
     <div class="tb-right">
       <a class="btn" href="pricing.html">الدفع والإشتراك</a>
-<a id="nav-profile" class="btn" href="profile.html" style="display:none">ملفي الشخصي</a>
+      <!-- يظهر بعد تسجيل الدخول -->
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">ملفي الشخصي</a>
     </div>
   </div>
 
@@ -83,93 +87,124 @@
   <main>
     <div class="container">
 
+      <!-- ============ نبذة «أثر» ============ -->
+      <section class="info">
 
+        <!-- 1) ما هو أثر؟ -->
+        <article class="card info-card">
+          <h2 class="title">ما هو «أثر»؟</h2>
+          <p class="lead">
+            منصة تعليمية ذكية صُمّمت لتكون مساحة إبداع للمعلم. تُولّد استراتيجيات وأنشطة وأسئلة
+            تفاعلية <strong>يمكن تعديلها لتناسب درسك وطلابك</strong>، وتمنحك أدوات عملية تُبسّط
+            التخطيط والإدارة لتصبح الحصة أكثر أثرًا وفاعلية.
+          </p>
+        </article>
 
-<!-- ============ نبذة «أثر» (تصميم أنظف ومضغوط) ============ -->
-<section class="info">
+        <!-- 2) ما هي استراتيجيات بلوم؟ -->
+        <article class="card info-card">
+          <h2 class="title">ما هي استراتيجيات بلوم؟</h2>
+          <p class="lead">
+            بلوم إطار عالمي يُنظّم مستويات التعلّم (تذكّر، فهم، تطبيق، تحليل، تقويم، ابتكار).
+            يسهّل على المعلم بناء أسئلة وأنشطة تصعد بالطالب تدريجيًا، فتتوازن الحصة بين
+            التذكّر والتفكير العميق.
+          </p>
+        </article>
 
-  <!-- 1) ما هو أثر؟ -->
-  <article class="card info-card">
-    <h2 class="title">ما هو «أثر»؟</h2>
-    <p class="lead">
-      منصة تعليمية ذكية صُمّمت لتكون مساحة إبداع للمعلم. تُولّد استراتيجيات وأنشطة وأسئلة
-      تفاعلية <strong>يمكن تعديلها لتناسب درسك وطلابك</strong>، وتمنحك أدوات عملية تُبسّط
-      التخطيط والإدارة لتصبح الحصة أكثر أثرًا وفاعلية.
-    </p>
-  </article>
+        <!-- 3) كيف يفيدني أثر كمعلم/ـة؟ -->
+        <article class="card info-card">
+          <h2 class="title">كيف يفيدني «أثر» كمعلم/ـة؟</h2>
+          <p class="lead">
+            يتيح لك أثـَـر قوالب جاهزة تُسرّع إعداد الدروس الإبداعية وتُبعد عنك التكرار المرهق، كما يزودك بأنشطة وأسئلة مرنة تلائم مستوى طلابك ووقت الحصة،
+            وتزودك بأدوات ذكية تجعل خطتك أكثر تنظيمًا.. وإدارة الصّـف أكثر سلاسـة.
+            <a href="programs.html" class="btn-link">اطّلع على برامج «أثر»</a>
+          </p>
+        </article>
 
-  <!-- 2) ما هي استراتيجيات بلوم؟ -->
-  <article class="card info-card">
-    <h2 class="title">ما هي استراتيجيات بلوم؟</h2>
-    <p class="lead">
-      بلوم إطار عالمي يُنظّم مستويات التعلّم (تذكّر، فهم، تطبيق، تحليل، تقويم، ابتكار).
-      يسهّل على المعلم بناء أسئلة وأنشطة تصعد بالطالب تدريجيًا، فتتوازن الحصة بين
-      التذكّر والتفكير العميق.
-    </p>
-  </article>
+        <!-- 4) كيف وُلد أثر؟ -->
+        <article class="card info-card">
+          <h2 class="title">كيف وُلد «أثر»؟</h2>
+          <p class="lead">
+            لم تكن الحكاية بحثًا عن “أداة” بقدر ما كانت مطاردةً لفكرة:<br>
+            كيف نجعل الدرس ينبض بالحياة؟<br>
+            حين اصطدمتُ بسقف الاستراتيجيات التقليدية، قررت أن أبني مساحةً تُوقظ الشغف وتفتح الآفاق.<br>
+            من هنا وُلد «أثـر»..<br>
+            مشروعٌ تعليميٌّ صُنع على مهل، ليحترم عقل المتعلم ويُعطي المعلم أدواتٍ
+            دقيقة، جميلة، وسهلة الاستخدام.
+          </p>
+        </article>
 
-  <!-- 3) كيف يفيدني أثر كمعلم/ـة؟ -->
-  <article class="card info-card">
-    <h2 class="title">كيف يفيدني «أثر» كمعلم/ـة؟</h2>
-<p class="lead">
-  يتيح لك أثـَـر قوالب جاهزة تُسرّع إعداد الدروس الإبداعية وتُبعد عنك التكرار المرهق، كما يزودك بأنشطة وأسئلة مرنة تلائم مستوى طلابك ووقت الحصة، 
-  وتزودك بأدوات ذكية تجعل خطتك أكثر تنظيمًا.. وإدارة الصّـف أكثر سلاسـة.  
-  <a href="programs.html" class="btn-link">اطّلع على برامج «أثر»</a>
-</p>
-  </article>
-
-  <!-- 4) كيف وُلد أثر؟ -->
-  <article class="card info-card">
-    <h2 class="title">كيف وُلد «أثر»؟</h2>
-<p class="lead">
-  لم تكن الحكاية بحثًا عن “أداة” بقدر ما كانت مطاردةً لفكرة:<br>
-  كيف نجعل الدرس ينبض بالحياة؟<br>
-  حين اصطدمتُ بسقف الاستراتيجيات التقليدية، قررت أن أبني مساحةً تُوقظ الشغف وتفتح الآفاق.<br>
-  من هنا وُلد «أثـر»..<br>
-  مشروعٌ تعليميٌّ صُنع على مهل، ليحترم عقل المتعلم ويُعطي المعلم أدواتٍ  
-  دقيقة، جميلة، وسهلة الاستخدام.
-</p>
-  </article>
-
-</section>
+      </section>
 
     </div>
   </main>
 
-<footer>
-  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-  <p class="foot-name">ندى المجيرش</p>
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
 
-  <nav class="foot-links">
-    <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-    <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-    <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-    <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-    <a href="complaints.html">الشكاوى والاقتراحات</a>
-  </nav>
+    <nav class="foot-links">
+      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+      <a href="complaints.html">الشكاوى والاقتراحات</a>
+    </nav>
 
-  <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-</footer>
+    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
+  </footer>
 
-<script>
-  // سنة تلقائية في الفوتر
-  (function(){
-    var y=document.getElementById('year');
-    if(y) y.textContent=new Date().getFullYear();
-  })();
-</script>
+  <!-- وظائف خفيفة في الصفحة -->
+  <script>
+    // سنة تلقائية
+    (function(){
+      var y = document.getElementById('year');
+      if (y) y.textContent = new Date().getFullYear();
+    })();
 
-<!-- SDKs أولاً -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"></script>
+    // Namespace واحد ثابت عبر المشروع (يطابق الـ Action)
+    window.ATHAR_NS = "https://n-athar.co/";
 
-<!-- سكربتات مشروعك (بدون تكرار) -->
-<script src="assets/js/supabase-client.js"></script>
-<script src="assets/js/ui.js"></script>
-<script src="assets/js/theme.js"></script>
-<script src="assets/js/storage.js"></script>
+    // منع تحميل storage.js مرتين لو صار إدراج مكرر بالخطأ
+    window.__ATHAR_STORAGE_LOADED__ = !!window.__ATHAR_STORAGE_LOADED__;
+  </script>
 
-<!-- أخيراً -->
-<script src="app.js"></script>
+  <!-- SDKs أولاً (نفس النسخ في كل الصفحات) -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"></script>
+
+  <!-- سكربتات مشروعك (مرتبة وبـ defer) -->
+  <!-- ملاحظة: storage.js يفضّل أن يكون "آمن عند التكرار" داخليًا -->
+  <script defer src="assets/js/supabase-client.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/theme.js"></script>
+  <script defer src="assets/js/storage.js" onload="window.__ATHAR_STORAGE_LOADED__=true"></script>
+
+  <!-- أخيراً: سكربت التطبيق العام -->
+  <script defer src="app.js"></script>
+
+  <!-- تلميح: لإظهار زر لوحة التحكم للأدمن + زر الملف الشخصي للمسجّل -->
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // انتظري auth من app.js / require-auth إن وُجد
+      for (let i=0; i<50 && !window.auth; i++) {
+        await new Promise(r=>setTimeout(r,100));
+      }
+      const adminBtn = document.getElementById('adminBtn');
+      const profBtn  = document.getElementById('nav-profile');
+      if (!window.auth) return;
+
+      try {
+        const u = await auth.getUser();
+        if (u && profBtn) profBtn.style.display = 'inline-flex';
+
+        const claims = await auth.getIdTokenClaims();
+        const NS = window.ATHAR_NS || 'https://n-athar.co/';
+        const roles = claims?.[NS + 'roles'] || [];
+        const isAdmin = roles.includes('admin') || claims?.[NS + 'admin'] === true;
+
+        if (isAdmin && adminBtn) adminBtn.style.display = 'inline';
+      } catch (_){}
+    });
+  </script>
 </body>
 </html>
