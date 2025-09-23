@@ -1,37 +1,41 @@
-/* ====== Athar Hard Reset (once) ====== */
+/* ============================
+ * Athar - app.js (final clean)
+ * يعتمد على:
+ *  - require-auth.js (ينشئ window.auth ويطلق auth0:ready)
+ *  - assets/js/supabase-client.js (فيه supaEnsureUser / supaEnsureUserProfile / supaLogToolUsage)
+ *  - ui.js / theme.js / storage.js (اختياري)
+ * ============================ */
+
+/* ====== Hard Reset (مرة واحدة فقط بعد ترقية) ====== */
 (function hardResetOnce(){
   try {
-    const FLAG = "ATHAR_V2_READY";   // اسم علامة الإصدار الجديد
+    const FLAG = "ATHAR_V2_READY";
     if (!localStorage.getItem(FLAG)) {
-      // امسحي كل التخزين المحلي والـ session
       localStorage.clear();
       sessionStorage.clear();
 
-      // حاولي حذف قواعد IndexedDB (لو المتصفح يدعم)
       if ('indexedDB' in window && indexedDB.databases) {
         indexedDB.databases().then(dbs => {
           dbs.forEach(db => { if (db && db.name) indexedDB.deleteDatabase(db.name); });
         });
       }
-
-      // ثبّتي العلامة حتى ما يتكرر المسح كل مرة
       localStorage.setItem(FLAG, "1");
       console.log("[Athar] One-time storage reset done.");
     }
   } catch (_) {}
 })();
 
-/* إعدادات Auth0 (احتياط لو احتجتها سكربتات ثانية) */
+/* ====== إعدادات Auth0 (تُقرأ إن وُجدت) ====== */
 if (typeof window.AUTH0_DOMAIN === 'undefined') {
   window.AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
 }
 if (typeof window.AUTH0_CLIENT === 'undefined') {
-  window.AUTH0_CLIENT = "rXaNXLwIkIOALVTWبRDA8SwJnERnI1NU";
+  window.AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
 }
 const AUTH0_DOMAIN = window.AUTH0_DOMAIN;
 const AUTH0_CLIENT = window.AUTH0_CLIENT;
 
-/* أدوات صغيرة */
+/* ====== أدوات صغيرة ====== */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
@@ -82,14 +86,20 @@ $$('.modal [data-close]').forEach(btn => btn.addEventListener('click', e=>{
   const m = btn.closest('.modal'); if(m) m.classList.remove('show');
 }));
 
-/* ============================== Supabase Sync ============================== */
-/* يحفظ/يحدّث المستخدم في Supabase اعتماداً على بيانات Auth0 */
+/* ========================= Supabase Helpers ========================= */
+/** يحفظ/يحدّث المستخدم في Supabase اعتماداً على بيانات Auth0 */
 async function supaEnsureUserFromAuth0() {
   try {
     const u = await window.auth?.getUser();
     if (!u || !u.email) return;
-    // استخدمي الدالة المعرّفة في assets/js/supabase-client.js
-    if (typeof window.supaEnsureUserProfile === 'function') {
+
+    // نستخدم أي دالة متاحة لديك (supaEnsureUser أو supaEnsureUserProfile)
+    if (typeof window.supaEnsureUser === 'function') {
+      await window.supaEnsureUser({
+        email: String(u.email).toLowerCase(),
+        full_name: u.name || u.nickname || null
+      });
+    } else if (typeof window.supaEnsureUserProfile === 'function') {
       await window.supaEnsureUserProfile({
         sub: u.sub,
         email: String(u.email).toLowerCase(),
@@ -100,11 +110,45 @@ async function supaEnsureUserFromAuth0() {
   } catch (_) {}
 }
 
-/* ============================== Entry ============================== */
-document.addEventListener('DOMContentLoaded', async () => {
-  bindThemeToggle();
+/* =============== زر لوحة التحكم (أدمن) =============== */
+/** إظهار/إخفاء زر لوحة التحكم حسب الـ claims */
+async function toggleAdminButton() {
+  const adminBtn = document.getElementById("adminBtn");
+  if (!adminBtn) return;
 
-  // عناصر الأزرار
+  try {
+    // استخدم العميل المعروض من require-auth.js
+    const claims = (window.auth?.getIdTokenClaims)
+      ? await window.auth.getIdTokenClaims()
+      : (window.auth0Client?.getIdTokenClaims ? await window.auth0Client.getIdTokenClaims() : null);
+
+    if (!claims) {
+      adminBtn.style.display = "none";
+      return;
+    }
+
+    // Namespace الرسمي + احتياطي لتوافق التوكنات
+    const NS  = "https://n-athar.co/";
+    const ALT = "https://athar.co/";
+
+    console.log('[admin] claims:', claims);
+    console.log('[admin] roles:', claims?.[NS+"roles"] || claims?.[ALT+"roles"]);
+    console.log('[admin] admin flag:', claims?.[NS+"admin"] ?? claims?.[ALT+"admin"]);
+
+    const roles   = claims?.[NS+"roles"] || claims?.[ALT+"roles"] || [];
+    const isAdmin = Array.isArray(roles) && roles.includes("admin")
+                 || claims?.[NS+"admin"] === true
+                 || claims?.[ALT+"admin"] === true;
+
+    adminBtn.style.display = isAdmin ? "inline-flex" : "none";
+  } catch (err) {
+    console.error("Error checking admin role:", err);
+    adminBtn.style.display = "none";
+  }
+}
+
+/* =============== أزرار الدخول/التسجيل/الخروج =============== */
+function bindAuthButtons() {
   const loginBtn    = document.getElementById('loginBtn');
   const registerBtn = document.getElementById('registerBtn');
   const logoutBtn   = document.getElementById('logout');
@@ -118,48 +162,79 @@ document.addEventListener('DOMContentLoaded', async () => {
     const profileLink = document.getElementById('nav-profile');
     if (profileLink) profileLink.style.display = isAuth ? '' : 'none';
   }
-  setButtons(false); // دخول/تسجيل ظاهر، خروج مخفي
+  // متاحة عالميًا إن احتجتيها في مكان آخر
+  window.__setAuthButtons = setButtons;
+
+  setButtons(false); // قبل الجاهزية
 
   // نقرأ كود الدعوة من رابط الصفحة (إن وُجد)
   const inviteCode = new URLSearchParams(location.search).get('code') || undefined;
 
-  // اربطي الأزرار الآن (حتى لو Auth0 يتأخر)
   if (loginBtn) {
-    loginBtn.onclick = () => window.auth?.login({
-      authorizationParams: {
-        screen_hint: 'login',
-        redirect_uri: window.location.origin
-      }
-    });
+    loginBtn.onclick = () => window.auth?.loginWithRedirect
+      ? window.auth.loginWithRedirect({
+          authorizationParams: {
+            screen_hint: 'login',
+            redirect_uri: window.location.origin
+          }
+        })
+      : window.auth?.login?.({
+          authorizationParams: {
+            screen_hint: 'login',
+            redirect_uri: window.location.origin
+          }
+        });
   }
   if (registerBtn) {
-    registerBtn.onclick = () => window.auth?.login({
-      authorizationParams: {
-        screen_hint: 'signup',
-        redirect_uri: window.location.origin,
-        ...(inviteCode ? { code: inviteCode } : {})
-      }
-    });
+    registerBtn.onclick = () => window.auth?.loginWithRedirect
+      ? window.auth.loginWithRedirect({
+          authorizationParams: {
+            screen_hint: 'signup',
+            redirect_uri: window.location.origin,
+            ...(inviteCode ? { code: inviteCode } : {})
+          }
+        })
+      : window.auth?.login?.({
+          authorizationParams: {
+            screen_hint: 'signup',
+            redirect_uri: window.location.origin,
+            ...(inviteCode ? { code: inviteCode } : {})
+          }
+        });
   }
   if (logoutBtn) {
-    logoutBtn.onclick = () => window.auth?.logout();
+    logoutBtn.onclick = () => {
+      if (window.auth?.logout) return window.auth.logout();
+      if (window.auth0Client?.logout) return window.auth0Client.logout({ logoutParams:{ returnTo: window.location.origin }});
+    };
   }
 
-  /* تحديث حالة الأزرار عند جاهزية Auth0 (مرّة واحدة) */
+  // عند جاهزية Auth0
   window.addEventListener('auth0:ready', async () => {
     try {
-      const ok = await window.auth.isAuthenticated();
-      setButtons(ok); // تُظهر/تُخفي login/register/logout + #nav-profile
+      const ok = await (window.auth?.isAuthenticated ? window.auth.isAuthenticated() : window.auth0Client?.isAuthenticated());
+      setButtons(!!ok);
     } catch {
       setButtons(false);
     }
   }, { once: true });
 
-  /* بعد جاهزية Auth0: احفظ المستخدم وسجّل مشاهدة الصفحة */
-  window.addEventListener('auth0:ready', async () => {
-    await supaEnsureUserFromAuth0();
+  // باك أب: لو كان window.auth جاهز أصلاً
+  (async () => {
+    try {
+      if (window.auth?.isAuthenticated) {
+        const ok = await window.auth.isAuthenticated();
+        setButtons(!!ok);
+      }
+    } catch {
+      setButtons(false);
+    }
+  })();
+}
 
-    // اسم الملف الحالي (مثلاً: /miyad.html → "miyad")
+/* =============== تسجيل استخدام الأدوات (view) =============== */
+async function logToolViewIfAny() {
+  try {
     const file = (location.pathname.split('/').pop() || '').toLowerCase();
     const base = file.replace('.html', '');
 
@@ -167,46 +242,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     const aliases = {
       athar: 'muntalaq',  // مُنطلق
       darsi: 'murtakaz',  // مُرتكز
-      // البقية نفس اسم الملف: miyad, masar, ethraa, mulham
+      // البقية نفس الاسم: miyad, masar, ethraa, mulham
     };
 
     const tool = aliases[base] || base;
-    if (tool && typeof window.supaLogToolUsage === 'function') {
-      window.supaLogToolUsage(`${tool}:view`);
-    }
-  });
+    if (!tool) return;
 
-  /* ✅ إظهار زر لوحة التحكم إن كان الدور Admin (بدون لمس الأدوار نفسها) */
+    if (typeof window.supaLogToolUsage === 'function') {
+      await window.supaLogToolUsage(`${tool}:view`);
+    }
+  } catch (_) {}
+}
+
+/* ============================== Entry ============================== */
+document.addEventListener('DOMContentLoaded', async () => {
+  bindThemeToggle();
+  bindAuthButtons();
+
+  // سننتظر جاهزية عميل Auth0 من require-auth.js
   window.addEventListener('auth0:ready', async () => {
-    try {
-      const claims = await window.auth.getIdTokenClaims();
+    // حفظ/تحديث المستخدم في Supabase
+    await supaEnsureUserFromAuth0();
 
-      // نفس الـ namespace المستخدم في Action
-      const NS  = "https://n-athar.co/";
-      // احتياطي لو بقايا توكن قديم
-      const ALT = "https://athar.co/";
+    // أظهر زر الأدمن لو كنتِ Admin
+    await toggleAdminButton();
 
-      console.log('[admin] claims:', claims);
-      console.log('[admin] roles:', claims?.[NS+"roles"] || claims?.[ALT+"roles"]);
-      console.log('[admin] admin flag:', claims?.[NS+"admin"] ?? claims?.[ALT+"admin"]);
+    // سجّلي مشاهدة الصفحة كأداة (إن وجدت)
+    await logToolViewIfAny();
+  }, { once: true });
 
-      const roles   = claims?.[NS+"roles"] || claims?.[ALT+"roles"] || [];
-      const isAdmin = roles.includes("admin") || (claims?.[NS+"admin"] === true) || (claims?.[ALT+"admin"] === true);
-
-      const adminBtn = document.getElementById("adminBtn");
-      if (adminBtn) adminBtn.style.display = isAdmin ? "inline-flex" : "none";
-    } catch (err) { 
-      console.error("Error checking admin role:", err); 
-    }
-  });
-
-  /* باك-أب: لو الحدث فاتنا وكان window.auth جاهز، حدّثي الآن */
+  // في حال كان window.auth جاهز قبل الحدث (نادرًا)
   if (window.auth) {
-    try {
-      const ok = await window.auth.isAuthenticated();
-      setButtons(ok);
-    } catch {
-      setButtons(false);
-    }
+    await toggleAdminButton();
   }
 });
