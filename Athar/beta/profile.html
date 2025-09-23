@@ -3,11 +3,40 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>الملف الشخصي — أثــر</title>
+  <title>معلومات صاحب الأثر — أثــر</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <meta name="color-scheme" content="dark light">
+
+  <!-- تحسينات CSS خفيفة خاصة بهذه الصفحة (لا تغيّر وظائف قديمة) -->
+  <style>
+    :root { --primary: #6366f1; }
+    .card .title { display:flex; align-items:center; gap:10px; }
+    .subheading { font-size:14px; color:#6b7280; font-weight:600; }
+    .grid { display:grid; gap:16px; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 800px){ .grid { grid-template-columns: 1fr; } }
+    .profile-box { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:center; }
+    .avatar-wrap { position:relative; width:92px; height:92px; }
+    .avatar { width:92px; height:92px; border-radius:50%; object-fit:cover; border:3px solid #eef; background:#f5f7ff; }
+    .edit-badge { position:absolute; right:-6px; bottom:-6px; background:var(--primary); color:#fff; border-radius:16px; padding:4px 8px; font-size:12px; cursor:pointer; border:1px solid #fff; }
+    .name-row { display:flex; align-items:center; gap:8px; font-weight:800; font-size:20px; }
+    .icon-btn { border:1px solid #e5e7eb; background:#fff; cursor:pointer; padding:4px 8px; border-radius:8px; }
+    .badge { padding:6px 10px; border:1px solid transparent; border-radius:10px; font-weight:700; display:inline-block; }
+    .muted { color:#6b7280 }
+    .row-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn.ghost { background:#fff; border:1px solid #e5e7eb; }
+    .section-title { font-weight:800; margin-bottom:8px; }
+    .theme-picker { display:flex; gap:10px; }
+    .theme-picker button { width:28px; height:28px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer; }
+    .theme-note { font-size:12px; color:#6b7280; margin-top:6px; }
+    .pill { padding:6px 10px; border-radius:999px; font-weight:700; border:1px solid #e5e7eb; background:#fff; }
+    .divider { height:1px; background:#f1f5f9; margin:12px 0; }
+
+    /* زر فواتير "قريبًا" */
+    .soon { opacity:.6; cursor:not-allowed; }
+  </style>
 </head>
+
 <body>
   <div class="global-bg"></div>
   <div class="backdrop"></div>
@@ -27,33 +56,77 @@
     <div class="hero">
       <div class="hero-plate"></div>
       <h1 class="logo">أثــر</h1>
-      <div class="tag"><span class="dot"></span>ملف المستخدم</div>
+      <div class="tag"><span class="dot"></span>الصفحة الشخصية</div>
     </div>
   </header>
 
   <main>
     <div class="container">
       <section class="card">
-        <h2 class="title">بيانات الحساب</h2>
+        <h2 class="title">معلومات صاحب الأثر <span class="subheading">— كل شيء يخص حسابك</span></h2>
 
         <div class="grid">
-          <div class="box">
-            <h3>المعلومات الأساسية</h3>
-            <p><strong>الاسم:</strong> <span class="js-user-name">—</span></p>
-            <p><strong>البريد:</strong> <span id="u-email">—</span></p>
-            <p><strong>المعرّف:</strong> <span id="u-sub">—</span></p>
-            <p><strong>الحالة:</strong> <span id="u-status">—</span></p>
+          <!-- العمود الأيسر: الهوية -->
+          <div class="box profile-box">
+            <div class="avatar-wrap">
+              <img id="u-avatar" class="avatar" src="assets/img/avatar-placeholder.png" alt="صورة الحساب">
+              <label class="edit-badge" title="تعديل الصورة">
+                ✎
+                <input id="avatarInput" type="file" accept="image/*" hidden>
+              </label>
+            </div>
+
+            <div>
+              <div class="name-row">
+                <span id="displayName" class="js-user-name">—</span>
+                <button id="editNameBtn" class="icon-btn" title="تعديل الاسم">✎</button>
+              </div>
+
+              <p><strong>البريد:</strong> <span id="u-email">—</span></p>
+              <p><strong>المعرّف:</strong> <span id="u-sub">—</span></p>
+              <p><strong>تاريخ الانضمام:</strong> <span id="u-joined">—</span></p>
+
+              <div class="divider"></div>
+
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <span class="section-title">حالة الحساب:</span>
+                <span id="u-status">—</span>
+                <span id="sub-state" class="badge" style="display:none"></span>
+              </div>
+
+              <div class="row-actions" style="margin-top:12px">
+                <a class="btn" href="pricing.html">إدارة الاشتراك</a>
+                <button id="invoicesBtn" class="btn ghost soon" title="قريبًا" disabled>الفواتير</button>
+              </div>
+              <div class="muted" style="margin-top:6px">الفواتير: <strong>قريبًا</strong> — ستظهر هنا فور ربط بوابة الدفع.</div>
+            </div>
           </div>
 
+          <!-- العمود الأيمن: تخصيص -->
           <div class="box">
-            <h3>الاشتراك</h3>
-            <p id="sub-state" class="badge" style="display:none"></p>
-            <p class="muted">للتفعيل أو الترقية تفضلي إلى صفحة <a href="pricing.html">الدفع والإشتراك</a>.</p>
-          </div>
-        </div>
+            <h3 class="section-title">تخصيص لون الواجهة</h3>
+       <div id="themePicker" class="theme-picker" aria-label="اختيار لون البرنامج">
+  <button data-color="#6366f1" title="بنفسجي"></button>
+  <button data-color="#f472b6" title="زهري"></button>
+  <button data-color="#22c55e" title="أخضر"></button>
+  <button data-color="#06b6d4" title="سماوي"></button>
+  <button data-color="#f59e0b" title="برتقالي"></button>
+  <button data-reset="true" title="اللون الافتراضي">↺</button>
+</div>
+            <div class="theme-note">يرجى اختيار لونك المفضل لعنصر الواجهة الأساسي. يُحفظ تلقائيًا.</div>
 
-        <div class="actions-row" style="margin-top:18px">
-          <button id="logout" class="btn">تسجيل الخروج</button>
+            <div class="divider"></div>
+
+            <h3 class="section-title">الاشتراك</h3>
+            <p class="muted">للتفعيل أو الترقية تفضل بزيارة صفحة <a href="pricing.html">الدفع والإشتراك</a>.</p>
+            <p class="muted">عند تفعيل بوابة الدفع ستظهر تفاصيل باقتك وفواتيرك هنا.</p>
+
+            <div class="divider"></div>
+
+            <div class="row-actions">
+              <button id="logout" class="btn">تسجيل الخروج</button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -72,59 +145,151 @@
     <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
   </footer>
 
-  <script>
-    (function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();
-  </script>
-
+  <script>(function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();</script>
   <div class="toast"></div>
 
-  <!-- سكربتات -->
+  <!-- Supabase SDK + تهيئة (قبل أي سكربت يستخدمه مثل storage.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.__CFG = Object.assign({}, window.__CFG || {}, {
+      supabase_url:  "YOUR_SUPABASE_URL",        // مثال: https://abcd1234.supabase.co
+      supabase_anon: "YOUR_SUPABASE_ANON_KEY"    // من Project Settings → API
+    });
+    window.supabase = window.supabase || supabase.createClient(
+      window.__CFG.supabase_url,
+      window.__CFG.supabase_anon,
+      { auth: { persistSession: false } }
+    );
+  </script>
+
+  <!-- سكربتات عامة للموقع -->
   <script src="app.js"></script>
   <script src="assets/js/storage.js"></script>
+
+  <!-- مناداة واجهة الهوية وملف التعريف -->
   <script>
-    // ننتظر جاهزية عميل الهوية من require-auth.js
     async function initProfile(){
       const client = window.auth0Client;
-      if (!client) return; // سيعاد النداء عند حدث الجاهزية
+      if (!client) return;
 
-      // لو ما هو مسجّل → نوجّه لتسجيل الدخول
-      const ok = await client.isAuthenticated().catch(()=>false);
-      if (!ok) {
+      const logged = await client.isAuthenticated().catch(()=>false);
+      if (!logged) {
         await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
         return;
       }
 
-      // بيانات المستخدم
-      let user = null, claims = null;
+      // بيانات المستخدم + Claims
+      let user=null, claims=null;
       try { user = await client.getUser(); } catch(_){}
       try { claims = await client.getIdTokenClaims(); } catch(_){}
 
-      document.querySelectorAll('.js-user-name').forEach(n=> n.textContent = user?.name || user?.nickname || '—');
+      const name = user?.name || user?.nickname || '—';
+      document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = name);
       document.getElementById('u-email').textContent = user?.email || '—';
       document.getElementById('u-sub').textContent   = user?.sub   || '—';
+      const joined = user?.updated_at || user?.created_at || null;
+      document.getElementById('u-joined').textContent = joined ? new Date(joined).toLocaleDateString('ar-SA') : '—';
 
-      const st = (claims && (claims["https://athar.co/status"] || claims["https://athar/status"])) || '';
+      // الصورة (مع تفضيلات محفوظة إن وجدت)
+      const avatarEl = document.getElementById('u-avatar');
+      if (user?.picture) avatarEl.src = user.picture;
+
+      // حالة الاشتراك (NS جديد مع دعم القديم)
+      const NS_NEW = "https://n-athar.co/";
+      const NS_OLD = "https://athar.co/";
+      const st = (claims && (claims[NS_NEW + "status"] || claims[NS_OLD + "status"])) || "";
       document.getElementById('u-status').textContent = st || '—';
 
+      const colorBy = {
+        active:  {bg:'#dcfce7', fg:'#166534', br:'#bbf7d0', text:'مفعل'},
+        trial:   {bg:'#dbeafe', fg:'#1e3a8a', br:'#bfdbfe', text:'تجريبي'},
+        pending: {bg:'#fef9c3', fg:'#854d0e', br:'#fde68a', text:'معلق'},
+        inactive:{bg:'#fee2e2', fg:'#991b1b', br:'#fecaca', text:'غير نشط'}
+      };
       const badge = document.getElementById('sub-state');
       if (st) {
-        const active = (st === 'active');
-        badge.style.display = 'inline-block';
-        badge.textContent   = active ? 'نشط' : 'غير نشط';
-        badge.style.background = active ? '#dcfce7' : '#fee2e2';
-        badge.style.color      = active ? '#166534' : '#991b1b';
-        badge.style.borderColor= active ? '#bbf7d0' : '#fecaca';
+        const m = colorBy[st] || colorBy.inactive;
+        badge.style.display='inline-block';
+        badge.textContent=m.text; badge.style.background=m.bg; badge.style.color=m.fg; badge.style.borderColor=m.br;
       }
 
-      // أزرار
-      document.getElementById('logout').addEventListener('click', () => {
-        client.logout({ logoutParams:{ returnTo: window.location.origin } });
-      });
+      // جلب تفضيلات المستخدم (اسم/صورة/لون)
+      try {
+        if (window.supabase && user?.sub) {
+          const { data: pref } = await window.supabase
+            .from('user_prefs').select('*').eq('user_sub', user.sub).maybeSingle();
+          if (pref?.display_name) document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = pref.display_name);
+          if (pref?.avatar_url)   avatarEl.src = pref.avatar_url;
+          if (pref?.theme_color)  document.documentElement.style.setProperty('--primary', pref.theme_color);
+        }
+      } catch(_){}
+
+      // تعديل الاسم (يحفظ في user_prefs)
+      document.getElementById('editNameBtn').onclick = async () => {
+        const cur = document.getElementById('displayName').textContent.trim();
+        const newName = prompt("أدخلي الاسم المعروض:", cur || name);
+        if (!newName || !newName.trim()) return;
+        document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = newName.trim());
+        try {
+          if (window.supabase && user?.sub) {
+            await window.supabase.from('user_prefs').upsert(
+              { user_sub: user.sub, display_name: newName.trim() },
+              { onConflict: 'user_sub' }
+            );
+          }
+        } catch(e){ console.error(e); }
+      };
+
+      // رفع صورة شخصية إلى Storage (bucket: avatars)
+      document.getElementById('avatarInput').onchange = async (ev) => {
+        const file = ev.target.files?.[0]; if (!file) return;
+        try {
+          const safe = user?.sub?.replace(/[|]/g,'_') || 'u';
+          const path = `${safe}/${Date.now()}_${file.name}`;
+          const up = await window.supabase.storage.from('avatars').upload(path, file, { upsert:true });
+          if (up.error) throw up.error;
+          const { data } = window.supabase.storage.from('avatars').getPublicUrl(path);
+          avatarEl.src = data.publicUrl;
+          await window.supabase.from('user_prefs').upsert({ user_sub: user.sub, avatar_url: data.publicUrl }, { onConflict: 'user_sub' });
+        } catch(e){ console.error(e); alert("تعذر رفع الصورة."); }
+      };
     }
 
+    // مُنتقي ألوان الواجهة (يحفظ محليًا وفي user_prefs)
+    (function themeInit(){
+      const saved = localStorage.getItem('athar:theme');
+      if (saved) document.documentElement.style.setProperty('--primary', saved);
+      const picker = document.getElementById('themePicker');
+      if (!picker) return;
+      picker.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('button[data-color]'); if (!btn) return;
+        const color = btn.getAttribute('data-color');
+        document.documentElement.style.setProperty('--primary', color);
+        localStorage.setItem('athar:theme', color);
+        try {
+          const u = await window.auth0Client?.getUser();
+          if (u?.sub && window.supabase) {
+            await window.supabase.from('user_prefs').upsert(
+              { user_sub: u.sub, theme_color: color }, { onConflict: 'user_sub' }
+            );
+          }
+        } catch(_){}
+      });
+    })();
+
+    // زر الخروج
+    document.addEventListener('click', (e)=>{
+      if (e.target && e.target.id === 'logout') {
+        window.auth0Client?.logout({ logoutParams:{ returnTo: window.location.origin } });
+      }
+    });
+
+    // تشغيل بعد جاهزية الحارس
     window.addEventListener('auth0:ready', initProfile);
-    if (window.auth0Client) initProfile(); // في حال كان جاهزًا أصلاً
+    if (window.auth0Client) initProfile();
   </script>
+
+  <!-- حارس الوصول -->
   <script src="assets/js/require-auth.js"></script>
 </body>
 </html>
