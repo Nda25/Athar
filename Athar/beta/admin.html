@@ -595,9 +595,9 @@
       document.getElementById('denyCard').style.display = ok ? 'none' : '';
       if (!ok) return;
 
-      showTab('t-complaints');
-      fetchAnnouncements().catch(console.warn);
-      loadComplaints().catch(console.warn);
+      document.getElementById('tabsCard').style.display = '';
+document.getElementById('denyCard').style.display = 'none';
+showTab('t-complaints');
     }catch(err){
       console.warn(err);
       document.getElementById('denyCard').style.display='';
