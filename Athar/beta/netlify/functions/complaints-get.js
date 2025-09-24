@@ -1,29 +1,45 @@
+// /netlify/functions/complaints-get.js
 // GET /.netlify/functions/complaints-get?id=<uuid>
+// Admin only
+
 const { requireAdmin } = require("./_auth");
+const { createClient } = require("@supabase/supabase-js");
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE,
+  { auth: { persistSession: false } }
+);
 
 exports.handler = async (event) => {
   const gate = await requireAdmin(event);
   if (!gate.ok) return { statusCode: gate.status, body: gate.error };
 
-  const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
   const id = (event.queryStringParameters || {}).id;
   if (!id) return { statusCode: 400, body: "Missing id" };
 
-  const hdrs = {
-    "apikey": SUPABASE_SERVICE_KEY,
-    "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`
-  };
-
   try {
-    const one = await fetch(`${SUPABASE_URL}/rest/v1/complaints?id=eq.${encodeURIComponent(id)}&select=*`, { headers: hdrs });
-    const rows = await one.json();
-    const complaint = rows && rows[0];
+    const { data: complaint, error: cErr } = await supabase
+      .from("complaints")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (cErr) return { statusCode: 500, body: cErr.message };
     if (!complaint) return { statusCode: 404, body: "Not found" };
 
-    const msgsRes = await fetch(`${SUPABASE_URL}/rest/v1/complaint_messages?complaint_id=eq.${encodeURIComponent(id)}&select=*&order=created_at.asc`, { headers: hdrs });
-    const messages = await msgsRes.json();
+    const { data: messages, error: mErr } = await supabase
+      .from("complaint_messages")
+      .select("*")
+      .eq("complaint_id", id)
+      .order("created_at", { ascending: true });
 
-    return { statusCode: 200, body: JSON.stringify({ ok:true, complaint, messages }) };
+    if (mErr) return { statusCode: 500, body: mErr.message };
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ok: true, complaint, messages })
+    };
   } catch (e) {
     return { statusCode: 500, body: e.message || "Server error" };
   }
