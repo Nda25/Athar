@@ -217,5 +217,27 @@
     document.addEventListener('DOMContentLoaded', bindAuthCTA);
     document.addEventListener('auth0:ready',      bindAuthCTA);
   </script>
+  <!-- مزامنة إظهار/إخفاء أزرار الدخول/الخروج والملف الشخصي -->
+<script>
+  function _show(el, yes){ if(!el) return; el.style.display = yes ? 'inline-flex' : 'none'; }
+
+  function updateAuthButtons(isAuthed){
+    _show(document.getElementById('authCta'),     !isAuthed); // زر الدخول/التسجيل
+    _show(document.getElementById('logout'),       isAuthed); // زر الخروج
+    _show(document.getElementById('nav-profile'),  isAuthed); // رابط الملف الشخصي
+  }
+
+  async function syncAuthButtons(){
+    const auth = window.auth;           // يجي من require-auth.js
+    if(!auth){ return; }
+    let ok = false;
+    try { ok = await auth.isAuthenticated(); } catch(_){}
+    updateAuthButtons(ok);
+  }
+
+  // شغّليها عند جاهزية Auth0 + عند تحميل الصفحة
+  document.addEventListener('auth0:ready', syncAuthButtons);
+  document.addEventListener('DOMContentLoaded', syncAuthButtons);
+</script>
 </body>
 </html>
