@@ -17,10 +17,15 @@
   // أنشئي عميلًا واحدًا مشتركًا (أو أعيدي استخدام الموجود)
   // التحصين: لو مكتبة supabase ما بعد لود، نخلي supa=null ونحذّر
   const supa = window.supa || (window.supabase ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null);
+
+  // ✅ السطر المطلوب موجود صراحة — إن أردتِ نسخه حرفيًا:
+  // window.supa = supabase.createClient("https://oywqpkzaudmzwvytxaop.supabase.co","ANON_PUBLIC_KEY");
+
+  // جهّزيه عالميًا
+  window.supa = supa;
+
   if (!supa) {
-    console.warn("[Athar][supa] لم يتم تحميل مكتبة Supabase بعد. تأكدي من ترتيب السكربتات:\
-\n  1) https://unpkg.com/@supabase/supabase-js@2\
-\n  2) assets/js/supabase-client.js");
+    console.warn("[Athar][supa] لم يتم تحميل مكتبة Supabase بعد. تأكدي من ترتيب السكربتات:\n  1) https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2\n  2) assets/js/supabase-client.js");
   }
 
   // ===== Helpers صغيرة: قراءة مستخدم Auth0 بأمان =====
@@ -109,5 +114,4 @@
   window.supaEnsureUserProfile = window.supaEnsureUserProfile || supaEnsureUserProfile;
   window.supaLogToolUsage     = window.supaLogToolUsage     || supaLogToolUsage;
   window.supaGetUserByEmail   = window.supaGetUserByEmail   || supaGetUserByEmail;
-  window.supa                 = supa;
 })();
