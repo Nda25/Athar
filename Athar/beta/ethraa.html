@@ -7,6 +7,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
+
+<!-- تطبيق الثيم مبكرًا (مثل بقية الصفحات) -->
+<script>
+  (function(){
+    try{
+      var c = localStorage.getItem('athar:theme');
+      if (c) document.documentElement.style.setProperty('--primary', c);
+    }catch(_){}
+  })();
+</script>
+
 <style>
   .field{ margin:10px 0 }
   .field label{ display:block; font-weight:700; margin:6px 0 }
@@ -27,7 +38,7 @@
 </style>
 </head>
 <body>
-    <div class="global-bg"></div>
+  <div class="global-bg"></div>
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
@@ -81,59 +92,71 @@
 
       <section class="card" id="out" style="display:none">
         <h2 class="title">بطاقات الإثراء</h2>
+
+        <!-- بطاقات القسم الأساسي -->
         <div class="cards" id="cards"></div>
+
+        <!-- يظهر فقط عندما تكون النتائج قديمة: قسم قريب من المجال -->
+        <div id="nearbyBox" style="display:none; margin-top:16px">
+          <h3 class="title" style="margin-bottom:10px">معلومات قريبة من المجال</h3>
+          <div class="cards" id="nearby"></div>
+        </div>
       </section>
     </div>
   </main>
 
-<footer>
-  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-  <p class="foot-name">ندى المجيرش</p>
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
 
-  <nav class="foot-links">
-    <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-    <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-    <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-    <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-    <a href="complaints.html">الشكاوى والاقتراحات</a>
-  </nav>
+    <nav class="foot-links">
+      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+      <a href="complaints.html">الشكاوى والاقتراحات</a>
+    </nav>
 
-  <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-</footer>
+    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
+  </footer>
 
-<script>
-  // سنة تلقائية في الفوتر
-  (function(){
-    var y=document.getElementById('year');
-    if(y) y.textContent=new Date().getFullYear();
-  })();
-</script>
+  <script>
+    // سنة تلقائية + مزامنة لون الثيم مع تغييره من صفحة البروفايل
+    (function(){
+      var y=document.getElementById('year');
+      if(y) y.textContent=new Date().getFullYear();
+      window.addEventListener('athar:theme-color', function(e){
+        try{ if(e && e.detail){ document.documentElement.style.setProperty('--primary', e.detail); } }catch(_){}
+      });
+    })();
+  </script>
 
   <div class="toast" id="toast"></div>
 
   <script>
   const STAGES = { p1:'ابتدائي دُنيا', p2:'ابتدائي عُليا', m:'متوسط', h:'ثانوي' };
   const cardsWrap = document.getElementById('cards');
+  const nearbyWrap = document.getElementById('nearby');
+  const nearbyBox = document.getElementById('nearbyBox');
   const out = document.getElementById('out');
   const copyBtn = document.getElementById('copy');
   const printBtn = document.getElementById('print');
 
-    // — اربطي حساب Auth0 مع جدول users مرة واحدة (upsert) بعد تحميل كل السكربتات
-window.addEventListener('load', () => {
-  if (typeof supaEnsureUserProfile === 'function') {
-    try { supaEnsureUserProfile(); } catch(_) {}
-  }
-});
+  // ربط Auth0 مع Supabase users مرة واحدة
+  window.addEventListener('load', () => {
+    if (typeof supaEnsureUserProfile === 'function') {
+      try { supaEnsureUserProfile(); } catch(_) {}
+    }
+  });
 
-// — لالتقاط الحالة الحالية كـ meta
-function ethraaMeta(){
-  return {
-    subject: (document.getElementById('subj')?.value || '').trim() || null,
-    stage: document.getElementById('stage')?.value || null,
-    focus: document.getElementById('focus')?.value || null
-  };
-}
-    
+  function ethraaMeta(){
+    return {
+      subject: (document.getElementById('subj')?.value || '').trim() || null,
+      stage: document.getElementById('stage')?.value || null,
+      focus: document.getElementById('focus')?.value || null
+    };
+  }
+
   function clean(t){ return String(t||'').replace(/\*\*?|##+|^\s*-\s*/gm,'').trim(); }
   function chip(t){ return `<span class="tag">${t}</span>`; }
   function toast(m){
@@ -141,7 +164,6 @@ function ethraaMeta(){
     t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200);
   }
 
-  // هيكل عرض مؤقت (skeleton)
   function showSkeleton(n=4){
     cardsWrap.innerHTML = '';
     for(let i=0;i<n;i++){
@@ -149,6 +171,8 @@ function ethraaMeta(){
       sk.className='skeleton';
       cardsWrap.appendChild(sk);
     }
+    nearbyBox.style.display = 'none';
+    nearbyWrap.innerHTML = '';
   }
 
   async function fetchEthraa(subject, stage, focus){
@@ -161,25 +185,29 @@ function ethraaMeta(){
     return res.json();
   }
 
-document.getElementById('gen').addEventListener('click', async ()=>{
-  const s  = (document.getElementById('subj').value||'').trim();
-  const st = document.getElementById('stage').value;
-  const fc = document.getElementById('focus').value;
-  if(!s){ toast('اكتبي المادة أولًا'); return; }
+  // عدم التكرار داخل الجلسة (بصمة)
+  const SEEN_KEY = 'ethraa_seen_v1';
+  const seen = new Set((() => {
+    try { return JSON.parse(sessionStorage.getItem(SEEN_KEY) || '[]'); } catch { return []; }
+  })());
+  function saveSeen(){
+    try { sessionStorage.setItem(SEEN_KEY, JSON.stringify(Array.from(seen))); } catch(_){}
+  }
+  function sigOf(card){
+    const s = ((card?.title||'') + '|' + (card?.idea||'')).toLowerCase();
+    let h=0; for (let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
+    return String(h);
+  }
 
-  out.style.display='block';
-  showSkeleton(4);
-  copyBtn.disabled = true;
-  printBtn.disabled = true;
-
-  try{
-    const { ok, cards=[] } = await fetchEthraa(s, st, fc);
-    cardsWrap.innerHTML = '';
-    (cards.length? cards : []).forEach(c=>{
+  function renderCards(container, cards, subject, stage){
+    container.innerHTML = '';
+    (cards || []).forEach(c=>{
       const title = clean(c.title)||'— بطاقة —';
       const brief = clean(c.brief)||'—';
       const idea  = clean(c.idea)||'—';
       const source = c.source ? `<div class="muted" style="font-size:.82rem;margin-top:6px">مصدر/مرجع: <a href="${c.source}" target="_blank" rel="noopener" style="text-decoration:underline">${c.source}</a></div>` : '';
+      const staleMark = (c.freshness === 'general') ? `<div class="muted" style="font-size:.82rem; margin-top:6px">عام</div>` : '';
+
       const card = document.createElement('div');
       card.className = 'idea';
       card.innerHTML = `
@@ -187,57 +215,89 @@ document.getElementById('gen').addEventListener('click', async ()=>{
         <p class="muted"><strong>لماذا؟</strong> ${brief}</p>
         <p><strong>اقتراح:</strong> ${idea}</p>
         ${source}
+        ${staleMark}
         <div class="tags">
-          ${chip(s)} ${chip(STAGES[st]||st)} ${chip('إثراء')}
+          ${chip(subject)} ${chip(STAGES[stage]||stage)} ${chip('إثراء')}
         </div>`;
-      cardsWrap.appendChild(card);
+      container.appendChild(card);
     });
-    copyBtn.disabled = cards.length === 0;
-    printBtn.disabled = cards.length === 0;
-    toast(ok ? 'تم ✨' : 'عُرض بديل');
+  }
 
-    // تتبّع: توليد بطاقات إثراء
-    if (typeof supaLogToolUsage === 'function') {
-      try { await supaLogToolUsage('ethraa_generate', ethraaMeta()); } catch(_){}
+  document.getElementById('gen').addEventListener('click', async ()=>{
+    const s  = (document.getElementById('subj').value||'').trim();
+    const st = document.getElementById('stage').value;
+    const fc = document.getElementById('focus').value;
+    if(!s){ toast('اكتبي المادة أولًا'); return; }
+
+    out.style.display='block';
+    showSkeleton(4);
+    copyBtn.disabled = true;
+    printBtn.disabled = true;
+
+    try{
+      const { ok, cards = [], nearby = undefined, _meta = {} } = await fetchEthraa(s, st, fc);
+
+      // فلترة التكرار داخل الجلسة
+      const uniq = [];
+      for (const c of cards) {
+        const sig = sigOf(c);
+        if (seen.has(sig)) continue;
+        seen.add(sig); uniq.push(c);
+      }
+      saveSeen();
+
+      renderCards(cardsWrap, uniq.length ? uniq : cards, s, st);
+
+      if (_meta.all_stale && Array.isArray(nearby) && nearby.length) {
+        renderCards(nearbyWrap, nearby, s, st);
+        nearbyBox.style.display = 'block';
+      } else {
+        nearbyBox.style.display = 'none';
+        nearbyWrap.innerHTML = '';
+      }
+
+      copyBtn.disabled = (cardsWrap.children.length === 0);
+      printBtn.disabled = (cardsWrap.children.length === 0);
+      toast(ok ? 'تم ✨' : 'عُرض بديل');
+
+      if (typeof supaLogToolUsage === 'function') {
+        try { await supaLogToolUsage('ethraa_generate', ethraaMeta()); } catch(_){}
+      }
+    }catch(e){
+      console.error(e);
+      cardsWrap.innerHTML = '<div class="muted">تعذّر جلب الإثراء الآن.</div>';
     }
-  }catch(e){
-    console.error(e);
-    cardsWrap.innerHTML = '<div class="muted">تعذّر جلب الإثراء الآن.</div>';
-  }
-});
-    
-copyBtn.addEventListener('click', async ()=>{
-  const text=[...document.querySelectorAll('.idea')].map(d=>d.innerText).join('\n\n— — —\n\n');
-  await navigator.clipboard.writeText(text);
-  toast('تم النسخ ✅');
-  // تتبّع النسخ
-  if (typeof supaLogToolUsage === 'function') {
-    try { await supaLogToolUsage('ethraa_copy', ethraaMeta()); } catch(_){}
-  }
-});
+  });
 
-printBtn.addEventListener('click', async ()=>{
-  window.print();
-  // تتبّع الطباعة
-  if (typeof supaLogToolUsage === 'function') {
-    try { await supaLogToolUsage('ethraa_print', ethraaMeta()); } catch(_){}
-  }
-});
+  copyBtn.addEventListener('click', async ()=>{
+    const text=[...document.querySelectorAll('.idea')].map(d=>d.innerText).join('\n\n— — —\n\n');
+    await navigator.clipboard.writeText(text);
+    toast('تم النسخ ✅');
+    if (typeof supaLogToolUsage === 'function') {
+      try { await supaLogToolUsage('ethraa_copy', ethraaMeta()); } catch(_){}
+    }
+  });
+
+  printBtn.addEventListener('click', async ()=>{
+    window.print();
+    if (typeof supaLogToolUsage === 'function') {
+      try { await supaLogToolUsage('ethraa_print', ethraaMeta()); } catch(_){}
+    }
+  });
   </script>
 
-<!-- Auth0 SDK (اختياري - يُفضّل إبقاؤه مع فولباك) -->
-<script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+  <!-- Auth0 SDK (اختياري - يُفضّل إبقاؤه مع فولباك) -->
+  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
 
-<!-- Supabase -->
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="/assets/js/supabase-client.js"></script>
+  <!-- Supabase -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="/assets/js/supabase-client.js"></script>
 
-<!-- الحماية (يجب أن يسبق أي كود يعتمد على تسجيل الدخول) -->
-<script defer src="/assets/js/require-auth.js"></script>
+  <!-- الحماية (يجب أن يسبق أي كود يعتمد على تسجيل الدخول) -->
+  <script defer src="/assets/js/require-auth.js"></script>
 
-<!-- سكربتات مشروعك -->
-<script defer src="/app.js"></script>
-
+  <!-- سكربتات مشروعك -->
+  <script defer src="/app.js"></script>
 </body>
 </html>
