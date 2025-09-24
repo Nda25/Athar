@@ -1,33 +1,24 @@
 // /assets/js/require-auth.js
 // =============================================
-// Athar - Front-end Guard (with debug logs, slug paths)
-// - يمنع فلاش المحتوى في الصفحات المحمية
-// - يتحقق من هوية المستخدم + صلاحياته + حالة الاشتراك
-// - يدعم الروابط بـ .html وبدونها (/admin و /admin.html)
-// - يعالج ثغرة الرجوع bfcache
-// - يسجل خطوات في Console لتشخيص أي مشكلة
+// Athar - Front-end Guard (with live user-status check)
 // =============================================
 (function AtharGuard(){
-  // ===== إعداد Auth0 =====
   const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
   const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
   const API_AUDIENCE = "https://api.n-athar";
   const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-  // DEBUG
   const DEBUG = true;
   const log  = (...a)=>{ if (DEBUG) console.info("[AtharGuard]", ...a); };
   const warn = (...a)=>{ console.warn("[AtharGuard]", ...a); };
   const err  = (...a)=>{ console.error("[AtharGuard]", ...a); };
 
-  // نعرض الإعدادات عموميًا إن احتاجتها سكربتات أخرى
   window.__CFG = Object.assign({}, window.__CFG || {}, {
     auth0_domain: AUTH0_DOMAIN,
     auth0_clientId: AUTH0_CLIENT,
     api_audience: API_AUDIENCE
   });
 
-  // ===== إشارة جاهزية auth (يُستخدمها admin.html) =====
   let __AUTH_READY_FIRED__ = false;
   function fireAuthReady(){
     if (__AUTH_READY_FIRED__) return;
@@ -35,33 +26,21 @@
     try { window.dispatchEvent(new Event("auth0:ready")); } catch(_) {}
   }
 
-  // ===== تحويل المسار إلى "slug" موحّد =====
-  // "/" أو "/index" أو "/index.html" => "index"
-  // "/admin" أو "/admin.html"        => "admin"
   function fileSlug(){
-    let p = location.pathname.replace(/\/+$/,''); // شيل السلاش الأخير
+    let p = location.pathname.replace(/\/+$/,'');
     if (p === "" || p === "/") return "index";
-    const last = p.split("/").pop();              // "admin" أو "admin.html"
+    const last = p.split("/").pop();
     return last.replace(/\.html?$/i, "").toLowerCase();
   }
 
-  // ===== تعريف الصفحات حسب "slug" =====
   const PUBLIC = new Set([
     "index", "pricing", "programs",
     "privacy", "terms", "refund-policy", "whatsapp"
   ]);
-
-  const LOGIN_ONLY = new Set(["profile"]); // يتطلب دخول فقط
+  const LOGIN_ONLY = new Set(["profile"]);
   const TOOLS = new Set(["athar","darsi","masar","miyad","ethraa","mulham"]);
   const ADMIN = "admin";
 
-  // ===== Claims namespace =====
-  const NS           = "https://n-athar.co/";
-  const CLAIM_STATUS = NS + "status";   // نتوقع 'active' لفتح الأدوات
-  const CLAIM_ROLES  = NS + "roles";    // array
-  const CLAIM_ADMIN  = NS + "admin";    // boolean
-
-  // ===== Helpers =====
   const toPricing = (msg) => {
     try { if (msg) sessionStorage.setItem("athar:msg", msg); } catch {}
     location.replace("/pricing.html");
@@ -79,7 +58,6 @@
     });
   };
 
-  // حاجب فوري يمنع فلاش المحتوى
   function mountGuardOverlay(){
     if (document.getElementById("athar-guard")) return;
     const s = document.createElement("style");
@@ -101,7 +79,6 @@
     document.getElementById("athar-guard-style")?.remove();
   }
 
-  // تحميل مكتبة Auth0 SPA إن لم تكن موجودة
   async function ensureAuth0SDK(){
     if (window.auth0?.createAuth0Client || window.createAuth0Client) return;
     await new Promise((res, rej) => {
@@ -125,23 +102,34 @@
     if (API_AUDIENCE) options.authorizationParams.audience = API_AUDIENCE;
     const c = await f(options);
     window.auth0Client = c; window.auth = c;
-    fireAuthReady(); // <— مهم: أعلن الجاهزية فور إنشاء العميل
+    fireAuthReady();
     return c;
   }
 
   async function cleanupRedirectIfNeeded(client){
     if (location.search.includes("code=") && location.search.includes("state=")) {
       try { await client.handleRedirectCallback(); }
-      catch (e) { /* لا نوقف الصفحة */ }
+      catch (e) { /* ignore */ }
       history.replaceState({}, document.title, location.pathname + location.hash);
     }
   }
 
-  const isAdmin = (claims) => {
-    const roles = claims?.[CLAIM_ROLES] || [];
-    return roles.includes("admin") || claims?.[CLAIM_ADMIN] === true;
-  };
-  const userStatus = (claims) => claims?.[CLAIM_STATUS] || "";
+  // === جديد: جلب حالة الاشتراك من السيرفر ===
+  async function fetchUserStatus(client){
+    try {
+      const token = await client.getTokenSilently?.() || await client.getTokenWithPopup?.();
+      if (!token) return { active:false, status:"none", expires_at:null };
+      const res = await fetch("/.netlify/functions/user-status", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store"
+      });
+      if (!res.ok) return { active:false, status:"none", expires_at:null };
+      const data = await res.json();
+      return { active: !!data.active, status: data.status || "none", expires_at: data.expires_at || null };
+    } catch (e) {
+      return { active:false, status:"none", expires_at:null };
+    }
+  }
 
   async function enforce(){
     addMetaNoStore();
@@ -149,26 +137,22 @@
     const slug = fileSlug();
     log("slug:", slug);
 
-    // الصفحات العامة: فقط نظّف العودة من Auth0 لو موجودة ثم اسمح بالعرض
     if (PUBLIC.has(slug)) {
       try { const tmp = await buildClient(); await cleanupRedirectIfNeeded(tmp); } catch {}
       log("Public -> allowed");
       unmountGuardOverlay();
-      fireAuthReady(); // <— نعلن الجاهزية للصفحات العامة أيضًا
+      fireAuthReady();
       return;
     }
 
-    // باقي الصفحات تتطلب تحقق
     let client;
     try { client = await buildClient(); await cleanupRedirectIfNeeded(client); }
     catch (e) { err("Auth0 init failed:", e?.message || e); unmountGuardOverlay(); return; }
 
-    // profile: تسجيل دخول فقط
     if (LOGIN_ONLY.has(slug)) {
       let authed = false;
       try { authed = await client.isAuthenticated(); } catch {}
       if (!authed) {
-        log("profile requires login -> redirect login");
         try {
           await client.loginWithRedirect({ authorizationParams: { screen_hint:"login", redirect_uri: REDIRECT_URI } });
           return;
@@ -176,17 +160,13 @@
           return toPricing("الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.");
         }
       }
-      log("profile allowed");
-      unmountGuardOverlay();
-      fireAuthReady();
-      return;
+      unmountGuardOverlay(); fireAuthReady(); return;
     }
 
-    // أدوات/أدمن: تحتاج تسجيل دخول
-    let authed = false, claims = null;
+    // باقي الصفحات: لازم تسجيل دخول
+    let authed = false;
     try { authed = await client.isAuthenticated(); } catch {}
     if (!authed) {
-      log("Protected requires login -> redirect login");
       try {
         await client.loginWithRedirect({ authorizationParams: { screen_hint:"login", redirect_uri: REDIRECT_URI } });
         return;
@@ -195,42 +175,29 @@
       }
     }
 
-    try { claims = await client.getIdTokenClaims(); } catch {}
+    // تحقق الحالة من السيرفر (سواء أدوات أو أدمن أو غيره)
+    const status = await fetchUserStatus(client);
+    log("live status:", status);
 
-    // admin
     if (slug === ADMIN) {
-      if (!isAdmin(claims)) {
-        log("admin blocked: missing admin claim/role");
-        return toPricing("هذه الصفحة متاحة للمشرفين فقط.");
-      }
-      log("admin allowed");
-      unmountGuardOverlay();
-      fireAuthReady();
-      return;
+      // للأدمن ممكن لاحقًا نضيف فحص isAdmin من دالة خاصة، لكن الآن نطلب active أيضًا
+      if (!status.active) return toPricing("هذه الصفحة للمشتركين النشطين فقط.");
+      unmountGuardOverlay(); fireAuthReady(); return;
     }
 
-    // الأدوات: لازم status = active
     if (TOOLS.has(slug)) {
-      const st = userStatus(claims);
-      if (st !== "active") {
-        log("tool blocked: status=", st);
-        return toPricing("حسابك غير مُفعّل بعد. الرجاء الاشتراك أو انتظار التفعيل.");
+      if (!status.active) {
+        return toPricing("حسابك غير مُفعّل (انتهت التجربة أو لم يتم التفعيل).");
       }
-      log("tool allowed");
-      unmountGuardOverlay();
-      fireAuthReady();
-      return;
+      unmountGuardOverlay(); fireAuthReady(); return;
     }
 
-    // أي صفحة غير مصنفة = نتعامل معها كمحمية وتتطلب اشتراك نشط
-    const st = userStatus(claims);
-    if (st !== "active") {
-      log("unlisted protected page blocked: status=", st);
+    // أي صفحة محمية غير مصنّفة
+    if (!status.active) {
       return toPricing("هذه الصفحة للمشتركين النشطين فقط.");
     }
-    log("unlisted protected page allowed");
-    unmountGuardOverlay();
-    fireAuthReady();
+
+    unmountGuardOverlay(); fireAuthReady();
   }
 
   if (document.readyState === "loading") {
@@ -239,7 +206,6 @@
     enforce();
   }
 
-  // معالجة ثغرة الرجوع من الكاش (bfcache)
   window.addEventListener("pageshow", function(e){
     if (e.persisted) enforce();
   });
