@@ -77,13 +77,11 @@
   }
 
   /* ==== تحسين الطباعة للجوال/الآيباد ==== */
-  /* نعزل المحتوى القابل للطباعة داخل ورقة A4 */
   @media print{
     html,body{ background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .global-bg,.backdrop,.pattern,.topbar,header,.actions-row,form,.toast{ display:none !important; }
     #out{ display:block !important; }
     .container{ width:auto; margin:0; padding:0; }
-    /* ورقة A4: عرض 180mm داخل هامش الصفحة */
     .printable{
       width: 180mm !important;
       margin: 0 auto !important;
@@ -308,6 +306,22 @@ window.addEventListener('load', () => {
   }
 });
 
+// ===== الحصول على توكن المصادقة من حارس الدخول (بدون تغيير الحماية) =====
+async function getAuthToken() {
+  try {
+    // يحضّره require-auth.js عادةً
+    if (window.AtharGuard?.token) return window.AtharGuard.token;
+    if (typeof window.getAtharToken === 'function') {
+      const t = await window.getAtharToken();
+      if (t) return t;
+    }
+    // احتياطي: مخزن محلي إن كان الحارس يخزّنه
+    const t2 = localStorage.getItem('athar_id_token') || localStorage.getItem('athar_access_token');
+    if (t2) return t2;
+  } catch(_) {}
+  return null;
+}
+
 // meta لتتبّع
 function mulhamMeta(){
   const get = id => document.getElementById(id);
@@ -336,11 +350,29 @@ document.addEventListener('DOMContentLoaded', ()=>{ bindAutoSave('mulham', '#mul
 let lastParams = null;
 
 async function callMulham(body) {
+  const token = await getAuthToken();
+  if (!token) {
+    // نفس نهج الحماية: لا نكسر شيء — ننبّه فقط
+    toast('الرجاء تسجيل الدخول لتفعيل مُلهم');
+  }
   const res = await fetch("/.netlify/functions/mulham", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": "Bearer " + token } : {})
+    },
     body: JSON.stringify(body)
   });
+
+  // رسائل واضحة لحالات الحماية/الاشتراك
+  if (res.status === 401) {
+    const t = await res.text();
+    throw new Error("غير مصرح: "+ (t||'يرجى تسجيل الدخول'));
+  }
+  if (res.status === 402) {
+    const t = await res.text();
+    throw new Error("العضوية غير مفعّلة: " + (t||'جرّبي تفعيل/تجديد الاشتراك'));
+  }
   if (!res.ok) throw new Error("Mulham function failed");
   return res.json();
 }
@@ -437,7 +469,11 @@ async function generate(withVariant=false){
     busyBtn.disabled = false;
   }catch(e){
     console.error(e);
-    toast('تعذّر التوليد، حاولي ثانية.');
+    // رسائل أدق حسب السبب
+    const msg = String(e.message||e);
+    if (msg.includes('غير مصرح')) toast('غير مصرح — سجّلي الدخول');
+    else if (msg.includes('العضوية غير مفعّلة')) toast('العضوية غير مفعّلة');
+    else toast('تعذّر التوليد، حاولي ثانية.');
     if (busyBtn){
       busyBtn.textContent = withVariant ? 'أنشطة أخرى' : 'ولّد الأنشطة';
       busyBtn.disabled = false;
