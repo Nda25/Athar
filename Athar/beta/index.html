@@ -22,6 +22,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
+  <!-- (اختياري) Tailwind CDN للتجارب فقط -->
+  <script defer src="https://cdn.tailwindcss.com"></script>
 
   <!-- تهيئة الثيم المبكرة -->
   <script>
@@ -54,25 +56,25 @@
   <div class="pattern"></div>
 
   <!-- Topbar -->
-<div class="topbar">
-  <div class="tb-left">
-    <button id="authCta" class="btn" type="button">الدخول / التسجيل</button>
-    <button id="logout" class="btn" type="button">تسجيل خروج</button>
-  </div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button id="authCta" class="btn" type="button">الدخول / التسجيل</button>
+      <button id="logout" class="btn" type="button">تسجيل خروج</button>
+    </div>
 
-  <div class="tb-center">
-    <!-- يظهر فقط للأدمن عبر app.js -->
-    <a id="adminBtn" href="/admin.html" style="display:none">لوحة التحكم</a>
-    <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-    <a class="btn" href="programs.html">مساحة إبداعي</a>
-  </div>
+    <div class="tb-center">
+      <!-- يظهر فقط للأدمن عبر app.js -->
+      <a id="adminBtn" href="/admin.html" style="display:none">لوحة التحكم</a>
+      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+      <a class="btn" href="programs.html">مساحة إبداعي</a>
+    </div>
 
-  <div class="tb-right">
-    <a class="btn" href="pricing.html">الدفع والإشتراك</a>
-    <!-- يظهر بعد تسجيل الدخول -->
-    <a id="nav-profile" class="btn" href="profile.html" style="display:none">ملفي الشخصي</a>
+    <div class="tb-right">
+      <a class="btn" href="pricing.html">الدفع والإشتراك</a>
+      <!-- يظهر بعد تسجيل الدخول -->
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">ملفي الشخصي</a>
+    </div>
   </div>
-</div>
 
   <header>
     <div class="hero">
@@ -165,74 +167,275 @@
     window.__ATHAR_STORAGE_LOADED__ = !!window.__ATHAR_STORAGE_LOADED__;
   </script>
 
-<!-- SDKs أولاً (نفس النسخ في كل الصفحات) -->
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"></script>
+  <!-- SDKs أولاً (نفس النسخ في كل الصفحات) -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"></script>
 
-<!-- سكربتات مشروعك (مرتبة وبـ defer) -->
-<script defer src="assets/js/supabase-client.js"></script>
-<script defer src="assets/js/ui.js"></script>
-<script defer src="assets/js/theme.js"></script>
-<script defer src="assets/js/storage.js" onload="window.__ATHAR_STORAGE_LOADED__=true"></script>
+  <!-- سكربتات مشروعك (مرتبة وبـ defer) -->
+  <script defer src="assets/js/supabase-client.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/theme.js"></script>
+  <script defer src="assets/js/storage.js" onload="window.__ATHAR_STORAGE_LOADED__=true"></script>
 
-<!-- الحارس: ينشئ window.auth ويطلق auth0:ready -->
-<script defer src="assets/js/require-auth.js"></script>
+  <!-- الحارس: ينشئ window.auth ويطلق auth0:ready -->
+  <script defer src="assets/js/require-auth.js"></script>
 
-<!-- أخيراً: سكربت التطبيق العام -->
-<script defer src="app.js"></script>
+  <!-- أخيراً: سكربت التطبيق العام -->
+  <script defer src="app.js"></script>
 
-  <!-- تلميح: لإظهار زر لوحة التحكم للأدمن + زر الملف الشخصي للمسجّل -->
-  <!-- سكربت صارم لإظهار زر لوحة التحكم للأدمن فقط -->
+  <!-- سكربت زر الدخول / التسجيل + تسجيل الخروج -->
   <script>
-    document.addEventListener('auth0:ready', async () => {
-      const adminBtn = document.getElementById('adminBtn');
-      const profBtn  = document.getElementById('nav-profile');
+    function bindAuthCTA(){
+      const btn  = document.getElementById('authCta');
+      const out  = document.getElementById('logout');
+      const auth = window.auth;   // يجي من require-auth.js
+      if (!btn) return;
 
-      // إخفاء افتراضي
-      if (adminBtn) adminBtn.style.display = 'none';
-      if (!window.auth) return;
+      if (!auth) { btn.disabled = false; return; }
 
-      // لا تواصلي لو مافي جلسة دخول مؤكدة
-      let authed = false;
-      try { authed = await window.auth.isAuthenticated(); } catch {}
-      if (!authed) return;
+      // الدخول / التسجيل
+      btn.disabled = false;
+      btn.onclick = () => {
+        auth.loginWithRedirect({
+          authorizationParams: {
+            redirect_uri: window.location.origin + '/profile.html'
+            // لو تبين فتح شاشة "التسجيل" مباشرة:
+            // screen_hint: 'signup'
+          }
+        });
+      };
 
-      // أظهري رابط الملف الشخصي للمسجّل
-      try {
-        const u = await window.auth.getUser();
-        if (u && profBtn) profBtn.style.display = 'inline-flex';
-      } catch {}
+      // تسجيل خروج
+      if (out) {
+        out.onclick = () => {
+          auth.logout({ logoutParams: { returnTo: window.location.origin } });
+        };
+      }
+    }
 
-      // تحقّق الأدمن من الـ claims
-      try {
-        const claims = await window.auth.getIdTokenClaims();
-        const NS  = "https://n-athar.co/";
-        const ALT = "https://athar.co/";
-
-        const roles   = claims?.[NS + "roles"] || claims?.[ALT + "roles"] || [];
-        const isAdmin = (Array.isArray(roles) && roles.includes("admin"))
-                     || claims?.[NS + "admin"] === true
-                     || claims?.[ALT + "admin"] === true;
-
-        if (isAdmin && adminBtn) adminBtn.style.display = 'inline-flex';
-      } catch {}
-    });
+    // نربط الزرين عند جاهزية DOM + عند جاهزية Auth0
+    document.addEventListener('DOMContentLoaded', bindAuthCTA);
+    document.addEventListener('auth0:ready',      bindAuthCTA);
   </script>
-    <script>
-  document.addEventListener('auth0:ready', () => {
-    const btn = document.getElementById('authCta');
-    if (!btn || !window.auth) return;
+</body>
+</html><!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>أثـَــر</title>
 
-    btn.onclick = () => {
-      window.auth.loginWithRedirect({
-        authorizationParams: {
-          redirect_uri: window.location.origin + '/profile.html'
-          // لو تبغينه يفتح مباشرة على "التسجيل" بدل "الدخول" زيدي:
-          // screen_hint: 'signup'
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="apple-touch-icon" href="assets/icon.png">
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:title" content="أثـَـر">
+  <meta property="og:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
+  <meta property="og:image" content="https://n-athar.co/assets/icon.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="أثـَـر">
+  <meta name="twitter:description" content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر">
+  <meta name="twitter:image" content="https://n-athar.co/assets/icon.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- (اختياري) Tailwind CDN للتجارب فقط -->
+  <script defer src="https://cdn.tailwindcss.com"></script>
+
+  <!-- تهيئة الثيم المبكرة -->
+  <script>
+    (function(){
+      var root = document.documentElement;
+      var saved = null;
+      try { saved = localStorage.getItem('theme'); } catch(_) {}
+      if (saved === 'dark') root.classList.add('dark');
+      else {
+        root.classList.remove('dark');
+        try { localStorage.setItem('theme','light'); } catch(_) {}
+      }
+      function fixBodyDark(){
+        if (document.body && document.body.classList.contains('dark')) {
+          document.body.classList.remove('dark');
+          root.classList.add('dark');
         }
-      });
-    };
-  });
-</script>
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixBodyDark);
+      } else {
+        fixBodyDark();
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="global-bg"></div>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="tb-left">
+      <button id="authCta" class="btn" type="button">الدخول / التسجيل</button>
+      <button id="logout" class="btn" type="button">تسجيل خروج</button>
+    </div>
+
+    <div class="tb-center">
+      <!-- يظهر فقط للأدمن عبر app.js -->
+      <a id="adminBtn" href="/admin.html" style="display:none">لوحة التحكم</a>
+      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+      <a class="btn" href="programs.html">مساحة إبداعي</a>
+    </div>
+
+    <div class="tb-right">
+      <a class="btn" href="pricing.html">الدفع والإشتراك</a>
+      <!-- يظهر بعد تسجيل الدخول -->
+      <a id="nav-profile" class="btn" href="profile.html" style="display:none">ملفي الشخصي</a>
+    </div>
+  </div>
+
+  <header>
+    <div class="hero">
+      <h1 class="logo">أثـَــر</h1>
+      <div class="tag"><span class="dot"></span>حين يلتقي الشغف بالمعرفة .. يُصنع الأثـَـر</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+
+      <!-- ============ نبذة «أثر» ============ -->
+      <section class="info">
+
+        <!-- 1) ما هو أثر؟ -->
+        <article class="card info-card">
+          <h2 class="title">ما هو «أثر»؟</h2>
+          <p class="lead">
+            منصة تعليمية ذكية صُمّمت لتكون مساحة إبداع للمعلم. تُولّد استراتيجيات وأنشطة وأسئلة
+            تفاعلية <strong>يمكن تعديلها لتناسب درسك وطلابك</strong>، وتمنحك أدوات عملية تُبسّط
+            التخطيط والإدارة لتصبح الحصة أكثر أثرًا وفاعلية.
+          </p>
+        </article>
+
+        <!-- 2) ما هي استراتيجيات بلوم؟ -->
+        <article class="card info-card">
+          <h2 class="title">ما هي استراتيجيات بلوم؟</h2>
+          <p class="lead">
+            بلوم إطار عالمي يُنظّم مستويات التعلّم (تذكّر، فهم، تطبيق، تحليل، تقويم، ابتكار).
+            يسهّل على المعلم بناء أسئلة وأنشطة تصعد بالطالب تدريجيًا، فتتوازن الحصة بين
+            التذكّر والتفكير العميق.
+          </p>
+        </article>
+
+        <!-- 3) كيف يفيدني أثر كمعلم/ـة؟ -->
+        <article class="card info-card">
+          <h2 class="title">كيف يفيدني «أثر» كمعلم/ـة؟</h2>
+          <p class="lead">
+            يتيح لك أثـَـر قوالب جاهزة تُسرّع إعداد الدروس الإبداعية وتُبعد عنك التكرار المرهق، كما يزودك بأنشطة وأسئلة مرنة تلائم مستوى طلابك ووقت الحصة،
+            وتزودك بأدوات ذكية تجعل خطتك أكثر تنظيمًا.. وإدارة الصّـف أكثر سلاسـة.
+            <a href="programs.html" class="btn-link">اطّلع على برامج «أثر»</a>
+          </p>
+        </article>
+
+        <!-- 4) كيف وُلد أثر؟ -->
+        <article class="card info-card">
+          <h2 class="title">كيف وُلد «أثر»؟</h2>
+          <p class="lead">
+            لم تكن الحكاية بحثًا عن “أداة” بقدر ما كانت مطاردةً لفكرة:<br>
+            كيف نجعل الدرس ينبض بالحياة؟<br>
+            حين اصطدمتُ بسقف الاستراتيجيات التقليدية، قررت أن أبني مساحةً تُوقظ الشغف وتفتح الآفاق.<br>
+            من هنا وُلد «أثـر»..<br>
+            مشروعٌ تعليميٌّ صُنع على مهل، ليحترم عقل المتعلم ويُعطي المعلم أدواتٍ
+            دقيقة، جميلة، وسهلة الاستخدام.
+          </p>
+        </article>
+
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
+
+    <nav class="foot-links">
+      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+      <a href="complaints.html">الشكاوى والاقتراحات</a>
+    </nav>
+
+    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
+  </footer>
+
+  <!-- وظائف خفيفة في الصفحة -->
+  <script>
+    // سنة تلقائية
+    (function(){
+      var y = document.getElementById('year');
+      if (y) y.textContent = new Date().getFullYear();
+    })();
+
+    // Namespace واحد ثابت عبر المشروع (يطابق الـ Action)
+    window.ATHAR_NS = "https://n-athar.co/";
+
+    // منع تحميل storage.js مرتين لو صار إدراج مكرر بالخطأ
+    window.__ATHAR_STORAGE_LOADED__ = !!window.__ATHAR_STORAGE_LOADED__;
+  </script>
+
+  <!-- SDKs أولاً (نفس النسخ في كل الصفحات) -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"></script>
+
+  <!-- سكربتات مشروعك (مرتبة وبـ defer) -->
+  <script defer src="assets/js/supabase-client.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/theme.js"></script>
+  <script defer src="assets/js/storage.js" onload="window.__ATHAR_STORAGE_LOADED__=true"></script>
+
+  <!-- الحارس: ينشئ window.auth ويطلق auth0:ready -->
+  <script defer src="assets/js/require-auth.js"></script>
+
+  <!-- أخيراً: سكربت التطبيق العام -->
+  <script defer src="app.js"></script>
+
+  <!-- سكربت زر الدخول / التسجيل + تسجيل الخروج -->
+  <script>
+    function bindAuthCTA(){
+      const btn  = document.getElementById('authCta');
+      const out  = document.getElementById('logout');
+      const auth = window.auth;   // يجي من require-auth.js
+      if (!btn) return;
+
+      if (!auth) { btn.disabled = false; return; }
+
+      // الدخول / التسجيل
+      btn.disabled = false;
+      btn.onclick = () => {
+        auth.loginWithRedirect({
+          authorizationParams: {
+            redirect_uri: window.location.origin + '/profile.html'
+            // لو تبين فتح شاشة "التسجيل" مباشرة:
+            // screen_hint: 'signup'
+          }
+        });
+      };
+
+      // تسجيل خروج
+      if (out) {
+        out.onclick = () => {
+          auth.logout({ logoutParams: { returnTo: window.location.origin } });
+        };
+      }
+    }
+
+    // نربط الزرين عند جاهزية DOM + عند جاهزية Auth0
+    document.addEventListener('DOMContentLoaded', bindAuthCTA);
+    document.addEventListener('auth0:ready',      bindAuthCTA);
+  </script>
 </body>
 </html>
