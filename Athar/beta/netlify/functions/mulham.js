@@ -1,10 +1,52 @@
-// netlify/functions/mulham.js
+// /netlify/functions/mulham.js
 // مُلهم: توليد أنشطة (حركي/جماعي/فردي) + وصف مختصر + خطوات + تذكرة خروج + الأثر المتوقع
 // يدعم: بدون أدوات (zero-prep) + تكييف منخفض التحفيز + فروق فردية + بدائل (variant)
+// + حارس اشتراك (active) من Supabase
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { createClient } = require("@supabase/supabase-js");
+const { requireUser } = require("./_auth.js");
 
-// Hash بسيط لإنتاج فهرس ثابت بناءً على المدخلات (لتنويع الاختيار من الأنشطة)
+// ===== Supabase client (Service Role) =====
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE,
+  { auth: { persistSession: false } }
+);
+
+// ===== فحص حالة العضوية (يفضّل v_user_status ثم memberships) =====
+async function isActiveMembership(user_sub, email) {
+  try {
+    const { data, error } = await supabase
+      .from("v_user_status")
+      .select("active")
+      .or(`user_sub.eq.${user_sub},email.eq.${(email||"").toLowerCase()}`)
+      .limit(1)
+      .maybeSingle();
+    if (!error && data) return !!data.active;
+  } catch (_) {}
+
+  try {
+    let q = supabase
+      .from("memberships")
+      .select("end_at, expires_at")
+      .order("end_at", { ascending: false })
+      .limit(1);
+
+    if (user_sub) q = q.eq("user_id", user_sub);
+    else if (email) q = q.eq("email", (email||"").toLowerCase());
+    else return false;
+
+    const { data: rows } = await q;
+    const row = rows?.[0];
+    const exp = row?.end_at || row?.expires_at;
+    return exp ? new Date(exp) > new Date() : false;
+  } catch (_) {
+    return false;
+  }
+}
+
+// ===== Hash بسيط لإنتاج فهرس ثابت (لتنويع الاختيار من الأنشطة) =====
 function hashInt(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
@@ -20,7 +62,20 @@ exports.handler = async (event) => {
       return { statusCode: 405, body: "Method Not Allowed" };
     }
 
-    // 1) مفاتيح البيئة
+    // 0) التحقق من المستخدم (JWT من Auth0)
+    const gate = await requireUser(event);
+    if (!gate.ok) return { statusCode: gate.status, body: gate.error };
+
+    // 0.1) قفل حسب الاشتراك (لا توليد إن لم يكن Active)
+    const ok = await isActiveMembership(gate.user?.sub, gate.user?.email);
+    if (!ok) {
+      return {
+        statusCode: 402, // Payment Required (إرشادي)
+        body: "Membership is not active (trial expired or not activated)."
+      };
+    }
+
+    // 1) مفاتيح البيئة (Gemini)
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing");
@@ -52,7 +107,7 @@ exports.handler = async (event) => {
     if (noTools) constraints.push("يجب أن تكون كل الأنشطة Zero-prep (بدون قص/لصق/بطاقات/أدوات).");
     constraints.push(`الزمن المتاح إجماليًا ~ ${time} دقيقة؛ اجعل كل نشاط قابلاً للتنفيذ داخل هذا السقف.`);
     constraints.push(`مستوى بلوم المستهدف: ${bloom}. المرحلة الدراسية: ${ageLabel}.`);
-    constraints.push("استخدم لغة ومفردات وأمثلة **مناسبة تمامًا** للمرحلة، وتجنّب التعقيد غير المناسب.");
+    constraints.push("استخدم لغة ومفردات وأمثلة مناسبة تمامًا للمرحلة، وتجنّب التعقيد غير المناسب.");
     constraints.push("كل نشاط يجب أن يتضمن خطوات عملية دقيقة قابلة للتنفيذ فورًا داخل الصف.");
     constraints.push("أعد اقتراحات متنوعة وليست متشابهة حرفيًا بين الفئات.");
 
@@ -60,7 +115,6 @@ exports.handler = async (event) => {
     if (adaptLow)  adaptations.push("تكيف منخفض التحفيز: مهام قصيرة جدًا، مكافآت فورية، أدوار بسيطة، فواصل حركة.");
     if (adaptDiff) adaptations.push("فروق فردية: ثلاث مستويات (سهل/متوسط/متقدم) أو بدائل للمنتج النهائي.");
 
-    // نجعل البذرة جزءًا من البرومبت لتشجيع التنويع
     const seedNote = `بذرة التنويع: ${variant || "base"}`;
 
     const prompt = `
@@ -151,8 +205,10 @@ ${seedNote}
 
     // ===== اختيار نشاط مختلف لكل فئة بناء على hash من المعطيات =====
     function normalizeActivity(a = {}) {
-      // تقدير مدة افتراضية إن لم يرجعها الموديل
-      const dur = typeof a.duration === "number" && a.duration > 0 ? a.duration : Math.max(5, Math.min(20, Math.round(time / 2)));
+      const dur = typeof a.duration === "number" && a.duration > 0
+        ? a.duration
+        : Math.max(5, Math.min(20, Math.round(time / 2)));
+
       return {
         ideaHook:        a.ideaHook || a.title || "",
         desc:            a.summary  || a.description || "",
