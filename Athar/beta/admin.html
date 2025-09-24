@@ -1,4 +1,4 @@
-l<!-- admin.html -->
+<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -29,6 +29,9 @@ l<!-- admin.html -->
   .status-rejected{background:#fee2e2; color:#7f1d1d}
   .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
   .hidden{display:none}
+  .mini-actions{ display:flex; gap:6px; flex-wrap:wrap }
+  .btn.sm{ padding:6px 10px; font-size:12px }
+  .nowrap{ white-space:nowrap }
 </style>
 </head>
 <body>
@@ -40,7 +43,7 @@ l<!-- admin.html -->
 
   <header>
     <div class="hero">
-      <h1 class="logo">صفحة المديرة الرايعة ندو </h1>
+      <h1 class="logo">صفحة المديرة الراقية ندو</h1>
       <div class="tag"><span class="dot"></span>فريق أثر</div>
     </div>
   </header>
@@ -57,7 +60,8 @@ l<!-- admin.html -->
       <div class="actions-row" style="gap:6px">
         <button class="btn" data-tab="t-activate">التفعيل اليدوي</button>
         <button class="btn" data-tab="t-ann">الإعلانات</button>
-        <button class="btn primary" data-tab="t-complaints">الشكاوى والاقتراحات</button>
+        <button class="btn" data-tab="t-complaints">الشكاوى والاقتراحات</button>
+        <button class="btn primary" data-tab="t-users">المشتركون الجدد</button>
       </div>
     </section>
 
@@ -228,6 +232,38 @@ l<!-- admin.html -->
         </div>
       </div>
     </section>
+
+    <!-- المشتركون الجدد -->
+    <section class="card" id="t-users" style="display:none">
+      <h2 class="title">المشتركون الجدد</h2>
+      <div class="toolbar">
+        <input id="u-q" type="search" placeholder="بحث (اسم/إيميل)" style="flex:1;min-width:200px">
+        <select id="u-active">
+          <option value="">الكل</option>
+          <option value="true">نشط</option>
+          <option value="false">غير نشط</option>
+        </select>
+        <button class="btn" id="u-refresh">تحديث</button>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>المستخدم</th>
+              <th>الإيميل</th>
+              <th>انضمّ</th>
+              <th>الحالة</th>
+              <th>ينتهي</th>
+              <th class="nowrap">تفعيل سريع</th>
+            </tr>
+          </thead>
+          <tbody id="u-rows">
+            <tr><td colspan="6" class="muted">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <div class="toast" id="toast"></div>
@@ -243,9 +279,9 @@ l<!-- admin.html -->
   <!-- الحارس العام -->
   <script src="assets/js/require-auth.js"></script>
 
-  <!-- moment + hijri (مصحح: استخدمنا النسخة المبنية/المصغرة) -->
+  <!-- moment + hijri -->
   <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/moment-hijri@2.3.1/moment-hijri.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment-hijri@2.3.1/moment-hijri.js"></script>
 
   <!-- سكربت عام (ثيم/أزرار) -->
   <script src="app.js"></script>
@@ -254,7 +290,7 @@ l<!-- admin.html -->
   const toast = (m)=>{ const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',1400); };
 
   // ===== تبويبات
-  const tabs = ["t-activate","t-ann","t-complaints"];
+  const tabs = ["t-activate","t-ann","t-complaints","t-users"];
   function showTab(id){
     tabs.forEach(x=> document.getElementById(x).style.display = (x===id)?'':'none');
     document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('primary', b.dataset.tab===id));
@@ -262,6 +298,7 @@ l<!-- admin.html -->
   document.addEventListener('click',(e)=>{
     const b = e.target.closest('[data-tab]'); if(!b) return;
     showTab(b.dataset.tab);
+    if (b.dataset.tab === 't-users') loadUsers();
   });
 
   // ===== صلاحيات الأدمن
@@ -275,10 +312,6 @@ l<!-- admin.html -->
       if (!u) return false;
 
       const claims = await window.auth.getIdTokenClaims();
-      console.log('[admin] claims:', claims);
-      console.log('[admin] roles:', claims?.[NS+"roles"] || claims?.[ALT+"roles"]);
-      console.log('[admin] admin flag:', claims?.[NS+"admin"] ?? claims?.[ALT+"admin"]);
-
       const roles = claims?.[NS + "roles"] || claims?.[ALT + "roles"] || [];
       const flag  = claims?.[NS + "admin"] === true || claims?.[ALT + "admin"] === true;
 
@@ -299,7 +332,6 @@ l<!-- admin.html -->
         }
       });
     } catch (err) {
-      console.warn("getTokenSilently failed; requesting consent/login", err);
       await window.auth.loginWithRedirect({
         authorizationParams: {
           audience: API_AUDIENCE,
@@ -322,15 +354,11 @@ l<!-- admin.html -->
     });
     const ct = res.headers.get("content-type") || "";
     const bodyText = await res.text();
-    if (!res.ok) {
-      console.error("API error", res.status, bodyText);
-      throw new Error(bodyText || `HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error(bodyText || `HTTP ${res.status}`);
     return ct.includes("application/json") ? JSON.parse(bodyText || "{}") : bodyText;
   }
 
-  // ===== أدوات مساعدة
-  // toIso الآن يتحقق من توفر moment-hijri ويعمل fallback آمن إذا لم تتوفر
+  // ===== الإعلانات (كما هي)
   function toIso(calSelId, gId, hId) {
     const mode = document.getElementById(calSelId).value;
     if (mode === 'greg') {
@@ -338,14 +366,9 @@ l<!-- admin.html -->
       if (!v) return null;
       return new Date(v + 'T00:00:00Z').toISOString();
     } else {
-      // تأكد أن moment + moment-hijri متاحان
       const hasMoment = typeof window.moment === 'function';
       const hasHijri = hasMoment && typeof moment.fn.iYear === 'function';
-      if (!hasHijri) {
-        // fallback: لو المستخدم اختار هجري لكن المكتبة غير متوفرة، نتجاهل التاريخ الهجري (آمن)
-        console.warn('moment-hijri غير محمّل؛ تجاهلت التاريخ الهجري');
-        return null;
-      }
+      if (!hasHijri) { console.warn('moment-hijri غير محمّل'); return null; }
       const v = document.getElementById(hId).value.trim();
       if (!v) return null;
       const m = moment(v, 'iYYYY-iMM-iDD', true);
@@ -354,7 +377,6 @@ l<!-- admin.html -->
     }
   }
 
-  // ===== الإعلانات
   async function fetchAnnouncements() {
     try {
       const latestRes = await apiFetch('/.netlify/functions/admin-announcement?latest=1');
@@ -428,8 +450,6 @@ l<!-- admin.html -->
       method:'DELETE'
     });
   }
-
-  // ===== نشر/تحديث إعلان
   document.addEventListener('click', async (e)=>{
     if(e.target.id !== 'btn-publish') return;
     const text    = document.getElementById('ann-text').value.trim();
@@ -448,13 +468,12 @@ l<!-- admin.html -->
       document.getElementById('ann-text').value = '';
       await fetchAnnouncements();
     }catch(err){
-      console.error(err);
       stat.textContent = 'تعذّر النشر';
       toast('تعذّر النشر');
     }
   });
 
-  // ===== تفعيل/تمديد عضوية
+  // ===== تفعيل/تمديد عضوية (القسم القديم)
   document.addEventListener('click', async (e)=>{
     if(e.target.id !== 'btn-activate') return;
     const email   = document.getElementById('act-email').value.trim();
@@ -472,13 +491,12 @@ l<!-- admin.html -->
       stat.textContent = `تم التفعيل ✓ ينتهي: ${j.expires_at || '—'}`;
       toast('تم التفعيل');
     }catch(err){
-      console.error(err);
       stat.textContent = 'تعذّر التفعيل';
       toast('تعذّر التفعيل');
     }
   });
 
-  // ===== الشكاوى/الاقتراحات
+  // ===== الشكاوى/الاقتراحات (كما هي)
   let currentComplaintId = null;
 
   async function loadComplaints(){
@@ -565,8 +583,6 @@ l<!-- admin.html -->
     e.preventDefault();
     openComplaint(a.getAttribute('data-open'));
   });
-
-  // إرسال الرد
   document.getElementById('cd-send').addEventListener('click', async ()=>{
     if (!currentComplaintId) return;
     const msg  = document.getElementById('cd-reply').value.trim();
@@ -584,16 +600,114 @@ l<!-- admin.html -->
       await openComplaint(currentComplaintId);
       await loadComplaints();
     }catch(err){
-      console.error(err);
       stat.textContent = 'تعذّر الإرسال';
       toast('تعذّر الإرسال');
     }
   });
 
-  // ===== تشغيل الصفحة (نضمن جاهزية auth)
+  // ===== المشتركون الجدد
+  async function loadUsers(){
+    try{
+      const q = document.getElementById('u-q').value.trim();
+      const act = document.getElementById('u-active').value;
+      const qs = new URLSearchParams();
+      if (q) qs.set('q', q);
+      if (act) qs.set('active', act);
+
+      const j = await apiFetch('/.netlify/functions/admin-users-list?'+qs.toString());
+      const rows = j.rows || [];
+
+      const tbody = document.getElementById('u-rows');
+      tbody.innerHTML = '';
+      rows.forEach(u=>{
+        const name = u.display_name || u.name || '—';
+        const email = u.email || '—';
+        const joined = u.created_at ? new Date(u.created_at).toLocaleDateString('ar-SA') : '—';
+        const active = u.active ? '✅ نشط' : '⏸️ غير نشط';
+        const exp = u.expires_at ? new Date(u.expires_at).toLocaleDateString('ar-SA') : '—';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${name}</td>
+          <td class="nowrap"><span class="muted">${email}</span></td>
+          <td>${joined}</td>
+          <td>${active}</td>
+          <td>${exp}</td>
+          <td>
+            <div class="mini-actions">
+              <button class="btn sm" data-quick="30d" data-email="${email}" data-sub="${u.user_sub||''}">+30 يوم</button>
+              <button class="btn sm" data-quick="3m"  data-email="${email}" data-sub="${u.user_sub||''}">+3 أشهر</button>
+              <button class="btn sm" data-quick="1y"  data-email="${email}" data-sub="${u.user_sub||''}">+سنة</button>
+              <span class="nowrap">
+                <input type="number" min="1" value="12" style="width:70px" data-amt>
+                <select data-unit style="width:92px">
+                  <option value="days">يوم</option>
+                  <option value="months" selected>شهر</option>
+                  <option value="years">سنة</option>
+                </select>
+                <button class="btn sm" data-custom data-email="${email}" data-sub="${u.user_sub||''}">تفعيل</button>
+              </span>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="6" class="muted">لا يوجد مستخدمون</td>`;
+        tbody.appendChild(tr);
+      }
+    }catch(err){
+      console.warn('loadUsers failed', err);
+    }
+  }
+
+  // أزرار التفعيل السريع
+  document.getElementById('u-rows').addEventListener('click', async (e)=>{
+    const qbtn = e.target.closest('[data-quick]');
+    const cbtn = e.target.closest('[data-custom]');
+    if (!qbtn && !cbtn) return;
+
+    let email = (qbtn||cbtn).getAttribute('data-email') || '';
+    const user_id = (qbtn||cbtn).getAttribute('data-sub') || null;
+    if (!email) { toast('لا يوجد إيميل'); return; }
+
+    let amount, unit, note = 'admin-quick-activate';
+    if (qbtn) {
+      const k = qbtn.getAttribute('data-quick');
+      if (k === '30d') { amount=30; unit='days'; }
+      else if (k === '3m') { amount=3; unit='months'; }
+      else { amount=1; unit='years'; }
+    } else {
+      const row = cbtn.closest('tr');
+      const amtEl = row.querySelector('[data-amt]');
+      const unitEl = row.querySelector('[data-unit]');
+      amount = Math.max(1, Number(amtEl.value||'1')|0);
+      unit   = unitEl.value;
+      note   = 'admin-custom-activate';
+    }
+
+    try{
+      await apiFetch('/.netlify/functions/admin-activate', {
+        method:'POST',
+        body: JSON.stringify({ email, user_id, amount, unit, note })
+      });
+      toast('تم التفعيل ✓');
+      await loadUsers();
+    }catch(err){
+      toast('تعذّر التفعيل');
+    }
+  });
+
+  // أدوات تحكّم
+  document.getElementById('u-refresh').addEventListener('click', loadUsers);
+  document.getElementById('u-active').addEventListener('change', loadUsers);
+  document.getElementById('u-q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') loadUsers(); });
+
+  // ===== تشغيل الصفحة
   async function startAdmin(){
     try{
-      // انتظر window.auth من require-auth.js
+      // انتظر window.auth
       for (let i=0;i<50 && !window.auth;i++) { await new Promise(r=>setTimeout(r,100)); }
 
       const authed = await window.auth.isAuthenticated?.();
@@ -604,15 +718,11 @@ l<!-- admin.html -->
       document.getElementById('denyCard').style.display = ok ? 'none' : '';
       if (!ok) return;
 
-      document.getElementById('tabsCard').style.display = '';
-      document.getElementById('denyCard').style.display = 'none';
-      showTab('t-complaints');
-
-      // جهزي الإعلانات والشكاوى بعد الإظهار
+      showTab('t-users'); // افتحي المشتركين الجدد افتراضيًا
       try { await fetchAnnouncements(); } catch(_) {}
       try { await loadComplaints(); } catch(_) {}
+      try { await loadUsers(); } catch(_) {}
     }catch(err){
-      console.warn(err);
       document.getElementById('denyCard').style.display='';
     }
   }
