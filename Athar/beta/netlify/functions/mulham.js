@@ -1,7 +1,6 @@
-// /netlify/functions/mulham.js
 // مُلهم: توليد أنشطة (حركي/جماعي/فردي) + وصف مختصر + خطوات + تذكرة خروج + الأثر المتوقع
 // يدعم: بدون أدوات (zero-prep) + تكييف منخفض التحفيز + فروق فردية + بدائل (variant)
-// + حارس اشتراك (active) من Supabase
+// + حارس اشتراك (active) من Supabase — الحماية كما هي، مع تحسينات في الصرامة والمخرجات
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@supabase/supabase-js");
@@ -56,21 +55,32 @@ function hashInt(str) {
   return Math.abs(h >>> 0);
 }
 
+// ===== CORS مبسّط لطلبات POST (لا يغيّر الحماية) =====
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
+};
+
 exports.handler = async (event) => {
   try {
+    if (event.httpMethod === "OPTIONS") {
+      return { statusCode: 204, headers: CORS_HEADERS, body: "" };
+    }
     if (event.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Method Not Allowed" };
+      return { statusCode: 405, headers: CORS_HEADERS, body: "Method Not Allowed" };
     }
 
-    // 0) التحقق من المستخدم (JWT من Auth0)
+    // 0) التحقق من المستخدم (JWT من Auth0) — (يجب إرسال Authorization من الواجهة)
     const gate = await requireUser(event);
-    if (!gate.ok) return { statusCode: gate.status, body: gate.error };
+    if (!gate.ok) return { statusCode: gate.status, headers: CORS_HEADERS, body: gate.error };
 
     // 0.1) قفل حسب الاشتراك (لا توليد إن لم يكن Active)
     const ok = await isActiveMembership(gate.user?.sub, gate.user?.email);
     if (!ok) {
       return {
         statusCode: 402, // Payment Required (إرشادي)
+        headers: CORS_HEADERS,
         body: "Membership is not active (trial expired or not activated)."
       };
     }
@@ -79,13 +89,13 @@ exports.handler = async (event) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing");
-      return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+      return { statusCode: 500, headers: CORS_HEADERS, body: "Missing GEMINI_API_KEY" };
     }
 
     // 2) جسم الطلب
     let payload = {};
     try { payload = JSON.parse(event.body || "{}"); }
-    catch { return { statusCode: 400, body: "Bad JSON body" }; }
+    catch { return { statusCode: 400, headers: CORS_HEADERS, body: "Bad JSON body" }; }
 
     const {
       subject = "",
@@ -99,21 +109,29 @@ exports.handler = async (event) => {
       variant = ""
     } = payload;
 
+    // تحقق خفيف من المعطيات
+    const TIME = Math.min(60, Math.max(5, Number(time)||20));
+    const SUBJ = String(subject||"").slice(0,120);
+    const TOP  = String(topic||SUBJ||"").slice(0,160);
+
     const AGE_LABEL = { p1:"ابتدائي دُنيا", p2:"ابتدائي عُليا", m:"متوسط", h:"ثانوي" };
     const ageLabel = AGE_LABEL[age] || "ابتدائي عُليا";
 
-    // 3) برومبت صارم مع تكييف المرحلة
+    // 3) برومبت صارم مع تكييف المرحلة + رؤية 2030 + مهارات القرن 21 + منهج السعودية 2025
     const constraints = [];
     if (noTools) constraints.push("يجب أن تكون كل الأنشطة Zero-prep (بدون قص/لصق/بطاقات/أدوات).");
-    constraints.push(`الزمن المتاح إجماليًا ~ ${time} دقيقة؛ اجعل كل نشاط قابلاً للتنفيذ داخل هذا السقف.`);
+    constraints.push(`الزمن المتاح إجماليًا ~ ${TIME} دقيقة؛ اجعل كل نشاط قابلاً للتنفيذ داخل هذا السقف.`);
     constraints.push(`مستوى بلوم المستهدف: ${bloom}. المرحلة الدراسية: ${ageLabel}.`);
-    constraints.push("استخدم لغة ومفردات وأمثلة مناسبة تمامًا للمرحلة، وتجنّب التعقيد غير المناسب.");
-    constraints.push("كل نشاط يجب أن يتضمن خطوات عملية دقيقة قابلة للتنفيذ فورًا داخل الصف.");
-    constraints.push("أعد اقتراحات متنوعة وليست متشابهة حرفيًا بين الفئات.");
+    constraints.push("استخدم لغة عربية سليمة وعبارات قصيرة مناسبة تمامًا للفئة العمرية.");
+    constraints.push("راعِ السلامة والأمان وعدم الحاجة لأدوات خطرة.");
+    constraints.push("أدرج خطوات عملية واضحة، ومعايير نجاح ضمنية في كل نشاط، وأسئلة قصيرة صحيحة لغويًا في تذكرة الخروج.");
+    constraints.push("نوّع بين التفاعل الحركي/التعاوني/الفردي دون تكرار الفكرة.");
+    constraints.push("اربط المعنى بسياقات من واقع الطالب في السعودية وبما ينسجم مع مهارات القرن 21 ورؤية 2030 (تعاون، تواصل، تفكير ناقد، إبداع، مواطَنة رقمية).");
+    constraints.push("التزم بالمخرجات المعرفية والمهارية لنسخة مناهج السعودية 2025 قدر الإمكان (صياغة الهدف، سلامة المصطلح، مناسبة المفاهيم).");
 
     const adaptations = [];
-    if (adaptLow)  adaptations.push("تكيف منخفض التحفيز: مهام قصيرة جدًا، مكافآت فورية، أدوار بسيطة، فواصل حركة.");
-    if (adaptDiff) adaptations.push("فروق فردية: ثلاث مستويات (سهل/متوسط/متقدم) أو بدائل للمنتج النهائي.");
+    if (adaptLow)  adaptations.push("تكيف منخفض التحفيز: مهام قصيرة جدًا، تعزيز فوري، خيارات بسيطة، فواصل حركة.");
+    if (adaptDiff) adaptations.push("فروق فردية: مستويات أداء (سهل/متوسط/متقدم) أو منتجات بديلة.");
 
     const seedNote = `بذرة التنويع: ${variant || "base"}`;
 
@@ -122,7 +140,7 @@ exports.handler = async (event) => {
 أنتج حزمة أنشطة ضمن ثلاث فئات:
 1) أنشطة صفّية حركية، 2) أنشطة صفّية جماعية، 3) أنشطة صفّية فردية.
 لكل فئة قدّم **٢ إلى ٣** أنشطة قوية ومختلفة.
-المجال: "${subject}"، الموضوع: "${topic || subject}".
+المجال: "${SUBJ}"، الموضوع: "${TOP}".
 
 ${constraints.map(s => "- " + s).join("\n")}
 ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.map(s=>"- "+s).join("\n") : ""}
@@ -137,29 +155,30 @@ ${seedNote}
       "activities": [
         {
           "title": "...",
-          "summary": "...",
+          "summary": "سبب تربوي موجز وقيمة تعليمية",
           "duration": 8,
-          "materials": ["..."],
-          "steps": ["...", "..."],
-          "exit": "...",
-          "impact": "...",
+          "materials": ["(إن لزم)"],
+          "steps": ["خطوة دقيقة 1", "خطوة دقيقة 2", "خطوة دقيقة 3"],
+          "exit": "سؤال/مهمة خروج دقيقة واحدة بصياغة عربية سليمة",
+          "impact": "أثر متوقّع مرتبط بالهدف والمهارة",
           "zeroPrep": true,
-          "lowMotivation": "...",
-          "differentiation": "...",
-          "notes": "..."
+          "lowMotivation": "تكييف للتحفيز المنخفض (إن طُلب)",
+          "differentiation": "فكرة مستويات أو بدائل (إن طُلب)",
+          "notes": "ملاحظة صفية سريعة"
         }
       ]
     },
     { "name": "أنشطة صفّية جماعية", "activities": [...] },
     { "name": "أنشطة صفّية فردية", "activities": [...] }
   ],
-  "tips": ["...", "..."]
+  "tips": ["تلميح عملي قصير", "تلميح آخر"]
 }
 بدون أي نص خارج JSON.
 `.trim();
 
     // 4) Gemini
     const genAI = new GoogleGenerativeAI(apiKey);
+    // flash سريع ودقيق للناتج JSON
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const req = {
@@ -184,7 +203,7 @@ ${seedNote}
 
     if (!text) {
       console.error("Empty response from model", result);
-      return { statusCode: 502, body: "Empty response from model" };
+      return { statusCode: 502, headers: CORS_HEADERS, body: "Empty response from model" };
     }
 
     let data;
@@ -194,37 +213,40 @@ ${seedNote}
       try { data = JSON.parse(cleaned); }
       catch (e) {
         console.error("Model returned non-JSON:", cleaned.slice(0, 400));
-        return { statusCode: 500, body: "Model returned non-JSON response" };
+        return { statusCode: 500, headers: CORS_HEADERS, body: "Model returned non-JSON response" };
       }
     }
 
     if (!data || !Array.isArray(data.categories)) {
       console.error("Invalid JSON shape", data);
-      return { statusCode: 500, body: "Invalid JSON shape" };
+      return { statusCode: 500, headers: CORS_HEADERS, body: "Invalid JSON shape" };
     }
 
     // ===== اختيار نشاط مختلف لكل فئة بناء على hash من المعطيات =====
     function normalizeActivity(a = {}) {
       const dur = typeof a.duration === "number" && a.duration > 0
         ? a.duration
-        : Math.max(5, Math.min(20, Math.round(time / 2)));
+        : Math.max(5, Math.min(20, Math.round(TIME / 2)));
+
+      const arr = (x) => Array.isArray(x) ? x.filter(Boolean).slice(0,10) : [];
+      const txt = (x) => (typeof x === "string" ? x.trim() : "") || "";
 
       return {
-        ideaHook:        a.ideaHook || a.title || "",
-        desc:            a.summary  || a.description || "",
+        ideaHook:        txt(a.ideaHook || a.title),
+        desc:            txt(a.summary  || a.description),
         duration:        dur,
-        materials:       Array.isArray(a.materials) ? a.materials : [],
-        steps:           Array.isArray(a.steps) ? a.steps : [],
-        exitTicket:      a.exit  || a.exitTicket || "",
-        expectedImpact:  a.impact || a.expectedImpact || "",
+        materials:       arr(a.materials),
+        steps:           arr(a.steps),
+        exitTicket:      txt(a.exit  || a.exitTicket),
+        expectedImpact:  txt(a.impact || a.expectedImpact),
         diff: {
-          lowMotivation:   a.lowMotivation || a.diff_low || "",
-          differentiation: a.differentiation || a.diff_levels || ""
+          lowMotivation:   txt(a.lowMotivation || a.diff_low),
+          differentiation: txt(a.differentiation || a.diff_levels)
         }
       };
     }
 
-    const seedStr = `${variant}|${topic}|${age}|${bloom}|${time}`;
+    const seedStr = `${variant}|${TOP}|${age}|${bloom}|${TIME}`;
     const idxSeed = hashInt(seedStr);
 
     function pickActivity(cat) {
@@ -253,24 +275,24 @@ ${seedNote}
     if (!sets.group.ideaHook     && cats[1]) sets.group     = pickActivity(cats[1]);
     if (!sets.individual.ideaHook&& cats[2]) sets.individual= pickActivity(cats[2]);
 
-    const tips = Array.isArray(data.tips) ? data.tips : [];
+    const tips = Array.isArray(data.tips) ? data.tips.filter(Boolean).slice(0,10) : [];
 
     const meta = {
-      subject: subject || "",
-      topic:   topic || subject || "",
-      time, bloom, age, variant: variant || "",
+      subject: SUBJ,
+      topic:   TOP,
+      time: TIME, bloom, age, variant: variant || "",
       adaptLow, adaptDiff
     };
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json; charset=utf-8" },
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({ meta, sets, tips })
     };
 
   } catch (err) {
     console.error("Mulham error:", err);
     const msg = (err && err.stack) ? err.stack : (err?.message || String(err));
-    return { statusCode: 500, body: `Mulham function failed: ${msg}` };
+    return { statusCode: 500, headers: CORS_HEADERS, body: `Mulham function failed: ${msg}` };
   }
 };
