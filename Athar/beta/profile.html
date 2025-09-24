@@ -6,7 +6,7 @@
   <title>معلومات صاحب الأثر — أثــر</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
 
-  <!-- حمّلي لون الواجهة المحفوظ مبكرًا جدًا لتفادي الوميض -->
+  <!-- حمّلي لون الواجهة والاسم من الكاش لتفادي الوميض -->
   <script>
     (function(){
       try{
@@ -255,41 +255,74 @@
       setTimeout(()=>t.classList.remove('show'), 1800);
     }
 
-    // —— مُحرّر القصّ ——
+    // —— مُحرّر القصّ (نسخة مُحسّنة مع minZoom وتثبيت السحب) ——
     const cropper = (function(){
       let modal, canvas, ctx, overlay, octx, img = null;
       let dragging = false, lastX=0, lastY=0;
-      let state = { zoom:1, ox:0, oy:0, aspect:1, quality:0.82, max:768 };
+      let stageRect = null;
+      let state = { zoom:1, minZoom:1, ox:0, oy:0, aspect:1, quality:0.82, max:768 };
+
+      function getCropBox(W,H){
+        const stageRatio = W/H;
+        let cw = W, ch = H;
+        if (stageRatio > state.aspect) { cw = H * state.aspect; ch = H; }
+        else { cw = W; ch = W / state.aspect; }
+        const cx = (W - cw)/2, cy = (H - ch)/2;
+        return {cx, cy, cw, ch};
+      }
+
+      function clampPan(){
+        if (!img || !canvas) return;
+        const W = canvas.width, H = canvas.height;
+        const {cx, cy, cw, ch} = getCropBox(W,H);
+        // يجب أن تغطي الصورة صندوق القص بالكامل:
+        const iw = img.width * state.zoom;
+        const ih = img.height * state.zoom;
+
+        // نحسب حدود إزاحة الصورة بحيث تبقى الصورة مغطية بالكامل
+        const minX = cx + cw - iw; // أقصى سحب لليسار
+        const maxX = cx;           // أقصى سحب لليمين
+        const minY = cy + ch - ih; // أقصى سحب للأعلى
+        const maxY = cy;           // أقصى سحب للأسفل
+
+        if (iw <= cw) { // لو الصورة أصغر من الصندوق بالعرض، صفيها وسط
+          state.ox = cx + (cw - iw)/2;
+        } else {
+          state.ox = Math.max(minX, Math.min(maxX, state.ox));
+        }
+        if (ih <= ch) { // لو أصغر بالارتفاع، وسط
+          state.oy = cy + (ch - ih)/2;
+        } else {
+          state.oy = Math.max(minY, Math.min(maxY, state.oy));
+        }
+      }
+
+      function computeMinZoom(){
+        // أقل تقريب لازم عشان الصورة تغطي الصندوق (cover)
+        const W = canvas.width, H = canvas.height;
+        const {cw, ch} = getCropBox(W,H);
+        const zx = cw / img.width;
+        const zy = ch / img.height;
+        return Math.max(zx, zy);
+      }
 
       function draw(){
         if (!img) return;
         const W = canvas.width, H = canvas.height;
         ctx.clearRect(0,0,W,H);
-        // خلفية
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(0,0,W,H);
 
-        // حساب صندوق القص الداخلي بحسب النسبة
-        const stageRatio = W/H;
-        let cw = W, ch = H;
-        if (stageRatio > state.aspect) {
-          // أعرض من المطلوب -> عرض بحسب الارتفاع
-          cw = H * state.aspect;
-          ch = H;
-        } else {
-          // أطول من المطلوب
-          cw = W;
-          ch = W / state.aspect;
-        }
-        const cx = (W - cw)/2, cy = (H - ch)/2;
+        const {cx, cy, cw, ch} = getCropBox(W,H);
 
-        // رسم الصورة مع الإزاحة والتقريب
+        // قيود السحب
+        clampPan();
+
         const iw = img.width * state.zoom;
         const ih = img.height * state.zoom;
-        const ix = cx + state.ox;
-        const iy = cy + state.oy;
+        const ix = state.ox;
+        const iy = state.oy;
 
-        // قصّ ضمن الإطار
         ctx.save();
         ctx.beginPath();
         ctx.rect(cx, cy, cw, ch);
@@ -297,12 +330,10 @@
         ctx.drawImage(img, ix, iy, iw, ih);
         ctx.restore();
 
-        // Overlay متدرج حول الإطار
         octx.clearRect(0,0,W,H);
         octx.fillStyle = '#00000088';
         octx.fillRect(0,0,W,H);
         octx.clearRect(cx, cy, cw, ch);
-        // إطار أبيض خفيف
         octx.strokeStyle = '#ffffffdd';
         octx.lineWidth = 2;
         octx.strokeRect(cx+1, cy+1, cw-2, ch-2);
@@ -311,10 +342,34 @@
       function setCanvasSize(){
         const stage = canvas.parentElement;
         const rect = stage.getBoundingClientRect();
-        canvas.width  = rect.width;
-        canvas.height = rect.height;
-        overlay.width = rect.width;
-        overlay.height = rect.height;
+        canvas.width  = Math.max(320, Math.round(rect.width));
+        canvas.height = Math.max(240, Math.round(rect.height));
+        overlay.width = canvas.width;
+        overlay.height= canvas.height;
+        stageRect = rect;
+      }
+
+      function setZoom(newZoom, centerX, centerY){
+        // إبقاء موضع المؤشر ثابت نسبيًا حين نغيّر التقريب
+        const prevZoom = state.zoom;
+        newZoom = Math.max(state.minZoom, Math.min(state.minZoom*3, newZoom));
+        if (!img || newZoom === prevZoom) { state.zoom = newZoom; clampPan(); draw(); return; }
+
+        const W = canvas.width, H = canvas.height;
+        const {cx, cy, cw, ch} = getCropBox(W,H);
+        const focusX = (centerX ?? (cx + cw/2));
+        const focusY = (centerY ?? (cy + ch/2));
+
+        // إحداثيات البكسل في الصورة قبل وبعد
+        const imgXBefore = (focusX - state.ox) / prevZoom;
+        const imgYBefore = (focusY - state.oy) / prevZoom;
+
+        state.zoom = newZoom;
+
+        state.ox = focusX - imgXBefore * newZoom;
+        state.oy = focusY - imgYBefore * newZoom;
+
+        clampPan();
         draw();
       }
 
@@ -333,6 +388,24 @@
           image.onload = function(){
             img = image;
             setCanvasSize();
+            // حساب minZoom وتطبيقه
+            state.minZoom = computeMinZoom();
+            state.zoom = state.minZoom;
+            // وسّطي الصورة
+            const W = canvas.width, H = canvas.height;
+            const {cx, cy, cw, ch} = getCropBox(W,H);
+            const iw = img.width * state.zoom;
+            const ih = img.height * state.zoom;
+            state.ox = cx + (cw - iw)/2;
+            state.oy = cy + (ch - ih)/2;
+
+            // اضبطي شريط التقريب
+            const zoomRange = document.getElementById('cropZoom');
+            zoomRange.min = state.minZoom.toFixed(2);
+            zoomRange.max = (state.minZoom*3).toFixed(2);
+            zoomRange.value = state.minZoom.toFixed(2);
+
+            draw();
           };
           image.onerror= function(){ toast('تعذر قراءة الصورة'); close(); resolve(null); };
 
@@ -343,21 +416,55 @@
             image.src = fileOrURL;
           }
 
-          // سحب داخل الكانفس
-          function onDown(e){ dragging=true; lastX=(e.touches?e.touches[0].clientX:e.clientX); lastY=(e.touches?e.touches[0].clientY:e.clientY); }
-          function onMove(e){ if(!dragging) return; const x=(e.touches?e.touches[0].clientX:e.clientX), y=(e.touches?e.touches[0].clientY:e.clientY); state.ox += (x-lastX); state.oy += (y-lastY); lastX=x; lastY=y; draw(); }
+          function onDown(e){ 
+            dragging=true; 
+            lastX=(e.touches?e.touches[0].clientX:e.clientX); 
+            lastY=(e.touches?e.touches[0].clientY:e.clientY); 
+          }
+          function onMove(e){ 
+            if(!dragging) return; 
+            const x=(e.touches?e.touches[0].clientX:e.clientX), y=(e.touches?e.touches[0].clientY:e.clientY); 
+            state.ox += (x-lastX); state.oy += (y-lastY); lastX=x; lastY=y; 
+            clampPan(); draw(); 
+          }
           function onUp(){ dragging=false; }
 
           canvas.onmousedown = onDown; canvas.onmousemove = onMove; window.onmouseup = onUp;
           canvas.ontouchstart= onDown; canvas.ontouchmove  = onMove; window.ontouchend = onUp;
+
+          // زووم بعجلة الماوس (يشتغل داخل الكانفس)
+          canvas.onwheel = (e)=>{
+            e.preventDefault();
+            const delta = -e.deltaY; // up = تكبير
+            const factor = (delta>0? 1.05 : 0.95);
+            setZoom(state.zoom * factor, e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top);
+          };
 
           // تحكمات
           const aspectSel = document.getElementById('cropAspect');
           const zoomRange = document.getElementById('cropZoom');
           const qRange    = document.getElementById('cropQuality');
           const maxInput  = document.getElementById('cropMax');
-          aspectSel.onchange = ()=>{ state.aspect = parseFloat(aspectSel.value)||1; draw(); };
-          zoomRange.oninput  = ()=>{ state.zoom = parseFloat(zoomRange.value)||1; draw(); };
+
+          aspectSel.onchange = ()=>{
+            state.aspect = parseFloat(aspectSel.value)||1;
+            // أعد الحسابات للـ minZoom والتمركز
+            state.minZoom = computeMinZoom();
+            state.zoom = Math.max(state.zoom, state.minZoom);
+            zoomRange.min = state.minZoom.toFixed(2);
+            zoomRange.max = (state.minZoom*3).toFixed(2);
+            if (parseFloat(zoomRange.value) < state.minZoom) zoomRange.value = state.minZoom.toFixed(2);
+            // إعادة تمركز
+            const W = canvas.width, H = canvas.height;
+            const {cx, cy, cw, ch} = getCropBox(W,H);
+            const iw = img.width * state.zoom;
+            const ih = img.height * state.zoom;
+            state.ox = cx + (cw - iw)/2;
+            state.oy = cy + (ch - ih)/2;
+            clampPan();
+            draw();
+          };
+          zoomRange.oninput  = ()=>{ setZoom(parseFloat(zoomRange.value)||state.minZoom); };
           qRange.oninput     = ()=>{ state.quality = parseFloat(qRange.value)||0.82; };
           maxInput.onchange  = ()=>{ state.max = Math.max(256, Math.min(2048, parseInt(maxInput.value||768,10))); };
 
@@ -365,22 +472,18 @@
           document.getElementById('cropCancel').onclick = ()=>{ close(); resolve(null); };
           document.querySelector('#cropModal [data-close]').onclick = ()=>{ close(); resolve(null); };
           document.getElementById('cropConfirm').onclick = ()=>{
-            // تصدير: قصّ لنسبة/aspect بالحجم الأقصى
+            // تصدير جزء القص بالحجم المطلوب
             const W = canvas.width, H=canvas.height;
-            let cw = W, ch = H;
-            if (W/H > state.aspect) { cw = H*state.aspect; ch=H; } else { cw=W; ch=W/state.aspect; }
-            const cx = (W-cw)/2, cy=(H-ch)/2;
+            const {cx, cy, cw, ch} = getCropBox(W,H);
 
-            // قياس نهائي
             let outW = state.max, outH = Math.round(outW / state.aspect);
-            // لو عمودي (aspect < 1) نخلي الطول هو max
             if (state.aspect < 1) { outH = state.max; outW = Math.round(outH * state.aspect); }
 
             const out = document.createElement('canvas');
             out.width = outW; out.height = outH;
             const o2d = out.getContext('2d');
 
-            // ارسم نفس الحسابات بدقة المصدر: نكبّر الصورة مؤقتًا في كانفس وسيط
+            // صورة مؤقتة لنفس الإعدادات
             const tmp = document.createElement('canvas');
             tmp.width = W; tmp.height = H;
             const tctx = tmp.getContext('2d');
@@ -389,27 +492,41 @@
             tctx.beginPath(); tctx.rect(cx, cy, cw, ch); tctx.clip();
             const iw = img.width * state.zoom;
             const ih = img.height * state.zoom;
-            const ix = cx + state.ox;
-            const iy = cy + state.oy;
+            const ix = state.ox;
+            const iy = state.oy;
             tctx.drawImage(img, ix, iy, iw, ih);
             tctx.restore();
 
-            // قص الجزء (cx,cy,cw,ch) ثم تحجيمه للحجم النهائي
             const cut = tctx.getImageData(cx, cy, cw, ch);
             const cutCanvas = document.createElement('canvas');
             cutCanvas.width = cw; cutCanvas.height = ch;
             cutCanvas.getContext('2d').putImageData(cut, 0, 0);
-
             o2d.drawImage(cutCanvas, 0, 0, outW, outH);
 
             out.toBlob((blob)=>{ close(); resolve(blob); }, 'image/jpeg', state.quality);
           };
 
-          function close(){ modal.classList.remove('show'); window.onmouseup=null; window.ontouchend=null; }
-          // قيم أولية
+          function close(){ 
+            modal.classList.remove('show'); 
+            window.onmouseup=null; window.ontouchend=null; 
+            canvas.onwheel = null;
+          }
+
+          // قياس أولي + رسم أول
           state.aspect = parseFloat(document.getElementById('cropAspect').value)||1;
           state.quality= parseFloat(document.getElementById('cropQuality').value)||0.82;
           state.max    = parseInt(document.getElementById('cropMax').value||768,10);
+
+          // إعادة حساب عند تغيير حجم النافذة (نادرًا)
+          const onResize = ()=>{ setCanvasSize(); state.minZoom = computeMinZoom(); if (state.zoom < state.minZoom) state.zoom = state.minZoom; clampPan(); draw(); };
+          window.addEventListener('resize', onResize, { passive:true });
+          // ننظف على الإغلاق
+          modal.addEventListener('transitionend', function cleanup(){
+            if (!modal.classList.contains('show')) {
+              window.removeEventListener('resize', onResize);
+              modal.removeEventListener('transitionend', cleanup);
+            }
+          });
         });
       }
 
@@ -433,7 +550,6 @@
       try { user = await client.getUser(); } catch(_){}
       try { claims = await client.getIdTokenClaims(); } catch(_){}
 
-      // العرض الأساسي + كاش الاسم
       const nameFromCache = localStorage.getItem('athar:displayName');
       const baseName = nameFromCache || user?.name || user?.nickname || '—';
       document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = baseName);
@@ -463,7 +579,7 @@
         badge.textContent=m.text; badge.style.background=m.bg; badge.style.color=m.fg; badge.style.borderColor=m.br;
       }
 
-      // جلب تفضيلات المستخدم من Supabase
+      // تفضيلات من Supabase
       try {
         if (window.supa && user?.sub) {
           const { data: pref } = await window.supa
@@ -485,7 +601,7 @@
         if (!newName || !newName.trim()) return;
         const clean = newName.trim();
         document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = clean);
-        localStorage.setItem('athar:displayName', clean); // كاش فوري
+        localStorage.setItem('athar:displayName', clean);
         try {
           if (window.supa && user?.sub) {
             await window.supa.from('user_prefs').upsert(
@@ -497,12 +613,13 @@
         } catch(e){ console.error(e); toast("تعذر حفظ الاسم"); }
       };
 
-      // رفع الصورة — مع قص/ضغط قبل الرفع
-      document.getElementById('avatarInput').onchange = async (ev) => {
+      // رفع الصورة — لا رفع إلا بعد تأكيد القص
+      const avatarInput = document.getElementById('avatarInput');
+      avatarInput.onchange = async (ev) => {
         const file = ev.target.files?.[0]; if (!file) return;
         try {
-          const blob = await cropper.open(file); // قد يرجع null عند إلغاء
-          if (!blob) return;
+          const blob = await cropper.open(file); // null عند الإلغاء
+          if (!blob) { ev.target.value=''; return; }
           const finalFile = new File([blob], 'avatar.jpg', { type:'image/jpeg' });
 
           if (!window.supa) throw new Error("Supabase غير متاح");
@@ -511,12 +628,12 @@
           const up = await window.supa.storage.from('avatars').upload(path, finalFile, { upsert:true, contentType:'image/jpeg' });
           if (up.error) throw up.error;
           const { data } = window.supa.storage.from('avatars').getPublicUrl(path);
-          const url = data.publicUrl + `?v=${Date.now()}`; // كسر الكاش
+          const url = data.publicUrl + `?v=${Date.now()}`;
           document.getElementById('u-avatar').src = url;
           await window.supa.from('user_prefs').upsert({ user_sub: user.sub, avatar_url: url }, { onConflict: 'user_sub' });
           toast("تم تحديث الصورة ✓");
         } catch(e){ console.error(e); toast("تعذر رفع الصورة"); }
-        finally { ev.target.value = ''; }
+        finally { ev.target.value = ''; } // تفريغ input لمنع رفع تلقائي لاحق
       };
 
       // منتقي الألوان
@@ -565,7 +682,6 @@
         });
       })();
 
-      // جاهز
       card?.setAttribute('data-ready','1');
     }
 
@@ -584,12 +700,12 @@
   <!-- الحارس -->
   <script src="assets/js/require-auth.js"></script>
 
-  <!-- حارس لنسختك القديمة من themeInit (لو موجودة في أي مكان) -->
   <script>
+    // تعطيل أي منطق قديم للثيم يعتمد على نفس العنصر
     (function themeInitLegacyGuard(){
       const picker = document.getElementById('themePicker');
       if (picker && picker.dataset && picker.dataset.v2 === '1') {
-        // لا شيء: نحجب المنطق القديم لو كان يعتمد على نفس العنصر
+        // no-op
       }
     })();
   </script>
