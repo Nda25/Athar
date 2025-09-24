@@ -12,6 +12,10 @@
       try{
         var c = localStorage.getItem('athar:theme');
         if (c) document.documentElement.style.setProperty('--primary', c);
+        var dn = localStorage.getItem('athar:displayName');
+        if (dn) { document.addEventListener('DOMContentLoaded', function(){ 
+          document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = dn);
+        }); }
       }catch(_){}
     })();
   </script>
@@ -19,7 +23,6 @@
   <link rel="stylesheet" href="style.css">
   <meta name="color-scheme" content="dark light">
 
-  <!-- تحسينات بسيطة خاصة بهذه الصفحة (لا تغيّر هوية الموقع) -->
   <style>
     :root { --primary: var(--sea-600); }
     .card .title { display:flex; align-items:center; gap:10px; }
@@ -39,7 +42,6 @@
     .btn.ghost { background:#fff; border:1px solid #e5e7eb; }
     .section-title { font-weight:800; margin-bottom:8px; }
 
-    /* منتقي الألوان — دوائر مستقلة عن ستايل الأزرار العامة */
     .theme-picker { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .theme-picker button{
       all: unset;
@@ -47,7 +49,7 @@
       width:28px; height:28px; border-radius:50%;
       border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer;
     }
-    .theme-picker button[data-reset]{ background:#111827; } /* زر اللون الافتراضي */
+    .theme-picker button[data-reset]{ background:#111827; }
     .theme-picker button.is-active{
       outline: 3px solid color-mix(in oklab, var(--primary) 65%, white);
       outline-offset: 2px;
@@ -56,12 +58,27 @@
     .divider { height:1px; background:#f1f5f9; margin:12px 0; }
     .soon { opacity:.6; cursor:not-allowed; }
 
-    /* وسم الحالة الملوّن (بدون تغيير الـ badge العامّة) */
     .state { padding:6px 10px; border-radius:999px; font-weight:800; border:1px solid #e5e7eb; background:#fff; }
 
-    /* منع الوميض: نخفي محتوى البطاقة حتى تجهز البيانات */
     .card[data-ready="0"] { opacity:.0; }
     .card[data-ready="1"] { opacity:1; transition:opacity .18s ease; }
+
+    /* ——— محرّر القص (Modal) ——— */
+    .modal{ position:fixed; inset:0; background:#0009; display:none; align-items:center; justify-content:center; z-index:2147483000; }
+    .modal.show{ display:flex; }
+    .modal .panel{ width:min(92vw, 720px); background:#0b1324; color:#e5e7eb; border-radius:14px; border:1px solid #1f2a44; box-shadow:0 20px 60px #0006; overflow:hidden; }
+    .panel .head{ padding:10px 14px; border-bottom:1px solid #1f2a44; display:flex; align-items:center; justify-content:space-between }
+    .panel .body{ padding:14px; display:grid; gap:12px; grid-template-columns:1fr 260px; }
+    @media (max-width:900px){ .panel .body{ grid-template-columns:1fr; } }
+    .crop-stage{ position:relative; background:#0f172a; border:1px solid #1f2a44; border-radius:10px; height:420px; overflow:hidden; }
+    .crop-canvas{ position:absolute; inset:0; width:100%; height:100%; }
+    .crop-overlay{ position:absolute; inset:0; pointer-events:none; }
+    .ctrls{ display:grid; gap:10px; align-content:start; }
+    .ctrls .row{ display:flex; align-items:center; gap:8px; }
+    .ctrls label{ font-size:12px; opacity:.85 }
+    .ctrls select,.ctrls input[type="range"]{ width:100% }
+    .panel .foot{ padding:12px 14px; border-top:1px solid #1f2a44; display:flex; gap:10px; justify-content:flex-end; }
+    .btn.small{ padding:8px 12px; font-size:14px }
   </style>
 </head>
 
@@ -94,7 +111,7 @@
         <h2 class="title">معلومات صاحب الأثر <span class="subheading">— كل ما يخص حسابك وتخصيص واجهتك</span></h2>
 
         <div class="grid">
-          <!-- العمود الأيسر: الهوية -->
+          <!-- الهوية -->
           <div class="box profile-box">
             <div class="avatar-wrap">
               <img id="u-avatar" class="avatar" src="assets/img/avatar-placeholder.png" alt="صورة الحساب">
@@ -130,11 +147,10 @@
             </div>
           </div>
 
-          <!-- العمود الأيمن: تخصيص -->
+          <!-- تخصيص -->
           <div class="box">
             <h3 class="section-title">تخصيص الواجهة</h3>
 
-            <!-- ✅ النسخة الجديدة من منتقي الألوان + وسم لمنع تشغيل السكربت القديم -->
             <div id="themePicker" class="theme-picker" aria-label="اختيار لون البرنامج" data-v2="1">
               <button data-reset title="اللون الافتراضي"></button>
               <button data-color="#6366f1" title="بنفسجي"></button>
@@ -178,25 +194,58 @@
   <script>(function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();</script>
   <div class="toast" id="toast"></div>
 
-  <!-- Supabase SDK + عميل مشترك (نستفيد من ملفك assets/js/supabase-client.js إن وُجد) -->
+  <!-- Modal القصّ -->
+  <div id="cropModal" class="modal" aria-hidden="true">
+    <div class="panel">
+      <div class="head">
+        <strong>قصّ الصورة</strong>
+        <button class="btn small" data-close>إغلاق</button>
+      </div>
+      <div class="body">
+        <div class="crop-stage">
+          <canvas id="cropCanvas" class="crop-canvas"></canvas>
+          <canvas id="cropOverlay" class="crop-overlay"></canvas>
+        </div>
+        <div class="ctrls">
+          <div class="row">
+            <label>النسبة:</label>
+            <select id="cropAspect">
+              <option value="1">1:1 (مربّع)</option>
+              <option value="1.3333333">4:3 (أفقي)</option>
+              <option value="0.75">3:4 (عمودي)</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>التقريب:</label>
+            <input id="cropZoom" type="range" min="0.5" max="3" step="0.01" value="1">
+          </div>
+          <div class="row">
+            <label>جودة الضغط:</label>
+            <input id="cropQuality" type="range" min="0.6" max="0.95" step="0.01" value="0.82">
+          </div>
+          <div class="row">
+            <label>الحجم الأقصى (px):</label>
+            <input id="cropMax" type="number" min="256" max="2048" step="64" value="768">
+          </div>
+          <div class="row muted" style="font-size:12px">اسحبي الصورة داخل الإطار لتغيير الموضع، واستخدمي شريط التقريب.</div>
+        </div>
+      </div>
+      <div class="foot">
+        <button id="cropCancel" class="btn">إلغاء</button>
+        <button id="cropConfirm" class="btn primary">حفظ ورفع</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SDKs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-client.js"></script>
-  <script>
-    // في حال ما كان عندك supabase-client.js يعرّف window.supa، نهيئ بديل بسيط
-    (function ensureSupa(){
-      if (!window.supa && window.supabase && window.__CFG && window.__CFG.supabase_url && window.__CFG.supabase_anon){
-        try{
-          window.supa = supabase.createClient(window.__CFG.supabase_url, window.__CFG.supabase_anon, { auth:{ persistSession:false }});
-        }catch(_){}
-      }
-    })();
-  </script>
 
   <!-- سكربتات عامة -->
   <script src="app.js"></script>
   <script src="assets/js/storage.js"></script>
 
-  <!-- مناداة واجهة الهوية + منطق الصفحة -->
+  <!-- منطق الصفحة -->
   <script>
     function toast(msg){
       const t = document.getElementById('toast');
@@ -206,12 +255,173 @@
       setTimeout(()=>t.classList.remove('show'), 1800);
     }
 
+    // —— مُحرّر القصّ ——
+    const cropper = (function(){
+      let modal, canvas, ctx, overlay, octx, img = null;
+      let dragging = false, lastX=0, lastY=0;
+      let state = { zoom:1, ox:0, oy:0, aspect:1, quality:0.82, max:768 };
+
+      function draw(){
+        if (!img) return;
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0,0,W,H);
+        // خلفية
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0,0,W,H);
+
+        // حساب صندوق القص الداخلي بحسب النسبة
+        const stageRatio = W/H;
+        let cw = W, ch = H;
+        if (stageRatio > state.aspect) {
+          // أعرض من المطلوب -> عرض بحسب الارتفاع
+          cw = H * state.aspect;
+          ch = H;
+        } else {
+          // أطول من المطلوب
+          cw = W;
+          ch = W / state.aspect;
+        }
+        const cx = (W - cw)/2, cy = (H - ch)/2;
+
+        // رسم الصورة مع الإزاحة والتقريب
+        const iw = img.width * state.zoom;
+        const ih = img.height * state.zoom;
+        const ix = cx + state.ox;
+        const iy = cy + state.oy;
+
+        // قصّ ضمن الإطار
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx, cy, cw, ch);
+        ctx.clip();
+        ctx.drawImage(img, ix, iy, iw, ih);
+        ctx.restore();
+
+        // Overlay متدرج حول الإطار
+        octx.clearRect(0,0,W,H);
+        octx.fillStyle = '#00000088';
+        octx.fillRect(0,0,W,H);
+        octx.clearRect(cx, cy, cw, ch);
+        // إطار أبيض خفيف
+        octx.strokeStyle = '#ffffffdd';
+        octx.lineWidth = 2;
+        octx.strokeRect(cx+1, cy+1, cw-2, ch-2);
+      }
+
+      function setCanvasSize(){
+        const stage = canvas.parentElement;
+        const rect = stage.getBoundingClientRect();
+        canvas.width  = rect.width;
+        canvas.height = rect.height;
+        overlay.width = rect.width;
+        overlay.height = rect.height;
+        draw();
+      }
+
+      function open(fileOrURL){
+        modal = document.getElementById('cropModal');
+        canvas = document.getElementById('cropCanvas');
+        overlay= document.getElementById('cropOverlay');
+        ctx  = canvas.getContext('2d');
+        octx = overlay.getContext('2d');
+
+        state.zoom = 1; state.ox = 0; state.oy = 0;
+
+        return new Promise((resolve)=>{
+          modal.classList.add('show');
+          const image = new Image();
+          image.onload = function(){
+            img = image;
+            setCanvasSize();
+          };
+          image.onerror= function(){ toast('تعذر قراءة الصورة'); close(); resolve(null); };
+
+          if (fileOrURL instanceof File) {
+            const url = URL.createObjectURL(fileOrURL);
+            image.src = url;
+          } else {
+            image.src = fileOrURL;
+          }
+
+          // سحب داخل الكانفس
+          function onDown(e){ dragging=true; lastX=(e.touches?e.touches[0].clientX:e.clientX); lastY=(e.touches?e.touches[0].clientY:e.clientY); }
+          function onMove(e){ if(!dragging) return; const x=(e.touches?e.touches[0].clientX:e.clientX), y=(e.touches?e.touches[0].clientY:e.clientY); state.ox += (x-lastX); state.oy += (y-lastY); lastX=x; lastY=y; draw(); }
+          function onUp(){ dragging=false; }
+
+          canvas.onmousedown = onDown; canvas.onmousemove = onMove; window.onmouseup = onUp;
+          canvas.ontouchstart= onDown; canvas.ontouchmove  = onMove; window.ontouchend = onUp;
+
+          // تحكمات
+          const aspectSel = document.getElementById('cropAspect');
+          const zoomRange = document.getElementById('cropZoom');
+          const qRange    = document.getElementById('cropQuality');
+          const maxInput  = document.getElementById('cropMax');
+          aspectSel.onchange = ()=>{ state.aspect = parseFloat(aspectSel.value)||1; draw(); };
+          zoomRange.oninput  = ()=>{ state.zoom = parseFloat(zoomRange.value)||1; draw(); };
+          qRange.oninput     = ()=>{ state.quality = parseFloat(qRange.value)||0.82; };
+          maxInput.onchange  = ()=>{ state.max = Math.max(256, Math.min(2048, parseInt(maxInput.value||768,10))); };
+
+          // أزرار
+          document.getElementById('cropCancel').onclick = ()=>{ close(); resolve(null); };
+          document.querySelector('#cropModal [data-close]').onclick = ()=>{ close(); resolve(null); };
+          document.getElementById('cropConfirm').onclick = ()=>{
+            // تصدير: قصّ لنسبة/aspect بالحجم الأقصى
+            const W = canvas.width, H=canvas.height;
+            let cw = W, ch = H;
+            if (W/H > state.aspect) { cw = H*state.aspect; ch=H; } else { cw=W; ch=W/state.aspect; }
+            const cx = (W-cw)/2, cy=(H-ch)/2;
+
+            // قياس نهائي
+            let outW = state.max, outH = Math.round(outW / state.aspect);
+            // لو عمودي (aspect < 1) نخلي الطول هو max
+            if (state.aspect < 1) { outH = state.max; outW = Math.round(outH * state.aspect); }
+
+            const out = document.createElement('canvas');
+            out.width = outW; out.height = outH;
+            const o2d = out.getContext('2d');
+
+            // ارسم نفس الحسابات بدقة المصدر: نكبّر الصورة مؤقتًا في كانفس وسيط
+            const tmp = document.createElement('canvas');
+            tmp.width = W; tmp.height = H;
+            const tctx = tmp.getContext('2d');
+            tctx.fillStyle = '#0f172a'; tctx.fillRect(0,0,W,H);
+            tctx.save();
+            tctx.beginPath(); tctx.rect(cx, cy, cw, ch); tctx.clip();
+            const iw = img.width * state.zoom;
+            const ih = img.height * state.zoom;
+            const ix = cx + state.ox;
+            const iy = cy + state.oy;
+            tctx.drawImage(img, ix, iy, iw, ih);
+            tctx.restore();
+
+            // قص الجزء (cx,cy,cw,ch) ثم تحجيمه للحجم النهائي
+            const cut = tctx.getImageData(cx, cy, cw, ch);
+            const cutCanvas = document.createElement('canvas');
+            cutCanvas.width = cw; cutCanvas.height = ch;
+            cutCanvas.getContext('2d').putImageData(cut, 0, 0);
+
+            o2d.drawImage(cutCanvas, 0, 0, outW, outH);
+
+            out.toBlob((blob)=>{ close(); resolve(blob); }, 'image/jpeg', state.quality);
+          };
+
+          function close(){ modal.classList.remove('show'); window.onmouseup=null; window.ontouchend=null; }
+          // قيم أولية
+          state.aspect = parseFloat(document.getElementById('cropAspect').value)||1;
+          state.quality= parseFloat(document.getElementById('cropQuality').value)||0.82;
+          state.max    = parseInt(document.getElementById('cropMax').value||768,10);
+        });
+      }
+
+      return { open };
+    })();
+
     async function initProfile(){
       const card = document.getElementById('profileCard');
       card?.setAttribute('data-ready','0');
 
       const client = window.auth0Client || window.auth;
-      if (!client) return; // سيُعاد النداء عند auth0:ready
+      if (!client) return;
 
       const logged = await client.isAuthenticated?.().catch(()=>false);
       if (!logged) {
@@ -219,28 +429,25 @@
         return;
       }
 
-      // جلب بيانات المستخدم و الـ claims
       let user=null, claims=null;
       try { user = await client.getUser(); } catch(_){}
       try { claims = await client.getIdTokenClaims(); } catch(_){}
 
-      // العرض الأساسي
-      const name = user?.name || user?.nickname || '—';
-      document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = name);
+      // العرض الأساسي + كاش الاسم
+      const nameFromCache = localStorage.getItem('athar:displayName');
+      const baseName = nameFromCache || user?.name || user?.nickname || '—';
+      document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = baseName);
       document.getElementById('u-email').textContent = user?.email || '—';
       document.getElementById('u-sub').textContent   = user?.sub   || '—';
       const joined = user?.updated_at || user?.created_at || null;
       document.getElementById('u-joined').textContent = joined ? new Date(joined).toLocaleDateString('ar-SA') : '—';
 
-      // الصورة الافتراضية من Auth0، ثم من user_prefs (لو موجود)
       const avatarEl = document.getElementById('u-avatar');
       if (user?.picture) avatarEl.src = user.picture;
 
-      // حالة الاشتراك من الـ namespace الجديد + القديم
       const NS_NEW = "https://n-athar.co/";
       const NS_OLD = "https://athar.co/";
       const st = (claims && (claims[NS_NEW + "status"] || claims[NS_OLD + "status"])) || "";
-
       document.getElementById('u-status').textContent = st || '—';
 
       const colorBy = {
@@ -256,28 +463,33 @@
         badge.textContent=m.text; badge.style.background=m.bg; badge.style.color=m.fg; badge.style.borderColor=m.br;
       }
 
-      // تفضيلات المستخدم (اسم/صورة/لون) من Supabase إن وُجدت
+      // جلب تفضيلات المستخدم من Supabase
       try {
         if (window.supa && user?.sub) {
           const { data: pref } = await window.supa
             .from('user_prefs').select('*').eq('user_sub', user.sub).maybeSingle();
 
-          if (pref?.display_name) document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = pref.display_name);
+          if (pref?.display_name) {
+            document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = pref.display_name);
+            localStorage.setItem('athar:displayName', pref.display_name);
+          }
           if (pref?.avatar_url)   avatarEl.src = pref.avatar_url;
           if (pref?.theme_color)  document.documentElement.style.setProperty('--primary', pref.theme_color);
         }
       } catch(_){}
 
-      // تعديل الاسم (يحفظ في user_prefs)
+      // تعديل الاسم
       document.getElementById('editNameBtn').onclick = async () => {
         const cur = document.getElementById('displayName').textContent.trim();
-        const newName = prompt("أدخلي الاسم المعروض:", cur || name);
+        const newName = prompt("أدخلي الاسم المعروض:", cur || baseName);
         if (!newName || !newName.trim()) return;
-        document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = newName.trim());
+        const clean = newName.trim();
+        document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = clean);
+        localStorage.setItem('athar:displayName', clean); // كاش فوري
         try {
           if (window.supa && user?.sub) {
             await window.supa.from('user_prefs').upsert(
-              { user_sub: user.sub, display_name: newName.trim() },
+              { user_sub: user.sub, display_name: clean },
               { onConflict: 'user_sub' }
             );
             toast("تم تحديث الاسم ✓");
@@ -285,72 +497,77 @@
         } catch(e){ console.error(e); toast("تعذر حفظ الاسم"); }
       };
 
-      // رفع صورة شخصية إلى Storage (bucket: avatars)
+      // رفع الصورة — مع قص/ضغط قبل الرفع
       document.getElementById('avatarInput').onchange = async (ev) => {
         const file = ev.target.files?.[0]; if (!file) return;
         try {
-          if (!window.supa) throw new Error("Supabase unavailable");
+          const blob = await cropper.open(file); // قد يرجع null عند إلغاء
+          if (!blob) return;
+          const finalFile = new File([blob], 'avatar.jpg', { type:'image/jpeg' });
+
+          if (!window.supa) throw new Error("Supabase غير متاح");
           const safe = (user?.sub || 'u').replace(/[|]/g,'_');
-          const path = `${safe}/${Date.now()}_${file.name}`;
-          const up = await window.supa.storage.from('avatars').upload(path, file, { upsert:true });
+          const path = `${safe}/${Date.now()}_avatar.jpg`;
+          const up = await window.supa.storage.from('avatars').upload(path, finalFile, { upsert:true, contentType:'image/jpeg' });
           if (up.error) throw up.error;
           const { data } = window.supa.storage.from('avatars').getPublicUrl(path);
-          const url = data.publicUrl;
+          const url = data.publicUrl + `?v=${Date.now()}`; // كسر الكاش
           document.getElementById('u-avatar').src = url;
           await window.supa.from('user_prefs').upsert({ user_sub: user.sub, avatar_url: url }, { onConflict: 'user_sub' });
           toast("تم تحديث الصورة ✓");
         } catch(e){ console.error(e); toast("تعذر رفع الصورة"); }
+        finally { ev.target.value = ''; }
       };
 
-      // جاهز للعرض
-      card?.setAttribute('data-ready','1');
-    }
+      // منتقي الألوان
+      (function initThemePicker(){
+        const root   = document.documentElement;
+        const picker = document.getElementById('themePicker');
+        if (!picker) return;
+        picker.dataset.v2 = '1';
 
-    /* مكوّن منتقي الألوان v2 — لا يحذف المنطق القديم، فقط يتجاوزه */
-    (function initThemePicker(){
-      const root   = document.documentElement;
-      const picker = document.getElementById('themePicker');
-      if (!picker) return;
+        const swatches = [...picker.querySelectorAll('button')];
+        swatches.forEach(b=>{
+          if (b.hasAttribute('data-color')) b.style.backgroundColor = b.dataset.color;
+          if (b.hasAttribute('data-reset')) b.style.background = '#111827';
+        });
 
-      // لو المحدد عليه data-v2، امنعي السكربت القديم من العمل (في دالة themeInit بالأسفل)
-      picker.dataset.v2 = '1';
-
-      const swatches = [...picker.querySelectorAll('button')];
-      swatches.forEach(b=>{
-        if (b.hasAttribute('data-color')) b.style.backgroundColor = b.dataset.color;
-        if (b.hasAttribute('data-reset')) b.style.background = '#111827';
-      });
-
-      // استرجاع اللون المحفوظ
-      const saved = localStorage.getItem('athar:theme');
-      if (saved) {
-        root.style.setProperty('--primary', saved);
-        (swatches.find(b=>b.dataset.color === saved) || swatches.find(b=>b.hasAttribute('data-reset')))?.classList.add('is-active');
-      } else {
-        swatches.find(b=>b.hasAttribute('data-reset'))?.classList.add('is-active');
-      }
-
-      // التعامل مع النقر
-      picker.addEventListener('click', async (e)=>{
-        const btn = e.target.closest('button'); if (!btn) return;
-
-        if (btn.hasAttribute('data-reset')) {
-          localStorage.removeItem('athar:theme');
-          root.style.setProperty('--primary', getComputedStyle(root).getPropertyValue('--sea-600').trim() || '#1e40af');
-          swatches.forEach(b=>b.classList.remove('is-active'));
-          btn.classList.add('is-active');
-          return;
+        const saved = localStorage.getItem('athar:theme');
+        if (saved) {
+          root.style.setProperty('--primary', saved);
+          (swatches.find(b=>b.dataset.color === saved) || swatches.find(b=>b.hasAttribute('data-reset')))?.classList.add('is-active');
+        } else {
+          swatches.find(b=>b.hasAttribute('data-reset'))?.classList.add('is-active');
         }
 
-        const color = btn.dataset.color;
-        if (!color) return;
-        root.style.setProperty('--primary', color);
-        localStorage.setItem('athar:theme', color);
+        picker.addEventListener('click', async (e)=>{
+          const btn = e.target.closest('button'); if (!btn) return;
 
-        swatches.forEach(b=>b.classList.remove('is-active'));
-        btn.classList.add('is-active');
-      });
-    })();
+          if (btn.hasAttribute('data-reset')) {
+            localStorage.removeItem('athar:theme');
+            const def = getComputedStyle(root).getPropertyValue('--sea-600').trim() || '#1e40af';
+            root.style.setProperty('--primary', def);
+            swatches.forEach(b=>b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+            try { if (window.supa && user?.sub) await window.supa.from('user_prefs').upsert({ user_sub:user.sub, theme_color:null }, { onConflict:'user_sub' }); } catch(_){}
+            window.dispatchEvent(new CustomEvent('athar:theme-color', { detail: def }));
+            return;
+          }
+
+          const color = btn.dataset.color;
+          if (!color) return;
+          root.style.setProperty('--primary', color);
+          localStorage.setItem('athar:theme', color);
+          try { if (window.supa && user?.sub) await window.supa.from('user_prefs').upsert({ user_sub:user.sub, theme_color:color }, { onConflict:'user_sub' }); } catch(_){}
+          swatches.forEach(b=>b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          window.dispatchEvent(new CustomEvent('athar:theme-color', { detail: color }));
+        });
+      })();
+
+      // جاهز
+      card?.setAttribute('data-ready','1');
+    }
 
     // زر الخروج
     document.addEventListener('click', (e)=>{
@@ -364,46 +581,16 @@
     if (window.auth0Client || window.auth) initProfile();
   </script>
 
-  <!-- حارس الوصول -->
+  <!-- الحارس -->
   <script src="assets/js/require-auth.js"></script>
 
-  <!-- ⚠️ سكربتك القديم themeInit() ما حذفته. فقط أضفت له حارس ناعم هنا ليتوقف إذا كان data-v2 موجود -->
+  <!-- حارس لنسختك القديمة من themeInit (لو موجودة في أي مكان) -->
   <script>
-    (function themeInit(){
+    (function themeInitLegacyGuard(){
       const picker = document.getElementById('themePicker');
-      const reset  = document.getElementById('resetTheme');
-      if (!picker) return;
-      if (picker.dataset && picker.dataset.v2 === '1') return; // ← تجاوز لأن لدينا نسخه v2 أعلاه
-
-      picker.addEventListener('click', async (e)=>{
-        const btn = e.target.closest('button[data-color]'); if (!btn) return;
-        const color = btn.getAttribute('data-color');
-        document.documentElement.style.setProperty('--primary', color);
-        try { localStorage.setItem('athar:theme', color); } catch(_){}
-        try {
-          const u = await window.auth0Client?.getUser();
-          if (u?.sub && window.supa) {
-            await window.supa.from('user_prefs').upsert(
-              { user_sub: u.sub, theme_color: color }, { onConflict: 'user_sub' }
-            );
-          }
-        } catch(_){}
-      });
-
-      if (reset) reset.addEventListener('click', async ()=>{
-        const def = getComputedStyle(document.documentElement).getPropertyValue('--sea-600') || '#1e40af';
-        document.documentElement.style.setProperty('--primary', def.trim() || '#1e40af');
-        try { localStorage.removeItem('athar:theme'); } catch(_){}
-        try {
-          const u = await window.auth0Client?.getUser();
-          if (u?.sub && window.supa) {
-            await window.supa.from('user_prefs').upsert(
-              { user_sub: u.sub, theme_color: null }, { onConflict: 'user_sub' }
-            );
-          }
-        } catch(_){}
-        toast && toast("رجعنا اللون الافتراضي ✓");
-      });
+      if (picker && picker.dataset && picker.dataset.v2 === '1') {
+        // لا شيء: نحجب المنطق القديم لو كان يعتمد على نفس العنصر
+      }
     })();
   </script>
 </body>
