@@ -37,17 +37,38 @@
 <!-- مُحرّك لون المظهر (accent) — يقرأ من التخزين المحلي ويطبّق فوريًا -->
 <script>
   (function(){
-    // المفتاح الذي تحفظه صفحة الملف الشخصي
     var KEY = 'athar:themeColor';
+
+    function hexToRgb(hex){
+      hex = (hex||'').replace('#','').trim();
+      if (hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+      var num = parseInt(hex,16);
+      if (isNaN(num)) return null;
+      return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+    }
 
     function applyAccent(hex){
       if(!hex) return;
       var root = document.documentElement;
-      // المتغيّرات الشائعة في style.css
-      root.style.setProperty('--accent',  hex);
-      root.style.setProperty('--sea-500', hex);
-      root.style.setProperty('--sea-600', hex);
-      root.style.setProperty('--sea-400', hex);
+      var rgb  = hexToRgb(hex);
+
+      // غطّي كل الأسماء المحتملة للّون الأساس المستخدمة في style.css
+      var vars = [
+        '--accent','--primary','--brand','--brand-500','--brand-600',
+        '--sea-400','--sea-500','--sea-600'
+      ];
+      vars.forEach(v=> root.style.setProperty(v, hex));
+
+      // درجات مشتقة شائعة (لو احتاجها CSS)
+      if (rgb){
+        root.style.setProperty('--accent-r', rgb.r);
+        root.style.setProperty('--accent-g', rgb.g);
+        root.style.setProperty('--accent-b', rgb.b);
+        // أمثلة على ظلال/شفافية
+        root.style.setProperty('--accent-20',  'color-mix(in oklab, '+hex+' 20%, transparent)');
+        root.style.setProperty('--accent-12',  'color-mix(in oklab, '+hex+' 12%, transparent)');
+        root.style.setProperty('--accent-08',  'color-mix(in oklab, '+hex+' 8%, transparent)');
+      }
 
       // تحديث لون شريط المتصفح على الموبايل
       var meta = document.getElementById('metaTheme');
@@ -70,7 +91,7 @@
       if (e && e.key === KEY) applyAccent(e.newValue);
     });
 
-    // دعم حدث مخصّص (لو غيرتي اللون داخل نفس الصفحة)
+    // دعم حدث مخصّص (لو تغيّر اللون داخل نفس الصفحة)
     window.addEventListener('athar:theme-color', function(e){
       applyAccent(e && e.detail);
       try { localStorage.setItem(KEY, e.detail || ''); } catch(_){}
@@ -109,37 +130,31 @@
     <div class="container">
       <section class="grid" style="margin-top:10px">
 
-        <!-- بطاقة: مُنطلق -->
         <a class="box" href="athar.html" style="text-decoration:none">
           <h3>«مُنطـَـلق»</h3>
           <p>محرّك أفكار تربوي يولّد لك استراتيجيات وأنشطة وأسئلة تقويمية متناسقة مع مستويات بلوم — منسّقة وجاهزة للتكييف.</p>
         </a>
 
-        <!-- بطاقة: مُرتكز -->
         <a class="box" href="darsi.html" style="text-decoration:none">
           <h3>«مُـرتكــز»</h3>
           <p>مخطّط مُحكم لبناء الدرس: صياغة أهداف دقيقة، افتتاحية دقيقة واحدة، ومصفوفة تقييم عملية قابلة للطباعة.</p>
         </a>
 
-        <!-- بطاقة: مسار -->
         <a class="box" href="masar.html" style="text-decoration:none">
           <h3>«مســار»</h3>
           <p>أنشئ جدول حصص مرنًا: اختر الأيام وعدد الحصص واتجاه العرض، لوّن المواد، واحفظ الجدول كصورة/CSV أو اطبعه.</p>
         </a>
 
-        <!-- بطاقة: ميعاد -->
         <a class="box" href="miyad.html" style="text-decoration:none">
           <h3>«ميعــاد»</h3>
           <p>تقويم فصل دراسي قابل للتخصيص: أضف المواعيد بالألوان، رتّبها حسب اليوم والحصة، وفعّل تذكير البريد قبل الموعد.</p>
         </a>
 
-        <!-- بطاقة: إثراء -->
         <a class="box" href="ethraa.html" style="text-decoration:none">
           <h3>«إثــراء»</h3>
           <p>بطاقات ثرية وجاهزة: أحدث معلومة أو خرافة مُصحّحة أو فكرة نشاط عملي مع مصدر مختصر، وفق مادّتك ومرحلتك.</p>
         </a>
 
-        <!-- بطاقة: مُلهم -->
         <a class="box" href="mulham.html" style="text-decoration:none">
           <h3>«مُلـهِم»</h3>
           <p>مولّد أنشطة صفية ذكي: يُنتج حِزمًا حركية وجماعية وفردية بناءً على الوقت والمرحلة وبلوم، مع نسخ وطباعة فورية.</p>
@@ -170,7 +185,6 @@
   </footer>
 
   <script>
-    // سنة تلقائية في الفوتر
     (function(){
       var y=document.getElementById('year');
       if(y) y.textContent=new Date().getFullYear();
@@ -180,13 +194,16 @@
   <div class="toast" id="toast"></div>
 
   <!-- SDKs -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"></script>
 
-  <!-- سكربتات مشروعك -->
-  <script src="assets/js/supabase-client.js"></script>
-  <script src="app.js"></script>
+  <!-- سكربتات مشروعك (مطابقة للـ index لضمان نفس سلوك الثيم) -->
+  <script defer src="assets/js/supabase-client.js"></script>
+  <script defer src="assets/js/ui.js"></script>
+  <script defer src="assets/js/theme.js"></script>
+  <script defer src="assets/js/storage.js"></script>
+  <script defer src="assets/js/require-auth.js"></script>
+  <script defer src="app.js"></script>
 
   <script>
     // اقتباس عشوائي
