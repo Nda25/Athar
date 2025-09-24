@@ -6,6 +6,17 @@
 <title> مُـرتكـز</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Cairo:wght@700&display=swap" rel="stylesheet" />
+
+<!-- تهيئة لون الواجهة من تفضيل المستخدم قبل تحميل الـCSS لتفادي الوميض -->
+<script>
+  (function(){
+    try{
+      var c = localStorage.getItem('athar:theme');
+      if (c) document.documentElement.style.setProperty('--primary', c);
+    }catch(_){}
+  })();
+</script>
+
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
 <style>
@@ -480,7 +491,9 @@ function metaSnapshot(){
           body: JSON.stringify({
             mode, subject, topic, sourceText,
             age, duration, bloomMain, bloomSupport,
-            goalCount, notes, level: document.getElementById('f-level').value, adapt
+            goalCount, notes, level: document.getElementById('f-level').value, adapt,
+            // إجبار التنويع التام دون تغيير الواجهة
+            variant: Date.now()
           })
         });
         if(!res.ok){
@@ -739,5 +752,4 @@ document.getElementById('btn-goals-print')?.addEventListener('click', async ()=>
 <script defer src="/assets/js/require-auth.js">
   
 </script>
-</body>
-</html>
+</body> </html>
