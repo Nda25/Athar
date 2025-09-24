@@ -26,23 +26,18 @@
   <style>
     :root { --primary: var(--sea-600); }
 
-    /* حاوية عامة */
-    .container{
-      width:100%;
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 0 16px;
-    }
+    /* حاوية عامة مرتّبة ومركّزة */
+    .container{ width:100%; max-width: 980px; margin: 0 auto; padding: 0 16px; }
 
     /* بطاقات وعناوين */
     .card .title { display:flex; align-items:center; gap:10px; }
     .subheading { font-size:14px; color:#6b7280; font-weight:600; }
 
-    /* شبكة الصفحة */
+    /* شبكة الصفحة الرئيسية */
     .grid { display:grid; gap:16px; grid-template-columns: 1fr 1fr; align-items:start; }
     @media (max-width: 900px){ .grid { grid-template-columns: 1fr; } }
 
-    /* الهوية */
+    /* مربّع الهوية */
     .profile-box { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:center; }
     .avatar-wrap { position:relative; width:96px; height:96px; flex:0 0 auto; }
     .avatar { width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid #eef; background:#f5f7ff; }
@@ -68,16 +63,13 @@
       border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer;
     }
     .theme-picker button[data-reset]{ background:#111827; }
-    .theme-picker button.is-active{
-      outline: 3px solid color-mix(in oklab, var(--primary) 65%, white);
-      outline-offset: 2px;
-    }
+    .theme-picker button.is-active{ outline: 3px solid color-mix(in oklab, var(--primary) 65%, white); outline-offset: 2px; }
     .theme-note { font-size:12px; color:#6b7280; margin-top:6px; }
     .divider { height:1px; background:#f1f5f9; margin:12px 0; }
     .soon { opacity:.6; cursor:not-allowed; }
     .state { padding:6px 10px; border-radius:999px; font-weight:800; border:1px solid #e5e7eb; background:#fff; }
 
-    /* إخفاء حتى تجهز البيانات */
+    /* إخفاء إلى أن تجهز البيانات */
     .card[data-ready="0"] { opacity:.0; }
     .card[data-ready="1"] { opacity:1; transition:opacity .18s ease; }
 
@@ -86,34 +78,26 @@
       .profile-box { grid-template-columns: 1fr; justify-items:center; text-align:center; }
       .avatar-wrap { width:84px; height:84px; }
       .avatar { width:84px; height:84px; }
-      .name-row { justify-content:center; }
-      .row-actions { justify-content:center; }
-      .topbar .actions, .topbar .left-actions, .topbar .user { gap:8px; }
+      .name-row, .row-actions { justify-content:center; }
       .hero .logo { font-size: 40px !important; }
     }
 
-    /* محرّر القص (Modal) */
+    /* — محرّر القص (Modal) — */
     .modal{ position:fixed; inset:0; background:#0009; display:none; align-items:center; justify-content:center; z-index:2147483000; }
     .modal.show{ display:flex; }
     .modal .panel{ width:min(96vw, 760px); background:#0b1324; color:#e5e7eb; border-radius:14px; border:1px solid #1f2a44; box-shadow:0 20px 60px #0006; overflow:hidden; }
     .panel .head{ padding:10px 14px; border-bottom:1px solid #1f2a44; display:flex; align-items:center; justify-content:space-between }
     .panel .body{ padding:14px; display:grid; gap:12px; grid-template-columns:1fr 260px; }
     .crop-stage{ position:relative; background:#0f172a; border:1px solid #1f2a44; border-radius:10px; height:440px; overflow:hidden; }
-    .crop-canvas{ position:absolute; inset:0; width:100%; height:100%; }
-    .crop-overlay{ position:absolute; inset:0; pointer-events:none; }
+    .crop-canvas,.crop-overlay{ position:absolute; inset:0; width:100%; height:100%; }
+    .crop-overlay{ pointer-events:none; }
     .ctrls{ display:grid; gap:10px; align-content:start; }
     .ctrls .row{ display:flex; align-items:center; gap:8px; }
     .ctrls label{ font-size:12px; opacity:.85 }
-    .ctrls select,.ctrls input[type="range"]{ width:100% }
+    .ctrls select,.ctrls input[type="range"], .ctrls input[type="number"]{ width:100% }
     .panel .foot{ padding:12px 14px; border-top:1px solid #1f2a44; display:flex; gap:10px; justify-content:flex-end; }
     .btn.small{ padding:8px 12px; font-size:14px }
-
-    /* محرّر القص على الجوال */
-    @media (max-width: 900px){
-      .panel .body{ grid-template-columns:1fr; }
-      .crop-stage{ height: 320px; }
-      .panel .foot{ justify-content:space-between; }
-    }
+    @media (max-width: 900px){ .panel .body{ grid-template-columns:1fr; } .crop-stage{ height: 320px; } .panel .foot{ justify-content:space-between; } }
   </style>
 </head>
 
@@ -149,6 +133,7 @@
           <!-- الهوية -->
           <div class="box profile-box">
             <div class="avatar-wrap">
+              <!-- مسار صورة افتراضية مضمون -->
               <img id="u-avatar" class="avatar" src="assets/icon.png" alt="صورة الحساب">
               <label class="edit-badge" title="تعديل الصورة">
                 ✎
@@ -275,12 +260,12 @@
   <!-- SDKs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-client.js"></script>
-
+  <!-- الحارس -->
+  <script src="assets/js/require-auth.js"></script>
   <!-- سكربتات عامة -->
   <script src="app.js"></script>
   <script src="assets/js/storage.js"></script>
 
-  <!-- منطق الصفحة -->
   <script>
     function toast(msg){
       const t = document.getElementById('toast');
@@ -290,26 +275,7 @@
       setTimeout(()=>t.classList.remove('show'), 1800);
     }
 
-    // Fallback لصورة الأفاتار لو حصل 404
-    document.addEventListener('DOMContentLoaded', () => {
-      const av = document.getElementById('u-avatar');
-      if (av) av.onerror = () => { av.onerror = null; av.src = 'assets/icon.png'; };
-    });
-
-    // تأكيد وجود البكِت عبر Netlify Function (مرة واحدة)
-    let __bucketEnsured = false;
-    async function ensureBucket(){
-      if (__bucketEnsured) return;
-      try { await fetch('/.netlify/functions/storage-ensure', { method:'POST' }); }
-      catch(_){}
-      __bucketEnsured = true;
-    }
-
-    // فتح/غلق المودال مع ARIA
-    function openModalFix(){ const m = document.getElementById('cropModal'); m.classList.add('show'); m.setAttribute('aria-hidden','false'); }
-    function closeModalFix(){ const m = document.getElementById('cropModal'); m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
-
-    // ——— مُحرّر القصّ ———
+    /* ——— مُحرّر القصّ ——— */
     const cropper = (function(){
       let modal, canvas, ctx, overlay, octx, img = null;
       let dragging = false, lastX=0, lastY=0;
@@ -323,145 +289,90 @@
         const cx = (W - cw)/2, cy = (H - ch)/2;
         return {cx, cy, cw, ch};
       }
-
       function clampPan(){
         if (!img || !canvas) return;
         const W = canvas.width, H = canvas.height;
         const {cx, cy, cw, ch} = getCropBox(W,H);
-        const iw = img.width * state.zoom;
-        const ih = img.height * state.zoom;
-
+        const iw = img.width * state.zoom, ih = img.height * state.zoom;
         const minX = cx + cw - iw, maxX = cx;
         const minY = cy + ch - ih, maxY = cy;
-
-        state.ox = (iw <= cw) ? cx + (cw - iw)/2 : Math.max(minX, Math.min(maxX, state.ox));
-        state.oy = (ih <= ch) ? cy + (ch - ih)/2 : Math.max(minY, Math.min(maxY, state.oy));
+        if (iw <= cw) { state.ox = cx + (cw - iw)/2; } else { state.ox = Math.max(minX, Math.min(maxX, state.ox)); }
+        if (ih <= ch) { state.oy = cy + (ch - ih)/2; } else { state.oy = Math.max(minY, Math.min(maxY, state.oy)); }
       }
-
       function computeMinZoom(){
         const W = canvas.width, H = canvas.height;
         const {cw, ch} = getCropBox(W,H);
-        return Math.max(cw / img.width, ch / img.height);
+        const zx = cw / img.width, zy = ch / img.height;
+        return Math.max(zx, zy);
       }
-
       function draw(){
         if (!img) return;
         const W = canvas.width, H = canvas.height;
         ctx.clearRect(0,0,W,H);
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(0,0,W,H);
-
         const {cx, cy, cw, ch} = getCropBox(W,H);
         clampPan();
-
         const iw = img.width * state.zoom, ih = img.height * state.zoom;
         const ix = state.ox, iy = state.oy;
-
-        ctx.save();
-        ctx.beginPath(); ctx.rect(cx, cy, cw, ch); ctx.clip();
-        ctx.drawImage(img, ix, iy, iw, ih);
-        ctx.restore();
+        ctx.save(); ctx.beginPath(); ctx.rect(cx, cy, cw, ch); ctx.clip();
+        ctx.drawImage(img, ix, iy, iw, ih); ctx.restore();
 
         octx.clearRect(0,0,W,H);
         octx.fillStyle = '#00000088'; octx.fillRect(0,0,W,H);
         octx.clearRect(cx, cy, cw, ch);
-        octx.strokeStyle = '#ffffffdd'; octx.lineWidth = 2;
-        octx.strokeRect(cx+1, cy+1, cw-2, ch-2);
+        octx.strokeStyle = '#ffffffdd'; octx.lineWidth = 2; octx.strokeRect(cx+1, cy+1, cw-2, ch-2);
       }
-
       function setCanvasSize(){
-        const stage = canvas.parentElement;
-        const rect = stage.getBoundingClientRect();
+        const stage = canvas.parentElement, rect = stage.getBoundingClientRect();
         canvas.width  = Math.max(320, Math.round(rect.width));
         canvas.height = Math.max(240, Math.round(rect.height));
-        overlay.width = canvas.width;
-        overlay.height= canvas.height;
+        overlay.width = canvas.width; overlay.height= canvas.height;
       }
-
       function setZoom(newZoom, cxPx, cyPx){
         const prev = state.zoom;
         newZoom = Math.max(state.minZoom, Math.min(state.minZoom*3, newZoom));
         if (!img || newZoom === prev) { state.zoom = newZoom; clampPan(); draw(); return; }
-
         const W = canvas.width, H = canvas.height;
         const {cx, cy, cw, ch} = getCropBox(W,H);
-        const fx = (cxPx ?? (cx + cw/2));
-        const fy = (cyPx ?? (cy + ch/2));
-
-        const imgXBefore = (fx - state.ox) / prev;
-        const imgYBefore = (fy - state.oy) / prev;
-
+        const fx = (cxPx ?? (cx + cw/2)), fy = (cyPx ?? (cy + ch/2));
+        const imgXBefore = (fx - state.ox) / prev, imgYBefore = (fy - state.oy) / prev;
         state.zoom = newZoom;
-        state.ox = fx - imgXBefore * newZoom;
-        state.oy = fy - imgYBefore * newZoom;
-
+        state.ox = fx - imgXBefore * newZoom; state.oy = fy - imgYBefore * newZoom;
         clampPan(); draw();
       }
-
       function open(fileOrURL){
         modal = document.getElementById('cropModal');
         canvas = document.getElementById('cropCanvas');
         overlay= document.getElementById('cropOverlay');
-        ctx  = canvas.getContext('2d');
-        octx = overlay.getContext('2d');
-
+        ctx = canvas.getContext('2d'); octx=overlay.getContext('2d');
         state.zoom = 1; state.ox = 0; state.oy = 0;
 
         return new Promise((resolve)=>{
-          openModalFix();
+          modal.classList.add('show');
           const image = new Image();
           image.onload = function(){
-            img = image;
-            setCanvasSize();
-            state.minZoom = computeMinZoom();
-            state.zoom = state.minZoom;
-
+            img = image; setCanvasSize();
+            state.minZoom = computeMinZoom(); state.zoom = state.minZoom;
             const W = canvas.width, H = canvas.height;
             const {cx, cy, cw, ch} = getCropBox(W,H);
             const iw = img.width * state.zoom, ih = img.height * state.zoom;
-            state.ox = cx + (cw - iw)/2;
-            state.oy = cy + (ch - ih)/2;
+            state.ox = cx + (cw - iw)/2; state.oy = cy + (ch - ih)/2;
 
-            const zoomRange = document.getElementById('cropZoom');
-            zoomRange.min = state.minZoom.toFixed(2);
-            zoomRange.max = (state.minZoom*3).toFixed(2);
-            zoomRange.value = state.minZoom.toFixed(2);
-
+            const zr = document.getElementById('cropZoom');
+            zr.min = state.minZoom.toFixed(2); zr.max = (state.minZoom*3).toFixed(2); zr.value = state.minZoom.toFixed(2);
             draw();
           };
           image.onerror= function(){ toast('تعذر قراءة الصورة'); close(); resolve(null); };
+          if (fileOrURL instanceof File) image.src = URL.createObjectURL(fileOrURL); else image.src = fileOrURL;
 
-          if (fileOrURL instanceof File) {
-            const url = URL.createObjectURL(fileOrURL);
-            image.src = url;
-          } else {
-            image.src = fileOrURL;
-          }
-
-          function onDown(e){
-            e.preventDefault();
-            dragging=true;
-            lastX=(e.touches?e.touches[0].clientX:e.clientX);
-            lastY=(e.touches?e.touches[0].clientY:e.clientY);
-          }
-          function onMove(e){
-            if(!dragging) return;
-            const x=(e.touches?e.touches[0].clientX:e.clientX), y=(e.touches?e.touches[0].clientY:e.clientY);
-            state.ox += (x-lastX); state.oy += (y-lastY); lastX=x; lastY=y;
-            clampPan(); draw();
-          }
+          function onDown(e){ e.preventDefault(); dragging=true; lastX=(e.touches?e.touches[0].clientX:e.clientX); lastY=(e.touches?e.touches[0].clientY:e.clientY); }
+          function onMove(e){ if(!dragging) return; const x=(e.touches?e.touches[0].clientX:e.clientX), y=(e.touches?e.touches[0].clientY:e.clientY); state.ox += (x-lastX); state.oy += (y-lastY); lastX=x; lastY=y; clampPan(); draw(); }
           function onUp(){ dragging=false; }
-
           canvas.onmousedown = onDown; canvas.onmousemove = onMove; window.onmouseup = onUp;
           canvas.ontouchstart= onDown; canvas.ontouchmove  = onMove; window.ontouchend = onUp;
 
-          canvas.onwheel = (e)=>{
-            e.preventDefault();
-            const delta = -e.deltaY;
-            const factor = (delta>0? 1.05 : 0.95);
-            const r = canvas.getBoundingClientRect();
-            setZoom(state.zoom * factor, e.clientX - r.left, e.clientY - r.top);
-          };
+          canvas.onwheel = (e)=>{ e.preventDefault(); const factor = (-e.deltaY>0? 1.05 : 0.95); const r = canvas.getBoundingClientRect(); setZoom(state.zoom * factor, e.clientX - r.left, e.clientY - r.top); };
 
           const aspectSel = document.getElementById('cropAspect');
           const zoomRange = document.getElementById('cropZoom');
@@ -470,76 +381,51 @@
 
           aspectSel.onchange = ()=>{
             state.aspect = parseFloat(aspectSel.value)||1;
-            state.minZoom = computeMinZoom();
-            state.zoom = Math.max(state.zoom, state.minZoom);
-            zoomRange.min = state.minZoom.toFixed(2);
-            zoomRange.max = (state.minZoom*3).toFixed(2);
+            state.minZoom = computeMinZoom(); state.zoom = Math.max(state.zoom, state.minZoom);
+            zoomRange.min = state.minZoom.toFixed(2); zoomRange.max = (state.minZoom*3).toFixed(2);
             if (parseFloat(zoomRange.value) < state.minZoom) zoomRange.value = state.minZoom.toFixed(2);
             const W = canvas.width, H = canvas.height;
             const {cx, cy, cw, ch} = getCropBox(W,H);
             const iw = img.width * state.zoom, ih = img.height * state.zoom;
-            state.ox = cx + (cw - iw)/2;
-            state.oy = cy + (ch - ih)/2;
-            clampPan();
-            draw();
+            state.ox = cx + (cw - iw)/2; state.oy = cy + (ch - ih)/2; clampPan(); draw();
           };
-          zoomRange.oninput  = ()=>{ setZoom(parseFloat(zoomRange.value)||state.minZoom); };
-          qRange.oninput     = ()=>{ state.quality = parseFloat(qRange.value)||0.82; };
-          maxInput.onchange  = ()=>{ state.max = Math.max(256, Math.min(2048, parseInt(maxInput.value||768,10))); };
+          zoomRange.oninput  = ()=> setZoom(parseFloat(zoomRange.value)||state.minZoom);
+          qRange.oninput     = ()=> state.quality = parseFloat(qRange.value)||0.82;
+          maxInput.onchange  = ()=> state.max = Math.max(256, Math.min(2048, parseInt(maxInput.value||768,10)));
 
           document.getElementById('cropCancel').onclick = ()=>{ close(); resolve(null); };
           document.querySelector('#cropModal [data-close]').onclick = ()=>{ close(); resolve(null); };
           document.getElementById('cropConfirm').onclick = ()=>{
             const W = canvas.width, H=canvas.height;
             const {cx, cy, cw, ch} = getCropBox(W,H);
-
             let outW = state.max, outH = Math.round(outW / state.aspect);
             if (state.aspect < 1) { outH = state.max; outW = Math.round(outH * state.aspect); }
-
-            const out = document.createElement('canvas');
-            out.width = outW; out.height = outH;
+            const out = document.createElement('canvas'); out.width = outW; out.height = outH;
             const o2d = out.getContext('2d');
 
-            const tmp = document.createElement('canvas');
-            tmp.width = W; tmp.height = H;
-            const tctx = tmp.getContext('2d');
-            tctx.fillStyle = '#0f172a'; tctx.fillRect(0,0,W,H);
-            tctx.save();
-            tctx.beginPath(); tctx.rect(cx, cy, cw, ch); tctx.clip();
+            const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H;
+            const tctx = tmp.getContext('2d'); tctx.fillStyle = '#0f172a'; tctx.fillRect(0,0,W,H);
+            tctx.save(); tctx.beginPath(); tctx.rect(cx, cy, cw, ch); tctx.clip();
             const iw = img.width * state.zoom, ih = img.height * state.zoom;
-            const ix = state.ox, iy = state.oy;
-            tctx.drawImage(img, ix, iy, iw, ih);
-            tctx.restore();
-
+            const ix = state.ox, iy = state.oy; tctx.drawImage(img, ix, iy, iw, ih); tctx.restore();
             const cut = tctx.getImageData(cx, cy, cw, ch);
-            const cutCanvas = document.createElement('canvas');
-            cutCanvas.width = cw; cutCanvas.height = ch;
+            const cutCanvas = document.createElement('canvas'); cutCanvas.width=cw; cutCanvas.height=ch;
             cutCanvas.getContext('2d').putImageData(cut, 0, 0);
             o2d.drawImage(cutCanvas, 0, 0, outW, outH);
-
             out.toBlob((blob)=>{ close(); resolve(blob); }, 'image/jpeg', state.quality);
           };
 
-          function close(){
-            closeModalFix();
-            window.onmouseup=null; window.ontouchend=null;
-            canvas.onwheel = null;
-          }
+          function close(){ modal.classList.remove('show'); window.onmouseup=null; window.ontouchend=null; canvas.onwheel = null; }
 
           const onResize = ()=>{ setCanvasSize(); state.minZoom = computeMinZoom(); if (state.zoom < state.minZoom) state.zoom = state.minZoom; clampPan(); draw(); };
           window.addEventListener('resize', onResize, { passive:true });
-          modal.addEventListener('transitionend', function cleanup(){
-            if (!modal.classList.contains('show')) {
-              window.removeEventListener('resize', onResize);
-              modal.removeEventListener('transitionend', cleanup);
-            }
-          });
+          modal.addEventListener('transitionend', function cleanup(){ if (!modal.classList.contains('show')) { window.removeEventListener('resize', onResize); modal.removeEventListener('transitionend', cleanup); }});
         });
       }
-
       return { open };
     })();
 
+    /* ——— منطق الصفحة ——— */
     async function initProfile(){
       const card = document.getElementById('profileCard');
       card?.setAttribute('data-ready','0');
@@ -548,10 +434,7 @@
       if (!client) return;
 
       const logged = await client.isAuthenticated?.().catch(()=>false);
-      if (!logged) {
-        await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
-        return;
-      }
+      if (!logged) { await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } }); return; }
 
       let user=null, claims=null;
       try { user = await client.getUser(); } catch(_){}
@@ -568,34 +451,19 @@
       const avatarEl = document.getElementById('u-avatar');
       if (user?.picture) avatarEl.src = user.picture;
 
-      const NS_NEW = "https://n-athar.co/";
-      const NS_OLD = "https://athar.co/";
+      const NS_NEW = "https://n-athar.co/"; const NS_OLD = "https://athar.co/";
       const st = (claims && (claims[NS_NEW + "status"] || claims[NS_OLD + "status"])) || "";
       document.getElementById('u-status').textContent = st || '—';
 
-      const colorBy = {
-        active:  {bg:'#dcfce7', fg:'#166534', br:'#bbf7d0', text:'مفعل'},
-        trial:   {bg:'#dbeafe', fg:'#1e3a8a', br:'#bfdbfe', text:'تجريبي'},
-        pending: {bg:'#fef9c3', fg:'#854d0e', br:'#fde68a', text:'معلق'},
-        inactive:{bg:'#fee2e2', fg:'#991b1b', br:'#fecaca', text:'غير نشط'}
-      };
+      const colorBy = {active:{bg:'#dcfce7',fg:'#166534',br:'#bbf7d0',text:'مفعل'},trial:{bg:'#dbeafe',fg:'#1e3a8a',br:'#bfdbfe',text:'تجريبي'},pending:{bg:'#fef9c3',fg:'#854d0e',br:'#fde68a',text:'معلق'},inactive:{bg:'#fee2e2',fg:'#991b1b',br:'#fecaca',text:'غير نشط'}};
       const badge = document.getElementById('sub-state');
-      if (st) {
-        const m = colorBy[st] || colorBy.inactive;
-        badge.style.display='inline-block';
-        badge.textContent=m.text; badge.style.background=m.bg; badge.style.color=m.fg; badge.style.borderColor=m.br;
-      }
+      if (st) { const m = colorBy[st] || colorBy.inactive; badge.style.display='inline-block'; badge.textContent=m.text; badge.style.background=m.bg; badge.style.color=m.fg; badge.style.borderColor=m.br; }
 
       // تفضيلات من Supabase
       try {
         if (window.supa && user?.sub) {
-          const { data: pref } = await window.supa
-            .from('user_prefs').select('*').eq('user_sub', user.sub).maybeSingle();
-
-          if (pref?.display_name) {
-            document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = pref.display_name);
-            localStorage.setItem('athar:displayName', pref.display_name);
-          }
+          const { data: pref } = await window.supa.from('user_prefs').select('*').eq('user_sub', user.sub).maybeSingle();
+          if (pref?.display_name) { document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = pref.display_name); localStorage.setItem('athar:displayName', pref.display_name); }
           if (pref?.avatar_url)   avatarEl.src = pref.avatar_url;
           if (pref?.theme_color)  document.documentElement.style.setProperty('--primary', pref.theme_color);
         }
@@ -611,98 +479,71 @@
         localStorage.setItem('athar:displayName', clean);
         try {
           if (window.supa && user?.sub) {
-            await window.supa.from('user_prefs').upsert(
-              { user_sub: user.sub, display_name: clean },
-              { onConflict: 'user_sub' }
-            );
+            await window.supa.from('user_prefs').upsert({ user_sub: user.sub, display_name: clean }, { onConflict: 'user_sub' });
             toast("تم تحديث الاسم ✓");
           }
         } catch(e){ console.error(e); toast("تعذر حفظ الاسم"); }
       };
 
-      // رفع الصورة — بعد القص/الضغط
+      // —— الرفع مع إنشاء البكت تلقائيًا وإعادة المحاولة ——
+      async function ensureBucketOnce(){
+        try { await fetch('/.netlify/functions/storage-ensure'); } catch(_){}
+      }
+      async function uploadAvatarBlob(blob){
+        const file = new File([blob], 'avatar.jpg', { type:'image/jpeg' });
+        const safe = (user?.sub || 'u').replace(/[|]/g,'_');
+        const path = `${safe}/${Date.now()}_avatar.jpg`;
+        return await window.supa.storage.from('avatars').upload(path, file, { upsert:true, contentType:'image/jpeg' });
+      }
+
       const avatarInput = document.getElementById('avatarInput');
       avatarInput.onchange = async (ev) => {
         const file = ev.target.files?.[0]; if (!file) return;
         try {
-          await ensureBucket(); // تأكيد وجود bucket: avatars
-
           const blob = await cropper.open(file);
           if (!blob) { ev.target.value=''; return; }
-          if (blob.size > 10 * 1024 * 1024) { toast('الصورة كبيرة جدًا بعد الضغط'); return; }
 
-          const finalFile = new File([blob], 'avatar.jpg', { type:'image/jpeg' });
+          // محاولة أولى
+          let up = await uploadAvatarBlob(blob);
+          if (up?.error && /Bucket not found/i.test(up.error.message||up.error)) {
+            await ensureBucketOnce();
+            up = await uploadAvatarBlob(blob);
+          }
+          if (up.error) throw up.error;
 
-          if (!window.supa) throw new Error("Supabase غير متاح");
-          const u = await (window.auth0Client || window.auth).getUser();
-          const safe = (u?.sub || 'u').replace(/[|/\\]/g,'_');
-          const path = `${safe}/${Date.now()}_avatar.jpg`;
-
-          const up = await window.supa.storage
-            .from('avatars')
-            .upload(path, finalFile, { upsert:true, contentType:'image/jpeg' });
-
-          if (up.error) { console.error(up.error); throw up.error; }
-
+          const path = up.data?.path;
           const { data } = window.supa.storage.from('avatars').getPublicUrl(path);
           const url = data.publicUrl + `?v=${Date.now()}`;
           document.getElementById('u-avatar').src = url;
-
-          await window.supa
-            .from('user_prefs')
-            .upsert({ user_sub: u.sub, avatar_url: url }, { onConflict: 'user_sub' });
-
+          await window.supa.from('user_prefs').upsert({ user_sub: user.sub, avatar_url: url }, { onConflict: 'user_sub' });
           toast("تم تحديث الصورة ✓");
-        } catch(e){
-          console.error(e);
-          toast(e?.message || 'تعذر رفع الصورة');
-        } finally {
-          ev.target.value = '';
-        }
+        } catch(e){ console.error(e); toast("تعذر رفع الصورة"); }
+        finally { ev.target.value = ''; }
       };
 
       // منتقي الألوان
       (function initThemePicker(){
-        const root   = document.documentElement;
-        const picker = document.getElementById('themePicker');
-        if (!picker) return;
-        picker.dataset.v2 = '1';
-
+        const root = document.documentElement, picker = document.getElementById('themePicker');
+        if (!picker) return; picker.dataset.v2 = '1';
         const swatches = [...picker.querySelectorAll('button')];
-        swatches.forEach(b=>{
-          if (b.hasAttribute('data-color')) b.style.backgroundColor = b.dataset.color;
-          if (b.hasAttribute('data-reset')) b.style.background = '#111827';
-        });
-
+        swatches.forEach(b=>{ if (b.hasAttribute('data-color')) b.style.backgroundColor = b.dataset.color; if (b.hasAttribute('data-reset')) b.style.background = '#111827'; });
         const saved = localStorage.getItem('athar:theme');
-        if (saved) {
-          root.style.setProperty('--primary', saved);
-          (swatches.find(b=>b.dataset.color === saved) || swatches.find(b=>b.hasAttribute('data-reset')))?.classList.add('is-active');
-        } else {
-          swatches.find(b=>b.hasAttribute('data-reset'))?.classList.add('is-active');
-        }
-
+        if (saved) { root.style.setProperty('--primary', saved); (swatches.find(b=>b.dataset.color === saved) || swatches.find(b=>b.hasAttribute('data-reset')))?.classList.add('is-active'); }
+        else { swatches.find(b=>b.hasAttribute('data-reset'))?.classList.add('is-active'); }
         picker.addEventListener('click', async (e)=>{
           const btn = e.target.closest('button'); if (!btn) return;
-
           if (btn.hasAttribute('data-reset')) {
             localStorage.removeItem('athar:theme');
             const def = getComputedStyle(root).getPropertyValue('--sea-600').trim() || '#1e40af';
             root.style.setProperty('--primary', def);
-            swatches.forEach(b=>b.classList.remove('is-active'));
-            btn.classList.add('is-active');
-            try { const u = await (window.auth0Client || window.auth).getUser(); if (window.supa && u?.sub) await window.supa.from('user_prefs').upsert({ user_sub:u.sub, theme_color:null }, { onConflict:'user_sub' }); } catch(_){}
-            window.dispatchEvent(new CustomEvent('athar:theme-color', { detail: def }));
-            return;
+            swatches.forEach(b=>b.classList.remove('is-active')); btn.classList.add('is-active');
+            try { if (window.supa && user?.sub) await window.supa.from('user_prefs').upsert({ user_sub:user.sub, theme_color:null }, { onConflict:'user_sub' }); } catch(_){}
+            window.dispatchEvent(new CustomEvent('athar:theme-color', { detail: def })); return;
           }
-
-          const color = btn.dataset.color;
-          if (!color) return;
-          root.style.setProperty('--primary', color);
-          localStorage.setItem('athar:theme', color);
-          try { const u = await (window.auth0Client || window.auth).getUser(); if (window.supa && u?.sub) await window.supa.from('user_prefs').upsert({ user_sub:u.sub, theme_color:color }, { onConflict:'user_sub' }); } catch(_){}
-          swatches.forEach(b=>b.classList.remove('is-active'));
-          btn.classList.add('is-active');
+          const color = btn.dataset.color; if (!color) return;
+          root.style.setProperty('--primary', color); localStorage.setItem('athar:theme', color);
+          try { if (window.supa && user?.sub) await window.supa.from('user_prefs').upsert({ user_sub:user.sub, theme_color:color }, { onConflict:'user_sub' }); } catch(_){}
+          swatches.forEach(b=>b.classList.remove('is-active')); btn.classList.add('is-active');
           window.dispatchEvent(new CustomEvent('athar:theme-color', { detail: color }));
         });
       })();
@@ -717,13 +558,10 @@
       }
     });
 
-    // تشغيل الصفحة بعد جاهزية الحارس
+    // تشغيل الصفحة
     window.addEventListener('auth0:ready', initProfile);
     if (window.auth0Client || window.auth) initProfile();
   </script>
-
-  <!-- الحارس -->
-  <script src="assets/js/require-auth.js"></script>
 
   <!-- تعطيل أي منطق قديم للثيم يعتمد على نفس العنصر -->
   <script>
