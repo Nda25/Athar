@@ -7,6 +7,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <meta name="color-scheme" content="dark light">
+
+  <!-- تطبيق الثيم مبكرًا مثل index/profile/programs -->
+  <script>
+    (function(){
+      try{
+        var c = localStorage.getItem('athar:theme');
+        if (c) document.documentElement.style.setProperty('--primary', c);
+      }catch(_){}
+    })();
+  </script>
+
   <style>
     .topbar .left-actions { display:flex; align-items:center; gap:10px; }
     .emoji-toggle { font-size:18px; line-height:1; }
@@ -70,7 +81,7 @@
     <div class="brand-row">
       <h1 class="brand-name">مُـنطــلق</h1>
     </div>
-<div class="tag"><span class="dot"></span>حيـثُ تبدأ الخطوة.. ويستمـرُ الأثـر</div>
+    <div class="tag"><span class="dot"></span>حيـثُ تبدأ الخطوة.. ويستمـرُ الأثـر</div>
   </header>
   
   <main class="container">
@@ -190,28 +201,32 @@
     <p id="err" class="muted" style="text-align:center; display:none">رجاءً اختر المرحلة والمادة.</p>
   </main>
 
-<footer>
-  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-  <p class="foot-name">ندى المجيرش</p>
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
 
-  <nav class="foot-links">
-    <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-    <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-    <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-    <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-    <a href="complaints.html">الشكاوى والاقتراحات</a>
-  </nav>
+    <nav class="foot-links">
+      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+      <a href="complaints.html">الشكاوى والاقتراحات</a>
+    </nav>
 
-  <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-</footer>
+    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
+  </footer>
 
-<script>
-  // سنة تلقائية في الفوتر
-  (function(){
-    var y=document.getElementById('year');
-    if(y) y.textContent=new Date().getFullYear();
-  })();
-</script>
+  <script>
+    // سنة تلقائية في الفوتر
+    (function(){
+      var y=document.getElementById('year');
+      if(y) y.textContent=new Date().getFullYear();
+    })();
+    // مزامنة لون الثيم مباشرة عند تغييره من صفحة البروفايل
+    window.addEventListener('athar:theme-color', function(e){
+      try{ if(e && e.detail){ document.documentElement.style.setProperty('--primary', e.detail); } }catch(_){}
+    });
+  </script>
 
   <!-- Auth0 SDK -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
@@ -229,204 +244,236 @@
   <script defer src="app.js"></script>
 
   <!-- سكربت الصفحة -->
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  // المواد حسب المرحلة
-  const SUBJECTS = {
-    "primary-lower": ["اللغة العربية","الرياضيات","العلوم","مهارات رقمية","اللغة الإنجليزية","الدراسات الإسلامية","التربية الفنية","التربية البدنية والدفاع عن النفس","مهارات حياتية وأسرية"],
-    "primary-upper": ["اللغة العربية","الرياضيات","العلوم","المهارات الرقمية","اللغة الإنجليزية","الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد","التربية الفنية","التربية البدنية والدفاع عن النفس"],
-    "middle":        ["اللغة العربية","الرياضيات","العلوم","اللغة الإنجليزية","الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد والمنطق","مهارات رقمية","التربية الفنية","التربية البدنية والدفاع عن النفس"],
-    "secondary":     ["الفيزياء","الكيمياء","الأحياء","الرياضيات","اللغة العربية","اللغة الإنجليزية","التاريخ","الدراسات الإسلامية","مهارات رقمية","علم الأرض والفضاء","التفكير الناقد"]
-  };
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // المواد حسب المرحلة
+    const SUBJECTS = {
+      "primary-lower": ["اللغة العربية","الرياضيات","العلوم","مهارات رقمية","اللغة الإنجليزية","الدراسات الإسلامية","التربية الفنية","التربية البدنية والدفاع عن النفس","مهارات حياتية وأسرية"],
+      "primary-upper": ["اللغة العربية","الرياضيات","العلوم","المهارات الرقمية","اللغة الإنجليزية","الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد","التربية الفنية","التربية البدنية والدفاع عن النفس"],
+      "middle":        ["اللغة العربية","الرياضيات","العلوم","اللغة الإنجليزية","الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد والمنطق","مهارات رقمية","التربية الفنية","التربية البدنية والدفاع عن النفس"],
+      "secondary":     ["الفيزياء","الكيمياء","الأحياء","الرياضيات","اللغة العربية","اللغة الإنجليزية","التاريخ","الدراسات الإسلامية","مهارات رقمية","علم الأرض والفضاء","التفكير الناقد"]
+    };
 
-  // يربط حساب Auth0 مع جدول users (upsert) مرة واحدة
-  if (typeof supaEnsureUserProfile === 'function') {
-    supaEnsureUserProfile().catch(()=>{});
-  }
-
-  // عناصر الواجهة
-  const $  = (s)=>document.querySelector(s);
-  const stageSel   = $('#stage');
-  const subjectSel = $('#subject');
-  const bloomSel   = $('#type');
-  const lessonInp  = $('#lesson');
-  const goBtn      = $('#go');
-  const regenBtn   = $('#regen');
-  const statusEl   = $('#status');
-
-  // تعبئة المواد عند تغيير المرحلة
-  stageSel.addEventListener('change', () => {
-    const s = stageSel.value;
-    subjectSel.innerHTML = '<option value="" selected disabled>اختر المادة</option>';
-    (SUBJECTS[s] || []).forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m; opt.textContent = m;
-      subjectSel.appendChild(opt);
-    });
-    subjectSel.disabled = !(SUBJECTS[s] && SUBJECTS[s].length);
-  });
-
-  function readStageLabel(v){
-    return {"primary-lower":"ابتدائي — دنيا","primary-upper":"ابتدائي — عليا","middle":"متوسط","secondary":"ثانوي"}[v] || v;
-  }
-
-  function setLoading(isLoading){
-    if (isLoading){
-      goBtn.dataset._label = goBtn.textContent;
-      goBtn.textContent = "قيد الإبداع  … ✨";
-      goBtn.disabled = true;
-      regenBtn.disabled = true;
-    } else {
-      goBtn.textContent = goBtn.dataset._label || "ساعدني على الإبداع";
-      goBtn.disabled = false;
-      regenBtn.disabled = false;
+    // يربط حساب Auth0 مع جدول users (upsert) مرة واحدة
+    if (typeof supaEnsureUserProfile === 'function') {
+      supaEnsureUserProfile().catch(()=>{});
     }
-  }
 
-  async function callStrategy({stage, subject, bloomType, lesson, variant}){
-    const res = await fetch("/.netlify/functions/strategy", {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ stage, subject, bloomType, lesson, variant })
+    // عناصر الواجهة
+    const $  = (s)=>document.querySelector(s);
+    const stageSel   = $('#stage');
+    const subjectSel = $('#subject');
+    const bloomSel   = $('#type');
+    const lessonInp  = $('#lesson');
+    const goBtn      = $('#go');
+    const regenBtn   = $('#regen');
+    const statusEl   = $('#status');
+
+    // تعبئة المواد عند تغيير المرحلة
+    stageSel.addEventListener('change', () => {
+      const s = stageSel.value;
+      subjectSel.innerHTML = '<option value="" selected disabled>اختر المادة</option>';
+      (SUBJECTS[s] || []).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m; opt.textContent = m;
+        subjectSel.appendChild(opt);
+      });
+      subjectSel.disabled = !(SUBJECTS[s] && SUBJECTS[s].length);
     });
-    if(!res.ok){
-      const txt = await res.text();
-      throw new Error("خطأ من الخادم: "+res.status+" | "+txt);
+
+    function readStageLabel(v){
+      return {"primary-lower":"ابتدائي — دنيا","primary-upper":"ابتدائي — عليا","middle":"متوسط","secondary":"ثانوي"}[v] || v;
     }
-    return res.json();
-  }
 
-  function listTo(el, arr){
-    el.innerHTML = "";
-    (arr||[]).forEach(v=>{
-      const t = (v||"").toString().trim();
-      if(!t) return;
-      const li = document.createElement('li'); li.textContent = t;
-      el.appendChild(li);
-    });
-  }
-
-  function paintOutput(data, meta){
-    $("#title").textContent = data.strategy_name || "—";
-    const chips=[];
-    if(meta.stage)   chips.push(meta.stageLabel || meta.stage);
-    if(meta.subject) chips.push(meta.subject);
-    if(data.bloom || meta.bloomType) chips.push(data.bloom || meta.bloomType);
-    if(meta.lesson)  chips.push("الدرس: "+meta.lesson);
-    $("#chips").innerHTML = chips.map(t=>`<span class="chip">${t}</span>`).join("");
-
-    $("#importance").textContent = data.importance || "—";
-    $("#materials").textContent  = data.materials  || "—";
-    $("#assessment").textContent = data.assessment || "—";
-    $("#impact").textContent     = data.expected_impact || "—";
-
-    const diffUl = $("#diff"); diffUl.innerHTML = "";
-    [["دعم: ",data.diff_support],["أساسي: ",data.diff_core],["تحدّي: ",data.diff_challenge]].forEach(([k,v])=>{
-      if(v){ const li=document.createElement('li'); li.textContent = k+v; diffUl.appendChild(li); }
-    });
-
-    listTo($("#goals"), data.goals);
-    listTo($("#steps"), data.steps);
-    listTo($("#examples"), data.examples);
-
-    const citesUl = $("#cites"); citesUl.innerHTML = "";
-    (data.citations||[]).forEach(c=>{
-      if(!c || !c.title) return;
-      const li = document.createElement('li');
-      const strong = document.createElement('strong'); strong.textContent = c.title;
-      li.appendChild(strong);
-      if(c.benefit){
-        const p = document.createElement('p'); p.style.margin = "4px 0 0 0"; p.className = "muted"; p.textContent = c.benefit;
-        li.appendChild(p);
+    function setLoading(isLoading){
+      if (isLoading){
+        goBtn.dataset._label = goBtn.textContent;
+        goBtn.textContent = "قيد الإبداع  … ✨";
+        goBtn.disabled = true;
+        regenBtn.disabled = true;
+      } else {
+        goBtn.textContent = goBtn.dataset._label || "ساعدني على الإبداع";
+        goBtn.disabled = false;
+        regenBtn.disabled = false;
       }
-      citesUl.appendChild(li);
+    }
+
+    async function callStrategy({stage, subject, bloomType, lesson, variant}){
+      const res = await fetch("/.netlify/functions/strategy", {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ stage, subject, bloomType, lesson, variant })
+      });
+      if(!res.ok){
+        const txt = await res.text();
+        throw new Error("خطأ من الخادم: "+res.status+" | "+txt);
+      }
+      return res.json();
+    }
+
+    function listTo(el, arr){
+      el.innerHTML = "";
+      (arr||[]).forEach(v=>{
+        const t = (v||"").toString().trim();
+        if(!t) return;
+        const li = document.createElement('li'); li.textContent = t;
+        el.appendChild(li);
+      });
+    }
+
+    function paintOutput(data, meta){
+      $("#title").textContent = data.strategy_name || "—";
+      const chips=[];
+      if(meta.stage)   chips.push(meta.stageLabel || meta.stage);
+      if(meta.subject) chips.push(meta.subject);
+      if(data.bloom || meta.bloomType) chips.push(data.bloom || meta.bloomType);
+      if(meta.lesson)  chips.push("الدرس: "+meta.lesson);
+      $("#chips").innerHTML = chips.map(t=>`<span class="chip">${t}</span>`).join("");
+
+      $("#importance").textContent = data.importance || "—";
+      $("#materials").textContent  = data.materials  || "—";
+      $("#assessment").textContent = data.assessment || "—";
+      $("#impact").textContent     = data.expected_impact || "—";
+
+      const diffUl = $("#diff"); diffUl.innerHTML = "";
+      [["دعم: ",data.diff_support],["أساسي: ",data.diff_core],["تحدّي: ",data.diff_challenge]].forEach(([k,v])=>{
+        if(v){ const li=document.createElement('li'); li.textContent = k+v; diffUl.appendChild(li); }
+      });
+
+      listTo($("#goals"), data.goals);
+      listTo($("#steps"), data.steps);
+      listTo($("#examples"), data.examples);
+
+      const citesUl = $("#cites"); citesUl.innerHTML = "";
+      (data.citations||[]).forEach(c=>{
+        if(!c || !c.title) return;
+        const li = document.createElement('li');
+        const strong = document.createElement('strong'); strong.textContent = c.title;
+        li.appendChild(strong);
+        if(c.benefit){
+          const p = document.createElement('p'); p.style.margin = "4px 0 0 0"; p.className = "muted"; p.textContent = c.benefit;
+          li.appendChild(p);
+        }
+        citesUl.appendChild(li);
+      });
+
+      $("#out").style.display = "block";
+      $("#err").style.display = "none";
+      $("#regen").style.display = "inline-flex";
+    }
+
+    // ——— حاجز تكرار ذكي: لا يعيد نفس العنوان/المحتوى  ———
+    const SEEN_KEY = "muntaq_seen_v1";
+    function loadSeen(){
+      try{ return new Set(JSON.parse(sessionStorage.getItem(SEEN_KEY) || "[]")); }catch(_){ return new Set(); }
+    }
+    function saveSeen(set){
+      try{ sessionStorage.setItem(SEEN_KEY, JSON.stringify(Array.from(set))); }catch(_){}
+    }
+    function signatureOf(d){
+      // بصمة بسيطة: اسم + أول هدف + أول خطوتين + أول مثال
+      const parts = [
+        d?.strategy_name || "",
+        (d?.goals||[])[0] || "",
+        (d?.steps||[])[0] || "",
+        (d?.steps||[])[1] || "",
+        (d?.examples||[])[0] || ""
+      ].join("||").toLowerCase().replace(/\s+/g," ").trim();
+      // هاش خفيف
+      let h=0; for (let i=0;i<parts.length;i++){ h=((h<<5)-h)+parts.charCodeAt(i); h|=0; }
+      return String(h);
+    }
+
+    async function generate(variant=null, _retry=0){
+      const stage   = stageSel.value;
+      const subject = subjectSel.value;
+      const bloom   = bloomSel.value;
+      const lesson  = lessonInp.value.trim();
+
+      if(!stage || !subject){
+        $("#err").style.display = "block";
+        (window.toast? toast("اختر المرحلة والمادة أولاً.") : null);
+        return;
+      }
+      $("#err").style.display = "none";
+      statusEl.textContent = "جاري تحويل شغفك إلى استراتيجية ملموسة …✨";
+      setLoading(true);
+      try{
+        const data = await callStrategy({
+          stage,
+          subject,
+          bloomType: bloom,
+          lesson,
+          variant: variant || Math.floor(Math.random()*1e9)
+        });
+
+        // تحقق من عدم التكرار في الجلسة
+        const seen = loadSeen();
+        const sig = signatureOf(data);
+        if (seen.has(sig) && _retry < 3){
+          // محاولة تنويع جديدة تلقائيًا
+          return await generate(Date.now() + Math.floor(Math.random()*1e6), _retry+1);
+        }
+        seen.add(sig); saveSeen(seen);
+
+        paintOutput(data, { stage, stageLabel: readStageLabel(stage), subject, bloomType: bloom, lesson });
+        statusEl.textContent = "تـــم  ✨";
+      }catch(err){
+        console.error(err);
+        statusEl.textContent = err.message || "تعذّر التوليد.";
+        (window.toast? toast("تعذّر التوليد. جرّب ثانية.") : null);
+      }finally{
+        setLoading(false);
+      }
+    }
+
+    // أزرار التوليد — مع تتبع واضح
+    goBtn.addEventListener("click", async ()=>{
+      await generate(null);
+      if (typeof supaLogToolUsage === 'function') {
+        await supaLogToolUsage('muntaq_generate', {
+          stage: stageSel.value || null,
+          subject: subjectSel.value || null,
+          bloom: bloomSel.value || null,
+          lesson: (lessonInp.value||'').trim() || null
+        });
+      }
     });
 
-    $("#out").style.display = "block";
-    $("#err").style.display = "none";
-    $("#regen").style.display = "inline-flex";
-  }
+    regenBtn.addEventListener("click", async ()=>{
+      await generate(Date.now());
+      if (typeof supaLogToolUsage === 'function') {
+        await supaLogToolUsage('muntaq_regenerate', {
+          stage: stageSel.value || null,
+          subject: subjectSel.value || null,
+          bloom: bloomSel.value || null,
+          lesson: (lessonInp.value||'').trim() || null
+        });
+      }
+    });
 
-  async function generate(variant=null){
-    const stage   = stageSel.value;
-    const subject = subjectSel.value;
-    const bloom   = bloomSel.value;
-    const lesson  = lessonInp.value.trim();
-
-    if(!stage || !subject){
-      $("#err").style.display = "block";
-      (window.toast? toast("اختر المرحلة والمادة أولاً.") : null);
-      return;
-    }
-    $("#err").style.display = "none";
-    statusEl.textContent = "جاري تحويل شغفك إلى استراتيجية ملموسة …✨";
-    setLoading(true);
-    try{
-      const data = await callStrategy({
-        stage,
-        subject,
-        bloomType: bloom,
-        lesson,
-        variant: variant || Math.floor(Math.random()*1e9)
-      });
-      paintOutput(data, { stage, stageLabel: readStageLabel(stage), subject, bloomType: bloom, lesson });
-      statusEl.textContent = "تـــم  ✨";
-    }catch(err){
-      console.error(err);
-      statusEl.textContent = err.message || "تعذّر التوليد.";
-      (window.toast? toast("تعذّر التوليد. جرّب ثانية.") : null);
-    }finally{
-      setLoading(false);
-    }
-  }
-
-  // أزرار التوليد — مع تتبع واضح
-  goBtn.addEventListener("click", async ()=>{
-    await generate(null);
-    if (typeof supaLogToolUsage === 'function') {
-      await supaLogToolUsage('muntaq_generate', {
-        stage: stageSel.value || null,
-        subject: subjectSel.value || null,
-        bloom: bloomSel.value || null,
-        lesson: (lessonInp.value||'').trim() || null
-      });
-    }
+    // نسخ الناتج — مع تتبع النسخ
+    document.getElementById('copy')?.addEventListener("click", async ()=>{
+      const text = document.querySelector("#out").innerText;
+      if (navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(text);
+        (window.toast? toast("تم النسخ ✓") : null);
+      } else {
+        const ta=document.createElement("textarea"); ta.value=text;
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); (window.toast? toast("تم النسخ ✓") : null); }
+        finally { document.body.removeChild(ta); }
+      }
+      if (typeof supaLogToolUsage === 'function') {
+        await supaLogToolUsage('muntaq_copy', {
+          stage: stageSel.value || null,
+          subject: subjectSel.value || null,
+          bloom: bloomSel.value || null,
+          lesson: (lessonInp.value||'').trim() || null
+        });
+      }
+    });
   });
-
-  regenBtn.addEventListener("click", async ()=>{
-    await generate(Date.now());
-    if (typeof supaLogToolUsage === 'function') {
-      await supaLogToolUsage('muntaq_regenerate', {
-        stage: stageSel.value || null,
-        subject: subjectSel.value || null,
-        bloom: bloomSel.value || null,
-        lesson: (lessonInp.value||'').trim() || null
-      });
-    }
-  });
-
-  // نسخ الناتج — مع تتبع النسخ
-  document.getElementById('copy')?.addEventListener("click", async ()=>{
-    const text = document.querySelector("#out").innerText;
-    if (navigator.clipboard && window.isSecureContext){
-      await navigator.clipboard.writeText(text);
-      (window.toast? toast("تم النسخ ✓") : null);
-    } else {
-      const ta=document.createElement("textarea"); ta.value=text;
-      document.body.appendChild(ta); ta.select();
-      try { document.execCommand("copy"); (window.toast? toast("تم النسخ ✓") : null); }
-      finally { document.body.removeChild(ta); }
-    }
-    if (typeof supaLogToolUsage === 'function') {
-      await supaLogToolUsage('muntaq_copy', {
-        stage: stageSel.value || null,
-        subject: subjectSel.value || null,
-        bloom: bloomSel.value || null,
-        lesson: (lessonInp.value||'').trim() || null
-      });
-    }
-  });
-});
-</script>
+  </script>
 </body>
 </html>
