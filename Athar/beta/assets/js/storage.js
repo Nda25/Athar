@@ -2,17 +2,15 @@
 (function () {
   "use strict";
 
-  // امنعي تحميل الملف أكثر من مرة
   if (window.__ATHAR_STORAGE_LOADED__) return;
   window.__ATHAR_STORAGE_LOADED__ = true;
 
-  // ===== Helpers بسيطة (احتياطي) =====
   if (typeof window.$ === "undefined") {
     window.$ = (sel, root = document) => root.querySelector(sel);
   }
 
   // ==============================
-  // قاعدة بيانات محلية بسيطة للفورمات (Global)
+  // قاعدة بيانات محلية بسيطة للفورمات
   // ==============================
   if (!window.userDB) {
     function userKey() { return "athar:data"; }
@@ -49,13 +47,13 @@
   }
 
   // ==============================
-  // أدوات تحقق عامة (Global)
+  // أدوات تحقق عامة
   // ==============================
   if (!window.isValidEmail) window.isValidEmail = (x) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x);
   if (!window.isValidPhone) window.isValidPhone = (x) => /^05\d{8}$/.test(x);
 
   // ==============================
-  // أوتو-حفظ: قراءة/ملء/ربط (Global)
+  // أوتو-حفظ: قراءة/ملء/ربط
   // ==============================
   if (!window.readForm) {
     window.readForm = function readForm(container) {
@@ -164,10 +162,9 @@
   }
 
   // ==============================
-  // Supabase للمتصفح (مع حارس منع تكرار التصريح)
+  // Supabase (عميل متصفح)
   // ==============================
 
-  // تحضير قيم افتراضية فقط إذا ما كانت مضبوطة من قبل
   if (typeof window.SUPABASE_URL === "undefined") {
     window.SUPABASE_URL = "https://oywqpkzaudmzwvytxaop.supabase.co";
   }
@@ -175,10 +172,8 @@
     window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d3Fwa3phdWRtend2eXR4YW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4OTczMTYsImV4cCI6MjA3MzQ3MzMxNn0.nhjbZMiHPkWvcPnNDeGu3sGSP2TloC0jESZjQ03FnyM";
   }
 
-  // استخدمي عميل supa الموجود، وإلا أنشئي واحدًا إن توفر كائن supabase
   const supa = window.supa || (window.supabase ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, { auth:{ persistSession:false }}) : null);
 
-  // Helpers: قراءة مستخدم Auth0 بأمان
   const auth0SafeGetUser = async () => {
     try {
       if (window.auth?.getUser) return await window.auth.getUser();
@@ -187,7 +182,6 @@
     return null;
   };
 
-  // **توكن للوصول لوظائف محمية** (احتياطي)
   if (!window.auth0SafeGetToken) {
     window.auth0SafeGetToken = async function auth0SafeGetToken() {
       try {
@@ -208,13 +202,9 @@
   }
 
   // ==============================
-  // دوال Supabase إضافية للتوافق مع البروفايل الجديد
+  // دوال Supabase للتفضيلات + كاش الاسم
   // ==============================
 
-  /**
-   * supaEnsureUserProfile
-   * يستدعي Function (service role) لتأسيس/تحديث المستخدم في جدول users
-   */
   async function supaEnsureUserProfile(profile = {}) {
     if (!profile.sub || !profile.email) {
       const u = await auth0SafeGetUser();
@@ -241,14 +231,6 @@
     }
   }
 
-  /**
-   * supaSaveUserPrefs(partial)
-   * يحفظ (أو يحدّث) صف تفضيلات المستخدم في جدول user_prefs
-   * أمثلة partial:
-   *   { display_name: "ندى" }
-   *   { avatar_url: "https://..." }
-   *   { theme_color: "#f472b6" }
-   */
   async function supaSaveUserPrefs(partial = {}) {
     try {
       if (!supa) return { ok:false, error:"supa unavailable" };
@@ -261,17 +243,16 @@
         .upsert(row, { onConflict: "user_sub" })
         .select()
         .maybeSingle();
-      if (error) return { ok:false, error };
-      return { ok:true, data };
+      // كاش الاسم محليًا (للاسم فقط)
+      if (!error && data && typeof row.display_name === 'string') {
+        try { localStorage.setItem('athar:displayName', row.display_name || ''); } catch(_){}
+      }
+      return { ok: !error, data, error };
     } catch (e) {
       return { ok:false, error: e.message || e };
     }
   }
 
-  /**
-   * supaGetUserPrefs()
-   * يرجع صف التفضيلات لهذا المستخدم (إن وُجد)
-   */
   async function supaGetUserPrefs() {
     try {
       if (!supa) return { ok:false, error:"supa unavailable" };
@@ -283,15 +264,34 @@
         .select("*")
         .eq("user_sub", u.sub)
         .maybeSingle();
-      if (error) return { ok:false, error };
-      return { ok:true, data };
+
+      if (!error && data && data.display_name) {
+        try { localStorage.setItem('athar:displayName', data.display_name); } catch(_){}
+      }
+      return { ok: !error, data, error };
     } catch (e) {
       return { ok:false, error:e.message || e };
     }
   }
 
-  // تسجيل استخدام أداة (كما هو)
-  async function supaLogToolUsage(toolName, meta = {}) {
+  // رفع أفاتار (احتياطي قابل لإعادة الاستخدام)
+  async function supaUploadAvatar(fileOrBlob, ext = "jpg") {
+    if (!supa) return { ok:false, error:"supa unavailable" };
+    const u = await auth0SafeGetUser();
+    if (!u?.sub) return { ok:false, error:"no user" };
+
+    const safe = (u.sub || 'u').replace(/[|]/g,'_');
+    const path = `${safe}/${Date.now()}_avatar.${ext}`;
+    const up = await supa.storage.from('avatars').upload(path, fileOrBlob, { upsert:true, contentType: ext==="png" ? "image/png" : "image/jpeg" });
+    if (up.error) return { ok:false, error: up.error };
+    const { data } = supa.storage.from('avatars').getPublicUrl(path);
+    const url = data.publicUrl + `?v=${Date.now()}`;
+    await supaSaveUserPrefs({ avatar_url: url });
+    return { ok:true, url };
+  }
+
+  window.supaEnsureUserProfile = window.supaEnsureUserProfile || supaEnsureUserProfile;
+  window.supaLogToolUsage     = window.supaLogToolUsage     || (async function supaLogToolUsage(toolName, meta = {}) {
     try {
       const u = await auth0SafeGetUser();
       const payload = {
@@ -305,7 +305,6 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      // 204 = تجاهُل بدون خطأ
       if (!res.ok && res.status !== 204) {
         return { ok: false, error: await res.text() };
       }
@@ -313,10 +312,8 @@
     } catch (e) {
       return { ok: false, error: e.message };
     }
-  }
-
-  // قراءة مستخدم عبر الإيميل (اختياري)
-  async function supaGetUserByEmail(email) {
+  });
+  window.supaGetUserByEmail   = window.supaGetUserByEmail   || (async function supaGetUserByEmail(email) {
     if (!supa) return { ok:false, error:"supa unavailable" };
     const { data, error } = await supa
       .from("users")
@@ -324,21 +321,16 @@
       .eq("email", String(email).toLowerCase())
       .single();
     return { ok: !error, data, error };
-  }
-
-  // تعريض الدوال مرة واحدة (بدون كسر تعريفات سابقة)
-  window.supaEnsureUserProfile = window.supaEnsureUserProfile || supaEnsureUserProfile;
-  window.supaLogToolUsage     = window.supaLogToolUsage     || supaLogToolUsage;
-  window.supaGetUserByEmail   = window.supaGetUserByEmail   || supaGetUserByEmail;
+  });
   window.supaSaveUserPrefs    = window.supaSaveUserPrefs    || supaSaveUserPrefs;
   window.supaGetUserPrefs     = window.supaGetUserPrefs     || supaGetUserPrefs;
+  window.supaUploadAvatar     = window.supaUploadAvatar     || supaUploadAvatar;
   window.supa                 = window.supa || supa;
 
   // ==============================
   // الثيم (الوضع الداكن + لون الواجهة)
   // ==============================
 
-  // توحيد "dark" على <html> بدل <body> (لو قديم)
   (function unifyDarkClass() {
     var root = document.documentElement;
     var body = document.body;
@@ -349,14 +341,12 @@
     }
   })();
 
-  // تفعيل/تعطيل الوضع الداكن مع حفظ مفتاح "theme"
   (function initDarkMode() {
     var root = document.documentElement;
     var saved = null;
     try { saved = localStorage.getItem("theme"); } catch (_) {}
     if (saved === "dark") root.classList.add("dark");
     else if (saved === "light") root.classList.remove("dark");
-    // إن كان null نتركه حسب النظام/الوضع الحالي
   })();
 
   if (!window.bindThemeToggle) {
@@ -375,7 +365,6 @@
     };
   }
 
-  // لون الواجهة الأساسي (CSS var --primary) مفتاح محلي: athar:theme
   (function initPrimaryColor() {
     try {
       var c = localStorage.getItem("athar:theme");
@@ -383,10 +372,6 @@
     } catch (_){}
   })();
 
-  /**
-   * setPrimaryColor(color)
-   * يغير لون الواجهة ويخزّنه محليًا ويزامنه مع Supabase (user_prefs.theme_color)
-   */
   if (!window.setPrimaryColor) {
     window.setPrimaryColor = async function setPrimaryColor(color) {
       try {
@@ -394,14 +379,12 @@
           document.documentElement.style.setProperty("--primary", color);
           localStorage.setItem("athar:theme", color);
         } else {
-          // إعادة اللون الافتراضي (from :root --sea-600)
           const def = getComputedStyle(document.documentElement).getPropertyValue("--sea-600") || "#1e40af";
           document.documentElement.style.setProperty("--primary", def.trim() || "#1e40af");
           localStorage.removeItem("athar:theme");
         }
       } catch (_){}
 
-      // مزامنة مع user_prefs (لا تفشل الصفحة لو supa غير متاح)
       try {
         const u = await auth0SafeGetUser();
         if (u?.sub && supa) {
@@ -411,7 +394,6 @@
     };
   }
 
-  // مودالات + توست (كما هي)
   if (!window.openModal)  window.openModal  = (id) => { const n = $(id); if (n) n.classList.add("show"); };
   if (!window.closeModal) window.closeModal = (id) => { const n = $(id); if (n) n.classList.remove("show"); };
 
