@@ -1,13 +1,11 @@
 // /netlify/functions/mueen.js
-// مُعين: خطة أسبوعية (٥ أيام) بلا قاعدة محلية — توليد ذكي موجّه
-// حماية: requireUser + اشتراك نشط عبر Supabase
-// ملاحظة: الذكاء يولد مسودة متوافقة مع منهج السعودية 2025 قدر الإمكان، لكنها تظل قابلة للمراجعة السريعة.
+// مُعين: خطة أسبوعية (٥ أيام) مع خطوة اختيارية لجلب مصادر رسمية وتمريرها للذكاء كسياق مُلزِم
+// حماية: requireUser + اشتراك نشط
 
 const { createClient } = require("@supabase/supabase-js");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { requireUser } = require("./_auth");
 
-// ===== Supabase admin client =====
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE,
@@ -39,7 +37,6 @@ const CORS = {
   "Access-Control-Allow-Methods":"POST, OPTIONS"
 };
 
-// ========= أدوات =========
 function parseGradeLabel(g){
   const map = {
     "أول ابتدائي":1,"ثاني ابتدائي":2,"ثالث ابتدائي":3,"رابع ابتدائي":4,"خامس ابتدائي":5,"سادس ابتدائي":6,
@@ -50,22 +47,72 @@ function parseGradeLabel(g){
   return { n, label: String(g).trim() };
 }
 
+// ======== جمع مصادر رسمية عبر Bing (اختياري) ========
+const OFFICIAL_DOMAINS = [
+  "moe.gov.sa",          // وزارة التعليم
+  "ien.edu.sa",          // قنوات عين/بوابة تعليمية
+  "madrasati.sa",        // مدرستي
+  "k12.gov.sa",          // نطاقات تعليمية حكومية محتملة
+  "noor.moe.gov.sa"      // نور
+];
+
+async function searchOfficialSources({ subject, grade_label, lessonNames, count }){
+  const key = process.env.BING_SEARCH_KEY;
+  const endpoint = process.env.BING_SEARCH_ENDPOINT || "https://api.bing.microsoft.com/v7.0/search";
+  if (!key) return { sources: [], note: "تم التوليد دون مصادر مباشرة (BING_SEARCH_KEY غير متوفر)." };
+
+  // نبني استعلامات مختصرة
+  const queries = [];
+  const baseQ = `${subject} ${grade_label} أهداف الدرس المفردات site:${OFFICIAL_DOMAINS.join(" OR site:")}`;
+  queries.push(baseQ);
+  (lessonNames||[]).slice(0,5).forEach(name=>{
+    queries.push(`${subject} "${name}" ${grade_label} أهداف المفردات site:${OFFICIAL_DOMAINS.join(" OR site:")}`);
+  });
+
+  const results = [];
+  for (const q of queries){
+    const url = `${endpoint}?q=${encodeURIComponent(q)}&mkt=ar-SA&count=10&freshness=Year`;
+    const res = await fetch(url, { headers: { "Ocp-Apim-Subscription-Key": key }});
+    if (!res.ok) continue;
+    const j = await res.json().catch(()=> ({}));
+    const webPages = j?.webPages?.value || [];
+    for (const w of webPages){
+      const host = (new URL(w.url)).host;
+      if (!OFFICIAL_DOMAINS.some(d => host.endsWith(d))) continue; // فلترة صارمة
+      results.push({
+        title: w.name,
+        url: w.url,
+        snippet: w.snippet || w.description || ""
+      });
+      if (results.length >= Math.max(3, count)) break;
+    }
+    if (results.length >= Math.max(3, count)) break;
+  }
+
+  // إزالة التكرارات حسب URL
+  const uniq = [];
+  const seen = new Set();
+  for (const r of results){
+    if (seen.has(r.url)) continue;
+    seen.add(r.url); uniq.push(r);
+  }
+  return { sources: uniq.slice(0, Math.max(3, count)), note: uniq.length ? null : "لم تُعثر مصادر مناسبة؛ تم توليد مسودة ذكية." };
+}
+
+// ======== الدالة الرئيسية ========
 exports.handler = async (event)=>{
   try{
     if (event.httpMethod === "OPTIONS") return { statusCode:204, headers:CORS, body:"" };
     if (event.httpMethod !== "POST") return { statusCode:405, headers:CORS, body:"Method Not Allowed" };
 
-    // 0) Auth + اشتراك
     const gate = await requireUser(event);
     if (!gate.ok) return { statusCode: gate.status, headers:CORS, body: gate.error };
     const active = await isActiveMembership(gate.user?.sub, gate.user?.email);
     if (!active) return { statusCode:402, headers:CORS, body:"Membership is not active." };
 
-    // 1) مفاتيح الذكاء
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return { statusCode:500, headers:CORS, body:"Missing GEMINI_API_KEY" };
 
-    // 2) جسم الطلب
     let body = {};
     try { body = JSON.parse(event.body || "{}"); }
     catch { return { statusCode:400, headers:CORS, body:"Bad JSON" }; }
@@ -76,15 +123,24 @@ exports.handler = async (event)=>{
     const lessonsMode  = (body.lessonsMode || "manual"); // manual | ai
     const lessonsCount = Math.max(1, Math.min(5, Number(body.lessonsCount || 5)));
     const lessonNames  = Array.isArray(body.lessonNames) ? body.lessonNames.filter(Boolean).slice(0,5) : [];
+    const sourceMode   = (body.sourceMode || "authoritative"); // authoritative | off
 
     if (!subject || !grade) return { statusCode:400, headers:CORS, body:"Missing subject/grade" };
     if (lessonsMode === "manual" && lessonNames.length === 0) {
       return { statusCode:400, headers:CORS, body:"Provide lesson names or switch mode to ai" };
     }
 
-    // 3) برومبت صارم
-    const phase =
-      grade<=6 ? "ابتدائي" : grade<=9 ? "متوسط" : "ثانوي";
+    // 1) مصادر رسمية (اختياري)
+    let sources = []; let note = null;
+    if (sourceMode === "authoritative"){
+      try {
+        const sr = await searchOfficialSources({ subject, grade_label, lessonNames, count: lessonsCount });
+        sources = sr.sources || []; note = sr.note || null;
+      } catch(e){ note = "تعذّر الربط بالمصادر؛ تم توليد مسودة ذكية."; }
+    }
+
+    // 2) برومبت صارم
+    const phase = grade<=6 ? "ابتدائي" : grade<=9 ? "متوسط" : "ثانوي";
 
     const constraints = [
       `المادة: ${subject}، الصف: ${grade_label} (${phase}).`,
@@ -93,13 +149,20 @@ exports.handler = async (event)=>{
         ? `أسماء الدروس الواردة (بالترتيب): ${lessonNames.join(" | ")}`
         : `اختر أسماء الدروس بنفسك بما يحاكي منهج السعودية 2025 (آخر إصدار) لهذه المادة والصف.`,
       `عدد الدروس لهذا الأسبوع: ${lessonsCount} (يوزّع كل درس على يوم واحد، ولا تخلط بين الدروس).`,
-      "لكل يوم أعطِ: اسم الدرس، أهداف تعلم واضحة قابلة للقياس (٣–5 نقاط قصيرة)، مفردات جديدة (٣–8 مفردات ملائمة)، نتائج متوقعة مختصرة، وواجب منزلي مقترح.",
+      "لكل يوم أعطِ: اسم الدرس، أهداف تعلم واضحة قابلة للقياس (٣–5)، مفردات جديدة (٣–8)، نتائج متوقعة مختصرة، وواجب منزلي مقترح.",
       "التزِم بالملاءمة العمرية؛ تجنب الأفكار الطفولية في الثانوي، وتجنب المصطلحات المعقّدة جدًا في الابتدائي.",
       "تجنّب التكرار بين الأيام. لا تنسخ الأهداف نفسها عبر الأيام.",
       "صياغة عربية سليمة ومباشرة، وخالية من الإطالة.",
       "لا تستخدم أدوات صفية ولا مراجع خارجية؛ فقط خطة قابلة للنسخ.",
-      "أجب فقط في JSON بالمخطط التالي وبدون أي نص زائد."
+      "أجب فقط في JSON بالمخطط المطلوب وبدون أي نص زائد."
     ];
+
+    // سياق المصادر الرسمية (إن وُجدت): نُلزم النموذج بعدم الخروج عنه
+    let sourcesBlock = "";
+    if (sources.length){
+      const sTxt = sources.map((s,i)=>`[${i+1}] ${s.title}\nURL: ${s.url}\nمقتطف: ${s.snippet||""}`).join("\n\n");
+      sourcesBlock = `\n\nالمصادر الرسمية التالية مُلزِمة، لا تخرج عنها، واستلهم منها الأهداف والمفردات:\n${sTxt}\n\n`;
+    }
 
     const schema = `{
   "meta": { "subject":"...", "grade_label":"...", "days":["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"] },
@@ -118,12 +181,12 @@ exports.handler = async (event)=>{
     const prompt = `
 أنت مساعد تخطيط دروس سعودي موثوق. أنشئ خطة أسبوعية محاكية لمنهج السعودية 2025، تراعي الفئة العمرية بدقة.
 ${constraints.map(s=>"- "+s).join("\n")}
-
+${sourcesBlock}
 أجب بصيغة JSON فقط مطابقة للمخطط:
 ${schema}
 `.trim();
 
-    // 4) استدعاء Gemini
+    // 3) توليد
     const gen = new GoogleGenerativeAI(apiKey);
     const model = gen.getGenerativeModel({ model: "gemini-1.5-flash" });
     const req = {
@@ -131,7 +194,7 @@ ${schema}
       generationConfig: {
         responseMimeType:"application/json",
         maxOutputTokens: 2048,
-        temperature: 0.7,
+        temperature: sources.length ? 0.5 : 0.7, // أكثر تحفظًا عند وجود مصادر
         topP: 0.9,
         candidateCount: 1
       }
@@ -151,21 +214,16 @@ ${schema}
       data = JSON.parse(cleaned);
     }
 
-    // 5) تطبيع + تقليص لعدد الأيام المطلوبة
+    // 4) تطبيع + اقتصار على عدد الأيام
     const DAYS = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"];
     let week = Array.isArray(data.week) ? data.week : [];
-    // ضمان 5 عناصر مرتبة
     const mapByDay = {};
     week.forEach(x=>{ if (x?.day && DAYS.includes(x.day)) mapByDay[x.day]=x; });
-    week = DAYS.map(d => mapByDay[d] || { day:d });
-
-    // إبقاء فقط عدد الدروس المطلوب (أول N أيام)
     const usedDays = DAYS.slice(0, lessonsCount);
-    week = week.filter(x => usedDays.includes(x.day));
+    week = usedDays.map(d => mapByDay[d] || { day:d });
 
-    // تنظيف الحقول
-    function arr(a){ return Array.isArray(a) ? a.filter(Boolean).slice(0,8) : []; }
-    function txt(t){ return (typeof t==="string"?t.trim():"") || ""; }
+    const arr = a => Array.isArray(a) ? a.filter(Boolean).slice(0,8) : [];
+    const txt = t => (typeof t==="string"?t.trim():"") || "";
     week = week.map(x=>({
       day: x.day,
       lesson_name: txt(x.lesson_name),
@@ -177,12 +235,9 @@ ${schema}
     }));
 
     const out = {
-      meta: {
-        subject,
-        grade_label,
-        days: usedDays
-      },
-      week
+      meta: { subject, grade_label, days: usedDays, note },
+      week,
+      sources // نعرضها في الواجهة كرابط مرجعي
     };
 
     return {
