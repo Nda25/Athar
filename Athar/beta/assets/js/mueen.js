@@ -1,14 +1,52 @@
-// مُعين — واجهة التوليد والعرض
+// مُعين — واجهة التوليد والعرض مع تحقّق صارم من تسجيل الدخول
 (function(){
   const $ = (s)=>document.querySelector(s);
   const $$=(s)=>document.querySelectorAll(s);
   const status = (t)=> { const el=$("#status"); if(el) el.textContent=t||""; };
   const toast = (m)=>{ const t=$("#toast"); if(!t) return; t.textContent=m; t.style.display='block'; clearTimeout(window.__tt); window.__tt=setTimeout(()=>t.style.display='none',1600); };
 
-  // حقول الدروس
+  // ====== auth ui ======
+  const $state=$("#auth-state"), $login=$("#btn-login"), $logout=$("#btn-logout");
+  const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
+  async function waitAuth(){ for(let i=0;i<60 && !window.auth && !window.auth0Client; i++){ await wait(100); } }
+
+  async function refreshAuthUI(){
+    try{
+      const authed = window.auth?.isAuthenticated ? await window.auth.isAuthenticated()
+                    : (window.auth0Client?.isAuthenticated ? await window.auth0Client.isAuthenticated() : false);
+
+      if (authed){
+        $state.textContent = 'مسجّل دخول'; $state.className='auth-badge auth-ok';
+        $login.style.display='none'; $logout.style.display='';
+      }else{
+        $state.textContent = 'غير مسجّل'; $state.className='auth-badge auth-no';
+        $login.style.display=''; $logout.style.display='none';
+      }
+    }catch{
+      $state.textContent = 'غير مسجّل'; $state.className='auth-badge auth-no';
+      $login.style.display=''; $logout.style.display='none';
+    }
+  }
+
+  $login?.addEventListener('click', ()=>{
+    if (window.auth?.login) {
+      window.auth.login({ authorizationParams:{ screen_hint:'login', redirect_uri: window.location.href }});
+    } else if (window.auth0Client?.loginWithRedirect){
+      window.auth0Client.loginWithRedirect({ authorizationParams:{ screen_hint:'login', redirect_uri: window.location.href }});
+    } else {
+      toast('لم يتم تهيئة الدخول بعد');
+    }
+  });
+
+  $logout?.addEventListener('click', async ()=>{
+    if (window.auth?.logout) window.auth.logout();
+    else if (window.auth0Client?.logout) window.auth0Client.logout({ logoutParams:{ returnTo: window.location.href }});
+    setTimeout(refreshAuthUI, 400);
+  });
+
+  // ====== UI: الحقول ======
   const lessonsBox = $("#lessons-box");
   const countSel   = $("#f-count");
-  const modeSel    = $("#f-mode");
   function drawLessonFields(){
     const n = +countSel.value || 1;
     const wrap = document.createElement("div");
@@ -25,32 +63,36 @@
   countSel.addEventListener('change', drawLessonFields);
   drawLessonFields();
 
-  // تجميع المعطيات
   function readPayload(){
     const subject = $("#f-subject").value.trim();
     const grade   = $("#f-grade").value.trim();
     const names   = [...$$(".lesson-name")].map(i=>i.value.trim()).filter(Boolean);
     return {
-      subject, grade, lessons: names, weekDays: ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس"],
+      subject, grade, lessons: names,
+      weekDays: ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس"],
       mode: $("#f-mode").value
     };
   }
 
-  // نسخة محسنة للحصول على توكن Auth0 — تتحمل اختلاف الدوال
+  // ====== token getter المتحمّل للاختلافات ======
   async function getJwt(){
+    await waitAuth();
     try{
-      if (window.auth && typeof window.auth.getToken === 'function') {
+      // مفضّل
+      if (window.auth && typeof window.auth.getToken === 'function'){
         return await window.auth.getToken({ audience: "https://api.athar" });
       }
-      if (window.auth0Client && typeof window.auth0Client.getTokenSilently === 'function') {
-        return await window.auth0Client.getTokenSilently({ audience:"https://api.athar" });
+      // عميل Auth0 القياسي
+      if (window.auth0Client && typeof window.auth0Client.getTokenSilently === 'function'){
+        return await window.auth0Client.getTokenSilently({ audience: "https://api.athar" });
       }
-    }catch(e){}
+    }catch(e){
+      console.warn('token error:', e);
+    }
     return null;
   }
 
-  // رسم خطة اليوم
-  function dayBlock(d, idx){
+  function dayBlock(d){
     const div = document.createElement('div');
     div.className='day-card';
     div.innerHTML = `
@@ -64,7 +106,6 @@
         <button class="btn" data-act="copy">نسخ ${d.day}</button>
       </div>
     `;
-    // أزرار
     div.addEventListener('click', (e)=>{
       const act = e.target?.dataset?.act;
       if (!act) return;
@@ -82,24 +123,26 @@
     return div;
   }
 
-  // رسم الخطة كاملة
   function renderPlan(data){
     const meta = $("#meta"); meta.innerHTML='';
     [data.subject, data.grade].forEach(x=>{ const b=document.createElement('span'); b.className='badge'; b.textContent=x; meta.appendChild(b); });
-
     const week = $("#week"); week.innerHTML='';
-    (data.plan||[]).forEach((d,i)=> week.appendChild(dayBlock(d,i)));
-
+    (data.plan||[]).forEach(d=> week.appendChild(dayBlock(d)));
     $("#out").style.display='';
   }
 
-  // أزرار
   $("#btn-generate").addEventListener('click', async ()=>{
-    status(''); const payload = readPayload();
+    status('');
+    const payload = readPayload();
     if (!payload.subject || payload.lessons.length===0){ toast('أدخلي المادة وأسماء الدروس'); return; }
 
     const jwt = await getJwt();
-    if (!jwt){ toast('غير مصرّح — سجّلي الدخول'); return; }
+    if (!jwt){
+      toast('غير مصرّح — سجّلي الدخول');
+      // أظهر زر الدخول
+      $login?.click?.bind($login);
+      return;
+    }
 
     const btn = $("#btn-generate");
     btn.disabled = true; const old=btn.textContent; btn.textContent='جارٍ التحضير…';
@@ -110,8 +153,8 @@
         body: JSON.stringify(payload)
       });
       if (!res.ok){
-        const t = await res.text();
-        status('تعذّر التوليد'); console.error('mueen-plan', res.status, t);
+        const t = await res.text(); console.error('mueen-plan', res.status, t);
+        status('تعذّر التوليد');
         if (res.status===402) toast('حساب غير نشط'); else toast('تعذّر التوليد');
         return;
       }
@@ -127,4 +170,9 @@
     if (!txt){ toast('لا توجد خطة لنسخها'); return; }
     navigator.clipboard.writeText(txt).then(()=>toast('نُسخت الخطة كاملة ✓'));
   });
+
+  (async function init(){
+    await waitAuth();
+    await refreshAuthUI();
+  })();
 })();
