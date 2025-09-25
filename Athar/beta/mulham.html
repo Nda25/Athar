@@ -1,111 +1,119 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>مُـلـهـم</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css" />
-<meta name="color-scheme" content="dark light" />
-<style>
-  :root{ --accent:#3b82f6; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مُـلـهـم</title>
 
-  .field{ margin:10px 0 }
-  .field label{ display:block; font-weight:700; margin:6px 0 }
-  .field input,.field select{
-    width:100%; padding:12px; border-radius:12px;
-    border:1px solid rgba(59,130,246,.35)
-  }
+  <!-- خط + النمط العام للموقع (يحتوي ألوان الملف الشخصي) -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <meta name="color-scheme" content="dark light" />
 
-  /* شبكة المدخلات */
-  .cols-3{ display:grid; gap:12px; grid-template-columns:1fr }
-  @media(min-width:900px){ .cols-3{ grid-template-columns:1fr 1fr 1fr } }
+  <style>
+    :root{ --accent:#3b82f6; }
 
-  /* شبكة إضافية للموضوع + المرحلة */
-  .cols-2 { display:grid; gap:12px; grid-template-columns:1fr 1fr; }
-
-  /* ===== خيارات على شكل سويتش مع نص خافت ===== */
-  .field.inline label{
-    display:flex; align-items:center; gap:10px;
-    font-size:.95rem; font-weight:600; color: var(--muted);
-    line-height:1.5; white-space:normal;
-  }
-  .field.inline input[type="checkbox"]{
-    appearance:none; -webkit-appearance:none;
-    width:46px; height:26px; border-radius:999px;
-    background:#e2e8f0; border:1px solid #cbd5e1; position:relative;
-    outline:none; cursor:pointer; transition: background .18s ease, border-color .18s ease;
-    flex:0 0 46px; margin:0;
-  }
-  .field.inline input[type="checkbox"]::after{
-    content:""; position:absolute; top:1px; inset-inline-start:1px;
-    width:22px; height:22px; border-radius:50%; background:#fff;
-    box-shadow:0 1px 3px rgba(0,0,0,.18); transition: inset-inline-start .18s ease;
-  }
-  .field.inline input[type="checkbox"]:checked{ background:var(--sea-500); border-color:var(--sea-500) }
-  .field.inline input[type="checkbox"]:checked::after{ inset-inline-start: calc(100% - 23px) }
-  .field.inline input[type="checkbox"]:focus-visible{ box-shadow:0 0 0 3px rgba(59,130,246,.25) }
-  .dark .field.inline input[type="checkbox"]{ background:#1f2937; border-color:#334155 }
-  .dark .field.inline input[type="checkbox"]:checked{ background:#3b82f6; border-color:#3b82f6 }
-
-  /* الأزرار صف واحد بالوسط */
-  .actions-row{ display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
-  .actions-row .btn{ min-width:140px; }
-  @media (max-width:480px){ .actions-row .btn{ min-width:120px; } }
-
-  /* منع أي خروج بصري من البطاقة */
-  .card{ overflow:hidden; }
-
-  /* ===== باقي القواعد التي كانت عندك ===== */
-  .printable{
-    border:1px solid color-mix(in oklab, var(--accent) 40%, #cbd5e1);
-    border-radius:12px; padding:14px; margin-top:8px; background:var(--card);
-  }
-  .set-card{ border:1px dashed rgba(59,130,246,.35); border-radius:10px; padding:10px; margin-top:12px }
-  .set-card h3{ margin:0 0 6px }
-  .muted{ color: var(--muted) }
-  .list{ margin:0; padding-inline-start:1.2rem }
-  .chips{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 }
-  .chip{ background:color-mix(in oklab, var(--accent) 14%, #fff); padding:4px 8px; border-radius:999px; font-size:.9rem }
-  .diff-box{ background:color-mix(in oklab, var(--accent) 10%, #fff); border-radius:8px; padding:8px; margin-top:8px; font-size:.95rem }
-  .btn[disabled]{ opacity:.6; cursor:not-allowed }
-
-  /* تجاوب */
-  @media (max-width: 900px){
-    .cols-3{ grid-template-columns: 1fr !important; }
-    .cols-2{ grid-template-columns: 1fr !important; }
-  }
-
-  /* ==== تحسين الطباعة للجوال/الآيباد ==== */
-  @media print{
-    html,body{ background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .global-bg,.backdrop,.pattern,.topbar,header,.actions-row,form,.toast{ display:none !important; }
-    #out{ display:block !important; }
-    .container{ width:auto; margin:0; padding:0; }
-    .printable{
-      width: 180mm !important;
-      margin: 0 auto !important;
-      border-color:#999 !important;
-      box-shadow:none !important;
-      background:#fff !important;
+    .field{ margin:10px 0 }
+    .field label{ display:block; font-weight:700; margin:6px 0 }
+    .field input,.field select{
+      width:100%; padding:12px; border-radius:12px;
+      border:1px solid rgba(59,130,246,.35)
     }
-    @page{ size:A4 portrait; margin:10mm; }
-  }
 
-  /* وضع طباعة يدوي (Safari iOS يحترمه أكثر أحياناً) */
-  body.print-mode .global-bg,
-  body.print-mode .backdrop,
-  body.print-mode .pattern,
-  body.print-mode .topbar,
-  body.print-mode header,
-  body.print-mode .actions-row,
-  body.print-mode form,
-  body.print-mode .toast{ display:none !important; }
-  body.print-mode #out{ display:block !important; }
-  body.print-mode .printable{
-    width:180mm; margin:0 auto; background:#fff; box-shadow:none;
-  }
-</style>
+    /* شبكة المدخلات */
+    .cols-3{ display:grid; gap:12px; grid-template-columns:1fr }
+    @media(min-width:900px){ .cols-3{ grid-template-columns:1fr 1fr 1fr } }
+
+    /* شبكة إضافية للموضوع + المرحلة */
+    .cols-2 { display:grid; gap:12px; grid-template-columns:1fr 1fr; }
+
+    /* ===== خيارات على شكل سويتش مع نص خافت ===== */
+    .field.inline label{
+      display:flex; align-items:center; gap:10px;
+      font-size:.95rem; font-weight:600; color: var(--muted);
+      line-height:1.5; white-space:normal;
+    }
+    .field.inline input[type="checkbox"]{
+      appearance:none; -webkit-appearance:none;
+      width:46px; height:26px; border-radius:999px;
+      background:#e2e8f0; border:1px solid #cbd5e1; position:relative;
+      outline:none; cursor:pointer; transition: background .18s ease, border-color .18s ease;
+      flex:0 0 46px; margin:0;
+    }
+    .field.inline input[type="checkbox"]::after{
+      content:""; position:absolute; top:1px; inset-inline-start:1px;
+      width:22px; height:22px; border-radius:50%; background:#fff;
+      box-shadow:0 1px 3px rgba(0,0,0,.18); transition: inset-inline-start .18s ease;
+    }
+    .field.inline input[type="checkbox"]:checked{ background:var(--sea-500); border-color:var(--sea-500) }
+    .field.inline input[type="checkbox"]:checked::after{ inset-inline-start: calc(100% - 23px) }
+    .field.inline input[type="checkbox"]:focus-visible{ box-shadow:0 0 0 3px rgba(59,130,246,.25) }
+    .dark .field.inline input[type="checkbox"]{ background:#1f2937; border-color:#334155 }
+    .dark .field.inline input[type="checkbox"]:checked{ background:#3b82f6; border-color:#3b82f6 }
+
+    /* الأزرار صف واحد بالوسط */
+    .actions-row{ display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    .actions-row .btn{ min-width:140px; }
+    @media (max-width:480px){ .actions-row .btn{ min-width:120px; } }
+
+    /* منع أي خروج بصري من البطاقة */
+    .card{ overflow:hidden; }
+
+    .printable{
+      border:1px solid color-mix(in oklab, var(--accent) 40%, #cbd5e1);
+      border-radius:12px; padding:14px; margin-top:8px; background:var(--card);
+    }
+    .set-card{ border:1px dashed rgba(59,130,246,.35); border-radius:10px; padding:10px; margin-top:12px }
+    .set-card h3{ margin:0 0 6px }
+    .muted{ color: var(--muted) }
+    .list{ margin:0; padding-inline-start:1.2rem }
+    .chips{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 }
+    .chip{ background:color-mix(in oklab, var(--accent) 14%, #fff); padding:4px 8px; border-radius:999px; font-size:.9rem }
+    .diff-box{ background:color-mix(in oklab, var(--accent) 10%, #fff); border-radius:8px; padding:8px; margin-top:8px; font-size:.95rem }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed }
+
+    /* تجاوب */
+    @media (max-width: 900px){
+      .cols-3{ grid-template-columns: 1fr !important; }
+      .cols-2{ grid-template-columns: 1fr !important; }
+    }
+
+    /* ==== تحسين الطباعة للجوال/الآيباد ==== */
+    @media print{
+      html,body{ background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .global-bg,.backdrop,.pattern,.topbar,header,.actions-row,form,.toast{ display:none !important; }
+      #out{ display:block !important; }
+      .container{ width:auto; margin:0; padding:0; }
+      .printable{
+        width: 180mm !important;
+        margin: 0 auto !important;
+        border-color:#999 !important;
+        box-shadow:none !important;
+        background:#fff !important;
+      }
+      @page{ size:A4 portrait; margin:10mm; }
+    }
+
+    /* وضع طباعة يدوي */
+    body.print-mode .global-bg,
+    body.print-mode .backdrop,
+    body.print-mode .pattern,
+    body.print-mode .topbar,
+    body.print-mode header,
+    body.print-mode .actions-row,
+    body.print-mode form,
+    body.print-mode .toast{ display:none !important; }
+    body.print-mode #out{ display:block !important; }
+    body.print-mode .printable{
+      width:180mm; margin:0 auto; background:#fff; box-shadow:none;
+    }
+
+    /* شارة حالة الحساب */
+    .badge{display:inline-block;padding:2px 10px;border-radius:999px;background:#e5e7eb22;border:1px solid #e5e7eb33}
+    .status-active{background:#dcfce733;color:#166534;border-color:#bbf7d066}
+    .status-pending{background:#fef9c333;color:#713f12;border-color:#fde68a66}
+    .status-cancelled{background:#fee2e233;color:#7f1d1d;border-color:#fecaca66}
+  </style>
 </head>
 <body>
   <div class="global-bg"></div>
@@ -122,6 +130,7 @@
     <div class="hero">
       <h1 class="logo">مـُلـهـم</h1>
       <div class="tag"><span class="dot"></span>كل دقيقة تحمل فكرة، وكل فكرة تُخلّد أثرًا</div>
+      <div id="acct-badge" class="muted" style="margin-top:8px"></div>
     </div>
   </header>
 
@@ -258,238 +267,240 @@
     </div>
   </main>
 
-<footer>
-  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-  <p class="foot-name">ندى المجيرش</p>
+  <footer>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-name">ندى المجيرش</p>
 
-  <nav class="foot-links">
-    <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-    <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-    <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-    <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-    <a href="complaints.html">الشكاوى والاقتراحات</a>
-  </nav>
+    <nav class="foot-links">
+      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
+      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
+      <a href="complaints.html">الشكاوى والاقتراحات</a>
+    </nav>
 
-  <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-</footer>
+    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
+  </footer>
 
-<script>
-  // سنة تلقائية
-  (function(){
-    var y=document.getElementById('year');
-    if(y) y.textContent=new Date().getFullYear();
+  <script>
+    // سنة تلقائية
+    (function(){
+      var y=document.getElementById('year');
+      if(y) y.textContent=new Date().getFullYear();
+    })();
+  </script>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- نفس ترتيب منظومتك -->
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="assets/js/supabase-client.js"></script>
+
+  <!-- Auth0 (مع بديل محلي في حال فشل CDN) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+
+  <!-- الحارس (يبقى كما هو لضمان الحماية) -->
+  <script defer src="assets/js/require-auth.js"></script>
+
+  <script defer src="assets/js/storage.js"></script>
+  <script defer src="app.js"></script>
+
+  <script>
+  // ===== Utilities =====
+  window.$ = window.$ || ((s)=>document.querySelector(s));
+  const liFill=(ul,items)=>{ ul.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ul.appendChild(li); }); }
+  const olFill=(ol,items)=>{ ol.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ol.appendChild(li); }); }
+
+  // شريط حالة الحساب من Auth0 claims (namespace مثل بقية المنصة)
+  const CLAIM_NS = "https://athar.co/";
+
+  // توست
+  (function(){ const box = document.getElementById('toast'); if(!box) return;
+    window.toast = (msg, ms=1600)=>{ box.textContent = msg; box.style.display='block';
+      clearTimeout(window.__t); window.__t=setTimeout(()=>box.style.display='none', ms); };
   })();
-</script>
 
-<div class="toast" id="toast"></div>
-
-<!-- ترتيب السكربتات -->
-<script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script defer src="assets/js/supabase-client.js"></script>
-
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-        onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-<script defer src="assets/js/require-auth.js"></script>
-
-<script defer src="assets/js/storage.js"></script>
-<script defer src="app.js"></script>
-
-<script>
-window.$ = window.$ || ((s)=>document.querySelector(s));
-const liFill=(ul,items)=>{ ul.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ul.appendChild(li); }); }
-const olFill=(ol,items)=>{ ol.innerHTML=''; (items||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; ol.appendChild(li); }); }
-
-// upsert مستخدم للربط مع Supabase
-window.addEventListener('load', () => {
-  if (typeof supaEnsureUserProfile === 'function') {
-    try { supaEnsureUserProfile(); } catch(_) {}
-  }
-});
-
-// ===== الحصول على توكن المصادقة من حارس الدخول (بدون تغيير الحماية) =====
-async function getAuthToken() {
-  try {
-    // يحضّره require-auth.js عادةً
-    if (window.AtharGuard?.token) return window.AtharGuard.token;
-    if (typeof window.getAtharToken === 'function') {
-      const t = await window.getAtharToken();
-      if (t) return t;
-    }
-    // احتياطي: مخزن محلي إن كان الحارس يخزّنه
-    const t2 = localStorage.getItem('athar_id_token') || localStorage.getItem('athar_access_token');
-    if (t2) return t2;
-  } catch(_) {}
-  return null;
-}
-
-// meta لتتبّع
-function mulhamMeta(){
-  const get = id => document.getElementById(id);
-  return {
-    subject:  (get('s-subj')?.value || '').trim() || null,
-    topic:    (get('s-topic')?.value || '').trim() || null,
-    time:     Number(get('s-time')?.value || 0) || null,
-    bloom:    get('s-bloom')?.value || null,
-    age:      get('s-age')?.value || null,
-    noTools:  !!get('s-noTools')?.checked,
-    adaptLow: !!get('s-adaptLow')?.checked,
-    adaptDiff:!!get('s-adaptDiff')?.checked
-  };
-}
-
-// توست
-(function(){ const box = document.getElementById('toast'); if(!box) return;
-  window.toast = (msg, ms=1600)=>{ box.textContent = msg; box.style.display='block';
-    clearTimeout(window.__t); window.__t=setTimeout(()=>box.style.display='none', ms); };
-})();
-
-// أوتو-حفظ
-document.addEventListener('DOMContentLoaded', ()=>{ bindAutoSave('mulham', '#mulham-form'); });
-
-// حفظ آخر إعدادات
-let lastParams = null;
-
-async function callMulham(body) {
-  const token = await getAuthToken();
-  if (!token) {
-    // نفس نهج الحماية: لا نكسر شيء — ننبّه فقط
-    toast('الرجاء تسجيل الدخول لتفعيل مُلهم');
-  }
-  const res = await fetch("/.netlify/functions/mulham", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { "Authorization": "Bearer " + token } : {})
-    },
-    body: JSON.stringify(body)
-  });
-
-  // رسائل واضحة لحالات الحماية/الاشتراك
-  if (res.status === 401) {
-    const t = await res.text();
-    throw new Error("غير مصرح: "+ (t||'يرجى تسجيل الدخول'));
-  }
-  if (res.status === 402) {
-    const t = await res.text();
-    throw new Error("العضوية غير مفعّلة: " + (t||'جرّبي تفعيل/تجديد الاشتراك'));
-  }
-  if (!res.ok) throw new Error("Mulham function failed");
-  return res.json();
-}
-
-function readParams(withVariant=false){
-  const subject = $('#s-subj').value.trim() || '';
-  const topic   = $('#s-topic').value.trim() || subject;
-  const time    = +$('#s-time').value || 20;
-  const bloom   = $('#s-bloom').value || 'understand';
-  const age     = $('#s-age').value || 'p2';
-  const noTools = !!$('#s-noTools').checked;
-  const adaptLow= !!$('#s-adaptLow').checked;
-  const adaptDiff=!!$('#s-adaptDiff').checked;
-  // بذرة دائمًا (حتى للطلب الأول) علشان ما تتكرر نفس النتيجة
-  const variant = String(Date.now()) + (withVariant ? '_more' : '_base');
-  return { subject, topic, time, bloom, age, noTools, adaptLow, adaptDiff, variant };
-}
-
-function renderSet(prefix, set, showDiff){
-  $(`#${prefix}-idea`).innerHTML   = `<strong>مدخل الفكرة:</strong> ${set.ideaHook || '—'}`;
-  $(`#${prefix}-desc`).textContent = set.desc || '—';
-  $(`#${prefix}-dur`).textContent  = `المدة: ${set.duration ?? '—'} د`;
-  liFill($(`#${prefix}-mats`), set.materials || []);
-  olFill($(`#${prefix}-steps`), set.steps || []);
-  $(`#${prefix}-exit`).textContent    = set.exitTicket || '—';
-  $(`#${prefix}-impact`).textContent  = set.expectedImpact || '—';
-
-  const diffEl = $(`#${prefix}-diff`);
-  if(showDiff && (set.diff?.lowMotivation || set.diff?.differentiation)){
-    diffEl.style.display = '';
-    diffEl.innerHTML = `
-      ${set.diff?.lowMotivation ? `<div><strong>للتحفيز المنخفض:</strong> ${set.diff.lowMotivation}</div>` : ''}
-      ${set.diff?.differentiation ? `<div style="margin-top:6px"><strong>فروق فردية:</strong> ${set.diff.differentiation}</div>` : ''}
-    `;
-  }else{
-    diffEl.style.display = 'none';
-    diffEl.innerHTML = '';
-  }
-}
-
-function renderAll(data){
-  const meta = data.meta || {};
-  const metaBox = $('#meta'); metaBox.innerHTML = '';
-  const ageMap = {p1:'ابتدائي دُنيا',p2:'ابتدائي عُليا',m:'متوسط',h:'ثانوي'};
-  const chips = [
-    meta.subject, meta.topic,
-    `مرحلة: ${ageMap[meta.age]||meta.age||'—'}`,
-    `بلوم: ${meta.bloom||'—'}`,
-    `زمن: ${meta.time||meta.timeMins||'—'} د`
-  ];
-  chips.forEach(v=>{
-    if(v && String(v).trim()!==''){
-      const chip=document.createElement('span');
-      chip.className='chip';
-      chip.textContent=v;
-      metaBox.appendChild(chip);
+  // upsert مستخدم للربط مع Supabase
+  window.addEventListener('load', () => {
+    if (typeof supaEnsureUserProfile === 'function') {
+      try { supaEnsureUserProfile(); } catch(_) {}
     }
   });
 
-  const showDiff = !!(meta.adaptLow || meta.adaptDiff);
+  // أوتو-حفظ
+  document.addEventListener('DOMContentLoaded', ()=>{ bindAutoSave('mulham', '#mulham-form'); });
 
-  renderSet('mv', data.sets?.movement || {}, showDiff);
-  renderSet('gr', data.sets?.group || {}, showDiff);
-  renderSet('in', data.sets?.individual || {}, showDiff);
+  // ===== Auth helpers =====
+  const wait = (ms)=> new Promise(r=>setTimeout(r,ms));
+  async function waitAuth(){ for(let i=0;i<80 && !window.auth;i++){ await wait(100); } }
 
-  liFill($('#tips'), data.tips || []);
-  $('#out').style.display = '';
-}
+  async function showAccountBadge(){
+    try{
+      const el = document.getElementById('acct-badge');
+      if(!window.auth){ el.textContent=''; return; }
+      const ok = await window.auth.isAuthenticated();
+      if(!ok){ el.innerHTML = '<span class="badge status-cancelled">غير مسجل دخول</span>'; return; }
+      const u   = await window.auth.getUser();
+      const cl  = await window.auth.getIdTokenClaims();
+      const st  = cl?.[CLAIM_NS + 'status'] || 'active';
+      const badge =
+        st==='active'  ? '<span class="badge status-active">حسابك نشط</span>' :
+        st==='pending' ? '<span class="badge status-pending">حسابك معلّق</span>' :
+                         '<span class="badge status-cancelled">غير نشط</span>';
+      el.innerHTML = badge + (u?.email ? ' — ' + u.email : '');
+    }catch{}
+  }
 
-async function generate(withVariant=false){
-  const goBtn   = document.getElementById('go');
-  const moreBtn = document.getElementById('more');
-  const busyBtn = withVariant ? moreBtn : goBtn;
+  // meta لتتبّع
+  function mulhamMeta(){
+    const get = id => document.getElementById(id);
+    return {
+      subject:  (get('s-subj')?.value || '').trim() || null,
+      topic:    (get('s-topic')?.value || '').trim() || null,
+      time:     Number(get('s-time')?.value || 0) || null,
+      bloom:    get('s-bloom')?.value || null,
+      age:      get('s-age')?.value || null,
+      noTools:  !!get('s-noTools')?.checked,
+      adaptLow: !!get('s-adaptLow')?.checked,
+      adaptDiff:!!get('s-adaptDiff')?.checked
+    };
+  }
 
-  try{
-    busyBtn.disabled = true;
-    const oldText = busyBtn.textContent;
-    busyBtn.textContent = 'جارٍ التفكير…';
+  // ===== استدعاء الدالة مع Authorization =====
+  async function callMulham(body) {
+    // نحصل على توكن JWT بنفس الـ audience المستخدم في _auth
+    const token = await window.auth.getToken({ audience: "https://api.athar" });
+    const res = await fetch("/.netlify/functions/mulham", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify(body)
+    });
 
-    const params = readParams(withVariant);
-    lastParams = params;
-
-    const data = await callMulham(params);
-    renderAll(data);
-
-    toast(withVariant ? 'تم توليد أنشطة أخرى ✨' : 'تم توليد الأنشطة ✨');
-
-    if (typeof supaLogToolUsage === 'function') {
-      const tag = withVariant ? 'mulham_more' : 'mulham_generate';
-      try { await supaLogToolUsage(tag, mulhamMeta()); } catch(_){}
+    if (!res.ok) {
+      // رسائل مفيدة
+      if (res.status === 401) throw new Error("غير مصرح — سجّلي الدخول");
+      if (res.status === 402) throw new Error("الاشتراك غير نشط — فضلاً فعّلي اشتراكك");
+      if (res.status === 403) throw new Error("لا تملكين صلاحية الوصول");
+      const t = await res.text().catch(()=> "");
+      throw new Error(t || "Mulham function failed");
     }
+    return res.json();
+  }
 
-    busyBtn.textContent = oldText;
-    busyBtn.disabled = false;
-  }catch(e){
-    console.error(e);
-    // رسائل أدق حسب السبب
-    const msg = String(e.message||e);
-    if (msg.includes('غير مصرح')) toast('غير مصرح — سجّلي الدخول');
-    else if (msg.includes('العضوية غير مفعّلة')) toast('العضوية غير مفعّلة');
-    else toast('تعذّر التوليد، حاولي ثانية.');
-    if (busyBtn){
-      busyBtn.textContent = withVariant ? 'أنشطة أخرى' : 'ولّد الأنشطة';
+  function readParams(withVariant=false){
+    const subject = $('#s-subj').value.trim() || '';
+    const topic   = $('#s-topic').value.trim() || subject;
+    const time    = +$('#s-time').value || 20;
+    const bloom   = $('#s-bloom').value || 'understand';
+    const age     = $('#s-age').value || 'p2';
+    const noTools = !!$('#s-noTools').checked;
+    const adaptLow= !!$('#s-adaptLow').checked;
+    const adaptDiff=!!$('#s-adaptDiff').checked;
+    // بذرة دائمًا (حتى للطلب الأول) علشان ما تتكرر نفس النتيجة
+    const variant = String(Date.now()) + (withVariant ? '_more' : '_base');
+    return { subject, topic, time, bloom, age, noTools, adaptLow, adaptDiff, variant };
+  }
+
+  function renderSet(prefix, set, showDiff){
+    $(`#${prefix}-idea`).innerHTML   = `<strong>مدخل الفكرة:</strong> ${set.ideaHook || '—'}`;
+    $(`#${prefix}-desc`).textContent = set.desc || '—';
+    $(`#${prefix}-dur`).textContent  = `المدة: ${set.duration ?? '—'} د`;
+    liFill($(`#${prefix}-mats`), set.materials || []);
+    olFill($(`#${prefix}-steps`), set.steps || []);
+    $(`#${prefix}-exit`).textContent    = set.exitTicket || '—';
+    $(`#${prefix}-impact`).textContent  = set.expectedImpact || '—';
+
+    const diffEl = $(`#${prefix}-diff`);
+    if(showDiff && (set.diff?.lowMotivation || set.diff?.differentiation)){
+      diffEl.style.display = '';
+      diffEl.innerHTML = `
+        ${set.diff?.lowMotivation ? `<div><strong>للتحفيز المنخفض:</strong> ${set.diff.lowMotivation}</div>` : ''}
+        ${set.diff?.differentiation ? `<div style="margin-top:6px"><strong>فروق فردية:</strong> ${set.diff.differentiation}</div>` : ''}
+      `;
+    }else{
+      diffEl.style.display = 'none';
+      diffEl.innerHTML = '';
+    }
+  }
+
+  function renderAll(data){
+    const meta = data.meta || {};
+    const metaBox = $('#meta'); metaBox.innerHTML = '';
+    const ageMap = {p1:'ابتدائي دُنيا',p2:'ابتدائي عُليا',m:'متوسط',h:'ثانوي'};
+    const chips = [
+      meta.subject, meta.topic,
+      `مرحلة: ${ageMap[meta.age]||meta.age||'—'}`,
+      `بلوم: ${meta.bloom||'—'}`,
+      `زمن: ${meta.time||meta.timeMins||'—'} د`
+    ];
+    chips.forEach(v=>{
+      if(v && String(v).trim()!==''){
+        const chip=document.createElement('span');
+        chip.className='chip';
+        chip.textContent=v;
+        metaBox.appendChild(chip);
+      }
+    });
+
+    const showDiff = !!(meta.adaptLow || meta.adaptDiff);
+
+    renderSet('mv', data.sets?.movement || {}, showDiff);
+    renderSet('gr', data.sets?.group || {}, showDiff);
+    renderSet('in', data.sets?.individual || {}, showDiff);
+
+    liFill($('#tips'), data.tips || []);
+    $('#out').style.display = '';
+  }
+
+  async function generate(withVariant=false){
+    const goBtn   = document.getElementById('go');
+    const moreBtn = document.getElementById('more');
+    const busyBtn = withVariant ? moreBtn : goBtn;
+
+    try{
+      busyBtn.disabled = true;
+      const oldText = busyBtn.textContent;
+      busyBtn.textContent = 'جارٍ التفكير…';
+
+      await waitAuth();
+      await showAccountBadge();
+
+      const params = readParams(withVariant);
+      const data = await callMulham(params);
+      renderAll(data);
+
+      toast(withVariant ? 'تم توليد أنشطة أخرى ✨' : 'تم توليد الأنشطة ✨');
+
+      if (typeof supaLogToolUsage === 'function') {
+        const tag = withVariant ? 'mulham_more' : 'mulham_generate';
+        try { await supaLogToolUsage(tag, mulhamMeta()); } catch(_){}
+      }
+
+      busyBtn.textContent = oldText;
       busyBtn.disabled = false;
+    }catch(e){
+      console.error(e);
+      toast(String(e.message||e) || 'تعذّر التوليد، حاولي ثانية.');
+      if (busyBtn){
+        busyBtn.textContent = withVariant ? 'أنشطة أخرى' : 'ولّد الأنشطة';
+        busyBtn.disabled = false;
+      }
     }
   }
-}
 
-// أزرار
-document.getElementById('go').addEventListener('click', ()=>generate(false));
-document.getElementById('more').addEventListener('click', ()=>generate(true));
+  // أزرار
+  document.getElementById('go').addEventListener('click', ()=>generate(false));
+  document.getElementById('more').addEventListener('click', ()=>generate(true));
 
-document.getElementById('copy').addEventListener('click', async ()=>{
-  const grab=(sel)=>$(sel)?.innerText?.trim() || '—';
-  const pack=(sel)=>[...document.querySelectorAll(sel+' li')].map(li=>'- '+li.innerText).join('\n') || '—';
+  document.getElementById('copy').addEventListener('click', async ()=>{
+    const grab=(sel)=>$(sel)?.innerText?.trim() || '—';
+    const pack=(sel)=>[...document.querySelectorAll(sel+' li')].map(li=>'- '+li.innerText).join('\n') || '—';
 
-  const txt =
+    const txt =
 `[مُلهم — ${new Date().toLocaleString()}]
 ${$('#meta').innerText}
 
@@ -527,23 +538,26 @@ ${pack('#in-steps')}
 ${pack('#tips')}
 `;
 
-  await navigator.clipboard.writeText(txt);
-  toast('تم النسخ ✅');
+    await navigator.clipboard.writeText(txt);
+    toast('تم النسخ ✅');
 
-  if (typeof supaLogToolUsage === 'function') {
-    try { await supaLogToolUsage('mulham_copy', mulhamMeta()); } catch(_){}
-  }
-});
+    if (typeof supaLogToolUsage === 'function') {
+      try { await supaLogToolUsage('mulham_copy', mulhamMeta()); } catch(_){}
+    }
+  });
 
-// طباعة محسّنة للجوال/الآيباد
-document.getElementById('print').addEventListener('click', async ()=>{
-  document.body.classList.add('print-mode');
-  setTimeout(()=>{ window.print(); setTimeout(()=>document.body.classList.remove('print-mode'), 400); }, 60);
+  // طباعة محسّنة للجوال/الآيباد
+  document.getElementById('print').addEventListener('click', async ()=>{
+    document.body.classList.add('print-mode');
+    setTimeout(()=>{ window.print(); setTimeout(()=>document.body.classList.remove('print-mode'), 400); }, 60);
 
-  if (typeof supaLogToolUsage === 'function') {
-    try { await supaLogToolUsage('mulham_print', mulhamMeta()); } catch(_){}
-  }
-});
-</script>
+    if (typeof supaLogToolUsage === 'function') {
+      try { await supaLogToolUsage('mulham_print', mulhamMeta()); } catch(_){}
+    }
+  });
+
+  // تحديث شارة الحساب عند الجاهزية
+  (async function run(){ await waitAuth(); await showAccountBadge(); })();
+  </script>
 </body>
 </html>
