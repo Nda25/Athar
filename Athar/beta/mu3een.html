@@ -44,7 +44,7 @@
   <header>
     <div class="hero">
       <h1 class="logo">مُعين</h1>
-      <div class="tag"><span class="dot"></span>نُولّد خطتك الأسبوعية بشكل ذكي — مع مصادر رسمية عند الإمكان ✨</div>
+      <div class="tag"><span class="dot"></span>نُولّد خطتك الأسبوعية — يومًا بيوم — دون خلط الدروس ✨</div>
     </div>
   </header>
 
@@ -52,7 +52,7 @@
     <div class="container">
       <section class="card">
         <h2 class="title">مدخلات الخطة الأسبوعية</h2>
-        <p class="small">عند توافر مصادر رسمية سنجلبها تلقائيًا ونُلزم النموذج بها (أهداف/مفردات/نتائج). وإلا فسنولد مسودة ذكية واضحة للمراجعة السريعة.</p>
+        <p class="small">الخطة دائمًا من الأحد إلى الخميس (٥ أيام). سنوزّع الدروس على الأيام بشكل عادل، ولو كان درس واحد فسيُبنى على ٥ أجزاء متسلسلة.</p>
 
         <form id="mueen-form" class="form" novalidate>
           <div class="form-grid">
@@ -165,8 +165,7 @@
         const li=document.createElement('li');
         const a=document.createElement('a');
         a.href=src.url; a.textContent=src.title || src.url; a.target="_blank"; a.rel="noopener";
-        li.appendChild(a);
-        ul.appendChild(li);
+        li.appendChild(a); ul.appendChild(li);
       });
       box.style.display='';
     }
@@ -183,8 +182,13 @@
       data.week.forEach((d,idx)=>{
         const card=document.createElement('div'); card.className='day-card';
         card.innerHTML=`
-          <h3 style="margin:0 0 6px">${d.day} — <span class="lnm">${d.lesson_name||'—'}</span>${d.unit_name?` <span class="small">(${d.unit_name})</span>`:''}</h3>
+          <h3 style="margin:0 0 6px">${d.day} — <span class="lnm">${d.lesson_name||'—'}</span>
+            ${d.segment_name?`<span class="small"> • ${d.segment_name}</span>`:''}
+            ${d.unit_name?` <span class="small">(${d.unit_name})</span>`:''}
+          </h3>
           <div class="small" style="margin-bottom:6px">${data.meta.subject} • ${data.meta.grade_label}</div>
+
+          ${d.segment_goal?`<p class="small"><strong>هدف الجزء:</strong> ${d.segment_goal}</p>`:''}
 
           <h4 style="margin:8px 0 4px">الأهداف</h4>
           <ul class="obj-ul" style="margin:0 0 6px">${(d.objectives||[]).map(x=>`<li>${x}</li>`).join('')}</ul>
@@ -230,11 +234,26 @@
 
       $('#out').style.display='';
 
-      // تفعيل أزرار النسخ/الحفظ
       out.querySelectorAll('button[data-act="copy"]').forEach(btn=>{
         btn.addEventListener('click',()=>{
           const d = data.week[+btn.dataset.idx];
-          const text = `${d.day} — ${d.lesson_name}\n\n[الأهداف]\n- ${(d.objectives||[]).join('\n- ')}\n\n[المفردات]\n- ${(d.vocab||[]).join('\n- ')}\n\n[النتائج]\n${d.outcomes||'—'}\n\n[الواجب]\n${d.homework||'—'}`;
+          const text =
+`${d.day} — ${d.lesson_name}${d.segment_name?` (${d.segment_name})`:''}
+
+[هدف الجزء]
+${d.segment_goal||'—'}
+
+[الأهداف]
+- ${(d.objectives||[]).join('\n- ')}
+
+[المفردات]
+- ${(d.vocab||[]).join('\n- ')}
+
+[النتائج]
+${d.outcomes||'—'}
+
+[الواجب]
+${d.homework||'—'}`;
           navigator.clipboard.writeText(text).then(()=>toast('تم نسخ اليوم ✅'));
         });
       });
@@ -243,8 +262,8 @@
         btn.addEventListener('click',()=>{
           const idx = +btn.dataset.idx;
           const card = btn.closest('.day-card');
-          const objs   = linesToList(card.querySelector('.ta-obj').value);
-          const vocab  = linesToList(card.querySelector('.ta-vocab').value);
+          const objs   = (card.querySelector('.ta-obj').value || '').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+          const vocab  = (card.querySelector('.ta-vocab').value || '').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
           const outc   = card.querySelector('.ta-out').value.trim();
           const hw     = card.querySelector('.ta-hw').value.trim();
 
@@ -253,13 +272,13 @@
           data.week[idx].outcomes   = outc;
           data.week[idx].homework   = hw;
 
-          // إعادة العرض داخل البطاقة
           card.querySelector('.obj-ul').innerHTML   = objs.map(x=>`<li>${x}</li>`).join('');
           card.querySelector('.vocab-ul').innerHTML = vocab.map(x=>`<li>${x}</li>`).join('');
           card.querySelector('.outcomes-p').textContent = outc || '—';
           card.querySelector('.homework-p').textContent = hw || '—';
 
-          toast('تم حفظ التعديل ✅');
+          const toastEl=$("#toast"); toastEl.textContent='تم حفظ التعديل ✅'; toastEl.style.display='block';
+          clearTimeout(window.__t); window.__t=setTimeout(()=>toastEl.style.display='none',1600);
         });
       });
     }
@@ -275,7 +294,7 @@
       const count   = +$('#f-count').value || 5;
       const names   = [...document.querySelectorAll('.ln')].map(i=>i.value.trim()).filter(Boolean);
 
-      if (!subject){ toast('اكتبي اسم المادة'); return; }
+      if (!subject){ const t=$("#toast"); t.textContent='اكتبي اسم المادة'; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); return; }
       $('#status').textContent='جارٍ التوليد…'; $('#btn-generate').disabled=true;
 
       try{
@@ -287,7 +306,7 @@
         });
         const j = await res.json().catch(()=> ({}));
         if(!res.ok){ $('#status').textContent = j?.error || 'تعذّر التوليد'; $('#btn-generate').disabled=false; return; }
-        if (j?.meta?.note) toast(j.meta.note);
+        if (j?.meta?.note){ const t=$("#toast"); t.textContent=j.meta.note; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); }
         $('#status').textContent = 'تم ✓';
         renderPlan(j);
       }catch(e){ $('#status').textContent='تعذّر التوليد'; }
@@ -301,7 +320,7 @@
       $('#btn-generate').addEventListener('click', generate);
       $('#btn-copy-all').addEventListener('click', ()=>{
         const txt = $('#days').innerText.trim();
-        navigator.clipboard.writeText(txt).then(()=>toast('تم نسخ الخطة كلها ✅'));
+        navigator.clipboard.writeText(txt).then(()=>{ const t=$("#toast"); t.textContent='تم نسخ الخطة كلها ✅'; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); });
       });
     });
   </script>
