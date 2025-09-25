@@ -1,178 +1,216 @@
-// مُعين — واجهة التوليد والعرض مع تحقّق صارم من تسجيل الدخول
+// مُعين — واجهة
 (function(){
+  const DAYS = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"];
   const $ = (s)=>document.querySelector(s);
-  const $$=(s)=>document.querySelectorAll(s);
-  const status = (t)=> { const el=$("#status"); if(el) el.textContent=t||""; };
-  const toast = (m)=>{ const t=$("#toast"); if(!t) return; t.textContent=m; t.style.display='block'; clearTimeout(window.__tt); window.__tt=setTimeout(()=>t.style.display='none',1600); };
+  const $$= (s)=>document.querySelectorAll(s);
+  const status = $('#status');
 
-  // ====== auth ui ======
-  const $state=$("#auth-state"), $login=$("#btn-login"), $logout=$("#btn-logout");
-  const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
-  async function waitAuth(){ for(let i=0;i<60 && !window.auth && !window.auth0Client; i++){ await wait(100); } }
+  const lessonsBox = $('#lessons-box');
+  const fCount   = $('#f-count');
+  const fMode    = $('#f-mode');
 
-  async function refreshAuthUI(){
-    try{
-      const authed = window.auth?.isAuthenticated ? await window.auth.isAuthenticated()
-                    : (window.auth0Client?.isAuthenticated ? await window.auth0Client.isAuthenticated() : false);
-
-      if (authed){
-        $state.textContent = 'مسجّل دخول'; $state.className='auth-badge auth-ok';
-        $login.style.display='none'; $logout.style.display='';
-      }else{
-        $state.textContent = 'غير مسجّل'; $state.className='auth-badge auth-no';
-        $login.style.display=''; $logout.style.display='none';
-      }
-    }catch{
-      $state.textContent = 'غير مسجّل'; $state.className='auth-badge auth-no';
-      $login.style.display=''; $logout.style.display='none';
+  function lessonRow(i){
+    const wrap = document.createElement('div');
+    wrap.className='field';
+    wrap.innerHTML = `
+      <label>اسم الدرس ${i+1}</label>
+      <input class="lesson-name" data-idx="${i}" placeholder="اكتب اسم الدرس بدقة">
+    `;
+    return wrap;
+  }
+  function drawLessonInputs(){
+    lessonsBox.innerHTML='';
+    const n = +fCount.value || 1;
+    if (fMode.value === 'manual'){
+      for(let i=0;i<n;i++) lessonsBox.appendChild(lessonRow(i));
+    }else{
+      const tip = document.createElement('div');
+      tip.className='muted';
+      tip.textContent='سيحاول مُعين جلب الدروس آليًا من المنهج (تجريبي).';
+      lessonsBox.appendChild(tip);
     }
   }
+  fCount.addEventListener('change', drawLessonInputs);
+  fMode.addEventListener('change', drawLessonInputs);
+  drawLessonInputs();
 
-  $login?.addEventListener('click', ()=>{
-    if (window.auth?.login) {
-      window.auth.login({ authorizationParams:{ screen_hint:'login', redirect_uri: window.location.href }});
-    } else if (window.auth0Client?.loginWithRedirect){
-      window.auth0Client.loginWithRedirect({ authorizationParams:{ screen_hint:'login', redirect_uri: window.location.href }});
-    } else {
-      toast('لم يتم تهيئة الدخول بعد');
-    }
-  });
-
-  $logout?.addEventListener('click', async ()=>{
-    if (window.auth?.logout) window.auth.logout();
-    else if (window.auth0Client?.logout) window.auth0Client.logout({ logoutParams:{ returnTo: window.location.href }});
-    setTimeout(refreshAuthUI, 400);
-  });
-
-  // ====== UI: الحقول ======
-  const lessonsBox = $("#lessons-box");
-  const countSel   = $("#f-count");
-  function drawLessonFields(){
-    const n = +countSel.value || 1;
-    const wrap = document.createElement("div");
-    wrap.className="grid";
-    for(let i=1;i<=n;i++){
-      const f = document.createElement("div");
-      f.className="field";
-      f.innerHTML = `<label>اسم الدرس ${i}</label><input class="lesson-name" placeholder="اكتب اسم الدرس ${i}">`;
-      wrap.appendChild(f);
-    }
-    lessonsBox.innerHTML = '';
-    lessonsBox.appendChild(wrap);
-  }
-  countSel.addEventListener('change', drawLessonFields);
-  drawLessonFields();
-
-  function readPayload(){
-    const subject = $("#f-subject").value.trim();
-    const grade   = $("#f-grade").value.trim();
-    const names   = [...$$(".lesson-name")].map(i=>i.value.trim()).filter(Boolean);
-    return {
-      subject, grade, lessons: names,
-      weekDays: ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس"],
-      mode: $("#f-mode").value
-    };
-  }
-
-  // ====== token getter المتحمّل للاختلافات ======
-  async function getJwt(){
-    await waitAuth();
-    try{
-      // مفضّل
-      if (window.auth && typeof window.auth.getToken === 'function'){
-        return await window.auth.getToken({ audience: "https://api.athar" });
+  // توكن Auth0 — توافقية (تعالج "getToken is not a function")
+  async function getAuthToken(){
+    if (!window.auth) return null;
+    try {
+      if (typeof window.auth.getTokenSilently === 'function') {
+        return await window.auth.getTokenSilently({ authorizationParams:{ audience:'https://api.athar' } });
       }
-      // عميل Auth0 القياسي
-      if (window.auth0Client && typeof window.auth0Client.getTokenSilently === 'function'){
-        return await window.auth0Client.getTokenSilently({ audience: "https://api.athar" });
+      if (typeof window.auth.getToken === 'function') {
+        return await window.auth.getToken({ audience:'https://api.athar' });
       }
-    }catch(e){
-      console.warn('token error:', e);
+    } catch(e){
+      try {
+        if (typeof window.auth.getTokenWithPopup === 'function') {
+          return await window.auth.getTokenWithPopup({ authorizationParams:{ audience:'https://api.athar' } });
+        }
+      } catch(_) {}
     }
     return null;
   }
 
-  function dayBlock(d){
-    const div = document.createElement('div');
-    div.className='day-card';
-    div.innerHTML = `
-      <h3 style="margin:4px 0 10px"><span class="badge">${d.day}</span> <strong>${d.lesson}</strong>${d.segment ? ` — <span class="muted">${d.segment}</span>`:''}</h3>
-      <div class="editable" data-key="objectives" contenteditable="false"><strong>الأهداف</strong><ul>${(d.objectives||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
-      <div class="editable" data-key="vocab" contenteditable="false"><strong>المفردات الجديدة</strong><ul>${(d.vocab||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
-      <div class="editable" data-key="outcomes" contenteditable="false"><strong>النتائج المتوقعة</strong><p>${d.outcomes||''}</p></div>
-      <div class="editable" data-key="homework" contenteditable="false"><strong>واجب منزلي مقترح</strong><p>${d.homework||''}</p></div>
-      <div class="actions-row" style="margin-top:6px">
-        <button class="btn" data-act="toggle-edit">تعديل سريع</button>
-        <button class="btn" data-act="copy">نسخ ${d.day}</button>
-      </div>
-    `;
-    div.addEventListener('click', (e)=>{
-      const act = e.target?.dataset?.act;
-      if (!act) return;
-      if (act==='toggle-edit'){
-        div.querySelectorAll('.editable').forEach(el=>{
-          el.contentEditable = (el.contentEditable!=='true');
-        });
-        e.target.textContent = div.querySelector('.editable').contentEditable==='true' ? 'إقفال التعديل' : 'تعديل سريع';
+  function chip(txt){
+    const c=document.createElement('span');
+    c.className='chip'; c.textContent=txt; return c;
+  }
+
+  // عرض الخطة
+  function renderPlan(data){
+    $('#out').style.display='';
+    const meta = $('#meta'); meta.innerHTML='';
+    meta.appendChild(chip(data.meta.subject));
+    meta.appendChild(chip(`الصف: ${data.meta.grade}`));
+    meta.appendChild(chip(`دروس الأسبوع: ${data.meta.count}`));
+
+    const host = $('#plan'); host.innerHTML='';
+    data.days.forEach((d,i)=>{
+      const card = document.createElement('div');
+      card.className='card-day';
+      card.innerHTML = `
+        <div class="day-head">
+          <h3 style="margin:0">${DAYS[i]} — <span class="muted">Segment ${i+1}</span></h3>
+        </div>
+        <h4 style="margin:6px 0">الأهداف</h4>
+        <ul class="list goals"></ul>
+
+        <h4 style="margin:6px 0">المفردات الجديدة</h4>
+        <ul class="list vocab"></ul>
+
+        <h4 style="margin:6px 0">النتائج المتوقعة</h4>
+        <p class="outcomes muted"></p>
+
+        <h4 style="margin:6px 0">واجب منزلي مقترح</h4>
+        <p class="hw muted"></p>
+
+        <div class="actions-row" style="margin-top:8px">
+          <button class="btn small" data-edit="${i}">تعديل سريع</button>
+          <button class="btn small" data-copy="${i}">نسخ ${DAYS[i]}</button>
+        </div>
+      `;
+      host.appendChild(card);
+      const ulG = card.querySelector('.goals');
+      const ulV = card.querySelector('.vocab');
+      (d.goals||[]).forEach(g=>{ const li=document.createElement('li'); li.textContent=g; ulG.appendChild(li); });
+      (d.vocab||[]).forEach(v=>{ const li=document.createElement('li'); li.textContent=v; ulV.appendChild(li); });
+      card.querySelector('.outcomes').textContent = d.outcomes || '';
+      card.querySelector('.hw').textContent       = d.homework || '';
+    });
+
+    // تعديل سريع
+    host.addEventListener('click', (e)=>{
+      const i = +e.target.dataset.edit;
+      if (Number.isFinite(i)){
+        const day = data.days[i];
+        const g = prompt(`عدّل الأهداف ليوم ${DAYS[i]} (سطر لكل هدف):`, (day.goals||[]).join('\n'));
+        if (g!=null) day.goals = g.split('\n').map(s=>s.trim()).filter(Boolean);
+        const v = prompt(`عدّل المفردات ليوم ${DAYS[i]} (سطر لكل مفردة — سيتم تقاطعها مع مفردات الدرس):`, (day.vocab||[]).join('\n'));
+        if (v!=null) day.vocab = v.split('\n').map(s=>s.trim()).filter(Boolean);
+        renderPlan(data);
       }
-      if (act==='copy'){
-        const txt = div.innerText.trim();
-        navigator.clipboard.writeText(txt).then(()=>toast('نُسخ اليوم ✓'));
+      const j = +e.target.dataset.copy;
+      if (Number.isFinite(j)){
+        const day = data.days[j];
+        const txt =
+`${DAYS[j]} — ${data.meta.subject} (${data.meta.grade})
+
+الأهداف:
+- ${(day.goals||[]).join('\n- ')}
+
+المفردات الجديدة:
+- ${(day.vocab||[]).join('\n- ')}
+
+النتائج المتوقعة:
+${day.outcomes||''}
+
+واجب منزلي:
+${day.homework||''}
+`;
+        navigator.clipboard.writeText(txt);
+        toast('نُسخ يوم '+DAYS[j]+' ✓');
       }
     });
-    return div;
+
+    // نسخ كامل
+    $('#btn-copy-all').onclick = ()=>{
+      const big = data.days.map((day,i)=>(
+`${DAYS[i]}
+
+الأهداف:
+- ${(day.goals||[]).join('\n- ')}
+
+المفردات:
+- ${(day.vocab||[]).join('\n- ')}
+
+النتائج المتوقعة:
+${day.outcomes||''}
+
+الواجب:
+${day.homework||''}
+`
+      )).join('\n\n---\n\n');
+      navigator.clipboard.writeText(big);
+      toast('نسخ الخطة كاملة ✓');
+    };
   }
 
-  function renderPlan(data){
-    const meta = $("#meta"); meta.innerHTML='';
-    [data.subject, data.grade].forEach(x=>{ const b=document.createElement('span'); b.className='badge'; b.textContent=x; meta.appendChild(b); });
-    const week = $("#week"); week.innerHTML='';
-    (data.plan||[]).forEach(d=> week.appendChild(dayBlock(d)));
-    $("#out").style.display='';
-  }
+  // نداء الدالة
+  $('#btn-generate').addEventListener('click', async ()=>{
+    status.textContent='جارٍ التوليد…';
+    const token = await getAuthToken();
+    if (!token){ status.textContent='غير مصرح — سجّلي الدخول'; toast('غير مصرح — سجّلي الدخول'); return; }
 
-  $("#btn-generate").addEventListener('click', async ()=>{
-    status('');
-    const payload = readPayload();
-    if (!payload.subject || payload.lessons.length===0){ toast('أدخلي المادة وأسماء الدروس'); return; }
+    const subject = $('#f-subject').value.trim();
+    const grade   = $('#f-grade').value;
+    const count   = +$('#f-count').value || 1;
+    let lessons   = [];
 
-    const jwt = await getJwt();
-    if (!jwt){
-      toast('غير مصرّح — سجّلي الدخول');
-      // أظهر زر الدخول
-      $login?.click?.bind($login);
-      return;
+    if (fMode.value==='manual'){
+      lessons = [...$$('.lesson-name')].map(i=>i.value.trim()).filter(Boolean);
     }
-
-    const btn = $("#btn-generate");
-    btn.disabled = true; const old=btn.textContent; btn.textContent='جارٍ التحضير…';
 
     try{
       const res = await fetch('/.netlify/functions/mueen-plan', {
-        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
-        body: JSON.stringify(payload)
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+        body: JSON.stringify({ subject, grade, count, lessons, mode:fMode.value })
       });
       if (!res.ok){
-        const t = await res.text(); console.error('mueen-plan', res.status, t);
-        status('تعذّر التوليد');
-        if (res.status===402) toast('حساب غير نشط'); else toast('تعذّر التوليد');
-        return;
+        const t = await res.text().catch(()=> '');
+        throw new Error(t||'server error');
       }
       const data = await res.json();
       renderPlan(data);
-      toast('تم توليد الخطة ✨');
-    }catch(e){ console.error(e); toast('تعذّر التوليد'); }
-    finally{ btn.disabled=false; btn.textContent=old; }
+      status.textContent = 'تم ✓';
+    }catch(e){
+      console.error(e);
+      status.textContent='تعذر التوليد';
+      toast('تعذر التوليد');
+    }
   });
 
-  $("#btn-copy-all").addEventListener('click', ()=>{
-    const txt = $("#week")?.innerText?.trim() || '';
-    if (!txt){ toast('لا توجد خطة لنسخها'); return; }
-    navigator.clipboard.writeText(txt).then(()=>toast('نُسخت الخطة كاملة ✓'));
-  });
+  // أزرار الدخول/الخروج
+  const btnLogin  = $('#btn-login');
+  const btnLogout = $('#btn-logout');
+  btnLogin.addEventListener('click', ()=> window.auth?.login({ authorizationParams:{ screen_hint:'login', redirect_uri: window.location.href }}));
+  btnLogout.addEventListener('click', ()=> window.auth?.logout({ logoutParams:{ returnTo: window.location.href }}));
 
-  (async function init(){
-    await waitAuth();
-    await refreshAuthUI();
-  })();
+  // عرض حالة الدخول
+  async function boot(){
+    try{
+      const ok = await window.auth.isAuthenticated();
+      btnLogin.style.display = ok? 'none' : '';
+      btnLogout.style.display= ok? '' : 'none';
+    }catch{}
+  }
+  boot();
+
+  // توست بسيط
+  const box = document.getElementById('toast');
+  window.toast = (msg, ms=1600)=>{ box.textContent = msg; box.style.display='block';
+    clearTimeout(window.__t); window.__t=setTimeout(()=>box.style.display='none', ms); };
 })();
