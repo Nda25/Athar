@@ -3,118 +3,114 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>مُعــين — مُقسِّم الخطة الأسبوعية</title>
+  <title>مُعين — تقسيم الخطة الأسبوعية</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <meta name="color-scheme" content="dark light" />
   <style>
-    /* يندمج مع ثيم أثــر + يلتقط ألوان الملف الشخصي */
-    :root{ --accent: var(--sea-500, #3b82f6); }
-    .card{ overflow:hidden }
-    .wizard .field{ margin:10px 0 }
-    .wizard .field label{ display:block; font-weight:700; margin:6px 0 }
-    .wizard input,.wizard select{ width:100%; padding:12px; border-radius:12px; border:1px solid rgba(59,130,246,.35) }
-    .cols-3{ display:grid; gap:12px; grid-template-columns:1fr }
-    .cols-2{ display:grid; gap:12px; grid-template-columns:1fr 1fr }
-    @media(min-width:900px){ .cols-3{ grid-template-columns:1fr 1fr 1fr } }
-    .actions-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center; margin-top:10px }
-    .badge{display:inline-block; padding:2px 10px; border-radius:999px; background:#e5e7eb22; border:1px solid #e5e7eb33}
-    .plan-day{ border:1px dashed rgba(59,130,246,.35); border-radius:12px; padding:12px; margin-top:12px; background:var(--card) }
-    .plan-day h3{ margin:0 0 6px }
-    .muted{ color: var(--muted) }
-    .chips{ display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 }
-    .chip{ background:color-mix(in oklab, var(--accent) 14%, #fff); padding:3px 8px; border-radius:999px; font-size:.9rem }
-    .printable{ border:1px solid color-mix(in oklab, var(--accent) 40%, #cbd5e1); border-radius:12px; padding:14px; margin-top:8px; background:var(--card) }
-    .btn[disabled]{ opacity:.6; cursor:not-allowed }
-    @media print{
-      .global-bg,.backdrop,.pattern,.topbar,header,.actions-row,.wizard,.toast{ display:none !important }
-      .container{ width:auto; padding:0; margin:0 }
-      .printable{ width:180mm; margin:0 auto; background:#fff; border-color:#999 }
-      @page{ size:A4 portrait; margin:10mm; }
+    :root{ --accent:#2563eb; }
+    .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media(max-width:900px){ .form-grid{ grid-template-columns:1fr; } }
+    .field{ margin:10px 0 }
+    .field label{ display:block; font-weight:700; margin:6px 0 }
+    .field input,.field select,.field textarea{
+      width:100%; padding:12px; border-radius:12px;
+      border:1px solid rgba(37,99,235,.35)
     }
+    .chips{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 }
+    .chip{ background:color-mix(in oklab, var(--accent) 14%, #fff); padding:4px 8px; border-radius:999px; font-size:.9rem }
+    .day-card{ border:1px dashed rgba(37,99,235,.35); border-radius:10px; padding:10px; margin-top:12px; }
+    .copy-row{ display:flex; gap:8px; flex-wrap:wrap; }
+    .small{ font-size:.92rem; color:var(--muted) }
+    .src-box{ background:color-mix(in oklab, var(--accent) 8%, #fff); border-radius:10px; padding:8px; margin-top:10px; }
+    details.edit{ background:#0001; border-radius:8px; padding:6px 8px; margin:8px 0 }
+    details.edit summary{ cursor:pointer; }
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    @media(max-width:800px){ .grid-2{ grid-template-columns:1fr; } }
+    textarea.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
   </style>
 </head>
 <body>
-  <!-- خلفيات أثــر -->
-  <div class="global-bg"></div><div class="backdrop"></div><div class="pattern"></div>
+  <div class="global-bg"></div>
+  <div class="backdrop"></div>
+  <div class="pattern"></div>
 
-  <!-- الشريط العلوي -->
   <div class="topbar">
-    <div class="left-actions"><a class="btn" href="index.html" title="الرئيسية">الرئيسية</a></div>
+    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
     <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
-    <div class="user">
-      <span id="nav-auth" style="display:none;gap:10px"></span>
-      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
-    </div>
+    <div class="user"><a class="btn" href="programs.html">مساحة إبداعي</a></div>
   </div>
 
-  <!-- الهيرو -->
   <header>
     <div class="hero">
-      <h1 class="logo">مُعـــين</h1>
-      <div class="tag"><span class="dot"></span>يبني خُطط أسبوعية دقيقة… مباشرة من المنهج الرسمي.</div>
+      <h1 class="logo">مُعين</h1>
+      <div class="tag"><span class="dot"></span>نُولّد خطتك الأسبوعية بشكل ذكي — مع مصادر رسمية عند الإمكان ✨</div>
     </div>
   </header>
 
   <main>
     <div class="container">
-      <!-- المعطيات -->
-      <section class="card wizard">
-        <h2 class="title" style="margin-top:0">مدخلات الخطة الأسبوعية</h2>
-        <p class="muted" style="margin:-6px 0 10px">لن نولّد أي هدف أو مفردة من عندنا — نقرأها فقط من قاعدة “منهج السعودية (آخر إصدار)”.</p>
+      <section class="card">
+        <h2 class="title">مدخلات الخطة الأسبوعية</h2>
+        <p class="small">عند توافر مصادر رسمية سنجلبها تلقائيًا ونُلزم النموذج بها (أهداف/مفردات/نتائج). وإلا فسنولد مسودة ذكية واضحة للمراجعة السريعة.</p>
 
-        <div class="cols-3">
-          <div class="field">
-            <label>المادة</label>
-            <input id="w-subject" placeholder="مثال: فيزياء / أحياء / لغة عربية …" />
+        <form id="mueen-form" class="form" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label>المادة</label>
+              <input id="f-subject" placeholder="مثال: الفيزياء، لغتي، الرياضيات…" required />
+            </div>
+            <div class="field">
+              <label>المرحلة/الصف</label>
+              <select id="f-grade" required>
+                <option>أول ابتدائي</option><option>ثاني ابتدائي</option><option>ثالث ابتدائي</option>
+                <option>رابع ابتدائي</option><option>خامس ابتدائي</option><option>سادس ابتدائي</option>
+                <option>أول متوسط</option><option>ثاني متوسط</option><option>ثالث متوسط</option>
+                <option>أول ثانوي</option><option>ثاني ثانوي</option><option selected>ثالث ثانوي</option>
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label>المرحلة/الصف</label>
-            <select id="w-grade">
-              <option value="1">أول ابتدائي</option>
-              <option value="2">ثاني ابتدائي</option>
-              <option value="3">ثالث ابتدائي</option>
-              <option value="4">رابع ابتدائي</option>
-              <option value="5">خامس ابتدائي</option>
-              <option value="6">سادس ابتدائي</option>
-              <option value="7">أول متوسط</option>
-              <option value="8">ثاني متوسط</option>
-              <option value="9">ثالث متوسط</option>
-              <option value="10">أول ثانوي</option>
-              <option value="11">ثاني ثانوي</option>
-              <option value="12">ثالث ثانوي</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>عدد الدروس هذا الأسبوع</label>
-            <select id="w-count">
-              <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option>
-            </select>
-          </div>
-        </div>
 
-        <div id="lessonsWrap" class="cols-2" style="margin-top:6px"></div>
+          <div class="form-grid">
+            <div class="field">
+              <label>عدد الدروس هذا الأسبوع</label>
+              <select id="f-count">
+                <option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>أسلوب اختيار الدروس</label>
+              <select id="f-mode">
+                <option value="manual" selected>أدخل أسماء الدروس يدويًا</option>
+                <option value="ai">دع مُعين يختارها وفق المنهج</option>
+              </select>
+            </div>
+          </div>
 
-        <div class="actions-row">
-          <button class="btn primary" id="btn-generate">ولّدي الخطة</button>
-          <button class="btn" id="btn-copy-all" disabled>نسخ الخطة كاملة</button>
-          <button class="btn" id="btn-print" disabled>طباعة</button>
-          <span id="status" class="muted"></span>
-        </div>
+          <div id="lesson-names" class="form-grid"></div>
+
+          <div class="actions-row" style="margin-top:10px">
+            <button type="button" class="btn primary" id="btn-generate">ولّدي الخطة</button>
+            <button type="button" class="btn" id="btn-copy-all">نسخ الخطة كاملة</button>
+            <span id="status" class="muted"></span>
+          </div>
+        </form>
       </section>
 
-      <!-- المخرجات -->
       <section class="card" id="out" style="display:none">
-        <h2 class="title" style="margin-top:0">الخطة الأسبوعية (قابلة للنسخ يومًا بيوم)</h2>
-        <div class="printable">
-          <div id="meta" class="chips"></div>
-          <div id="weekWrap"></div>
+        <h2 class="title">خطة الأسبوع</h2>
+        <div class="chips" id="meta"></div>
+
+        <div id="source-info" class="src-box" style="display:none">
+          <div><strong>المصادر الرسمية المستخدَمة:</strong></div>
+          <ul id="src-list" style="margin:6px 0 0"></ul>
         </div>
+
+        <div id="days"></div>
       </section>
     </div>
   </main>
 
-  <!-- فوتر -->
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
@@ -130,141 +126,184 @@
   <div class="toast" id="toast"></div>
 
   <!-- SDKs -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js" onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
   <script defer src="assets/js/supabase-client.js"></script>
-  <script defer src="app.js"></script>
+  <script defer src="assets/js/require-auth.js"></script>
+  <script defer src="assets/js/storage.js"></script>
 
   <script>
-    // ===== أدوات بسيطة =====
-    const $ = (s)=>document.querySelector(s);
-    const DAYS = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس"];
-    const gradeLabel = (g)=>{
-      const map = {1:"أول ابتدائي",2:"ثاني ابتدائي",3:"ثالث ابتدائي",4:"رابع ابتدائي",5:"خامس ابتدائي",6:"سادس ابتدائي",7:"أول متوسط",8:"ثاني متوسط",9:"ثالث متوسط",10:"أول ثانوي",11:"ثاني ثانوي",12:"ثالث ثانوي"};
-      return map[g]||g;
-    };
-    function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1200); }
-    function setStatus(t){ $("#status").textContent=t||""; }
-    function chip(txt){ const s=document.createElement("span"); s.className="chip"; s.textContent=txt; return s; }
+    const $ = s=>document.querySelector(s);
+    const daysNames = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"];
 
-    // ===== حقول أسماء الدروس ديناميكية =====
-    function renderLessonInputs(){
-      const wrap = $("#lessonsWrap"); wrap.innerHTML="";
-      const n = +$("#w-count").value || 3;
-      for(let i=0;i<n;i++){
-        const d=document.createElement("div"); d.className="field";
-        d.innerHTML = `<label>اسم الدرس ${i+1}</label><input id="lesson-${i}" placeholder="اكتبيه كما في المنهج الرسمي">`;
-        wrap.appendChild(d);
+    function drawLessonInputs() {
+      const n = +$('#f-count').value || 5;
+      const wrap = $('#lesson-names'); wrap.innerHTML='';
+      const mode = $('#f-mode').value;
+      for (let i=1;i<=n;i++){
+        const div=document.createElement('div'); div.className='field';
+        div.innerHTML = `
+          <label>اسم الدرس ${i}</label>
+          <input class="ln" placeholder="${mode==='ai'?'(سيختاره مُعين تلقائيًا)':'اكتبي اسم الدرس كما في الكتاب'}" ${mode==='ai'?'disabled':''}/>
+        `;
+        wrap.appendChild(div);
       }
     }
-    $("#w-count").addEventListener("change", renderLessonInputs);
-    document.addEventListener("DOMContentLoaded", renderLessonInputs);
 
-    // ===== توليد الخطة =====
-    async function callMu3een(body){
-      // ملاحظة: الدالة تتطلب JWT — نحصل عليه من Auth0 SPA
-      const token = await window.auth.getToken({ audience: "https://api.athar" });
-      const res = await fetch("/.netlify/functions/mu3een", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+token },
-        body: JSON.stringify(body)
+    function toast(msg){ const t=$("#toast"); t.textContent=msg; t.style.display='block';
+      clearTimeout(window.__t); window.__t=setTimeout(()=>t.style.display='none',1600); }
+
+    function chip(text){ const s=document.createElement('span'); s.className='chip'; s.textContent=text; return s; }
+
+    function linesToList(txt){ return (txt||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean); }
+    function listToLines(arr){ return (arr||[]).join("\n"); }
+
+    function renderSources(sources){
+      const box = $('#source-info'); const ul = $('#src-list'); ul.innerHTML='';
+      if (!Array.isArray(sources) || sources.length===0){ box.style.display='none'; return; }
+      sources.forEach(src=>{
+        const li=document.createElement('li');
+        const a=document.createElement('a');
+        a.href=src.url; a.textContent=src.title || src.url; a.target="_blank"; a.rel="noopener";
+        li.appendChild(a);
+        ul.appendChild(li);
       });
-      if(!res.ok){
-        const txt = await res.text().catch(()=> "");
-        throw new Error(txt || ("HTTP "+res.status));
-      }
-      return res.json();
+      box.style.display='';
     }
 
-    function dayCard(d){
-      const box=document.createElement("div");
-      box.className="plan-day";
-      box.innerHTML = `
-        <h3>${d.day} — <span style="color:var(--accent)">${d.lesson || "—"}</span></h3>
-        <div class="muted">${d.found ? '<span class="badge">من المنهج الرسمي</span>' : '<span class="badge" style="background:#fee2e233;border-color:#fecaca66;color:#7f1d1d">لا تتوفر بيانات لهذا الدرس</span>'}</div>
-        <h4 style="margin:8px 0 4px">الأهداف</h4>
-        <ul>${(d.objectives||[]).map(o=>`<li>${o}</li>`).join("") || "<li>—</li>"}</ul>
-        <h4 style="margin:8px 0 4px">المفردات الجديدة</h4>
-        <ul>${(d.vocab||[]).map(v=>`<li>${v}</li>`).join("") || "<li>—</li>"}</ul>
-        <h4 style="margin:8px 0 4px">النتائج المتوقعة</h4>
-        <p>${d.outcomes || "—"}</p>
-        <h4 style="margin:8px 0 4px">واجب منزلي مقترح</h4>
-        <p>${d.homework || "—"}</p>
-        <div class="actions-row" style="justify-content:flex-start">
-          <button class="btn" data-copy>نسخ اليوم</button>
-        </div>
-      `;
-      box.querySelector("[data-copy]").addEventListener("click", ()=>{
-        const txt = `
-[خطة ${d.day}]
-الدرس: ${d.lesson||'—'}
-الأهداف:
-${(d.objectives||[]).map(x=>"- "+x).join("\n")||"- —"}
-المفردات:
-${(d.vocab||[]).map(x=>"- "+x).join("\n")||"- —"}
-النتائج المتوقعة:
-- ${d.outcomes||"—"}
-واجب منزلي:
-- ${d.homework||"—"}
-`.trim();
-        navigator.clipboard.writeText(txt).then(()=>toast("نُسخ يوم "+d.day+" ✅"));
+    function renderPlan(data){
+      const meta = $('#meta'); meta.innerHTML='';
+      meta.appendChild(chip(data.meta.subject));
+      meta.appendChild(chip(`الصف: ${data.meta.grade_label}`));
+      meta.appendChild(chip(`أيام: ${data.meta.days.join('، ')}`));
+
+      renderSources(data.sources||[]);
+
+      const out = $('#days'); out.innerHTML='';
+      data.week.forEach((d,idx)=>{
+        const card=document.createElement('div'); card.className='day-card';
+        card.innerHTML=`
+          <h3 style="margin:0 0 6px">${d.day} — <span class="lnm">${d.lesson_name||'—'}</span>${d.unit_name?` <span class="small">(${d.unit_name})</span>`:''}</h3>
+          <div class="small" style="margin-bottom:6px">${data.meta.subject} • ${data.meta.grade_label}</div>
+
+          <h4 style="margin:8px 0 4px">الأهداف</h4>
+          <ul class="obj-ul" style="margin:0 0 6px">${(d.objectives||[]).map(x=>`<li>${x}</li>`).join('')}</ul>
+
+          <h4 style="margin:8px 0 4px">المفردات الجديدة</h4>
+          <ul class="vocab-ul" style="margin:0 0 6px">${(d.vocab||[]).map(x=>`<li>${x}</li>`).join('')}</ul>
+
+          ${d.outcomes?`<h4 style="margin:8px 0 4px">النتائج المتوقعة</h4><p class="outcomes-p">${d.outcomes}</p>`:''}
+          <h4 style="margin:8px 0 4px">واجب منزلي مقترح</h4>
+          <p class="homework-p">${d.homework||'—'}</p>
+
+          <details class="edit">
+            <summary>✏️ تعديل سريع</summary>
+            <div class="grid-2" style="margin-top:8px">
+              <div>
+                <label class="small">الأهداف (كل سطر هدف)</label>
+                <textarea class="ta-obj mono" rows="6">${listToLines(d.objectives||[])}</textarea>
+              </div>
+              <div>
+                <label class="small">المفردات (كل سطر مفردة)</label>
+                <textarea class="ta-vocab mono" rows="6">${listToLines(d.vocab||[])}</textarea>
+              </div>
+              <div>
+                <label class="small">النتائج المتوقعة</label>
+                <textarea class="ta-out mono" rows="4">${d.outcomes||''}</textarea>
+              </div>
+              <div>
+                <label class="small">الواجب المنزلي</label>
+                <textarea class="ta-hw mono" rows="4">${d.homework||''}</textarea>
+              </div>
+            </div>
+            <div class="actions-row" style="margin-top:8px">
+              <button type="button" class="btn" data-act="apply" data-idx="${idx}">حفظ التعديل</button>
+            </div>
+          </details>
+
+          <div class="copy-row">
+            <button class="btn" data-act="copy" data-idx="${idx}">نسخ يوم ${d.day}</button>
+          </div>
+        `;
+        out.appendChild(card);
       });
-      return box;
+
+      $('#out').style.display='';
+
+      // تفعيل أزرار النسخ/الحفظ
+      out.querySelectorAll('button[data-act="copy"]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const d = data.week[+btn.dataset.idx];
+          const text = `${d.day} — ${d.lesson_name}\n\n[الأهداف]\n- ${(d.objectives||[]).join('\n- ')}\n\n[المفردات]\n- ${(d.vocab||[]).join('\n- ')}\n\n[النتائج]\n${d.outcomes||'—'}\n\n[الواجب]\n${d.homework||'—'}`;
+          navigator.clipboard.writeText(text).then(()=>toast('تم نسخ اليوم ✅'));
+        });
+      });
+
+      out.querySelectorAll('button[data-act="apply"]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const idx = +btn.dataset.idx;
+          const card = btn.closest('.day-card');
+          const objs   = linesToList(card.querySelector('.ta-obj').value);
+          const vocab  = linesToList(card.querySelector('.ta-vocab').value);
+          const outc   = card.querySelector('.ta-out').value.trim();
+          const hw     = card.querySelector('.ta-hw').value.trim();
+
+          data.week[idx].objectives = objs;
+          data.week[idx].vocab      = vocab;
+          data.week[idx].outcomes   = outc;
+          data.week[idx].homework   = hw;
+
+          // إعادة العرض داخل البطاقة
+          card.querySelector('.obj-ul').innerHTML   = objs.map(x=>`<li>${x}</li>`).join('');
+          card.querySelector('.vocab-ul').innerHTML = vocab.map(x=>`<li>${x}</li>`).join('');
+          card.querySelector('.outcomes-p').textContent = outc || '—';
+          card.querySelector('.homework-p').textContent = hw || '—';
+
+          toast('تم حفظ التعديل ✅');
+        });
+      });
+    }
+
+    async function authToken(){
+      return window.auth.getTokenSilently({ audience: "https://api.athar" });
     }
 
     async function generate(){
-      const subject = $("#w-subject").value.trim();
-      const grade = +$("#w-grade").value;
-      const count = +$("#w-count").value || 3;
-      if(!subject){ toast("اكتبي اسم المادة بدقة"); return; }
+      const subject = $('#f-subject').value.trim();
+      const grade   = $('#f-grade').value;
+      const mode    = $('#f-mode').value;
+      const count   = +$('#f-count').value || 5;
+      const names   = [...document.querySelectorAll('.ln')].map(i=>i.value.trim()).filter(Boolean);
 
-      const lessons=[];
-      for(let i=0;i<count;i++){
-        const v = $("#lesson-"+i).value.trim();
-        if(!v){ toast("أدخلي جميع أسماء الدروس"); return; }
-        lessons.push(v);
-      }
+      if (!subject){ toast('اكتبي اسم المادة'); return; }
+      $('#status').textContent='جارٍ التوليد…'; $('#btn-generate').disabled=true;
 
       try{
-        setStatus("جارٍ بناء الخطة…");
-        $("#btn-generate").disabled = true;
-
-        const plan = await callMu3een({ subject, grade, lessons });
-
-        // رأس الخطة
-        const metaBox = $("#meta"); metaBox.innerHTML="";
-        metaBox.appendChild(chip("المادة: "+plan.meta.subject));
-        metaBox.appendChild(chip("المرحلة: "+gradeLabel(plan.meta.grade)));
-        metaBox.appendChild(chip("الأسبوع: "+plan.meta.weekLabel));
-
-        // الأيام
-        const wrap = $("#weekWrap"); wrap.innerHTML="";
-        plan.days.forEach(d=> wrap.appendChild(dayCard(d)));
-
-        $("#out").style.display="";
-        $("#btn-copy-all").disabled=false;
-        $("#btn-print").disabled=false;
-
-        toast("تم توليد الخطة ✨");
-        setStatus("");
-        if (typeof supaLogToolUsage === "function") {
-          try { await supaLogToolUsage("mu3een_generate", { subject, grade, count }); } catch(_){}
-        }
-      }catch(e){
-        console.error(e);
-        setStatus("تعذّر التوليد");
-        toast("تعذّر التوليد");
-      }finally{
-        $("#btn-generate").disabled = false;
-      }
+        const token = await authToken();
+        const res = await fetch('/.netlify/functions/mueen', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+          body: JSON.stringify({ subject, grade, lessonsMode: mode, lessonsCount: count, lessonNames: names, sourceMode: 'authoritative' })
+        });
+        const j = await res.json().catch(()=> ({}));
+        if(!res.ok){ $('#status').textContent = j?.error || 'تعذّر التوليد'; $('#btn-generate').disabled=false; return; }
+        if (j?.meta?.note) toast(j.meta.note);
+        $('#status').textContent = 'تم ✓';
+        renderPlan(j);
+      }catch(e){ $('#status').textContent='تعذّر التوليد'; }
+      finally{ $('#btn-generate').disabled=false; }
     }
 
-    document.getElementById("btn-generate").addEventListener("click", generate);
-    document.getElementById("btn-copy-all").addEventListener("click", async ()=>{
-      const text = document.querySelector(".printable").innerText.trim();
-      await navigator.clipboard.writeText(text);
-      toast("نُسخت الخطة كاملة ✅");
+    document.addEventListener('DOMContentLoaded', ()=>{
+      drawLessonInputs();
+      $('#f-count').addEventListener('change', drawLessonInputs);
+      $('#f-mode').addEventListener('change', drawLessonInputs);
+      $('#btn-generate').addEventListener('click', generate);
+      $('#btn-copy-all').addEventListener('click', ()=>{
+        const txt = $('#days').innerText.trim();
+        navigator.clipboard.writeText(txt).then(()=>toast('تم نسخ الخطة كلها ✅'));
+      });
     });
-    document.getElementById("btn-print").addEventListener("click", ()=> window.print());
   </script>
 </body>
 </html>
