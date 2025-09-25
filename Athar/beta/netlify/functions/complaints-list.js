@@ -3,9 +3,9 @@ const { requireAdmin } = require("./_auth");
 
 exports.handler = async (event) => {
   const gate = await requireAdmin(event);
-  if (!gate.ok) return { statusCode: gate.status, body: gate.error };
+  if (!gate.ok) return { statusCode: gate.status, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: gate.error };
 
-  const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
+  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE } = process.env;
   const params = new URLSearchParams(event.queryStringParameters || {});
   const status = params.get("status");
   const type   = params.get("type");
@@ -19,19 +19,25 @@ exports.handler = async (event) => {
 
     if (status) search.append("status", `eq.${status}`);
     if (type)   search.append("type",   `eq.${type}`);
-    // بحث بسيط على subject/message/email
-    if (q) search.append("or", `(subject.ilike.*${q}*,message.ilike.*${q}*,user_email.ilike.*${q}*)`);
+    if (q)      search.append("or", `(subject.ilike.*${q}*,message.ilike.*${q}*,user_email.ilike.*${q}*)`);
 
     const res = await fetch(`${base}?${search.toString()}`, {
       headers: {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`
+        "apikey": SUPABASE_SERVICE_ROLE,
+        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE}`,
+        "Content-Type": "application/json",
+        "Prefer": "count=exact"
       }
     });
-    const rows = await res.json();
 
-    return { statusCode: 200, body: JSON.stringify({ ok:true, rows }) };
+    if (!res.ok){
+      const txt = await res.text().catch(()=> '');
+      return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: txt || "Supabase REST error" };
+    }
+
+    const rows = await res.json();
+    return { statusCode: 200, headers:{'Content-Type':'application/json; charset=utf-8'}, body: JSON.stringify({ ok:true, rows }) };
   } catch (e) {
-    return { statusCode: 500, body: e.message || "Server error" };
+    return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: e.message || "Server error" };
   }
 };
