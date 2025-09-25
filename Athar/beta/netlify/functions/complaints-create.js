@@ -1,11 +1,10 @@
-// /netlify/functions/complaints-create.js
 // POST body: { subject, type: 'complaint'|'suggestion', message, email?, name?, order_number? }
 // يتطلب مستخدم مسجّل (JWT) + (اختياري) اشتراك نشط
 
 const { requireUser } = require("./_auth");
 const { createClient } = require("@supabase/supabase-js");
 
-// بدّلي هذا إلى false لو تبين السماح لأي مستخدم مسجّل يرسل شكوى حتى لو انتهت التجربة
+// غيّري إلى false لو تبين السماح لأي مستخدم مسجّل
 const REQUIRE_ACTIVE = true;
 
 const supabase = createClient(
@@ -15,7 +14,6 @@ const supabase = createClient(
 );
 
 async function isActive(user_sub, email) {
-  // نفضّل v_user_status، يرجّع active جاهز
   try {
     const { data, error } = await supabase
       .from("v_user_status")
@@ -25,13 +23,14 @@ async function isActive(user_sub, email) {
       .maybeSingle();
     if (!error && data) return !!data.active;
   } catch (_) {}
-  // احتياطي: memberships (end_at/expires_at)
+
   try {
     let q = supabase
       .from("memberships")
       .select("end_at, expires_at")
       .order("end_at", { ascending: false })
       .limit(1);
+
     if (user_sub) q = q.eq("user_id", user_sub);
     else if (email) q = q.eq("email", (email||"").toLowerCase());
     else return false;
@@ -47,12 +46,11 @@ async function isActive(user_sub, email) {
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+    return { statusCode: 405, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Method Not Allowed" };
   }
 
-  // 1) يتطلب مستخدمًا مسجّلًا (JWT من Auth0 في Authorization)
   const gate = await requireUser(event);
-  if (!gate.ok) return { statusCode: gate.status, body: gate.error };
+  if (!gate.ok) return { statusCode: gate.status, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: gate.error };
 
   try {
     const data = JSON.parse(event.body || "{}");
@@ -60,10 +58,10 @@ exports.handler = async (event) => {
     const subject = String(data.subject || "").trim();
     const type    = String(data.type || "").trim(); // complaint | suggestion
     const message = String(data.message || "").trim();
-    const orderNo = (data.order_number ? String(data.order_number).trim() : null);
+    const orderNo = data.order_number ? String(data.order_number).trim() : null;
 
     if (!subject || !message || !["complaint","suggestion"].includes(type)) {
-      return { statusCode: 400, body: "Invalid payload" };
+      return { statusCode: 400, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Invalid payload" };
     }
 
     const userEmail = (data.email || gate.user.email || "").toLowerCase();
@@ -71,18 +69,16 @@ exports.handler = async (event) => {
     const userSub   = gate.user.sub;
 
     if (!userEmail) {
-      return { statusCode: 400, body: "Missing user email" };
+      return { statusCode: 400, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Missing user email" };
     }
 
-    // 2) (اختياري) السماح فقط للنشطين
     if (REQUIRE_ACTIVE) {
       const active = await isActive(userSub, userEmail);
       if (!active) {
-        return { statusCode: 403, body: "Only active subscribers can send complaints/suggestions" };
+        return { statusCode: 403, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Only active subscribers can send complaints/suggestions" };
       }
     }
 
-    // 3) إدراج الشكوى عبر supabase-js (أكثر بساطة من REST + يقلّل أخطاء مفاتيح البيئة)
     const { data: inserted, error: insErr } = await supabase
       .from("complaints")
       .insert([{
@@ -90,7 +86,7 @@ exports.handler = async (event) => {
         user_name:  userName,
         subject,
         type,
-        message,        // للسجلّ الرئيسي (نحفظ نسخة مختصرة/العنوان)
+        message,
         order_number: orderNo,
         channel: "web",
         status: "new",
@@ -101,25 +97,16 @@ exports.handler = async (event) => {
 
     if (insErr) {
       console.error("complaints: insert error", insErr);
-      return { statusCode: 500, body: "Failed to create complaint" };
+      return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Failed to create complaint" };
     }
 
-    // 4) رسالة أولى في complaint_messages
     if (inserted?.id) {
       const { error: msgErr } = await supabase
         .from("complaint_messages")
-        .insert([{
-          complaint_id: inserted.id,
-          sender: "user",
-          body: message
-        }]);
-      if (msgErr) {
-        console.warn("complaint_messages: insert warning", msgErr);
-        // ما نفشل الطلب؛ الشكوى نفسها اننشأت
-      }
+        .insert([{ complaint_id: inserted.id, sender: "user", body: message }]);
+      if (msgErr) console.warn("complaint_messages: insert warning", msgErr);
     }
 
-    // 5) رابط واتساب (اختياري)
     let whatsapp = null;
     if (process.env.WHATSAPP_NUMBER) {
       const num = process.env.WHATSAPP_NUMBER.replace(/\D+/g, "");
@@ -128,10 +115,11 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: { "Content-Type":"application/json; charset=utf-8" },
       body: JSON.stringify({ ok: true, complaint: inserted, whatsapp })
     };
   } catch (e) {
     console.error("complaints-create error:", e);
-    return { statusCode: 500, body: e.message || "Server error" };
+    return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: e.message || "Server error" };
   }
 };
