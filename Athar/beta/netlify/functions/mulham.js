@@ -55,7 +55,7 @@ function hashInt(str) {
   return Math.abs(h >>> 0);
 }
 
-// ===== CORS مبسّط لطلبات POST (لا يغيّر الحماية) =====
+// ===== CORS مبسّط لطلبات POST =====
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -71,7 +71,7 @@ exports.handler = async (event) => {
       return { statusCode: 405, headers: CORS_HEADERS, body: "Method Not Allowed" };
     }
 
-    // 0) التحقق من المستخدم (JWT من Auth0) — يجب أن تصل Authorization من الواجهة
+    // 0) التحقق من المستخدم (JWT من Auth0)
     const gate = await requireUser(event);
     if (!gate.ok) return { statusCode: gate.status, headers: CORS_HEADERS, body: gate.error };
 
@@ -79,7 +79,7 @@ exports.handler = async (event) => {
     const ok = await isActiveMembership(gate.user?.sub, gate.user?.email);
     if (!ok) {
       return {
-        statusCode: 402, // Payment Required (إرشادي)
+        statusCode: 402,
         headers: CORS_HEADERS,
         body: "Membership is not active (trial expired or not activated)."
       };
@@ -109,7 +109,7 @@ exports.handler = async (event) => {
       variant = ""
     } = payload;
 
-    // تحقق خفيف من المعطيات
+    // تحقق خفيف
     const TIME = Math.min(60, Math.max(5, Number(time)||20));
     const SUBJ = String(subject||"").slice(0,120);
     const TOP  = String(topic||SUBJ||"").slice(0,160);
@@ -117,7 +117,7 @@ exports.handler = async (event) => {
     const AGE_LABEL = { p1:"ابتدائي دُنيا", p2:"ابتدائي عُليا", m:"متوسط", h:"ثانوي" };
     const ageLabel = AGE_LABEL[age] || "ابتدائي عُليا";
 
-    // 3) برومبت صارم مع تكييف المرحلة + رؤية 2030 + مهارات القرن 21 + منهج السعودية 2025
+    // 3) برومبت صارم (رؤية 2030 + مهارات القرن 21 + مناهج 2025)
     const constraints = [];
     if (noTools) constraints.push("يجب أن تكون كل الأنشطة Zero-prep (بدون قص/لصق/بطاقات/أدوات).");
     constraints.push(`الزمن المتاح إجماليًا ~ ${TIME} دقيقة؛ اجعل كل نشاط قابلاً للتنفيذ داخل هذا السقف.`);
@@ -126,8 +126,7 @@ exports.handler = async (event) => {
     constraints.push("راعِ السلامة والأمان وعدم الحاجة لأدوات خطرة.");
     constraints.push("أدرج خطوات عملية واضحة، ومعايير نجاح ضمنية في كل نشاط، وأسئلة قصيرة صحيحة لغويًا في تذكرة الخروج.");
     constraints.push("نوّع بين التفاعل الحركي/التعاوني/الفردي دون تكرار الفكرة.");
-    constraints.push("اربط المعنى بسياقات من واقع الطالب في السعودية وبما ينسجم مع مهارات القرن 21 ورؤية 2030 (تعاون، تواصل، تفكير ناقد، إبداع، مواطَنة رقمية).");
-    constraints.push("التزم بالمخرجات المعرفية والمهارية لنسخة مناهج السعودية 2025 قدر الإمكان (صياغة الهدف، سلامة المصطلح، مناسبة المفاهيم).");
+    constraints.push("اربط المعنى بسياقات من واقع الطالب في السعودية وبما ينسجم مع مهارات القرن 21 ورؤية 2030.");
 
     const adaptations = [];
     if (adaptLow)  adaptations.push("تكيف منخفض التحفيز: مهام قصيرة جدًا، تعزيز فوري، خيارات بسيطة، فواصل حركة.");
@@ -268,7 +267,6 @@ ${seedNote}
       }
     }
 
-    // احتياطي بالتتابع إذا لم تُعرف الأسماء
     const cats = data.categories || [];
     if (!sets.movement.ideaHook && cats[0]) sets.movement  = pickActivity(cats[0]);
     if (!sets.group.ideaHook     && cats[1]) sets.group     = pickActivity(cats[1]);
