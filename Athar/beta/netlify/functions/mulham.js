@@ -71,7 +71,7 @@ exports.handler = async (event) => {
       return { statusCode: 405, headers: CORS_HEADERS, body: "Method Not Allowed" };
     }
 
-    // 0) التحقق من المستخدم (JWT من Auth0) — (يجب إرسال Authorization من الواجهة)
+    // 0) التحقق من المستخدم (JWT من Auth0) — يجب أن تصل Authorization من الواجهة
     const gate = await requireUser(event);
     if (!gate.ok) return { statusCode: gate.status, headers: CORS_HEADERS, body: gate.error };
 
@@ -178,7 +178,6 @@ ${seedNote}
 
     // 4) Gemini
     const genAI = new GoogleGenerativeAI(apiKey);
-    // flash سريع ودقيق للناتج JSON
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const req = {
