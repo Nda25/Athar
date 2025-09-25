@@ -1,160 +1,130 @@
-// assets/js/mueen.js
+// مُعين — واجهة التوليد والعرض
 (function(){
-  const dayNames = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس"];
   const $ = (s)=>document.querySelector(s);
-  const $$=(s)=>Array.from(document.querySelectorAll(s));
-  const statusEl = $('#status');
+  const $$=(s)=>document.querySelectorAll(s);
+  const status = (t)=> { const el=$("#status"); if(el) el.textContent=t||""; };
+  const toast = (m)=>{ const t=$("#toast"); if(!t) return; t.textContent=m; t.style.display='block'; clearTimeout(window.__tt); window.__tt=setTimeout(()=>t.style.display='none',1600); };
 
-  // يبني حقول الدروس حسب العدد
-  function buildLessonInputs(){
-    const n = +$('#f-count').value;
-    const box = $('#lesson-box'); box.innerHTML='';
+  // حقول الدروس
+  const lessonsBox = $("#lessons-box");
+  const countSel   = $("#f-count");
+  const modeSel    = $("#f-mode");
+  function drawLessonFields(){
+    const n = +countSel.value || 1;
+    const wrap = document.createElement("div");
+    wrap.className="grid";
     for(let i=1;i<=n;i++){
-      const wrap = document.createElement('div'); wrap.className='field';
-      wrap.innerHTML = `<label>اسم الدرس ${i}</label><input class="lesson-name" placeholder="اكتب اسم الدرس ${i}">`;
-      box.appendChild(wrap);
+      const f = document.createElement("div");
+      f.className="field";
+      f.innerHTML = `<label>اسم الدرس ${i}</label><input class="lesson-name" placeholder="اكتب اسم الدرس ${i}">`;
+      wrap.appendChild(f);
     }
+    lessonsBox.innerHTML = '';
+    lessonsBox.appendChild(wrap);
   }
-  buildLessonInputs();
-  $('#f-count').addEventListener('change', buildLessonInputs);
-  $('#f-mode').addEventListener('change', (e)=>{
-    const manual = e.target.value === 'manual';
-    $$('.lesson-name').forEach(inp=> inp.disabled = !manual);
-  });
+  countSel.addEventListener('change', drawLessonFields);
+  drawLessonFields();
 
-  // Get token safely (Auth0 SPA v2)
-  async function getAuthToken(){
-    if (!window.auth) return null;
-    // require-auth.js يضع auth ككائن جاهز
+  // تجميع المعطيات
+  function readPayload(){
+    const subject = $("#f-subject").value.trim();
+    const grade   = $("#f-grade").value.trim();
+    const names   = [...$$(".lesson-name")].map(i=>i.value.trim()).filter(Boolean);
+    return {
+      subject, grade, lessons: names, weekDays: ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس"],
+      mode: $("#f-mode").value
+    };
+  }
+
+  // نسخة محسنة للحصول على توكن Auth0 — تتحمل اختلاف الدوال
+  async function getJwt(){
     try{
-      const ok = await window.auth.isAuthenticated();
-      if (!ok) { return null; }
-      // متوافق مع v2: getTokenSilently
-      if (typeof window.auth.getTokenSilently === 'function') {
-        return await window.auth.getTokenSilently({ authorizationParams:{ audience:"https://api.athar" }});
+      if (window.auth && typeof window.auth.getToken === 'function') {
+        return await window.auth.getToken({ audience: "https://api.athar" });
       }
-      // fallback wrapper إن كانت الواجهة قد وفّرت getToken
-      if (typeof window.auth.getToken === 'function') {
-        return await window.auth.getToken({ audience:"https://api.athar" });
+      if (window.auth0Client && typeof window.auth0Client.getTokenSilently === 'function') {
+        return await window.auth0Client.getTokenSilently({ audience:"https://api.athar" });
       }
     }catch(e){}
     return null;
   }
 
-  function chip(t){ const s=document.createElement('span'); s.className='chip'; s.textContent=t; return s; }
-
-  // تعديل سريع قبل النسخ
-  function quickEdit(container, dayObj){
-    const btn = document.createElement('button');
-    btn.className='btn small'; btn.textContent='تعديل سريع';
-    btn.addEventListener('click', ()=>{
-      const newGoal = prompt('عدّل هدف اليوم (اختياري):', (dayObj.goals||[]).join(' • '));
-      if (newGoal!=null){
-        dayObj.goals = newGoal.split('•').map(t=>t.trim()).filter(Boolean);
-        renderDay(container, dayObj, true);
-      }
-    });
-    return btn;
-  }
-
-  function copyText(t){
-    navigator.clipboard.writeText(t); toast('تم النسخ ✓');
-  }
-  function toast(m){ const box = document.getElementById('toast'); box.textContent=m; box.style.display='block'; setTimeout(()=>box.style.display='none',1500); }
-
-  function renderDay(host, d, replace=false){
-    const html = `
-      <h3 style="margin:0 0 6px">${d.dayName} — <span style="color:var(--accent)">${d.lessonName}${d.segment?` (Segment ${d.segment})`:''}</span></h3>
-      <div class="chips">
-        <span class="chip">${d.subject}</span>
-        <span class="chip">${d.grade}</span>
+  // رسم خطة اليوم
+  function dayBlock(d, idx){
+    const div = document.createElement('div');
+    div.className='day-card';
+    div.innerHTML = `
+      <h3 style="margin:4px 0 10px"><span class="badge">${d.day}</span> <strong>${d.lesson}</strong>${d.segment ? ` — <span class="muted">${d.segment}</span>`:''}</h3>
+      <div class="editable" data-key="objectives" contenteditable="false"><strong>الأهداف</strong><ul>${(d.objectives||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+      <div class="editable" data-key="vocab" contenteditable="false"><strong>المفردات الجديدة</strong><ul>${(d.vocab||[]).map(x=>`<li>${x}</li>`).join('')}</ul></div>
+      <div class="editable" data-key="outcomes" contenteditable="false"><strong>النتائج المتوقعة</strong><p>${d.outcomes||''}</p></div>
+      <div class="editable" data-key="homework" contenteditable="false"><strong>واجب منزلي مقترح</strong><p>${d.homework||''}</p></div>
+      <div class="actions-row" style="margin-top:6px">
+        <button class="btn" data-act="toggle-edit">تعديل سريع</button>
+        <button class="btn" data-act="copy">نسخ ${d.day}</button>
       </div>
-      <h4>الأهداف</h4>
-      <ul>${(d.goals||[]).map(g=>`<li>${g}</li>`).join('')}</ul>
-      <h4>المفردات الجديدة</h4>
-      <ul>${(d.vocab||[]).map(v=>`<li>${v}</li>`).join('')}</ul>
-      <h4>النتائج المتوقعة</h4>
-      <p>${d.outcomes||''}</p>
-      <h4>واجب منزلي مقترح</h4>
-      <p>${d.homework||''}</p>
     `;
-    if (replace) {
-      host.querySelector('.content').innerHTML = html;
-      return;
-    }
-    const card = document.createElement('div'); card.className='day-card';
-    card.innerHTML = `<div class="content">${html}</div>`;
-    const tools = document.createElement('div'); tools.className='tools';
-    const btnCopy = document.createElement('button'); btnCopy.className='btn small'; btnCopy.textContent=`نسخ يوم ${d.dayName}`;
-    btnCopy.addEventListener('click', ()=>{
-      const text = card.innerText.trim();
-      copyText(text);
-    });
-    tools.appendChild(quickEdit(card, d));
-    tools.appendChild(btnCopy);
-    card.appendChild(tools);
-    host.appendChild(card);
-  }
-
-  async function callPlan(body){
-    const token = await getAuthToken();
-    statusEl.textContent = 'جارٍ إعداد الخطة…';
-    const res = await fetch('/.netlify/functions/mueen-plan', {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        ...(token ? {'Authorization':'Bearer '+token} : {})
-      },
-      body: JSON.stringify(body)
-    });
-    const txt = await res.text();
-    let data = {};
-    try{ data = JSON.parse(txt); }catch{ throw new Error(txt||'Bad JSON'); }
-    if (!res.ok) throw new Error(data?.error || 'تعذّر التوليد');
-    return data;
-  }
-
-  $('#btn-generate').addEventListener('click', async ()=>{
-    try{
-      const subject = $('#f-subject').value.trim();
-      const grade   = $('#f-grade').value;
-      const count   = +$('#f-count').value;
-      const mode    = $('#f-mode').value; // manual|ai
-      if (!subject) { statusEl.textContent='اكتبي اسم المادة'; return; }
-
-      let lessons = [];
-      if (mode==='manual'){
-        lessons = $$('.lesson-name').map(i=>i.value.trim()).filter(Boolean).slice(0,count);
-        if (lessons.length!==count){ statusEl.textContent='أكملي أسماء الدروس'; return; }
-      }else{
-        lessons = []; // الدالة ستجلب أسماء الدروس
+    // أزرار
+    div.addEventListener('click', (e)=>{
+      const act = e.target?.dataset?.act;
+      if (!act) return;
+      if (act==='toggle-edit'){
+        div.querySelectorAll('.editable').forEach(el=>{
+          el.contentEditable = (el.contentEditable!=='true');
+        });
+        e.target.textContent = div.querySelector('.editable').contentEditable==='true' ? 'إقفال التعديل' : 'تعديل سريع';
       }
+      if (act==='copy'){
+        const txt = div.innerText.trim();
+        navigator.clipboard.writeText(txt).then(()=>toast('نُسخ اليوم ✓'));
+      }
+    });
+    return div;
+  }
 
-      const payload = { subject, grade, lessons, mode, days:5 };
-      const out = await callPlan(payload);
+  // رسم الخطة كاملة
+  function renderPlan(data){
+    const meta = $("#meta"); meta.innerHTML='';
+    [data.subject, data.grade].forEach(x=>{ const b=document.createElement('span'); b.className='badge'; b.textContent=x; meta.appendChild(b); });
 
-      // meta
-      const meta = $('#meta'); meta.innerHTML=''; 
-      meta.appendChild(chip(out.meta.subject));
-      meta.appendChild(chip(out.meta.grade));
-      meta.appendChild(chip('خطة ٥ أيام'));
-      if (out.meta.note) meta.appendChild(chip(out.meta.note));
+    const week = $("#week"); week.innerHTML='';
+    (data.plan||[]).forEach((d,i)=> week.appendChild(dayBlock(d,i)));
 
-      // render days
-      const week = $('#week'); week.innerHTML='';
-      (out.days||[]).forEach(d=> renderDay(week, d));
+    $("#out").style.display='';
+  }
 
-      $('#result').style.display='';
-      statusEl.innerHTML = '<span class="ok">تم توليد الخطة ✓</span>';
+  // أزرار
+  $("#btn-generate").addEventListener('click', async ()=>{
+    status(''); const payload = readPayload();
+    if (!payload.subject || payload.lessons.length===0){ toast('أدخلي المادة وأسماء الدروس'); return; }
 
-      // نسخ الخطة كاملة
-      $('#copy-all').onclick = ()=>{
-        const text = $('#week').innerText.trim();
-        copyText(text);
-      };
-    }catch(e){
-      console.error(e);
-      statusEl.textContent = 'تعذّر التوليد، حاولي ثانية.';
-    }
+    const jwt = await getJwt();
+    if (!jwt){ toast('غير مصرّح — سجّلي الدخول'); return; }
+
+    const btn = $("#btn-generate");
+    btn.disabled = true; const old=btn.textContent; btn.textContent='جارٍ التحضير…';
+
+    try{
+      const res = await fetch('/.netlify/functions/mueen-plan', {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok){
+        const t = await res.text();
+        status('تعذّر التوليد'); console.error('mueen-plan', res.status, t);
+        if (res.status===402) toast('حساب غير نشط'); else toast('تعذّر التوليد');
+        return;
+      }
+      const data = await res.json();
+      renderPlan(data);
+      toast('تم توليد الخطة ✨');
+    }catch(e){ console.error(e); toast('تعذّر التوليد'); }
+    finally{ btn.disabled=false; btn.textContent=old; }
+  });
+
+  $("#btn-copy-all").addEventListener('click', ()=>{
+    const txt = $("#week")?.innerText?.trim() || '';
+    if (!txt){ toast('لا توجد خطة لنسخها'); return; }
+    navigator.clipboard.writeText(txt).then(()=>toast('نُسخت الخطة كاملة ✓'));
   });
 })();
