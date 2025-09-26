@@ -1,18 +1,28 @@
 // /assets/js/require-auth.js
 // =============================================
 // Athar - Front-end Guard (with live user-status check)
+// (نسخة محدثة: توحيد redirect_uri إلى CALLBACK ثابت)
 // =============================================
 (function AtharGuard(){
+  // ---- إعدادات أساسية ----
   const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
   const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
   const API_AUDIENCE = "https://api.n-athar";
-  const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+  // ✅ Callback ثابت (يجب إضافته في Auth0 Allowed Callback URLs)
+  const CALLBACK = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://localhost:8888/profile.html'
+    : 'https://n-athar.co/profile.html';
+
+  // وجهة الخروج
+  const RETURN_TO = CALLBACK.startsWith('http://localhost:8888') ? 'http://localhost:8888' : 'https://n-athar.co';
 
   const DEBUG = true;
   const log  = (...a)=>{ if (DEBUG) console.info("[AtharGuard]", ...a); };
   const warn = (...a)=>{ console.warn("[AtharGuard]", ...a); };
   const err  = (...a)=>{ console.error("[AtharGuard]", ...a); };
 
+  // نشر الإعدادات للاستخدام العام
   window.__CFG = Object.assign({}, window.__CFG || {}, {
     auth0_domain: AUTH0_DOMAIN,
     auth0_clientId: AUTH0_CLIENT,
@@ -33,6 +43,7 @@
     return last.replace(/\.html?$/i, "").toLowerCase();
   }
 
+  // خرائط الصفحات
   const PUBLIC = new Set([
     "index", "pricing", "programs",
     "privacy", "terms", "refund-policy", "whatsapp"
@@ -83,7 +94,7 @@
     if (window.auth0?.createAuth0Client || window.createAuth0Client) return;
     await new Promise((res, rej) => {
       const sc = document.createElement("script");
-      sc.src = "https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js";
+      sc.src = "https://cdn.auth0.com/js/auth0-spa-js/2.2/auth0-spa-js.production.js";
       sc.onload = res; sc.onerror = rej; document.head.appendChild(sc);
     });
   }
@@ -92,14 +103,20 @@
     await ensureAuth0SDK();
     const f = window.auth0?.createAuth0Client || window.createAuth0Client;
     if (!f) throw new Error("Auth0 SPA SDK not available");
+
     const options = {
       domain: AUTH0_DOMAIN,
       clientId: AUTH0_CLIENT,
       cacheLocation: "localstorage",
       useRefreshTokens: true,
-      authorizationParams: { redirect_uri: REDIRECT_URI, scope: "openid profile email offline_access" }
+      authorizationParams: {
+        // ✅ أهم تعديل: نستخدم CALLBACK الثابت بدل window.location.origin+pathname
+        redirect_uri: CALLBACK,
+        scope: "openid profile email offline_access"
+      }
     };
     if (API_AUDIENCE) options.authorizationParams.audience = API_AUDIENCE;
+
     const c = await f(options);
     window.auth0Client = c; window.auth = c;
     fireAuthReady();
@@ -110,14 +127,17 @@
     if (location.search.includes("code=") && location.search.includes("state=")) {
       try { await client.handleRedirectCallback(); }
       catch (e) { /* ignore */ }
-      history.replaceState({}, document.title, location.pathname + location.hash);
+      // إزالة بارامترات العودة من URL (نُبقِي الpathname)
+      const url = new URL(location.href);
+      url.searchParams.delete('code'); url.searchParams.delete('state');
+      history.replaceState({}, document.title, url.pathname + url.hash);
     }
   }
 
-  // === جديد: جلب حالة الاشتراك من السيرفر ===
+  // === جلب حالة الاشتراك من السيرفر (Netlify Function) ===
   async function fetchUserStatus(client){
     try {
-      const token = await client.getTokenSilently?.() || await client.getTokenWithPopup?.();
+      const token = await (client.getTokenSilently?.() || client.getTokenWithPopup?.());
       if (!token) return { active:false, status:"none", expires_at:null };
       const res = await fetch("/.netlify/functions/user-status", {
         headers: { Authorization: `Bearer ${token}` },
@@ -137,6 +157,7 @@
     const slug = fileSlug();
     log("slug:", slug);
 
+    // الصفحات العامة: اسمحي بالدخول بدون تسجيل
     if (PUBLIC.has(slug)) {
       try { const tmp = await buildClient(); await cleanupRedirectIfNeeded(tmp); } catch {}
       log("Public -> allowed");
@@ -145,16 +166,21 @@
       return;
     }
 
+    // تهيئة العميل
     let client;
     try { client = await buildClient(); await cleanupRedirectIfNeeded(client); }
     catch (e) { err("Auth0 init failed:", e?.message || e); unmountGuardOverlay(); return; }
 
+    // صفحات login-only (profile): تتطلب تسجيل فقط
     if (LOGIN_ONLY.has(slug)) {
       let authed = false;
       try { authed = await client.isAuthenticated(); } catch {}
       if (!authed) {
         try {
-          await client.loginWithRedirect({ authorizationParams: { screen_hint:"login", redirect_uri: REDIRECT_URI } });
+          // ✅ نستخدم CALLBACK الثابت
+          // تخزين مسار الرجوع الاختياري
+          try { localStorage.setItem('afterLogin', location.pathname); } catch(_){}
+          await client.loginWithRedirect({ authorizationParams: { screen_hint:"login", redirect_uri: CALLBACK } });
           return;
         } catch (e) {
           return toPricing("الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.");
@@ -163,24 +189,25 @@
       unmountGuardOverlay(); fireAuthReady(); return;
     }
 
-    // باقي الصفحات: لازم تسجيل دخول
+    // باقي الصفحات: تتطلب تسجيل دخول + حالة نشطة حسب التصنيف
     let authed = false;
     try { authed = await client.isAuthenticated(); } catch {}
     if (!authed) {
       try {
-        await client.loginWithRedirect({ authorizationParams: { screen_hint:"login", redirect_uri: REDIRECT_URI } });
+        // ✅ نستخدم CALLBACK الثابت
+        try { localStorage.setItem('afterLogin', location.pathname); } catch(_){}
+        await client.loginWithRedirect({ authorizationParams: { screen_hint:"login", redirect_uri: CALLBACK } });
         return;
       } catch (e) {
         return toPricing("الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.");
       }
     }
 
-    // تحقق الحالة من السيرفر (سواء أدوات أو أدمن أو غيره)
+    // تحقق الحالة من السيرفر
     const status = await fetchUserStatus(client);
     log("live status:", status);
 
     if (slug === ADMIN) {
-      // للأدمن ممكن لاحقًا نضيف فحص isAdmin من دالة خاصة، لكن الآن نطلب active أيضًا
       if (!status.active) return toPricing("هذه الصفحة للمشتركين النشطين فقط.");
       unmountGuardOverlay(); fireAuthReady(); return;
     }
@@ -192,7 +219,7 @@
       unmountGuardOverlay(); fireAuthReady(); return;
     }
 
-    // أي صفحة محمية غير مصنّفة
+    // أي صفحة محمية أخرى
     if (!status.active) {
       return toPricing("هذه الصفحة للمشتركين النشطين فقط.");
     }
@@ -200,13 +227,26 @@
     unmountGuardOverlay(); fireAuthReady();
   }
 
+  // نقطة الدخول
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", enforce);
   } else {
     enforce();
   }
 
+  // التعامل مع الرجوع من الذاكرة (bfcache)
   window.addEventListener("pageshow", function(e){
     if (e.persisted) enforce();
+  });
+
+  // ✅ إعادة المستخدم للصفحة التي بدأ منها بعد نجاح الدخول (من داخل profile.html)
+  window.addEventListener('auth0:ready', async () => {
+    if ((location.pathname || '').endsWith('/profile.html')) {
+      const go = localStorage.getItem('afterLogin');
+      if (go && go !== '/profile.html') {
+        localStorage.removeItem('afterLogin');
+        location.replace(go);
+      }
+    }
   });
 })();
