@@ -1,7 +1,7 @@
 // /assets/js/require-auth.js
 // =============================================
 // Athar - Front-end Guard (with live user-status check)
-// (نسخة محدثة: توحيد redirect_uri إلى CALLBACK ثابت)
+// (نسخة محدثة: CALLBACK ثابت + منع الكاش + حفظ مسار الرجوع الكامل + logout يستخدم RETURN_TO)
 // =============================================
 (function AtharGuard(){
   // ---- إعدادات أساسية ----
@@ -15,9 +15,11 @@
     : 'https://n-athar.co/profile.html';
 
   // وجهة الخروج
-  const RETURN_TO = CALLBACK.startsWith('http://localhost:8888') ? 'http://localhost:8888' : 'https://n-athar.co';
+  const RETURN_TO = CALLBACK.startsWith('http://localhost:8888')
+    ? 'http://localhost:8888'
+    : 'https://n-athar.co';
 
-  const DEBUG = true;
+  const DEBUG = false; // true لتمكين السجل
   const log  = (...a)=>{ if (DEBUG) console.info("[AtharGuard]", ...a); };
   const warn = (...a)=>{ console.warn("[AtharGuard]", ...a); };
   const err  = (...a)=>{ console.error("[AtharGuard]", ...a); };
@@ -49,13 +51,14 @@
     "privacy", "terms", "refund-policy", "whatsapp"
   ]);
   const LOGIN_ONLY = new Set(["profile"]);
-  const TOOLS = new Set(["athar","darsi","masar","miyad","ethraa","mulham"]);
+  const TOOLS = new Set(["athar","darsi","masar","miyad","ethraa","mulham","mueen"]);
   const ADMIN = "admin";
 
   const toPricing = (msg) => {
     try { if (msg) sessionStorage.setItem("athar:msg", msg); } catch {}
-    location.replace("/pricing.html");
+    location.replace(location.origin + "/pricing.html");
   };
+
   const addMetaNoStore = () => {
     const metas = [
       ['Cache-Control','no-store, no-cache, must-revalidate, max-age=0'],
@@ -92,10 +95,12 @@
 
   async function ensureAuth0SDK(){
     if (window.auth0?.createAuth0Client || window.createAuth0Client) return;
-    await new Promise((res, rej) => {
+    await new Promise((res) => {
       const sc = document.createElement("script");
       sc.src = "https://cdn.auth0.com/js/auth0-spa-js/2.2/auth0-spa-js.production.js";
-      sc.onload = res; sc.onerror = rej; document.head.appendChild(sc);
+      sc.onload = res;
+      sc.onerror = () => { console.error("Auth0 SDK load failed"); res(); };
+      document.head.appendChild(sc);
     });
   }
 
@@ -118,7 +123,24 @@
     if (API_AUDIENCE) options.authorizationParams.audience = API_AUDIENCE;
 
     const c = await f(options);
-    window.auth0Client = c; window.auth = c;
+
+    // كشف عالمي
+    window.auth0Client = c;
+    window.auth = c;
+
+    // ✅ غلاف logout ليستخدم RETURN_TO افتراضياً مع إمكانية تمرير خيارات إضافية
+    const originalLogout = (c.logout || (()=>Promise.resolve())).bind(c);
+    window.auth.logout = (opts = {}) => {
+      const base = { logoutParams: { returnTo: RETURN_TO } };
+      // دمج أي حقول إضافية من النداء الأصلي
+      const merged = {
+        ...base,
+        ...(opts || {}),
+        logoutParams: { ...(base.logoutParams), ...((opts && opts.logoutParams) || {}) }
+      };
+      return originalLogout(merged);
+    };
+
     fireAuthReady();
     return c;
   }
@@ -127,10 +149,11 @@
     if (location.search.includes("code=") && location.search.includes("state=")) {
       try { await client.handleRedirectCallback(); }
       catch (e) { /* ignore */ }
-      // إزالة بارامترات العودة من URL (نُبقِي الpathname)
+      // إزالة بارامترات العودة من URL مع الحفاظ على باقي الاستعلامات
       const url = new URL(location.href);
-      url.searchParams.delete('code'); url.searchParams.delete('state');
-      history.replaceState({}, document.title, url.pathname + url.hash);
+      url.searchParams.delete('code');
+      url.searchParams.delete('state');
+      history.replaceState({}, document.title, url.pathname + (url.search || "") + url.hash);
     }
   }
 
@@ -139,18 +162,27 @@
     try {
       const token = await (client.getTokenSilently?.() || client.getTokenWithPopup?.());
       if (!token) return { active:false, status:"none", expires_at:null };
-      const res = await fetch("/.netlify/functions/user-status", {
+
+      // 👇 منع الكاش بختم وقت
+      const res = await fetch("/.netlify/functions/user-status?ts=" + Date.now(), {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store"
       });
+
       if (!res.ok) return { active:false, status:"none", expires_at:null };
       const data = await res.json();
-      return { active: !!data.active, status: data.status || "none", expires_at: data.expires_at || null };
+
+      return {
+        active: !!data.active,
+        status: data.status || "none",
+        expires_at: data.expires_at || null
+      };
     } catch (e) {
       return { active:false, status:"none", expires_at:null };
     }
   }
 
+  // ======== المنفّذ الرئيسي ========
   async function enforce(){
     addMetaNoStore();
     mountGuardOverlay();
@@ -175,18 +207,26 @@
     if (LOGIN_ONLY.has(slug)) {
       let authed = false;
       try { authed = await client.isAuthenticated(); } catch {}
+
       if (!authed) {
         try {
           // ✅ نستخدم CALLBACK الثابت
-          // تخزين مسار الرجوع الاختياري
-          try { localStorage.setItem('afterLogin', location.pathname); } catch(_){}
-          await client.loginWithRedirect({ authorizationParams: { screen_hint:"login", redirect_uri: CALLBACK } });
+          // تخزين مسار الرجوع الكامل (path + search + hash)
+          try {
+            localStorage.setItem('afterLogin', location.pathname + location.search + location.hash);
+          } catch(_){}
+          await client.loginWithRedirect({
+            authorizationParams: { screen_hint: "login", redirect_uri: CALLBACK }
+          });
           return;
         } catch (e) {
           return toPricing("الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.");
         }
       }
-      unmountGuardOverlay(); fireAuthReady(); return;
+
+      unmountGuardOverlay();
+      fireAuthReady();
+      return;
     }
 
     // باقي الصفحات: تتطلب تسجيل دخول + حالة نشطة حسب التصنيف
@@ -194,8 +234,8 @@
     try { authed = await client.isAuthenticated(); } catch {}
     if (!authed) {
       try {
-        // ✅ نستخدم CALLBACK الثابت
-        try { localStorage.setItem('afterLogin', location.pathname); } catch(_){}
+        // ✅ نستخدم CALLBACK الثابت + نحفظ المسار الكامل
+        try { localStorage.setItem('afterLogin', location.pathname + location.search + location.hash); } catch(_){}
         await client.loginWithRedirect({ authorizationParams: { screen_hint:"login", redirect_uri: CALLBACK } });
         return;
       } catch (e) {
@@ -224,7 +264,8 @@
       return toPricing("هذه الصفحة للمشتركين النشطين فقط.");
     }
 
-    unmountGuardOverlay(); fireAuthReady();
+    unmountGuardOverlay();
+    fireAuthReady();
   }
 
   // نقطة الدخول
@@ -249,4 +290,5 @@
       }
     }
   });
+
 })();
