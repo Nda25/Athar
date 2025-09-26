@@ -35,6 +35,18 @@ if (typeof window.AUTH0_CLIENT === 'undefined') {
 const AUTH0_DOMAIN = window.AUTH0_DOMAIN;
 const AUTH0_CLIENT = window.AUTH0_CLIENT;
 
+/* ====== Callback ثابت للدخول/التسجيل + وجهة الخروج ====== */
+const CALLBACK = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:8888/profile.html'    // أثناء التطوير المحلي
+  : 'https://n-athar.co/profile.html';       // على الإنتاج
+
+const RETURN_TO = CALLBACK.startsWith('http://localhost:8888')
+  ? 'http://localhost:8888'
+  : 'https://n-athar.co';
+
+console.log('[Auth] redirect_uri =', CALLBACK);
+console.log('[Auth] returnTo     =', RETURN_TO);
+
 /* ====== أدوات صغيرة ====== */
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -168,45 +180,50 @@ function bindAuthButtons() {
 
   const inviteCode = new URLSearchParams(location.search).get('code') || undefined;
 
+  // === زر الدخول ===
   if (loginBtn) {
     loginBtn.onclick = () =>
       window.auth?.loginWithRedirect
         ? window.auth.loginWithRedirect({
             authorizationParams: {
               screen_hint: 'login',
-              redirect_uri: window.location.origin
+              redirect_uri: CALLBACK
             }
           })
         : window.auth?.login?.({
             authorizationParams: {
               screen_hint: 'login',
-              redirect_uri: window.location.origin
+              redirect_uri: CALLBACK
             }
           });
   }
+
+  // === زر التسجيل ===
   if (registerBtn) {
     registerBtn.onclick = () =>
       window.auth?.loginWithRedirect
         ? window.auth.loginWithRedirect({
             authorizationParams: {
               screen_hint: 'signup',
-              redirect_uri: window.location.origin,
+              redirect_uri: CALLBACK,
               ...(inviteCode ? { code: inviteCode } : {})
             }
           })
         : window.auth?.login?.({
             authorizationParams: {
               screen_hint: 'signup',
-              redirect_uri: window.location.origin,
+              redirect_uri: CALLBACK,
               ...(inviteCode ? { code: inviteCode } : {})
             }
           });
   }
+
+  // === زر الخروج ===
   if (logoutBtn) {
     logoutBtn.onclick = () => {
       if (window.auth?.logout) return window.auth.logout();
       if (window.auth0Client?.logout) {
-        return window.auth0Client.logout({ logoutParams:{ returnTo: window.location.origin }});
+        return window.auth0Client.logout({ logoutParams:{ returnTo: RETURN_TO }});
       }
     };
   }
