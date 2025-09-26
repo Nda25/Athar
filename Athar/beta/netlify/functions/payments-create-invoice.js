@@ -85,7 +85,7 @@ exports.handler = async (event) => {
     const amountHalala = Math.round(discounted * 100);
 
     // 4) إعدادات ميسّر
-    const MOYASAR_SECRET = process.env.MOYASAR_SECRET_KEY_LIVE; // sk_live_******
+const MOYASAR_SECRET = process.env.MOYASAR_SK;
     if (!MOYASAR_SECRET) {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "Missing Moyasar secret" }) };
     }
