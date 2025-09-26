@@ -1,4 +1,4 @@
-// /.netlify/functions/payment-webhook.js
+// /.netlify/functions/payments-webhook.js
 // Moyasar Webhook (LIVE) — يدير حالات paid/refunded/canceled/expired ويحتفظ بـ invoice_url
 
 const fetch = require("node-fetch");
