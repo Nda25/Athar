@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>الدفع والإشتراك — أثــر</title>
+<title>الدفع والاشتراك — أثــر</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <meta name="color-scheme" content="dark light">
@@ -107,10 +107,14 @@
   <script>(function(){var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();})();</script>
   <div class="toast" id="toast"></div>
 
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <!-- SDKs (لا ننشئ عميل هنا؛ سنعتمد على require-auth.js) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.2/auth0-spa-js.production.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="/assets/js/supabase-client.js"></script>
   <script src="assets/js/storage.js"></script>
+
+  <!-- تحميل الحارس أولاً ليجهّز window.auth بCALLBACK ثابت /profile.html -->
+  <script src="assets/js/require-auth.js"></script>
 
   <!-- رسالة نجاح الدفع عند العودة بـ ?paid=1 -->
   <script>
@@ -135,45 +139,32 @@
     })();
   </script>
 
+  <!-- منطق الصفحة (يعتمد على window.auth من require-auth.js) -->
   <script>
   // ===== Helpers =====
   const $ = (s)=>document.querySelector(s);
   const toast = (m)=>{ const t=$('#toast'); if(!t){alert(m);return;} t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500); };
 
-  let auth0; // سنضبطه لاحقًا
-
-  // ===== Auth0 init =====
-  (async function initAuth(){
-    // ثبّتي الـ audience ليطابق دوال Netlify (غيّريه إن كان عندك قيمة مختلفة)
-    const AUTH0_DOMAIN   = (window.__CFG && window.__CFG.auth0_domain)   || "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-    const AUTH0_CLIENTID = (window.__CFG && window.__CFG.auth0_clientId) || "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-    const API_AUDIENCE   = (window.__CFG && window.__CFG.api_audience)   || "https://api.athar";
-    const REDIRECT_URI   = window.location.origin + window.location.pathname;
-
-    auth0 = await createAuth0Client({
-      domain: AUTH0_DOMAIN,
-      clientId: AUTH0_CLIENTID,
-      authorizationParams: { redirect_uri: REDIRECT_URI, audience: API_AUDIENCE }
+  // ثيم بسيط
+  (function(){
+    const btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    btn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const root = document.documentElement;
+      const dark = root.classList.toggle('dark');
+      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(_){}
+      toast(dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح');
     });
-
-    // معالجة الرجوع من Auth0
-    if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
-      try {
-        const { appState } = await auth0.handleRedirectCallback();
-        if (appState?.plan) localStorage.setItem('intended_plan', appState.plan);
-      } catch(e) {
-        console.warn("Auth0 callback error:", e);
-      }
-      window.history.replaceState({}, document.title, window.location.pathname);
-      // استئناف الاشتراك لو كان فيه نية محفوظة
-      const intended = localStorage.getItem('intended_plan');
-      if (intended) subscribe(intended);
-    }
-
-    await refreshAuthUI();
+    try {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark') document.documentElement.classList.add('dark');
+    } catch(_){}
   })();
 
-  async function isLogged(){ try { return await auth0.isAuthenticated(); } catch(_) { return false; } }
+  async function isLogged(){
+    try { return await window.auth?.isAuthenticated?.(); } catch(_) { return false; }
+  }
 
   async function refreshAuthUI(){
     const logged = await isLogged();
@@ -183,21 +174,29 @@
 
     if (logged) {
       let user=null;
-      try { user = await auth0.getUser(); } catch(_){}
-      loginBtn.textContent = user?.email || 'حسابي';
-      logoutBtn.style.display = 'inline-flex';
+      try { user = await window.auth.getUser(); } catch(_){}
+      if (loginBtn) loginBtn.textContent = user?.email || 'حسابي';
+      if (logoutBtn) logoutBtn.style.display = 'inline-flex';
       if (whoami) { whoami.style.display='block'; whoami.textContent = user?.email ? ('مسجّل كـ ' + user.email) : 'حسابك نشِط'; }
       document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(b=>b.textContent="إكمال الاشتراك");
     } else {
-      loginBtn.textContent = 'الدخول / إنشاء حساب';
-      logoutBtn.style.display = 'none';
+      if (loginBtn) loginBtn.textContent = 'الدخول / إنشاء حساب';
+      if (logoutBtn) logoutBtn.style.display = 'none';
       if (whoami) whoami.style.display='none';
       document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(b=>b.textContent="اشترك الآن");
     }
   }
 
-  $('#login')?.addEventListener('click', () => auth0.loginWithRedirect({ appState: { plan: localStorage.getItem('intended_plan') || null } }));
-  $('#logout')?.addEventListener('click', () => auth0.logout({ logoutParams:{ returnTo: window.location.origin }}) );
+  // زر الدخول: خزّني رجوعًا إلى /pricing.html ثم ابدأ تدفق Auth0
+  $('#login')?.addEventListener('click', () => {
+    try { localStorage.setItem('afterLogin', '/pricing.html'); } catch(_){}
+    window.auth?.loginWithRedirect?.();
+  });
+
+  // زر الخروج
+  $('#logout')?.addEventListener('click', () => {
+    window.auth?.logout?.();
+  });
 
   // ===== تفعيل الرمز الترويجي (اختياري) =====
   $('#redeem')?.addEventListener('click', async ()=>{
@@ -206,18 +205,18 @@
     if (!code){ msgEl.textContent = 'الرجاء إدخال الرمز'; return; }
 
     try{
-      const token = await auth0.getTokenSilently();
+      const token = await window.auth.getTokenSilently();
       const res = await fetch('/.netlify/functions/promo-redeem', {
         method:'POST',
         headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ code })
       });
       const out = await res.text();
-      if (!res.ok) { msgEl.textContent = out || 'تعذر تفعيل الرمز'; return; }
+      if (!res.ok) { msgEl.textContent = out || 'تعذّر تفعيل الرمز'; return; }
       const j = JSON.parse(out);
       msgEl.textContent = 'تم التفعيل ✓، تاريخ الانتهاء: ' + (new Date(j.expires_at)).toLocaleDateString('ar-SA');
     }catch(e){
-      msgEl.textContent = 'تعذر تفعيل الرمز';
+      msgEl.textContent = 'تعذّر تفعيل الرمز';
     }
   });
 
@@ -225,12 +224,12 @@
   async function subscribe(plan){
     const btn = document.querySelector(`[data-plan="${plan}"]`);
     if (!btn) return;
-    localStorage.setItem('intended_plan', plan);
+    try { localStorage.setItem('intended_plan', plan); } catch(_){}
 
-    // تأكدي من تسجيل الدخول
+    // تأكدي من تسجيل الدخول (سيعود إلى /pricing.html تلقائيًا عبر require-auth.js)
     if (!(await isLogged())){
-      await auth0.loginWithRedirect({ appState: { plan } });
-      return; // سيُستأنف تلقائيًا بعد الرجوع
+      try { localStorage.setItem('afterLogin', '/pricing.html'); } catch(_){}
+      return window.auth?.loginWithRedirect?.();
     }
 
     // اجلب الرمز الترويجي (اختياري)
@@ -238,7 +237,7 @@
 
     btn.disabled = true; const old = btn.textContent; btn.textContent = "جارِ التوجيه…";
     try{
-      const token = await auth0.getTokenSilently(); // يعتمد على audience أعلاه
+      const token = await window.auth.getTokenSilently();
       const res = await fetch('/.netlify/functions/payments-create-invoice', {
         method:'POST',
         headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
@@ -249,19 +248,47 @@
         console.warn('create-invoice error:', j);
         alert(j?.error || 'تعذّر إنشاء الفاتورة'); btn.disabled=false; btn.textContent=old; return;
       }
-      window.location.href = j.url; // تحويل مباشر لصفحة الدفع من ميسّر
+      location.href = j.url; // تحويل مباشر لصفحة الدفع من ميسّر
     }catch(e){
       console.error(e);
-      alert('تعذّر الحصول على الإذن. جرّبي تسجيل الخروج ثم الدخول مرة أخرى.'); 
+      alert('تعذّر الحصول على الإذن. جرّبي تسجيل الخروج ثم الدخول مرة أخرى.');
       btn.disabled=false; btn.textContent=old;
     }
   }
   window.subscribe = subscribe;
 
-  // حدّث الواجهة عند تغيّر حالة Auth0
-  window.addEventListener('auth0:ready', refreshAuthUI);
+  // حدّث الواجهة عند جاهزية Auth0 + استئناف نية الاشتراك إن وُجدت
+  window.addEventListener('auth0:ready', async ()=>{
+    await refreshAuthUI();
+    try {
+      const intended = localStorage.getItem('intended_plan');
+      const urlParams = new URLSearchParams(location.search);
+      const justPaid = urlParams.get('paid') === '1';
+      if (intended && !justPaid && (await isLogged())) {
+        // استئناف الاشتراك تلقائيًا بعد الرجوع من Auth0
+        subscribe(intended);
+      }
+    } catch(_){}
+  });
   </script>
 
-  <script src="assets/js/require-auth.js"></script>
+  <!-- شريط رسالة تحويل من require-auth.js (toPricing) -->
+  <script>
+  (function(){
+    try {
+      const msg = sessionStorage.getItem("athar:msg");
+      if (!msg) return;
+      sessionStorage.removeItem("athar:msg");
+
+      if (typeof window.toast === 'function') { toast(msg); return; }
+
+      const bar = document.createElement('div');
+      bar.dir = 'rtl';
+      bar.style.cssText = "background:#1f2937;color:#fff;padding:12px 16px;text-align:center;font:500 14px/1.6 system-ui;border-radius:10px;margin:12px auto;max-width:960px";
+      bar.textContent = msg;
+      document.body.prepend(bar);
+    } catch(_) {}
+  })();
+  </script>
 </body>
 </html>
