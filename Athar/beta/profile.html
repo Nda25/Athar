@@ -3,103 +3,96 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>معلومات صاحب الأثر — أثــر</title>
+  <title>حسابي — أثــر</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <meta name="color-scheme" content="dark light">
-
-  <!-- حمّلي لون الواجهة والاسم/الصورة من الكاش مبكرًا لتفادي الوميض -->
-  <script>
-    (function(){
-      try{
-        var c  = localStorage.getItem('athar:theme');
-        if (c) document.documentElement.style.setProperty('--primary', c);
-
-        var dn = localStorage.getItem('athar:displayName');
-        if (dn) document.addEventListener('DOMContentLoaded', function(){
-          document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = dn);
-        });
-
-        var av = localStorage.getItem('athar:avatar');
-        if (av) document.addEventListener('DOMContentLoaded', function(){
-          var img = document.getElementById('u-avatar');
-          if (img) img.src = av;
-        });
-      }catch(_){}
-    })();
-  </script>
-
   <style>
-    :root { --primary: var(--sea-600); }
+    :root{ --primary: var(--sea-600); }
     .container{ width:100%; max-width:980px; margin:0 auto; padding:0 16px; }
-    .card .title { display:flex; align-items:center; gap:10px; }
-    .subheading { font-size:14px; color:#6b7280; font-weight:600; }
-    .grid { display:grid; gap:16px; grid-template-columns:1fr 1fr; align-items:start; }
-    @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
-    .profile-box { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:center; }
-    .avatar-wrap { position:relative; width:96px; height:96px; }
-    .avatar { width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid #eef; background:#f5f7ff; }
-    .edit-badge { position:absolute; right:-6px; bottom:-6px; background:var(--primary); color:#fff; border-radius:16px; padding:4px 8px; font-size:12px; cursor:pointer; border:1px solid #fff; }
-    .name-row { display:flex; align-items:center; gap:8px; font-weight:800; font-size:20px; flex-wrap:wrap; }
-    .icon-btn { border:1px solid #e5e7eb; background:#fff; cursor:pointer; padding:4px 8px; border-radius:8px; }
-    .badge { padding:6px 10px; border:1px solid transparent; border-radius:10px; font-weight:700; display:inline-block; }
-    .muted { color:#6b7280 }
-    .row-actions { display:flex; gap:10px; flex-wrap:wrap; }
-    .btn.ghost { background:#fff; border:1px solid #e5e7eb; }
-    .section-title { font-weight:800; margin-bottom:8px; }
-    #u-email,#u-sub{ word-break: break-word; overflow-wrap:anywhere; }
-    .card[data-ready="0"]{ opacity:0; }
-    .card[data-ready="1"]{ opacity:1; transition:opacity .18s ease; }
+    .page-grid{ display:grid; gap:16px; grid-template-columns: 1fr; }
+    .card[data-ready="0"]{ opacity:0 }
+    .card[data-ready="1"]{ opacity:1; transition:opacity .18s ease }
 
-    @media (max-width:900px){
-      .profile-box { grid-template-columns:1fr; justify-items:center; text-align:center; }
-      .avatar-wrap { width:84px; height:84px; }
-      .avatar { width:84px; height:84px; }
-      .name-row,.row-actions{ justify-content:center; }
-      .hero .logo{ font-size:40px !important; }
+    /* ===== الهيدر الشخصي ===== */
+    .profile-header{
+      display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center;
+      padding:18px; border:1px solid #e5e7eb; border-radius:14px; background:var(--card,#fff);
     }
+    .ph-avatar{ position:relative; width:96px; height:96px; }
+    .ph-avatar img{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid #eef; background:#f5f7ff; }
+    .ph-edit{ position:absolute; right:-6px; bottom:-6px; background:var(--primary); color:#fff; border-radius:16px; padding:4px 8px; font-size:12px; cursor:pointer; border:1px solid #fff; }
+    .ph-identity{ display:flex; flex-direction:column; gap:4px }
+    .ph-name{ font-weight:800; font-size:22px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-weight:800; border:1px solid transparent; }
+    .badge.active{ background:#dcfce7; color:#166534; border-color:#bbf7d0 }
+    .badge.trial{ background:#dbeafe; color:#1e3a8a; border-color:#bfdbfe }
+    .badge.inactive{ background:#fee2e2; color:#991b1b; border-color:#fecaca }
+    .ph-meta{ color:#6b7280; font-size:13px }
+    .ph-actions{ display:flex; gap:10px; flex-wrap:wrap }
+    .btn.ghost{ background:#fff; border:1px solid #e5e7eb }
 
-    .theme-picker{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .theme-picker button{ all:unset; display:inline-block; width:28px; height:28px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer; }
-    .theme-picker button[data-reset]{ background:#111827; }
-    .theme-picker button.is-active{ outline:3px solid color-mix(in oklab, var(--primary) 65%, white); outline-offset:2px; }
-    .theme-note{ font-size:12px; color:#6b7280; margin-top:6px; }
-    .divider{ height:1px; background:#f1f5f9; margin:12px 0; }
-    .soon{ opacity:.6; cursor:not-allowed; }
-    .state{ padding:6px 10px; border-radius:999px; font-weight:800; border:1px solid #e5e7eb; background:#fff; }
+    /* ===== الشبكة الرئيسية ===== */
+    .grid-2{ display:grid; gap:16px; grid-template-columns: 1fr 1fr; }
+    @media (max-width:900px){ .grid-2{ grid-template-columns:1fr } .ph-actions{ justify-content:flex-start } }
 
-    /* محرّر القص */
+    /* ===== صناديق المحتوى ===== */
+    .box{ border:1px solid #e5e7eb; border-radius:14px; background:var(--card,#fff); padding:16px }
+    .box h3{ margin:0 0 6px; font-weight:800 }
+    .sub{ color:#6b7280; font-size:13px; margin:0 0 12px }
+
+    /* ===== جدول الفواتير ===== */
+    .table{ width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:12px; border:1px solid #e5e7eb }
+    .table th, .table td{ padding:10px 12px; text-align:right }
+    .table thead th{ background:#f8fafc; font-weight:800; font-size:13px; border-bottom:1px solid #e5e7eb }
+    .table tbody tr+tr td{ border-top:1px solid #f1f5f9 }
+    .pill{ padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid #e5e7eb; background:#fff }
+    .pill.paid{ background:#dcfce7; color:#166534; border-color:#bbf7d0 }
+    .pill.refunded{ background:#f1f5f9; color:#0f172a; }
+    .pill.canceled{ background:#fee2e2; color:#991b1b; border-color:#fecaca }
+    .pill.expired{ background:#fef9c3; color:#854d0e; border-color:#fde68a }
+
+    /* ===== منتقي الألوان ===== */
+    .theme-picker{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
+    .theme-picker button{ all:unset; display:inline-block; width:28px; height:28px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer }
+    .theme-picker button.is-active{ outline:3px solid color-mix(in oklab, var(--primary) 65%, white); outline-offset:2px }
+    .theme-note{ font-size:12px; color:#6b7280; margin-top:6px }
+
+    /* ===== مودال القص (كما كان) ===== */
     .modal{ position:fixed; inset:0; background:#0009; display:none; align-items:center; justify-content:center; z-index:2147483000; }
-    .modal.show{ display:flex; }
-    .modal .panel{ width:min(96vw,760px); background:#0b1324; color:#e5e7eb; border-radius:14px; border:1px solid #1f2a44; box-shadow:0 20px 60px #0006; overflow:hidden; }
+    .modal.show{ display:flex }
+    .modal .panel{ width:min(96vw,760px); background:#0b1324; color:#e5e7eb; border-radius:14px; border:1px solid #1f2a44; box-shadow:0 20px 60px #0006; overflow:hidden }
     .panel .head{ padding:10px 14px; border-bottom:1px solid #1f2a44; display:flex; align-items:center; justify-content:space-between }
-    .panel .body{ padding:14px; display:grid; gap:12px; grid-template-columns:1fr 260px; }
-    .crop-stage{ position:relative; background:#0f172a; border:1px solid #1f2a44; border-radius:10px; height:440px; overflow:hidden; }
-    .crop-canvas{ position:absolute; inset:0; width:100%; height:100%; }
-    .crop-overlay{ position:absolute; inset:0; pointer-events:none; }
-    .ctrls{ display:grid; gap:10px; align-content:start; }
-    .ctrls .row{ display:flex; align-items:center; gap:8px; }
+    .panel .body{ padding:14px; display:grid; gap:12px; grid-template-columns:1fr 260px }
+    .crop-stage{ position:relative; background:#0f172a; border:1px solid #1f2a44; border-radius:10px; height:440px; overflow:hidden }
+    .crop-canvas,.crop-overlay{ position:absolute; inset:0; width:100%; height:100% }
+    .ctrls{ display:grid; gap:10px; align-content:start }
+    .ctrls .row{ display:flex; align-items:center; gap:8px }
     .ctrls label{ font-size:12px; opacity:.85 }
     .ctrls select,.ctrls input[type="range"]{ width:100% }
-    .panel .foot{ padding:12px 14px; border-top:1px solid #1f2a44; display:flex; gap:10px; justify-content:flex-end; }
+    .panel .foot{ padding:12px 14px; border-top:1px solid #1f2a44; display:flex; gap:10px; justify-content:flex-end }
     .btn.small{ padding:8px 12px; font-size:14px }
+
     @media (max-width:900px){
-      .panel .body{ grid-template-columns:1fr; }
-      .crop-stage{ height:320px; }
-      .panel .foot{ justify-content:space-between; }
+      .profile-header{ grid-template-columns: 1fr; text-align:center; justify-items:center }
+      .ph-actions{ justify-content:center }
+      .ph-avatar{ width:84px; height:84px }
+      .ph-avatar img{ width:84px; height:84px }
+      .panel .body{ grid-template-columns:1fr }
+      .crop-stage{ height:320px }
+      .panel .foot{ justify-content:space-between }
     }
   </style>
 </head>
-
 <body>
   <div class="global-bg"></div>
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
   <div class="topbar">
-    <div class="left-actions"><a class="btn" href="index.html" title="الرئيسية">الرئيسية</a></div>
+    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
     <div class="actions">
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
+      <button class="btn" id="themeToggle">🌓</button>
       <a class="btn primary" href="pricing.html">الدفع والإشتراك</a>
     </div>
   </div>
@@ -113,76 +106,77 @@
   </header>
 
   <main>
-    <div class="container">
-      <section class="card" id="profileCard" data-ready="0">
-        <h2 class="title">معلومات صاحب الأثر <span class="subheading">— كل ما يخص حسابك وتخصيص واجهتك</span></h2>
-
-        <div class="grid">
-          <!-- الهوية -->
-          <div class="box profile-box">
-            <div class="avatar-wrap">
-              <!-- fallback SVG لو ملف placeholder غير موجود -->
-              <img id="u-avatar" class="avatar"
-                   src="assets/img/avatar-placeholder.png"
-                   alt="صورة الحساب"
-                   onerror="this.onerror=null; this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2296%22 height=%2296%22 viewBox=%220 0 96 96%22%3E%3Crect width=%2296%22 height=%2296%22 rx=%2248%22 fill=%22%23eef%22/%3E%3Ccircle cx=%2248%22 cy=%2248%22 r=%2230%22 fill=%22%23c7d2fe%22/%3E%3Ctext x=%2250%25%22 y=%2253%25%22 font-size=%2230%22 text-anchor=%22middle%22 fill=%22%23333%22 font-family=%22Cairo,Arial%22%3E🙂%3C/text%3E%3C/svg%3E';">
-              <label class="edit-badge" title="تعديل الصورة">
-                ✎
-                <input id="avatarInput" type="file" accept="image/*" hidden>
-              </label>
-            </div>
-
-            <div>
-              <div class="name-row">
-                <span id="displayName" class="js-user-name">—</span>
-                <button id="editNameBtn" class="icon-btn" title="تعديل الاسم">✎</button>
-              </div>
-
-              <p><strong>البريد:</strong> <span id="u-email">—</span></p>
-              <p><strong>المعرّف:</strong> <span id="u-sub">—</span></p>
-              <p><strong>تاريخ الانضمام:</strong> <span id="u-joined">—</span></p>
-
-              <div class="divider"></div>
-
-              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <span class="section-title">حالة الحساب:</span>
-                <span id="u-status">—</span>
-                <span id="sub-state" class="badge" style="display:none"></span>
-              </div>
-
-              <div class="row-actions" style="margin-top:12px">
-                <a class="btn" href="pricing.html">إدارة الاشتراك</a>
-                <button id="invoicesBtn" class="btn ghost soon" title="قريبًا" disabled>الفواتير</button>
-              </div>
-              <div class="muted" style="margin-top:6px">الفواتير: <strong>قريبًا</strong> — ستظهر هنا فور ربط بوابة الدفع.</div>
-            </div>
+    <div class="container page-grid">
+      <!-- ===== Header شخصي ===== -->
+      <section class="profile-header card" id="cardHeader" data-ready="0">
+        <div class="ph-avatar">
+          <img id="u-avatar" alt="صورة الحساب" src="assets/img/avatar-placeholder.png"
+               onerror="this.onerror=null;this.src='assets/img/avatar-placeholder.png'">
+          <label class="ph-edit" title="تعديل الصورة">
+            ✎
+            <input id="avatarInput" type="file" accept="image/*" hidden>
+          </label>
+        </div>
+        <div class="ph-identity">
+          <div class="ph-name">
+            <span id="displayName" class="js-user-name">—</span>
+            <button id="editNameBtn" class="btn ghost" style="padding:2px 8px">تعديل</button>
           </div>
+          <div class="ph-meta">
+            <span><strong>البريد:</strong> <span id="u-email">—</span></span> ·
+            <span><strong>المعرّف:</strong> <span id="u-sub">—</span></span>
+          </div>
+          <div id="acc-badge" class="badge inactive">غير نشط</div>
+        </div>
+        <div class="ph-actions">
+          <a class="btn" href="pricing.html">إدارة الاشتراك</a>
+          <button id="logout" class="btn ghost">تسجيل الخروج</button>
+        </div>
+      </section>
 
-          <!-- تخصيص -->
-          <div class="box">
-            <h3 class="section-title">تخصيص الواجهة</h3>
+      <!-- ===== الشبكة الرئيسية ===== -->
+      <section class="grid-2">
+        <!-- الاشتراك -->
+        <div class="box card" id="cardSub" data-ready="0">
+          <h3>تفاصيل الاشتراك</h3>
+          <p class="sub">معلومات تساعدك على متابعة حالة حسابك.</p>
+          <div style="display:grid;grid-template-columns:160px 1fr;gap:8px">
+            <div class="muted">تاريخ التسجيل:</div><div id="u-joined">—</div>
+            <div class="muted">آخر ظهور:</div><div id="u-last">—</div>
+            <div class="muted">حالة الحساب:</div><div id="u-status-text">—</div>
+            <div class="muted">الخطة الحالية:</div><div id="u-plan">—</div>
+            <div class="muted">تاريخ تفعيل/انتهاء:</div><div id="u-activation">—</div>
+          </div>
+        </div>
 
-            <div id="themePicker" class="theme-picker" aria-label="اختيار لون البرنامج" data-v2="1">
-              <button data-reset title="اللون الافتراضي"></button>
-              <button data-color="#6366f1" title="بنفسجي"></button>
-              <button data-color="#f472b6" title="زهري"></button>
-              <button data-color="#22c55e" title="أخضر"></button>
-              <button data-color="#06b6d4" title="سماوي"></button>
-              <button data-color="#f59e0b" title="برتقالي"></button>
-            </div>
-            <div class="theme-note">اختر لونك المفضل… 🪄.</div>
+        <!-- تخصيص -->
+        <div class="box">
+          <h3>تخصيص الواجهة</h3>
+          <p class="sub">اختر لونك المفضل—يُحفَظ تلقائيًا لحسابك.</p>
+          <div id="themePicker" class="theme-picker" data-v2="1" aria-label="لوحة ألوان">
+            <button data-color="#1f2937" title="أسود"></button>
+            <button data-color="#064e3b" title="زيتي"></button>
+            <button data-color="#16a34a" title="أخضر"></button>
+            <button data-color="#0ea5e9" title="سماوي"></button>
+            <button data-color="#6366f1" title="بنفسجي"></button>
+            <button data-color="#f59e0b" title="برتقالي"></button>
+            <button data-color="#facc15" title="أصفر"></button>
+            <button data-color="#be123c" title="خمري"></button>
+            <button data-reset title="الافتراضي"></button>
+          </div>
+          <div class="theme-note">يمكنك العودة للّون الافتراضي في أي وقت.</div>
+        </div>
 
-            <div class="divider"></div>
-
-            <h3 class="section-title">الاشتراك</h3>
-            <p class="muted">للتفعيل أو الترقية قم بزيارة صفحة <a href="pricing.html">الدفع والإشتراك</a>.</p>
-            <p class="muted">عند تفعيل بوابة الدفع ستظهر تفاصيل الباقة والفواتير هنا تلقائيًا.</p>
-
-            <div class="divider"></div>
-
-            <div class="row-actions">
-              <button id="logout" class="btn">تسجيل الخروج</button>
-            </div>
+        <!-- الفواتير -->
+        <div class="box card" id="cardInvoices" data-ready="0" style="grid-column:1/-1">
+          <h3>الفواتير</h3>
+          <p class="sub">تعرض عمليات الدفع الواردة من بوابة ميسّر بعد الربط.</p>
+          <div id="invWrap">
+            <table class="table" id="invTable" style="display:none">
+              <thead><tr><th>التاريخ</th><th>المبلغ</th><th>البوابة</th><th>الحالة</th><th>المرجع</th></tr></thead>
+              <tbody id="invBody"></tbody>
+            </table>
+            <div id="invEmpty" class="muted">لا توجد فواتير حتى الآن.</div>
           </div>
         </div>
       </section>
@@ -205,68 +199,95 @@
   <script>(function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();</script>
   <div class="toast" id="toast"></div>
 
-  <!-- Modal القصّ -->
+  <!-- مودال القص -->
   <div id="cropModal" class="modal" aria-hidden="true">
     <div class="panel" role="dialog" aria-modal="true" aria-label="قصّ الصورة">
-      <div class="head">
-        <strong>قصّ الصورة</strong>
-        <button class="btn small" data-close>إغلاق</button>
-      </div>
+      <div class="head"><strong>قصّ الصورة</strong><button class="btn small" data-close>إغلاق</button></div>
       <div class="body">
-        <div class="crop-stage">
-          <canvas id="cropCanvas" class="crop-canvas"></canvas>
-          <canvas id="cropOverlay" class="crop-overlay"></canvas>
-        </div>
+        <div class="crop-stage"><canvas id="cropCanvas" class="crop-canvas"></canvas><canvas id="cropOverlay" class="crop-overlay"></canvas></div>
         <div class="ctrls">
-          <div class="row">
-            <label>النسبة:</label>
-            <select id="cropAspect">
-              <option value="1">1:1 (مربّع)</option>
-              <option value="1.3333333">4:3 (أفقي)</option>
-              <option value="0.75">3:4 (عمودي)</option>
-            </select>
-          </div>
-          <div class="row">
-            <label>التقريب:</label>
-            <input id="cropZoom" type="range" min="0.5" max="3" step="0.01" value="1">
-          </div>
-          <div class="row">
-            <label>جودة الضغط:</label>
-            <input id="cropQuality" type="range" min="0.6" max="0.95" step="0.01" value="0.82">
-          </div>
-          <div class="row">
-            <label>الحجم الأقصى (px):</label>
-            <input id="cropMax" type="number" min="256" max="2048" step="64" value="768">
-          </div>
-          <div class="row muted" style="font-size:12px">اسحبي الصورة داخل الإطار لتغيير الموضع، واستخدمي شريط التقريب.</div>
+          <div class="row"><label>النسبة:</label><select id="cropAspect"><option value="1">1:1 (مربّع)</option><option value="1.3333333">4:3</option><option value="0.75">3:4</option></select></div>
+          <div class="row"><label>التقريب:</label><input id="cropZoom" type="range" min="0.5" max="3" step="0.01" value="1"></div>
+          <div class="row"><label>الجودة:</label><input id="cropQuality" type="range" min="0.6" max="0.95" step="0.01" value="0.82"></div>
+          <div class="row"><label>الحجم الأقصى(px):</label><input id="cropMax" type="number" min="256" max="2048" step="64" value="768"></div>
+          <div class="row muted" style="font-size:12px">اسحبي الصورة داخل الإطار وغيّري التقريب حسب الحاجة.</div>
         </div>
       </div>
-      <div class="foot">
-        <button id="cropCancel" class="btn">إلغاء</button>
-        <button id="cropConfirm" class="btn primary">حفظ ورفع</button>
-      </div>
+      <div class="foot"><button id="cropCancel" class="btn">إلغاء</button><button id="cropConfirm" class="btn primary">حفظ ورفع</button></div>
     </div>
   </div>
 
   <!-- SDKs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-client.js"></script>
-
-  <!-- سكربتات عامة -->
   <script src="app.js"></script>
   <script src="assets/js/storage.js"></script>
 
   <!-- منطق الصفحة -->
   <script>
-    function toast(msg){
-      const t = document.getElementById('toast');
-      if (!t) return;
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(()=>t.classList.remove('show'), 1800);
+    const $ = (s)=>document.querySelector(s);
+    function toast(msg){ const t=$('#toast'); if(!t) return alert(msg); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 1600); }
+
+    // ===== شارة الحالة =====
+    function renderBadge(status){
+      const el = document.getElementById('acc-badge');
+      el.classList.remove('active','trial','inactive');
+      if (status === 'active') { el.classList.add('active'); el.textContent='مفعّل'; }
+      else if (status === 'trial') { el.classList.add('trial'); el.textContent='تجريبي'; }
+      else { el.classList.add('inactive'); el.textContent='غير نشط'; }
     }
 
-    // —— محرّر القص (cover + minZoom + تثبيت السحب) ——
+    // ===== تلوين الواجهة (تُحفظ محليًا + Supabase user_prefs) =====
+    (function initThemePicker(){
+      const root = document.documentElement;
+      const picker = document.getElementById('themePicker');
+      if (!picker) return;
+
+      // تلوين الأزرار
+      [...picker.querySelectorAll('button')].forEach(b=>{
+        if (b.dataset.color) b.style.backgroundColor = b.dataset.color;
+        if (b.hasAttribute('data-reset')) b.style.background = '#111827';
+      });
+
+      // حالة مبدئية
+      const saved = localStorage.getItem('athar:theme');
+      if (saved) {
+        root.style.setProperty('--primary', saved);
+        const btn = [...picker.querySelectorAll('button')].find(b=>b.dataset.color === saved);
+        (btn || picker.querySelector('[data-reset]'))?.classList.add('is-active');
+      } else {
+        picker.querySelector('[data-reset]')?.classList.add('is-active');
+      }
+
+      picker.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('button'); if (!btn) return;
+        const reset = btn.hasAttribute('data-reset');
+        let color = null;
+        if (reset){
+          localStorage.removeItem('athar:theme');
+          const def = getComputedStyle(root).getPropertyValue('--sea-600').trim() || '#1e40af';
+          root.style.setProperty('--primary', def);
+        }else{
+          color = btn.dataset.color; if (!color) return;
+          root.style.setProperty('--primary', color);
+          localStorage.setItem('athar:theme', color);
+        }
+        [...picker.querySelectorAll('button')].forEach(b=>b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+
+        try{
+          const u = await (window.auth0Client||window.auth)?.getUser?.();
+          if (window.supa && u?.sub) {
+            await window.supa.from('user_prefs').upsert(
+              { user_sub: u.sub, theme_color: color || null },
+              { onConflict: 'user_sub' }
+            );
+          }
+        }catch(_){}
+      });
+    })();
+
+    // ===== محرّر القص (نفس أسلوبك السابق) =====
     const cropper = (function(){
       let modal, canvas, ctx, overlay, octx, img = null;
       let dragging = false, lastX=0, lastY=0;
@@ -274,179 +295,128 @@
 
       function getCropBox(W,H){
         const stageRatio = W/H;
-        let cw = W, ch = H;
+        let cw=W, ch=H;
         if (stageRatio > state.aspect) { cw = H * state.aspect; ch = H; }
-        else { cw = W; ch = W / state.aspect; }
-        const cx = (W - cw)/2, cy = (H - ch)/2;
-        return {cx, cy, cw, ch};
+        else { cw = W; ch = W/state.aspect; }
+        const cx=(W-cw)/2, cy=(H-ch)/2;
+        return {cx,cy,cw,ch};
       }
       function clampPan(){
         if (!img || !canvas) return;
-        const W = canvas.width, H = canvas.height;
-        const {cx, cy, cw, ch} = getCropBox(W,H);
-        const iw = img.width * state.zoom;
-        const ih = img.height * state.zoom;
+        const W=canvas.width, H=canvas.height;
+        const {cx,cy,cw,ch} = getCropBox(W,H);
+        const iw = img.width * state.zoom, ih = img.height * state.zoom;
         const minX = cx + cw - iw, maxX = cx;
         const minY = cy + ch - ih, maxY = cy;
-        if (iw <= cw) state.ox = cx + (cw - iw)/2; else state.ox = Math.max(minX, Math.min(maxX, state.ox));
-        if (ih <= ch) state.oy = cy + (ch - ih)/2; else state.oy = Math.max(minY, Math.min(maxY, state.oy));
+        state.ox = (iw<=cw) ? cx+(cw-iw)/2 : Math.max(minX, Math.min(maxX, state.ox));
+        state.oy = (ih<=ch) ? cy+(ch-ih)/2 : Math.max(minY, Math.min(maxY, state.oy));
       }
       function computeMinZoom(){
-        const W = canvas.width, H = canvas.height;
-        const {cw, ch} = getCropBox(W,H);
-        return Math.max(cw / img.width, ch / img.height);
+        const W=canvas.width, H=canvas.height;
+        const {cw,ch} = getCropBox(W,H);
+        return Math.max(cw/img.width, ch/img.height);
       }
       function draw(){
         if (!img) return;
-        const W = canvas.width, H = canvas.height;
-        ctx.clearRect(0,0,W,H); ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,W,H);
-        const {cx, cy, cw, ch} = getCropBox(W,H);
+        const W=canvas.width, H=canvas.height;
+        ctx.clearRect(0,0,W,H); ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,W,H);
+        const {cx,cy,cw,ch} = getCropBox(W,H);
         clampPan();
-        ctx.save(); ctx.beginPath(); ctx.rect(cx, cy, cw, ch); ctx.clip();
+        ctx.save(); ctx.beginPath(); ctx.rect(cx,cy,cw,ch); ctx.clip();
         ctx.drawImage(img, state.ox, state.oy, img.width*state.zoom, img.height*state.zoom);
         ctx.restore();
-        octx.clearRect(0,0,W,H);
-        octx.fillStyle = '#0008'; octx.fillRect(0,0,W,H);
-        octx.clearRect(cx, cy, cw, ch);
-        octx.strokeStyle = '#fff'; octx.lineWidth = 2; octx.strokeRect(cx+1, cy+1, cw-2, ch-2);
+        octx.clearRect(0,0,W,H); octx.fillStyle='#0008'; octx.fillRect(0,0,W,H);
+        octx.clearRect(cx,cy,cw,ch); octx.strokeStyle='#fff'; octx.lineWidth=2; octx.strokeRect(cx+1,cy+1,cw-2,ch-2);
       }
       function setCanvasSize(){
-        const stage = canvas.parentElement;
-        const rect = stage.getBoundingClientRect();
-        canvas.width  = Math.max(320, Math.round(rect.width));
-        canvas.height = Math.max(240, Math.round(rect.height));
-        overlay.width = canvas.width;
-        overlay.height= canvas.height;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width=Math.max(320, Math.round(rect.width));
+        canvas.height=Math.max(240, Math.round(rect.height));
+        overlay.width=canvas.width; overlay.height=canvas.height;
       }
-      function setZoom(newZoom, fx, fy){
+      function setZoom(nz, fx, fy){
         const prev = state.zoom;
-        newZoom = Math.max(state.minZoom, Math.min(state.minZoom*3, newZoom));
-        if (!img || newZoom === prev) { state.zoom = newZoom; clampPan(); draw(); return; }
-        const W = canvas.width, H = canvas.height;
-        const {cx, cy, cw, ch} = getCropBox(W,H);
-        fx = (fx ?? (cx + cw/2)); fy = (fy ?? (cy + ch/2));
-        const imgXBefore = (fx - state.ox) / prev;
-        const imgYBefore = (fy - state.oy) / prev;
-        state.zoom = newZoom;
-        state.ox = fx - imgXBefore * newZoom;
-        state.oy = fy - imgYBefore * newZoom;
+        nz = Math.max(state.minZoom, Math.min(state.minZoom*3, nz));
+        if (!img || nz===prev){ state.zoom=nz; clampPan(); draw(); return; }
+        const W=canvas.width, H=canvas.height;
+        const {cx,cy,cw,ch} = getCropBox(W,H);
+        fx = (fx ?? (cx+cw/2)); fy=(fy ?? (cy+ch/2));
+        const imgXBefore = (fx - state.ox)/prev, imgYBefore=(fy - state.oy)/prev;
+        state.zoom=nz;
+        state.ox = fx - imgXBefore*nz; state.oy = fy - imgYBefore*nz;
         clampPan(); draw();
       }
-      function open(fileOrURL){
-        modal = document.getElementById('cropModal');
-        canvas = document.getElementById('cropCanvas');
-        overlay= document.getElementById('cropOverlay');
-        ctx = canvas.getContext('2d'); octx = overlay.getContext('2d');
-        state.zoom = 1; state.ox = 0; state.oy = 0;
-
+      function open(file){
         return new Promise((resolve)=>{
-          modal.classList.add('show');
-          modal.setAttribute('aria-hidden','false');
-          const image = new Image();
-          image.onload = function(){
-            img = image; setCanvasSize();
-            state.minZoom = computeMinZoom();
-            state.zoom = state.minZoom;
-            const {cx, cy, cw, ch} = getCropBox(canvas.width, canvas.height);
-            const iw = img.width * state.zoom, ih = img.height * state.zoom;
-            state.ox = cx + (cw - iw)/2; state.oy = cy + (ch - ih)/2;
+          modal = $('#cropModal'); const stage = $('.crop-stage');
+          canvas=$('#cropCanvas'); overlay=$('#cropOverlay');
+          ctx=canvas.getContext('2d'); octx=overlay.getContext('2d');
+          state.zoom=1; state.ox=0; state.oy=0;
 
-            const zoomRange = document.getElementById('cropZoom');
-            zoomRange.min = state.minZoom.toFixed(2);
-            zoomRange.max = (state.minZoom*3).toFixed(2);
-            zoomRange.value = state.minZoom.toFixed(2);
+          modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
+
+          const image=new Image();
+          image.onload=()=>{ img=image; setCanvasSize(); state.minZoom=computeMinZoom(); state.zoom=state.minZoom;
+            const {cx,cy,cw,ch}=getCropBox(canvas.width,canvas.height);
+            const iw=img.width*state.zoom, ih=img.height*state.zoom;
+            state.ox=cx+(cw-iw)/2; state.oy=cy+(ch-ih)/2;
+            const z=$('#cropZoom'); z.min=state.minZoom.toFixed(2); z.max=(state.minZoom*3).toFixed(2); z.value=state.minZoom.toFixed(2);
             draw();
           };
-          image.onerror= function(){ toast('تعذر قراءة الصورة'); close(); resolve(null); };
-          if (fileOrURL instanceof File) image.src = URL.createObjectURL(fileOrURL);
-          else image.src = fileOrURL;
+          image.onerror=()=>{ toast('تعذر قراءة الصورة'); close(); resolve(null); };
+          image.src = file instanceof File ? URL.createObjectURL(file) : file;
 
+          function close(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); window.onmouseup=null; window.ontouchend=null; canvas.onwheel=null; }
+
+          let dragging=false,lastX=0,lastY=0;
           function onDown(e){ e.preventDefault(); dragging=true; lastX=(e.touches?e.touches[0].clientX:e.clientX); lastY=(e.touches?e.touches[0].clientY:e.clientY); }
-          function onMove(e){ if(!dragging) return; const x=(e.touches?e.touches[0].clientX:e.clientX), y=(e.touches?e.touches[0].clientY:e.clientY); state.ox += (x-lastX); state.oy += (y-lastY); lastX=x; lastY=y; clampPan(); draw(); }
+          function onMove(e){ if(!dragging) return; const x=(e.touches?e.touches[0].clientX:e.clientX),y=(e.touches?e.touches[0].clientY:e.clientY);
+            state.ox+=(x-lastX); state.oy+=(y-lastY); lastX=x; lastY=y; clampPan(); draw(); }
           function onUp(){ dragging=false; }
 
-          canvas.onmousedown = onDown; canvas.onmousemove = onMove; window.onmouseup = onUp;
-          canvas.ontouchstart= onDown; canvas.ontouchmove  = onMove; window.ontouchend = onUp;
-          canvas.onwheel = (e)=>{ e.preventDefault(); const f = (e.deltaY<0? 1.05:0.95); const r=canvas.getBoundingClientRect(); setZoom(state.zoom*f, e.clientX-r.left, e.clientY-r.top); };
+          canvas.onmousedown=onDown; canvas.onmousemove=onMove; window.onmouseup=onUp;
+          canvas.ontouchstart=onDown; canvas.ontouchmove=onMove; window.ontouchend=onUp;
+          canvas.onwheel=(e)=>{ e.preventDefault(); const f=(e.deltaY<0?1.05:0.95); const r=canvas.getBoundingClientRect(); setZoom(state.zoom*f, e.clientX-r.left, e.clientY-r.top); };
 
-          const aspectSel = document.getElementById('cropAspect');
-          const zoomRange = document.getElementById('cropZoom');
-          const qRange    = document.getElementById('cropQuality');
-          const maxInput  = document.getElementById('cropMax');
-
-          aspectSel.onchange = ()=>{
-            state.aspect = parseFloat(aspectSel.value)||1;
-            state.minZoom = computeMinZoom();
-            state.zoom = Math.max(state.zoom, state.minZoom);
-            zoomRange.min = state.minZoom.toFixed(2);
-            zoomRange.max = (state.minZoom*3).toFixed(2);
-            if (parseFloat(zoomRange.value) < state.minZoom) zoomRange.value = state.minZoom.toFixed(2);
-            const {cx, cy, cw, ch} = getCropBox(canvas.width, canvas.height);
-            const iw = img.width * state.zoom, ih = img.height * state.zoom;
-            state.ox = cx + (cw - iw)/2; state.oy = cy + (ch - ih)/2;
-            clampPan(); draw();
+          $('#cropAspect').onchange=()=>{ state.aspect=parseFloat($('#cropAspect').value)||1; state.minZoom=computeMinZoom();
+            state.zoom=Math.max(state.zoom,state.minZoom);
+            const z=$('#cropZoom'); z.min=state.minZoom.toFixed(2); z.max=(state.minZoom*3).toFixed(2); if(parseFloat(z.value)<state.minZoom) z.value=state.minZoom.toFixed(2);
+            const {cx,cy,cw,ch}=getCropBox(canvas.width,canvas.height); const iw=img.width*state.zoom, ih=img.height*state.zoom;
+            state.ox=cx+(cw-iw)/2; state.oy=cy+(ch-ih)/2; clampPan(); draw();
           };
-          zoomRange.oninput  = ()=> setZoom(parseFloat(zoomRange.value)||state.minZoom);
-          qRange.oninput     = ()=> state.quality = parseFloat(qRange.value)||0.82;
-          maxInput.onchange  = ()=> state.max = Math.max(256, Math.min(2048, parseInt(maxInput.value||768,10)));
+          $('#cropZoom').oninput=()=> setZoom(parseFloat($('#cropZoom').value)||state.minZoom);
+          $('#cropQuality').oninput=()=> state.quality=parseFloat($('#cropQuality').value)||0.82;
+          $('#cropMax').onchange=()=> state.max=Math.max(256, Math.min(2048, parseInt($('#cropMax').value||768,10)));
 
-          document.getElementById('cropCancel').onclick = ()=>{ close(); resolve(null); };
-          document.querySelector('#cropModal [data-close]').onclick = ()=>{ close(); resolve(null); };
-          document.getElementById('cropConfirm').onclick = ()=>{
-            const W = canvas.width, H=canvas.height;
-            const {cx, cy, cw, ch} = getCropBox(W,H);
-            let outW = state.max, outH = Math.round(outW / state.aspect);
-            if (state.aspect < 1) { outH = state.max; outW = Math.round(outH * state.aspect); }
-            const out = document.createElement('canvas'); out.width = outW; out.height = outH;
-            const o2d = out.getContext('2d');
-            const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H;
-            const tctx = tmp.getContext('2d');
-            tctx.fillStyle = '#0f172a'; tctx.fillRect(0,0,W,H);
-            tctx.save(); tctx.beginPath(); tctx.rect(cx, cy, cw, ch); tctx.clip();
-            tctx.drawImage(img, state.ox, state.oy, img.width*state.zoom, img.height*state.zoom);
-            tctx.restore();
-            const cut = tctx.getImageData(cx, cy, cw, ch);
-            const cutCanvas = document.createElement('canvas'); cutCanvas.width = cw; cutCanvas.height = ch;
-            cutCanvas.getContext('2d').putImageData(cut, 0, 0);
-            o2d.drawImage(cutCanvas, 0, 0, outW, outH);
-            out.toBlob((blob)=>{ close(); resolve(blob); }, 'image/jpeg', state.quality);
+          $('#cropCancel').onclick=()=>{ close(); resolve(null); };
+          document.querySelector('#cropModal [data-close]').onclick=()=>{ close(); resolve(null); };
+          $('#cropConfirm').onclick=()=>{
+            const W=canvas.width,H=canvas.height; const {cx,cy,cw,ch}=getCropBox(W,H);
+            let outW=state.max,outH=Math.round(outW/state.aspect); if(state.aspect<1){ outH=state.max; outW=Math.round(outH*state.aspect); }
+            const out=document.createElement('canvas'); out.width=outW; out.height=outH; const o2d=out.getContext('2d');
+            const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; const tctx=tmp.getContext('2d');
+            tctx.fillStyle='#0f172a'; tctx.fillRect(0,0,W,H);
+            tctx.save(); tctx.beginPath(); tctx.rect(cx,cy,cw,ch); tctx.clip();
+            tctx.drawImage(img,state.ox,state.oy,img.width*state.zoom,img.height*state.zoom); tctx.restore();
+            const cut=tctx.getImageData(cx,cy,cw,ch); const cutCanvas=document.createElement('canvas'); cutCanvas.width=cw; cutCanvas.height=ch; cutCanvas.getContext('2d').putImageData(cut,0,0);
+            o2d.drawImage(cutCanvas,0,0,outW,outH); out.toBlob((blob)=>{ close(); resolve(blob); }, 'image/jpeg', state.quality);
           };
 
-          function close(){ 
-            modal.classList.remove('show');
-            modal.setAttribute('aria-hidden','true');
-            window.onmouseup=null; window.ontouchend=null; canvas.onwheel=null;
-          }
-
-          const onResize = ()=>{ setCanvasSize(); state.minZoom = computeMinZoom(); if (state.zoom < state.minZoom) state.zoom = state.minZoom; clampPan(); draw(); };
+          const onResize = ()=>{ const preMin = state.minZoom; setCanvasSize(); state.minZoom=computeMinZoom(); if(state.zoom<state.minZoom) state.zoom=state.minZoom; clampPan(); draw(); };
           window.addEventListener('resize', onResize, { passive:true });
-          modal.addEventListener('transitionend', function cleanup(){
-            if (!modal.classList.contains('show')) {
-              window.removeEventListener('resize', onResize);
-              modal.removeEventListener('transitionend', cleanup);
-            }
-          });
+          modal.addEventListener('transitionend', function cleanup(){ if(!modal.classList.contains('show')){ window.removeEventListener('resize', onResize); modal.removeEventListener('transitionend', cleanup); }});
         });
       }
       return { open };
     })();
 
-    async function ensureBucketOnce(){
-      // حاول إنشاء البكت والسياسات مرة واحدة فقط، ثم تجاهل الأخطاء.
-      if (window.__triedEnsureBucket__) return;
-      window.__triedEnsureBucket__ = true;
-      try { await fetch('/.netlify/functions/storage-ensure'); } catch(_){}
-    }
-
+    // ===== تحميل بيانات الحساب + الفواتير =====
     async function initProfile(){
-      const card = document.getElementById('profileCard');
-      card?.setAttribute('data-ready','0');
-
+      // جاهزية Auth
       const client = window.auth0Client || window.auth;
-      if (!client) return;
-
-      const logged = await client.isAuthenticated?.().catch(()=>false);
-      if (!logged) {
+      if (!client || !client.isAuthenticated){ return; }
+      const logged = await client.isAuthenticated().catch(()=>false);
+      if (!logged){
         await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
         return;
       }
@@ -455,157 +425,136 @@
       try { user = await client.getUser(); } catch(_){}
       try { claims = await client.getIdTokenClaims(); } catch(_){}
 
-      // عرض مبدئي
-      const nameFromCache = localStorage.getItem('athar:displayName');
-      const baseName = nameFromCache || user?.name || user?.nickname || '—';
-      document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = baseName);
-      document.getElementById('u-email').textContent = user?.email || '—';
-      document.getElementById('u-sub').textContent   = user?.sub   || '—';
-      const joined = user?.updated_at || user?.created_at || null;
-      document.getElementById('u-joined').textContent = joined ? new Date(joined).toLocaleDateString('ar-SA') : '—';
+      // تعبئة الهيدر
+      const name = localStorage.getItem('athar:displayName') || user?.name || user?.nickname || '—';
+      $('#displayName').textContent = name;
+      $('#u-email').textContent = user?.email || '—';
+      $('#u-sub').textContent   = user?.sub || '—';
+      $('#cardHeader').setAttribute('data-ready', '1');
 
-      const avatarEl = document.getElementById('u-avatar');
-
-      // حالة الاشتراك
+      // الحالة/الخطة/تواريخ
       const NS_NEW = "https://n-athar.co/";
       const NS_OLD = "https://athar.co/";
-      const st = (claims && (claims[NS_NEW + "status"] || claims[NS_OLD + "status"])) || "";
-      document.getElementById('u-status').textContent = st || '—';
-      const colorBy = {
-        active:{bg:'#dcfce7', fg:'#166534', br:'#bbf7d0', text:'مفعل'},
-        trial:{bg:'#dbeafe', fg:'#1e3a8a', br:'#bfdbfe', text:'تجريبي'},
-        pending:{bg:'#fef9c3', fg:'#854d0e', br:'#fde68a', text:'معلق'},
-        inactive:{bg:'#fee2e2', fg:'#991b1b', br:'#fecaca', text:'غير نشط'}
-      };
-      const badge = document.getElementById('sub-state');
-      if (st) {
-        const m = colorBy[st] || colorBy.inactive;
-        badge.style.display='inline-block'; badge.textContent=m.text;
-        badge.style.background=m.bg; badge.style.color=m.fg; badge.style.borderColor=m.br;
-      }
+      const status = (claims && (claims[NS_NEW+"status"] || claims[NS_OLD+"status"])) || 'inactive';
+      renderBadge(status);
+      $('#u-status-text').textContent = (status==='active'?'مفعّل':status==='trial'?'تجريبي':'غير نشط');
 
-      // تفضيلات من Supabase (تقدّم على صورة Auth0)
-      try {
-        if (window.supa && user?.sub) {
-          const { data: pref } = await window.supa
-            .from('user_prefs').select('*').eq('user_sub', user.sub).maybeSingle();
+      const plan = (claims && (claims[NS_NEW+"plan"] || claims[NS_OLD+"plan"])) || '—';
+      $('#u-plan').textContent = plan;
 
-          if (pref?.display_name) {
-            document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = pref.display_name);
-            localStorage.setItem('athar:displayName', pref.display_name);
+      const joined = user?.updated_at || user?.created_at || null;
+      $('#u-joined').textContent = joined ? new Date(joined).toLocaleDateString('ar-SA') : '—';
+      // “آخر ظهور” من auth0 لا يأتي مباشرًا، نستخدم الآن الوقت الحالي كمؤشر
+      $('#u-last').textContent = new Date().toLocaleString('ar-SA');
+
+      // تاريخ التفعيل/الانتهاء (إن كنتِ تحفظينه في Supabase memberships)
+      try{
+        if (window.supa && user?.email){
+          const { data: m } = await window.supa
+            .from('memberships')
+            .select('start_at,end_at,status,plan')
+            .or(`user_id.eq.${user.sub},email.eq.${(user.email||'').toLowerCase()}`)
+            .order('end_at', { ascending:false })
+            .limit(1);
+          const row = (Array.isArray(m) && m[0]) || null;
+          if (row){
+            const s = row.start_at ? new Date(row.start_at).toLocaleDateString('ar-SA') : '—';
+            const e = row.end_at   ? new Date(row.end_at).toLocaleDateString('ar-SA')   : '—';
+            $('#u-activation').textContent = `${s} → ${e}`;
+            if (row.plan && plan==='—') $('#u-plan').textContent = row.plan;
           }
-          if (pref?.avatar_url) {
-            const url = pref.avatar_url;
-            avatarEl.src = url;
-            localStorage.setItem('athar:avatar', url);
-          } else if (user?.picture) {
-            avatarEl.src = user.picture;
-          }
-          if (pref?.theme_color) document.documentElement.style.setProperty('--primary', pref.theme_color);
-        } else {
-          // لا يوجد supa: اعرض صورة Auth0 لو وُجدت
-          if (!localStorage.getItem('athar:avatar') && user?.picture) avatarEl.src = user.picture;
         }
-      } catch(_){}
+      }catch(_){}
+      $('#cardSub').setAttribute('data-ready','1');
+
+      // صورة الحساب
+      try{
+        if (window.supa && user?.sub){
+          const { data: pref } = await window.supa.from('user_prefs').select('display_name,avatar_url,theme_color').eq('user_sub', user.sub).maybeSingle();
+          if (pref?.display_name){ $('#displayName').textContent = pref.display_name; localStorage.setItem('athar:displayName', pref.display_name); }
+          if (pref?.avatar_url){ $('#u-avatar').src = pref.avatar_url; localStorage.setItem('athar:avatar', pref.avatar_url); }
+          else if (user?.picture){ $('#u-avatar').src = user.picture; }
+          if (pref?.theme_color) document.documentElement.style.setProperty('--primary', pref.theme_color);
+        } else if (user?.picture){
+          $('#u-avatar').src = user.picture;
+        }
+      }catch(_){}
 
       // تعديل الاسم
-      document.getElementById('editNameBtn').onclick = async () => {
-        const cur = document.getElementById('displayName').textContent.trim();
-        const newName = prompt("أدخلي الاسم المعروض:", cur || baseName);
-        if (!newName || !newName.trim()) return;
-        const clean = newName.trim();
-        document.querySelectorAll('.js-user-name,#displayName').forEach(n=> n.textContent = clean);
+      $('#editNameBtn').onclick = async ()=>{
+        const cur = $('#displayName').textContent.trim();
+        const nn = prompt("أدخلي الاسم المعروض:", cur || '');
+        if (!nn || !nn.trim()) return;
+        const clean = nn.trim();
+        $('#displayName').textContent = clean;
         localStorage.setItem('athar:displayName', clean);
-        try {
-          if (window.supa && user?.sub) {
-            await window.supa.from('user_prefs').upsert(
-              { user_sub: user.sub, display_name: clean },
-              { onConflict: 'user_sub' }
-            );
+        try{
+          if (window.supa && user?.sub){
+            await window.supa.from('user_prefs').upsert({ user_sub:user.sub, display_name: clean }, { onConflict:'user_sub' });
             toast("تم تحديث الاسم ✓");
           }
-        } catch(e){ console.error(e); toast("تعذر حفظ الاسم"); }
+        }catch(e){ toast("تعذر حفظ الاسم"); }
       };
 
-      // رفع الصورة (بعد القص/الضغط)
-      const avatarInput = document.getElementById('avatarInput');
-      avatarInput.onchange = async (ev) => {
-        const file = ev.target.files?.[0]; if (!file) return;
-        try {
-          const blob = await cropper.open(file);
-          if (!blob) { ev.target.value=''; return; }
-          const finalFile = new File([blob], 'avatar.jpg', { type:'image/jpeg' });
+      // تغيير الصورة
+      $('#avatarInput').onchange = async (ev)=>{
+        const f = ev.target.files?.[0]; if (!f) return;
+        try{
+          const blob = await cropper.open(f);
+          if (!blob){ ev.target.value=''; return; }
+          const final = new File([blob], 'avatar.jpg', { type:'image/jpeg' });
 
           if (!window.supa) throw new Error("Supabase غير متاح");
           const safe = (user?.sub || 'u').replace(/[|]/g,'_');
           const path = `${safe}/${Date.now()}_avatar.jpg`;
 
-          // الرفع (مع محاولة إنشاء البكت إذا مفقود)
-          let up = await window.supa.storage.from('avatars').upload(path, finalFile, { upsert:true, contentType:'image/jpeg' });
-          if (up.error && /Bucket not found/i.test(up.error.message||up.error)) {
-            await ensureBucketOnce();
-            up = await window.supa.storage.from('avatars').upload(path, finalFile, { upsert:true, contentType:'image/jpeg' });
+          let up = await window.supa.storage.from('avatars').upload(path, final, { upsert:true, contentType:'image/jpeg' });
+          if (up.error && /Bucket not found/i.test(up.error.message||up.error)){
+            try { await fetch('/.netlify/functions/storage-ensure'); } catch(_){}
+            up = await window.supa.storage.from('avatars').upload(path, final, { upsert:true, contentType:'image/jpeg' });
           }
           if (up.error) throw up.error;
 
           const { data } = window.supa.storage.from('avatars').getPublicUrl(path);
           const url = data.publicUrl + `?v=${Date.now()}`;
-          document.getElementById('u-avatar').src = url;
+          $('#u-avatar').src = url;
           localStorage.setItem('athar:avatar', url);
-
-          await window.supa.from('user_prefs').upsert(
-            { user_sub: user.sub, avatar_url: url },
-            { onConflict: 'user_sub' }
-          );
+          await window.supa.from('user_prefs').upsert({ user_sub:user.sub, avatar_url:url }, { onConflict:'user_sub' });
           toast("تم تحديث الصورة ✓");
-        } catch(e){ console.error(e); toast("تعذر رفع الصورة"); }
-        finally { ev.target.value = ''; }
+        }catch(e){ console.error(e); toast("تعذر رفع الصورة"); }
+        finally{ ev.target.value=''; }
       };
 
-      // منتقي الألوان
-      (function initThemePicker(){
-        const root = document.documentElement;
-        const picker = document.getElementById('themePicker');
-        if (!picker) return;
-        const swatches = [...picker.querySelectorAll('button')];
-        picker.dataset.v2 = '1';
-        swatches.forEach(b=>{
-          if (b.hasAttribute('data-color')) b.style.backgroundColor = b.dataset.color;
-          if (b.hasAttribute('data-reset')) b.style.background = '#111827';
-        });
-
-        const saved = localStorage.getItem('athar:theme');
-        if (saved) {
-          root.style.setProperty('--primary', saved);
-          (swatches.find(b=>b.dataset.color === saved) || swatches.find(b=>b.hasAttribute('data-reset')))?.classList.add('is-active');
+      // تحميل الفواتير (من دالة محمية)
+      try{
+        const token = await (window.auth0Client||window.auth).getToken({ audience: "https://api.athar" }).catch(()=>null)
+                    || await (window.auth0Client||window.auth).getTokenSilently?.().catch(()=>null);
+        const res = await fetch('/.netlify/functions/invoices-list', { headers: token ? { Authorization: 'Bearer '+token } : {} });
+        const out = await res.json().catch(()=>({}));
+        if (res.ok && Array.isArray(out.rows) && out.rows.length){
+          const tb = $('#invBody');
+          tb.innerHTML='';
+          out.rows.forEach(r=>{
+            const tr = document.createElement('tr');
+            const d = r.created_at ? new Date(r.created_at).toLocaleString('ar-SA') : '—';
+            const amount = r.amount ? (Number(r.amount)/100).toFixed(2)+' ر.س' : (r.amount_sar ? (Number(r.amount_sar).toFixed(2)+' ر.س') : '—');
+            const st = (r.status||'').toLowerCase();
+            tr.innerHTML = `
+              <td>${d}</td>
+              <td>${amount}</td>
+              <td>${r.gateway || 'moyasar'}</td>
+              <td><span class="pill ${st}">${st||'—'}</span></td>
+              <td>${r.invoice_id || r.provider_event_id || '—'}</td>`;
+            tb.appendChild(tr);
+          });
+          $('#invTable').style.display='table';
+          $('#invEmpty').style.display='none';
         } else {
-          swatches.find(b=>b.hasAttribute('data-reset'))?.classList.add('is-active');
+          $('#invTable').style.display='none';
+          $('#invEmpty').style.display='';
         }
-
-        picker.addEventListener('click', async (e)=>{
-          const btn = e.target.closest('button'); if (!btn) return;
-
-          if (btn.hasAttribute('data-reset')) {
-            localStorage.removeItem('athar:theme');
-            const def = getComputedStyle(root).getPropertyValue('--sea-600').trim() || '#1e40af';
-            root.style.setProperty('--primary', def);
-            swatches.forEach(b=>b.classList.remove('is-active'));
-            btn.classList.add('is-active');
-            try { const u = await (window.auth0Client||window.auth)?.getUser(); if (window.supa && u?.sub) await window.supa.from('user_prefs').upsert({ user_sub:u.sub, theme_color:null }, { onConflict:'user_sub' }); } catch(_){}
-            return;
-          }
-
-          const color = btn.dataset.color;
-          if (!color) return;
-          root.style.setProperty('--primary', color);
-          localStorage.setItem('athar:theme', color);
-          try { const u = await (window.auth0Client||window.auth)?.getUser(); if (window.supa && u?.sub) await window.supa.from('user_prefs').upsert({ user_sub:u.sub, theme_color:color }, { onConflict:'user_sub' }); } catch(_){}
-          swatches.forEach(b=>b.classList.remove('is-active'));
-          btn.classList.add('is-active');
-        });
-      })();
-
-      card?.setAttribute('data-ready','1');
+      }catch(_){}
+      $('#cardInvoices').setAttribute('data-ready','1');
     }
 
     // زر الخروج
@@ -615,20 +564,12 @@
       }
     });
 
-    // تشغيل الصفحة بعد جاهزية الحارس
+    // شغّل عند جاهزية Auth0 (حارسِك يوحّد الحدث)
     window.addEventListener('auth0:ready', initProfile);
     if (window.auth0Client || window.auth) initProfile();
   </script>
 
   <!-- حارس الوصول -->
   <script src="assets/js/require-auth.js"></script>
-
-  <!-- تعطيل أي منطق قديم للثيم يعتمد على نفس العنصر -->
-  <script>
-    (function themeInitLegacyGuard(){
-      const picker = document.getElementById('themePicker');
-      if (picker && picker.dataset && picker.dataset.v2 === '1') { /* no-op */ }
-    })();
-  </script>
 </body>
 </html>
