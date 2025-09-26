@@ -6,7 +6,7 @@ const PLAN_MAP = {
   weekly:   { amount: 1299, days: 7,   name: "أسبوعي 12.99 رس" },
   monthly:  { amount: 2999, days: 30,  name: "شهري 29.99 رس" },
   semiannual: { amount: 16999, days: 180, name: "نصف سنوي 169.99 رس" },
-  annual:   { amount: 29999, days: 365, name: "سنوي 299.99 رس" } // عدّلي السعر إن اختلف
+  annual:   { amount: 33999, days: 365, name: "سنوي 339.99 رس" } // عدّلي السعر إن اختلف
 };
 
 exports.handler = async (event) => {
