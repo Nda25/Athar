@@ -1,7 +1,7 @@
 // /assets/js/require-auth.js
 // =============================================
 // Athar - Front-end Guard (with live user-status check)
-// (نسخة محدثة: CALLBACK ثابت + منع الكاش + حفظ مسار الرجوع الكامل + logout يستخدم RETURN_TO)
+// (نسخة محدثة: CALLBACK ثابت + منع الكاش + حفظ مسار الرجوع الكامل + لودر SDK متعدد)
 // =============================================
 (function AtharGuard(){
   // ---- إعدادات أساسية ----
@@ -9,7 +9,7 @@
   const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
   const API_AUDIENCE = "https://api.n-athar";
 
-  // ✅ Callback ثابت (يجب إضافته في Auth0 Allowed Callback URLs)
+  // ✅ Callback ثابت (أضيفيه في Auth0 Allowed Callback URLs)
   const CALLBACK = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? 'http://localhost:8888/profile.html'
     : 'https://n-athar.co/profile.html';
@@ -93,15 +93,36 @@
     document.getElementById("athar-guard-style")?.remove();
   }
 
+  // ===== لودر SDK قوي مع بدائل =====
   async function ensureAuth0SDK(){
     if (window.auth0?.createAuth0Client || window.createAuth0Client) return;
-    await new Promise((res) => {
-      const sc = document.createElement("script");
-      sc.src = "https://cdn.auth0.com/js/auth0-spa-js/2.2/auth0-spa-js.production.js";
-      sc.onload = res;
-      sc.onerror = () => { console.error("Auth0 SDK load failed"); res(); };
-      document.head.appendChild(sc);
-    });
+
+    const sources = [
+      "https://cdn.auth0.com/js/auth0-spa-js/2.2/auth0-spa-js.production.js",
+      "https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js",
+      "https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js",
+      // ⚠️ اختياري: ضعي نسخة محلية كنسخة احتياطية assets/vendor/auth0-spa-js.production.js
+      "/assets/vendor/auth0-spa-js.production.js"
+    ];
+
+    for (const src of sources){
+      const ok = await new Promise((res)=>{
+        const sc = document.createElement("script");
+        sc.src = src;
+        sc.async = true;
+        sc.defer = true;
+        sc.onload = ()=>res(true);
+        sc.onerror = ()=>res(false);
+        document.head.appendChild(sc);
+      });
+      if (ok && (window.auth0?.createAuth0Client || window.createAuth0Client)) {
+        log("Auth0 SDK loaded from:", src);
+        return;
+      }
+      warn("Auth0 SDK load failed from:", src);
+    }
+    // إذا وصلنا هنا فالتحميل فشل
+    err("Auth0 SDK load failed");
   }
 
   async function buildClient(){
@@ -115,32 +136,14 @@
       cacheLocation: "localstorage",
       useRefreshTokens: true,
       authorizationParams: {
-        // ✅ أهم تعديل: نستخدم CALLBACK الثابت بدل window.location.origin+pathname
-        redirect_uri: CALLBACK,
+        redirect_uri: CALLBACK, // ✅ ثابت
         scope: "openid profile email offline_access"
       }
     };
     if (API_AUDIENCE) options.authorizationParams.audience = API_AUDIENCE;
 
     const c = await f(options);
-
-    // كشف عالمي
-    window.auth0Client = c;
-    window.auth = c;
-
-    // ✅ غلاف logout ليستخدم RETURN_TO افتراضياً مع إمكانية تمرير خيارات إضافية
-    const originalLogout = (c.logout || (()=>Promise.resolve())).bind(c);
-    window.auth.logout = (opts = {}) => {
-      const base = { logoutParams: { returnTo: RETURN_TO } };
-      // دمج أي حقول إضافية من النداء الأصلي
-      const merged = {
-        ...base,
-        ...(opts || {}),
-        logoutParams: { ...(base.logoutParams), ...((opts && opts.logoutParams) || {}) }
-      };
-      return originalLogout(merged);
-    };
-
+    window.auth0Client = c; window.auth = c;
     fireAuthReady();
     return c;
   }
@@ -149,7 +152,7 @@
     if (location.search.includes("code=") && location.search.includes("state=")) {
       try { await client.handleRedirectCallback(); }
       catch (e) { /* ignore */ }
-      // إزالة بارامترات العودة من URL مع الحفاظ على باقي الاستعلامات
+      // إزالة code/state من URL (نُبقِي الـ search الأخرى + الـ hash)
       const url = new URL(location.href);
       url.searchParams.delete('code');
       url.searchParams.delete('state');
@@ -163,7 +166,6 @@
       const token = await (client.getTokenSilently?.() || client.getTokenWithPopup?.());
       if (!token) return { active:false, status:"none", expires_at:null };
 
-      // 👇 منع الكاش بختم وقت
       const res = await fetch("/.netlify/functions/user-status?ts=" + Date.now(), {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store"
@@ -189,7 +191,7 @@
     const slug = fileSlug();
     log("slug:", slug);
 
-    // الصفحات العامة: اسمحي بالدخول بدون تسجيل
+    // الصفحات العامة
     if (PUBLIC.has(slug)) {
       try { const tmp = await buildClient(); await cleanupRedirectIfNeeded(tmp); } catch {}
       log("Public -> allowed");
@@ -203,18 +205,14 @@
     try { client = await buildClient(); await cleanupRedirectIfNeeded(client); }
     catch (e) { err("Auth0 init failed:", e?.message || e); unmountGuardOverlay(); return; }
 
-    // صفحات login-only (profile): تتطلب تسجيل فقط
+    // صفحات login-only (profile)
     if (LOGIN_ONLY.has(slug)) {
       let authed = false;
       try { authed = await client.isAuthenticated(); } catch {}
 
       if (!authed) {
         try {
-          // ✅ نستخدم CALLBACK الثابت
-          // تخزين مسار الرجوع الكامل (path + search + hash)
-          try {
-            localStorage.setItem('afterLogin', location.pathname + location.search + location.hash);
-          } catch(_){}
+          try { localStorage.setItem('afterLogin', location.pathname + location.search + location.hash); } catch(_){}
           await client.loginWithRedirect({
             authorizationParams: { screen_hint: "login", redirect_uri: CALLBACK }
           });
@@ -229,12 +227,11 @@
       return;
     }
 
-    // باقي الصفحات: تتطلب تسجيل دخول + حالة نشطة حسب التصنيف
+    // باقي الصفحات (محميّة حسب الاشتراك)
     let authed = false;
     try { authed = await client.isAuthenticated(); } catch {}
     if (!authed) {
       try {
-        // ✅ نستخدم CALLBACK الثابت + نحفظ المسار الكامل
         try { localStorage.setItem('afterLogin', location.pathname + location.search + location.hash); } catch(_){}
         await client.loginWithRedirect({ authorizationParams: { screen_hint:"login", redirect_uri: CALLBACK } });
         return;
@@ -275,7 +272,7 @@
     enforce();
   }
 
-  // التعامل مع الرجوع من الذاكرة (bfcache)
+  // الرجوع من الذاكرة (bfcache)
   window.addEventListener("pageshow", function(e){
     if (e.persisted) enforce();
   });
@@ -290,5 +287,12 @@
       }
     }
   });
+
+  // ✅ دالة خروج عامة مع returnTo محدد
+  window.atharLogout = function(){
+    try {
+      window.auth?.logout?.({ logoutParams: { returnTo: RETURN_TO }});
+    } catch(e){ warn("logout failed", e); }
+  };
 
 })();
