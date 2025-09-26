@@ -42,7 +42,7 @@ body{
   margin:0;
   font-family:"Cairo",system-ui,Tahoma,Arial;
   color:var(--ink);
-  background: transparent;       /* بدل background-color */
+  background: var(--bg);         /* ✅ استخدمي المتغيّر */
   overflow-x:hidden;
   line-height:1.9;
   font-size:17px;
