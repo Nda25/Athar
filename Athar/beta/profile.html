@@ -5,65 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>حسابي — أثــر</title>
 
-  <!-- خطوط وستايل عام -->
+  <!-- خطوط وهوية -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
+
+  <!-- ملف النمط الأساسي (لو موجود) -->
   <link rel="stylesheet" href="style.css" />
+
   <meta name="color-scheme" content="dark light">
 
-  <!-- تنسيقات سريعة خاصة بالصفحة -->
+  <!-- تحسينات سريعة + fallback لو تعطل style.css -->
   <style>
-    :root{ --primary: var(--sea-600); }
+    :root{
+      --sea-600:#1e40af;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --primary:var(--sea-600);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{ --card:#0f172a; --ink:#e5e7eb; }
+    }
+    body{ background:transparent; color:var(--ink); font-family:"Cairo",system-ui,Tahoma,Arial; margin:0; }
     .container{ width:100%; max-width:980px; margin:0 auto; padding:0 16px; }
-    .page-grid{ display:grid; gap:16px; grid-template-columns: 1fr; }
+    .page-grid{ display:grid; gap:16px; grid-template-columns:1fr; }
     .card[data-ready="0"]{ opacity:0 }
     .card[data-ready="1"]{ opacity:1; transition:opacity .18s ease }
 
-    /* ===== الهيدر الشخصي ===== */
-    .profile-header{
-      display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center;
-      padding:18px; border:1px solid #e5e7eb; border-radius:14px; background:var(--card,#fff);
-    }
-    .ph-avatar{ position:relative; width:96px; height:96px; }
-    .ph-avatar img{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid #eef; background:#f5f7ff; }
-    .ph-edit{ position:absolute; right:-6px; bottom:-6px; background:var(--primary); color:#fff; border-radius:16px; padding:4px 8px; font-size:12px; cursor:pointer; border:1px solid #fff; }
-    .ph-identity{ display:flex; flex-direction:column; gap:4px }
-    .ph-name{ font-weight:800; font-size:22px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-weight:800; border:1px solid transparent; }
+    /* خلفية عامة شفافة (تظهر صورة bg من style.css) */
+    .global-bg,.backdrop,.pattern{ position:fixed; inset:0; pointer-events:none; }
+    .global-bg{ z-index:-2 }
+    .backdrop{ z-index:-3 }
+    .pattern{ z-index:-1 }
+
+    /* هيدر علوي بسيط */
+    .topbar{ position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; gap:10px; padding:12px 18px;
+      backdrop-filter:blur(8px); background:rgba(255,255,255,.7); border-bottom:1px solid rgba(30,64,175,.18); }
+    @media (prefers-color-scheme: dark){ .topbar{ background:rgba(17,24,39,.6) } }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; text-decoration:none; border:1px solid rgba(30,64,175,.25); background:#fff; color:var(--ink); font-weight:800; cursor:pointer }
+    .btn.primary{ background:var(--primary); color:#fff; border-color:transparent }
+
+    header{ padding:48px 18px 28px; text-align:center }
+    .logo{ margin:0; color:var(--primary); font-weight:800; font-size:clamp(44px, 6.2vw, 84px) }
+    .tag{ display:inline-block; margin-top:12px; padding:10px 16px; border-radius:999px; background:rgba(255,255,255,.6); border:1px solid rgba(30,64,175,.25); font-weight:700 }
+
+    .box.card{ border:1px solid #e5e7eb; border-radius:14px; background:var(--card,#fff); padding:16px }
+    .sub{ color:#6b7280; font-size:13px; margin:0 0 12px }
+
+    /* الهيدر الشخصي */
+    .profile-header{ display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; padding:18px; border:1px solid #e5e7eb; border-radius:14px; background:var(--card,#fff); }
+    .ph-avatar{ position:relative; width:96px; height:96px }
+    .ph-avatar img{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid #eef; background:#f5f7ff }
+    .ph-edit{ position:absolute; right:-6px; bottom:-6px; background:var(--primary); color:#fff; border-radius:16px; padding:4px 8px; font-size:12px; cursor:pointer; border:1px solid #fff }
+    .ph-name{ font-weight:800; font-size:22px; display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+    .badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-weight:800; border:1px solid transparent }
     .badge.active{ background:#dcfce7; color:#166534; border-color:#bbf7d0 }
     .badge.trial{ background:#dbeafe; color:#1e3a8a; border-color:#bfdbfe }
     .badge.inactive{ background:#fee2e2; color:#991b1b; border-color:#fecaca }
-    .ph-meta{ color:#6b7280; font-size:13px }
-    .ph-actions{ display:flex; gap:10px; flex-wrap:wrap }
-    .btn.ghost{ background:#fff; border:1px solid #e5e7eb }
 
-    /* ===== الشبكة الرئيسية ===== */
-    .grid-2{ display:grid; gap:16px; grid-template-columns: 1fr 1fr; }
-    @media (max-width:900px){ .grid-2{ grid-template-columns:1fr } .ph-actions{ justify-content:flex-start } }
+    /* شبكة */
+    .grid-2{ display:grid; gap:16px; grid-template-columns:1fr 1fr }
+    @media (max-width:900px){ .grid-2{ grid-template-columns:1fr } .ph-actions{ justify-content:center } .profile-header{ grid-template-columns:1fr; text-align:center; justify-items:center } }
 
-    /* ===== صناديق المحتوى ===== */
-    .box{ border:1px solid #e5e7eb; border-radius:14px; background:var(--card,#fff); padding:16px }
-    .box h3{ margin:0 0 6px; font-weight:800 }
-    .sub{ color:#6b7280; font-size:13px; margin:0 0 12px }
-
-    /* ===== جدول الفواتير ===== */
+    /* جدول فواتير */
     .table{ width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:12px; border:1px solid #e5e7eb }
     .table th, .table td{ padding:10px 12px; text-align:right }
     .table thead th{ background:#f8fafc; font-weight:800; font-size:13px; border-bottom:1px solid #e5e7eb }
     .table tbody tr+tr td{ border-top:1px solid #f1f5f9 }
     .pill{ padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid #e5e7eb; background:#fff }
     .pill.paid{ background:#dcfce7; color:#166534; border-color:#bbf7d0 }
-    .pill.refunded{ background:#f1f5f9; color:#0f172a; }
+    .pill.refunded{ background:#f1f5f9; color:#0f172a }
     .pill.canceled{ background:#fee2e2; color:#991b1b; border-color:#fecaca }
     .pill.expired{ background:#fef9c3; color:#854d0e; border-color:#fde68a }
 
-    /* ===== منتقي الألوان ===== */
+    /* Theme picker */
     .theme-picker{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
     .theme-picker button{ all:unset; display:inline-block; width:28px; height:28px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer }
     .theme-picker button.is-active{ outline:3px solid color-mix(in oklab, var(--primary) 65%, white); outline-offset:2px }
     .theme-note{ font-size:12px; color:#6b7280; margin-top:6px }
 
-    /* ===== مودال القص ===== */
-    .modal{ position:fixed; inset:0; background:#0009; display:none; align-items:center; justify-content:center; z-index:2147483000; }
+    /* محرر القص */
+    .modal{ position:fixed; inset:0; background:#0009; display:none; align-items:center; justify-content:center; z-index:2147483000 }
     .modal.show{ display:flex }
     .modal .panel{ width:min(96vw,760px); background:#0b1324; color:#e5e7eb; border-radius:14px; border:1px solid #1f2a44; box-shadow:0 20px 60px #0006; overflow:hidden }
     .panel .head{ padding:10px 14px; border-bottom:1px solid #1f2a44; display:flex; align-items:center; justify-content:space-between }
@@ -76,25 +96,16 @@
     .ctrls select,.ctrls input[type="range"]{ width:100% }
     .panel .foot{ padding:12px 14px; border-top:1px solid #1f2a44; display:flex; gap:10px; justify-content:flex-end }
     .btn.small{ padding:8px 12px; font-size:14px }
-
-    @media (max-width:900px){
-      .profile-header{ grid-template-columns: 1fr; text-align:center; justify-items:center }
-      .ph-actions{ justify-content:center }
-      .ph-avatar{ width:84px; height:84px }
-      .ph-avatar img{ width:84px; height:84px }
-      .panel .body{ grid-template-columns:1fr }
-      .crop-stage{ height:320px }
-      .panel .foot{ justify-content:space-between }
-    }
   </style>
 </head>
+
 <body>
-  <!-- خلفيات الهوية -->
+  <!-- خلفيات (تظهر لو طبّقتِ style.css) -->
   <div class="global-bg"></div>
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
-  <!-- شريط علوي -->
+  <!-- الشريط العلوي -->
   <div class="topbar">
     <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
     <div class="actions">
@@ -103,23 +114,24 @@
     </div>
   </div>
 
-  <!-- هيدر -->
+  <!-- هيدر الصفحة -->
   <header>
     <div class="hero">
       <div class="hero-plate"></div>
       <h1 class="logo">أثــر</h1>
-      <div class="tag"><span class="dot"></span>صفحتك الشخصية</div>
+      <div class="tag"><span class="dot">•</span> صفحتك الشخصية</div>
     </div>
   </header>
 
-  <!-- محتوى -->
+  <!-- المحتوى -->
   <main>
     <div class="container page-grid">
-      <!-- Header شخصي -->
+      <!-- هيدر الحساب -->
       <section class="profile-header card" id="cardHeader" data-ready="0">
         <div class="ph-avatar">
-          <img id="u-avatar" alt="صورة الحساب" src="assets/img/avatar-placeholder.png"
-               onerror="this.onerror=null;this.src='assets/img/avatar-placeholder.png'">
+          <!-- صورة افتراضية inline — لا 404 -->
+          <img id="u-avatar" alt="صورة الحساب"
+               src="data:image/svg+xml;utf8,<?xml version='1.0' encoding='UTF-8'?><svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23e5f0ff'/><stop offset='100%' stop-color='%23cfe0ff'/></linearGradient></defs><rect width='96' height='96' rx='48' fill='url(%23g)'/><circle cx='48' cy='38' r='16' fill='%23b7c7ff'/><path d='M16 82c6-16 22-24 32-24s26 8 32 24' fill='%23d7e4ff'/></svg>">
           <label class="ph-edit" title="تعديل الصورة">
             ✎
             <input id="avatarInput" type="file" accept="image/*" hidden>
@@ -128,9 +140,9 @@
         <div class="ph-identity">
           <div class="ph-name">
             <span id="displayName" class="js-user-name">—</span>
-            <button id="editNameBtn" class="btn ghost" style="padding:2px 8px">تعديل</button>
+            <button id="editNameBtn" class="btn" style="padding:2px 8px">تعديل</button>
           </div>
-          <div class="ph-meta">
+          <div class="ph-meta" style="color:#6b7280;font-size:13px">
             <span><strong>البريد:</strong> <span id="u-email">—</span></span> ·
             <span><strong>المعرّف:</strong> <span id="u-sub">—</span></span>
           </div>
@@ -138,13 +150,13 @@
         </div>
         <div class="ph-actions">
           <a class="btn" href="pricing.html">إدارة الاشتراك</a>
-          <button id="logout" class="btn ghost">تسجيل الخروج</button>
+          <button id="logout" class="btn">تسجيل الخروج</button>
         </div>
       </section>
 
-      <!-- الشبكة الرئيسية -->
+      <!-- شبكة -->
       <section class="grid-2">
-        <!-- الاشتراك -->
+        <!-- تفاصيل الاشتراك -->
         <div class="box card" id="cardSub" data-ready="0">
           <h3>تفاصيل الاشتراك</h3>
           <p class="sub">معلومات تساعدك على متابعة حالة حسابك.</p>
@@ -157,8 +169,8 @@
           </div>
         </div>
 
-        <!-- تخصيص -->
-        <div class="box">
+        <!-- تخصيص الواجهة -->
+        <div class="box card">
           <h3>تخصيص الواجهة</h3>
           <p class="sub">اختر لونك المفضل—يُحفَظ تلقائيًا لحسابك.</p>
           <div id="themePicker" class="theme-picker" data-v2="1" aria-label="لوحة ألوان">
@@ -191,7 +203,7 @@
     </div>
   </main>
 
-  <!-- ذيل -->
+  <!-- الذيل -->
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
@@ -206,7 +218,7 @@
   </footer>
 
   <script>(function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();</script>
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" style="position:fixed;bottom:18px;right:18px;background:#111827;color:#fff;padding:10px 14px;border-radius:10px;display:none"></div>
 
   <!-- مودال القص -->
   <div id="cropModal" class="modal" aria-hidden="true">
@@ -219,33 +231,26 @@
           <div class="row"><label>التقريب:</label><input id="cropZoom" type="range" min="0.5" max="3" step="0.01" value="1"></div>
           <div class="row"><label>الجودة:</label><input id="cropQuality" type="range" min="0.6" max="0.95" step="0.01" value="0.82"></div>
           <div class="row"><label>الحجم الأقصى(px):</label><input id="cropMax" type="number" min="256" max="2048" step="64" value="768"></div>
-          <div class="row muted" style="font-size:12px">اسحبي الصورة داخل الإطار وغيّري التقريب حسب الحاجة.</div>
+          <div class="row" style="font-size:12px;color:#94a3b8">اسحبي الصورة داخل الإطار وغيّري التقريب.</div>
         </div>
       </div>
       <div class="foot"><button id="cropCancel" class="btn">إلغاء</button><button id="cropConfirm" class="btn primary">حفظ ورفع</button></div>
     </div>
   </div>
 
-  <!-- ======= SDKs وترتيب السكربتات ======= -->
+  <!-- SDKs -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-client.js"></script>
-
-  <!-- إن كان require-auth لا يحمّل SDK Auth0، أبقي هذا السطر -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-  <!-- حارس الوصول قبل أي منطق يعتمد على Auth -->
-  <script src="assets/js/require-auth.js"></script>
-
-  <!-- ملفاتك العامة (لو عندك أشياء مشتركة) -->
-  <script src="app.js"></script>
-  <script src="assets/js/storage.js"></script>
+  <!-- تعريف آمن لـ $ (مرة واحدة فقط) -->
+  <script>
+    window.$ = window.$ || (sel => document.querySelector(sel));
+    function toast(msg){ const t=$('#toast'); if(!t){ alert(msg); return; } t.textContent=msg; t.style.display='block'; setTimeout(()=>{ t.style.display='none'; },1600); }
+  </script>
 
   <!-- منطق الصفحة -->
   <script>
-    const $ = (s)=>document.querySelector(s);
-    function toast(msg){ const t=$('#toast'); if(!t) return alert(msg); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 1600); }
-
-    // ===== شارة الحالة =====
     function renderBadge(status){
       const el = document.getElementById('acc-badge');
       el.classList.remove('active','trial','inactive');
@@ -254,19 +259,16 @@
       else { el.classList.add('inactive'); el.textContent='غير نشط'; }
     }
 
-    // ===== منتقي الألوان =====
     (function initThemePicker(){
       const root = document.documentElement;
       const picker = document.getElementById('themePicker');
       if (!picker) return;
 
-      // تلوين الأزرار
       [...picker.querySelectorAll('button')].forEach(b=>{
         if (b.dataset.color) b.style.backgroundColor = b.dataset.color;
         if (b.hasAttribute('data-reset')) b.style.background = '#111827';
       });
 
-      // حالة مبدئية
       const saved = localStorage.getItem('athar:theme');
       if (saved) {
         root.style.setProperty('--primary', saved);
@@ -304,7 +306,7 @@
       });
     })();
 
-    // ===== محرّر القص =====
+    // محرّر القص (كما هو)
     const cropper = (function(){
       let modal, canvas, ctx, overlay, octx, img = null;
       let state = { zoom:1, minZoom:1, ox:0, oy:0, aspect:1, quality:0.82, max:768 };
@@ -364,8 +366,9 @@
       }
       function open(file){
         return new Promise((resolve)=>{
-          modal = $('#cropModal'); const stage = $('.crop-stage');
-          canvas=$('#cropCanvas'); overlay=$('#cropOverlay');
+          modal = document.getElementById('cropModal');
+          const stage = modal.querySelector('.crop-stage');
+          canvas=document.getElementById('cropCanvas'); overlay=document.getElementById('cropOverlay');
           ctx=canvas.getContext('2d'); octx=overlay.getContext('2d');
           state.zoom=1; state.ox=0; state.oy=0;
 
@@ -376,7 +379,7 @@
             const {cx,cy,cw,ch}=getCropBox(canvas.width,canvas.height);
             const iw=img.width*state.zoom, ih=img.height*state.zoom;
             state.ox=cx+(cw-iw)/2; state.oy=cy+(ch-ih)/2;
-            const z=$('#cropZoom'); z.min=state.minZoom.toFixed(2); z.max=(state.minZoom*3).toFixed(2); z.value=state.minZoom.toFixed(2);
+            const z=document.getElementById('cropZoom'); z.min=state.minZoom.toFixed(2); z.max=(state.minZoom*3).toFixed(2); z.value=state.minZoom.toFixed(2);
             draw();
           };
           image.onerror=()=>{ toast('تعذر قراءة الصورة'); close(); resolve(null); };
@@ -384,29 +387,29 @@
 
           function close(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); window.onmouseup=null; window.ontouchend=null; canvas.onwheel=null; }
 
-          let dragging=false,lastX=0,lastY=0;
           function onDown(e){ e.preventDefault(); dragging=true; lastX=(e.touches?e.touches[0].clientX:e.clientX); lastY=(e.touches?e.touches[0].clientY:e.clientY); }
           function onMove(e){ if(!dragging) return; const x=(e.touches?e.touches[0].clientX:e.clientX),y=(e.touches?e.touches[0].clientY:e.clientY);
             state.ox+=(x-lastX); state.oy+=(y-lastY); lastX=x; lastY=y; clampPan(); draw(); }
           function onUp(){ dragging=false; }
+          let dragging=false,lastX=0,lastY=0;
 
           canvas.onmousedown=onDown; canvas.onmousemove=onMove; window.onmouseup=onUp;
           canvas.ontouchstart=onDown; canvas.ontouchmove=onMove; window.ontouchend=onUp;
           canvas.onwheel=(e)=>{ e.preventDefault(); const f=(e.deltaY<0?1.05:0.95); const r=canvas.getBoundingClientRect(); setZoom(state.zoom*f, e.clientX-r.left, e.clientY-r.top); };
 
-          $('#cropAspect').onchange=()=>{ state.aspect=parseFloat($('#cropAspect').value)||1; state.minZoom=computeMinZoom();
+          document.getElementById('cropAspect').onchange=()=>{ state.aspect=parseFloat(document.getElementById('cropAspect').value)||1; state.minZoom=computeMinZoom();
             state.zoom=Math.max(state.zoom,state.minZoom);
-            const z=$('#cropZoom'); z.min=state.minZoom.toFixed(2); z.max=(state.minZoom*3).toFixed(2); if(parseFloat(z.value)<state.minZoom) z.value=state.minZoom.toFixed(2);
+            const z=document.getElementById('cropZoom'); z.min=state.minZoom.toFixed(2); z.max=(state.minZoom*3).toFixed(2); if(parseFloat(z.value)<state.minZoom) z.value=state.minZoom.toFixed(2);
             const {cx,cy,cw,ch}=getCropBox(canvas.width,canvas.height); const iw=img.width*state.zoom, ih=img.height*state.zoom;
             state.ox=cx+(cw-iw)/2; state.oy=cy+(ch-ih)/2; clampPan(); draw();
           };
-          $('#cropZoom').oninput=()=> setZoom(parseFloat($('#cropZoom').value)||state.minZoom);
-          $('#cropQuality').oninput=()=> state.quality=parseFloat($('#cropQuality').value)||0.82;
-          $('#cropMax').onchange=()=> state.max=Math.max(256, Math.min(2048, parseInt($('#cropMax').value||768,10)));
+          document.getElementById('cropZoom').oninput=()=> setZoom(parseFloat(document.getElementById('cropZoom').value)||state.minZoom);
+          document.getElementById('cropQuality').oninput=()=> state.quality=parseFloat(document.getElementById('cropQuality').value)||0.82;
+          document.getElementById('cropMax').onchange=()=> state.max=Math.max(256, Math.min(2048, parseInt(document.getElementById('cropMax').value||768,10)));
 
-          $('#cropCancel').onclick=()=>{ close(); resolve(null); };
-          document.querySelector('#cropModal [data-close]').onclick=()=>{ close(); resolve(null); };
-          $('#cropConfirm').onclick=()=>{
+          document.getElementById('cropCancel').onclick=()=>{ close(); resolve(null); };
+          modal.querySelector('[data-close]').onclick=()=>{ close(); resolve(null); };
+          document.getElementById('cropConfirm').onclick=()=>{
             const W=canvas.width,H=canvas.height; const {cx,cy,cw,ch}=getCropBox(W,H);
             let outW=state.max,outH=Math.round(outW/state.aspect); if(state.aspect<1){ outH=state.max; outW=Math.round(outH*state.aspect); }
             const out=document.createElement('canvas'); out.width=outW; out.height=outH; const o2d=out.getContext('2d');
@@ -418,7 +421,7 @@
             o2d.drawImage(cutCanvas,0,0,outW,outH); out.toBlob((blob)=>{ close(); resolve(blob); }, 'image/jpeg', state.quality);
           };
 
-          const onResize = ()=>{ const preMin = state.minZoom; setCanvasSize(); state.minZoom=computeMinZoom(); if(state.zoom<state.minZoom) state.zoom=state.minZoom; clampPan(); draw(); };
+          const onResize = ()=>{ setCanvasSize(); state.minZoom=computeMinZoom(); if(state.zoom<state.minZoom) state.zoom=state.minZoom; clampPan(); draw(); };
           window.addEventListener('resize', onResize, { passive:true });
           modal.addEventListener('transitionend', function cleanup(){ if(!modal.classList.contains('show')){ window.removeEventListener('resize', onResize); modal.removeEventListener('transitionend', cleanup); }});
         });
@@ -426,52 +429,39 @@
       return { open };
     })();
 
-    // ===== تحميل بيانات الحساب + الفواتير =====
+    // تحميل بيانات الحساب + الفواتير
     async function initProfile(){
-      // انتظري توفر الكلاينت
-      let client = window.auth0Client || window.auth;
-      if (!client) { setTimeout(initProfile, 200); return; }
-
-      // هل في جلسة؟
-      const isAuthFn = client.isAuthenticated?.bind(client);
-      let logged = false;
-      try { logged = isAuthFn ? await isAuthFn() : false; } catch(_) {}
-
-      // لو مو مسجّل -> تسجيل دخول
-      if (!logged) {
-        try {
-          await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
-        } catch(_){}
+      const client = window.auth0Client || window.auth;
+      if (!client || !client.isAuthenticated){ return; }
+      const logged = await client.isAuthenticated().catch(()=>false);
+      if (!logged){
+        await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
         return;
       }
 
-      // جلب المستخدم والـ claims
       let user=null, claims=null;
       try { user = await client.getUser(); } catch(_){}
-      try { claims = await client.getIdTokenClaims?.(); } catch(_){}
+      try { claims = await client.getIdTokenClaims(); } catch(_){}
 
-      // تعبئة الهيدر
       const name = localStorage.getItem('athar:displayName') || user?.name || user?.nickname || '—';
-      $('#displayName').textContent = name;
-      $('#u-email').textContent = user?.email || '—';
-      $('#u-sub').textContent   = user?.sub || '—';
-      $('#cardHeader').setAttribute('data-ready', '1');
+      document.getElementById('displayName').textContent = name;
+      document.getElementById('u-email').textContent = user?.email || '—';
+      document.getElementById('u-sub').textContent   = user?.sub || '—';
+      document.getElementById('cardHeader').setAttribute('data-ready', '1');
 
-      // الحالة/الخطة/تواريخ
       const NS_NEW = "https://n-athar.co/";
       const NS_OLD = "https://athar.co/";
       const status = (claims && (claims[NS_NEW+"status"] || claims[NS_OLD+"status"])) || 'inactive';
       renderBadge(status);
-      $('#u-status-text').textContent = (status==='active'?'مفعّل':status==='trial'?'تجريبي':'غير نشط');
+      document.getElementById('u-status-text').textContent = (status==='active'?'مفعّل':status==='trial'?'تجريبي':'غير نشط');
 
       const plan = (claims && (claims[NS_NEW+"plan"] || claims[NS_OLD+"plan"])) || '—';
-      $('#u-plan').textContent = plan;
+      document.getElementById('u-plan').textContent = plan;
 
       const joined = user?.updated_at || user?.created_at || null;
-      $('#u-joined').textContent = joined ? new Date(joined).toLocaleDateString('ar-SA') : '—';
-      $('#u-last').textContent = new Date().toLocaleString('ar-SA');
+      document.getElementById('u-joined').textContent = joined ? new Date(joined).toLocaleDateString('ar-SA') : '—';
+      document.getElementById('u-last').textContent = new Date().toLocaleString('ar-SA');
 
-      // تاريخ التفعيل/الانتهاء من Supabase (اختياري)
       try{
         if (window.supa && user?.email){
           const { data: m } = await window.supa
@@ -484,33 +474,31 @@
           if (row){
             const s = row.start_at ? new Date(row.start_at).toLocaleDateString('ar-SA') : '—';
             const e = row.end_at   ? new Date(row.end_at).toLocaleDateString('ar-SA')   : '—';
-            $('#u-activation').textContent = `${s} → ${e}`;
-            if (row.plan && plan==='—') $('#u-plan').textContent = row.plan;
+            document.getElementById('u-activation').textContent = `${s} → ${e}`;
+            if (row.plan && plan==='—') document.getElementById('u-plan').textContent = row.plan;
           }
         }
       }catch(_){}
-      $('#cardSub').setAttribute('data-ready','1');
+      document.getElementById('cardSub').setAttribute('data-ready','1');
 
-      // صورة الحساب + التفضيلات
       try{
         if (window.supa && user?.sub){
           const { data: pref } = await window.supa.from('user_prefs').select('display_name,avatar_url,theme_color').eq('user_sub', user.sub).maybeSingle();
-          if (pref?.display_name){ $('#displayName').textContent = pref.display_name; localStorage.setItem('athar:displayName', pref.display_name); }
-          if (pref?.avatar_url){ $('#u-avatar').src = pref.avatar_url; localStorage.setItem('athar:avatar', pref.avatar_url); }
-          else if (user?.picture){ $('#u-avatar').src = user.picture; }
+          if (pref?.display_name){ document.getElementById('displayName').textContent = pref.display_name; localStorage.setItem('athar:displayName', pref.display_name); }
+          if (pref?.avatar_url){ document.getElementById('u-avatar').src = pref.avatar_url; localStorage.setItem('athar:avatar', pref.avatar_url); }
+          else if (user?.picture){ document.getElementById('u-avatar').src = user.picture; }
           if (pref?.theme_color) document.documentElement.style.setProperty('--primary', pref.theme_color);
         } else if (user?.picture){
-          $('#u-avatar').src = user.picture;
+          document.getElementById('u-avatar').src = user.picture;
         }
       }catch(_){}
 
-      // تعديل الاسم
-      $('#editNameBtn').onclick = async ()=>{
-        const cur = $('#displayName').textContent.trim();
+      document.getElementById('editNameBtn').onclick = async ()=>{
+        const cur = document.getElementById('displayName').textContent.trim();
         const nn = prompt("أدخلي الاسم المعروض:", cur || '');
         if (!nn || !nn.trim()) return;
         const clean = nn.trim();
-        $('#displayName').textContent = clean;
+        document.getElementById('displayName').textContent = clean;
         localStorage.setItem('athar:displayName', clean);
         try{
           if (window.supa && user?.sub){
@@ -520,8 +508,7 @@
         }catch(e){ toast("تعذر حفظ الاسم"); }
       };
 
-      // تغيير الصورة
-      $('#avatarInput').onchange = async (ev)=>{
+      document.getElementById('avatarInput').onchange = async (ev)=>{
         const f = ev.target.files?.[0]; if (!f) return;
         try{
           const blob = await cropper.open(f);
@@ -541,7 +528,7 @@
 
           const { data } = window.supa.storage.from('avatars').getPublicUrl(path);
           const url = data.publicUrl + `?v=${Date.now()}`;
-          $('#u-avatar').src = url;
+          document.getElementById('u-avatar').src = url;
           localStorage.setItem('athar:avatar', url);
           await window.supa.from('user_prefs').upsert({ user_sub:user.sub, avatar_url:url }, { onConflict:'user_sub' });
           toast("تم تحديث الصورة ✓");
@@ -549,16 +536,14 @@
         finally{ ev.target.value=''; }
       };
 
-      // تحميل الفواتير (من Function محميّة)
+      // الفواتير
       try{
-        const token = await (client.getToken?.({ audience: "https://api.athar" }))?.catch(()=>null)
-                    || await client.getTokenSilently?.().catch(()=>null);
-        const res = await fetch('/.netlify/functions/invoices-list', {
-          headers: token ? { Authorization: 'Bearer '+token } : {}
-        });
+        const token = await (window.auth0Client||window.auth).getToken({ audience: "https://api.athar" }).catch(()=>null)
+                    || await (window.auth0Client||window.auth).getTokenSilently?.().catch(()=>null);
+        const res = await fetch('/.netlify/functions/invoices-list', { headers: token ? { Authorization: 'Bearer '+token } : {} });
         const out = await res.json().catch(()=>({}));
         if (res.ok && Array.isArray(out.rows) && out.rows.length){
-          const tb = $('#invBody'); tb.innerHTML='';
+          const tb = document.getElementById('invBody'); tb.innerHTML='';
           out.rows.forEach(r=>{
             const tr = document.createElement('tr');
             const d = r.created_at ? new Date(r.created_at).toLocaleString('ar-SA') : '—';
@@ -572,26 +557,29 @@
               <td>${r.invoice_id || r.provider_event_id || '—'}</td>`;
             tb.appendChild(tr);
           });
-          $('#invTable').style.display='table';
-          $('#invEmpty').style.display='none';
+          document.getElementById('invTable').style.display='table';
+          document.getElementById('invEmpty').style.display='none';
         } else {
-          $('#invTable').style.display='none';
-          $('#invEmpty').style.display='';
+          document.getElementById('invTable').style.display='none';
+          document.getElementById('invEmpty').style.display='';
         }
       }catch(_){}
-      $('#cardInvoices').setAttribute('data-ready','1');
+      document.getElementById('cardInvoices').setAttribute('data-ready','1');
     }
 
-    // زر الخروج
+    // خروج
     document.addEventListener('click', (e)=>{
       if (e.target && e.target.id === 'logout') {
         (window.auth0Client || window.auth)?.logout({ logoutParams:{ returnTo: window.location.origin } });
       }
     });
 
-    // شغّل عند جاهزية Auth0 ثم احتياط تشغيل مباشر
+    // شغّل عند جاهزية Auth0
     window.addEventListener('auth0:ready', initProfile);
     if (window.auth0Client || window.auth) initProfile();
   </script>
+
+  <!-- حارس الوصول (لا يعرّف $) -->
+  <script src="assets/js/require-auth.js"></script>
 </body>
 </html>
