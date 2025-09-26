@@ -112,32 +112,60 @@
   <script src="/assets/js/supabase-client.js"></script>
   <script src="assets/js/storage.js"></script>
 
+  <!-- رسالة نجاح الدفع عند العودة بـ ?paid=1 -->
   <script>
-  // ===== Helper for toasts =====
-  const $ = (s)=>document.querySelector(s);
-  const toast = (m)=>{ const t=$('#toast'); if(!t){alert(m);return;} t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1300); };
+    (function(){
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('paid') === '1') {
+        const msg = document.createElement('div');
+        msg.textContent = "🎉 تم الدفع بنجاح! شكرًا لاشتراكك في أثر.";
+        msg.style.position = "fixed";
+        msg.style.top = "20px";
+        msg.style.left = "50%";
+        msg.style.transform = "translateX(-50%)";
+        msg.style.background = "#16a34a";
+        msg.style.color = "white";
+        msg.style.padding = "14px 22px";
+        msg.style.borderRadius = "10px";
+        msg.style.fontSize = "16px";
+        msg.style.zIndex = "9999";
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 5000);
+      }
+    })();
+  </script>
 
-  let auth0; // will set below
+  <script>
+  // ===== Helpers =====
+  const $ = (s)=>document.querySelector(s);
+  const toast = (m)=>{ const t=$('#toast'); if(!t){alert(m);return;} t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500); };
+
+  let auth0; // سنضبطه لاحقًا
 
   // ===== Auth0 init =====
   (async function initAuth(){
+    // ثبّتي الـ audience ليطابق دوال Netlify (غيّريه إن كان عندك قيمة مختلفة)
     const AUTH0_DOMAIN   = (window.__CFG && window.__CFG.auth0_domain)   || "dev-2f0fmbtj6u8o7en4.us.auth0.com";
     const AUTH0_CLIENTID = (window.__CFG && window.__CFG.auth0_clientId) || "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+    const API_AUDIENCE   = (window.__CFG && window.__CFG.api_audience)   || "https://api.athar";
     const REDIRECT_URI   = window.location.origin + window.location.pathname;
 
     auth0 = await createAuth0Client({
       domain: AUTH0_DOMAIN,
       clientId: AUTH0_CLIENTID,
-      authorizationParams: { redirect_uri: REDIRECT_URI, audience: (window.__CFG && window.__CFG.api_audience) || "https://api.n-athar" }
+      authorizationParams: { redirect_uri: REDIRECT_URI, audience: API_AUDIENCE }
     });
 
+    // معالجة الرجوع من Auth0
     if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
       try {
         const { appState } = await auth0.handleRedirectCallback();
         if (appState?.plan) localStorage.setItem('intended_plan', appState.plan);
-      } catch(e) { console.warn("Auth0 callback error:", e); }
+      } catch(e) {
+        console.warn("Auth0 callback error:", e);
+      }
       window.history.replaceState({}, document.title, window.location.pathname);
-      // بعد العودة من تسجيل الدخول: لو فيه نية اشتراك، كمّلي مباشرة
+      // استئناف الاشتراك لو كان فيه نية محفوظة
       const intended = localStorage.getItem('intended_plan');
       if (intended) subscribe(intended);
     }
@@ -158,8 +186,7 @@
       try { user = await auth0.getUser(); } catch(_){}
       loginBtn.textContent = user?.email || 'حسابي';
       logoutBtn.style.display = 'inline-flex';
-      whoami.style.display='block';
-      whoami.textContent = user?.email ? ('مسجّل كـ ' + user.email) : 'حسابك نشِط';
+      if (whoami) { whoami.style.display='block'; whoami.textContent = user?.email ? ('مسجّل كـ ' + user.email) : 'حسابك نشِط'; }
       document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(b=>b.textContent="إكمال الاشتراك");
     } else {
       loginBtn.textContent = 'الدخول / إنشاء حساب';
@@ -172,7 +199,7 @@
   $('#login')?.addEventListener('click', () => auth0.loginWithRedirect({ appState: { plan: localStorage.getItem('intended_plan') || null } }));
   $('#logout')?.addEventListener('click', () => auth0.logout({ logoutParams:{ returnTo: window.location.origin }}) );
 
-  // ===== Promo redeem (اختياري — يبقى كما هو ويُتحقق بالخادم) =====
+  // ===== تفعيل الرمز الترويجي (اختياري) =====
   $('#redeem')?.addEventListener('click', async ()=>{
     const code = ($('#promo')?.value || '').trim();
     const msgEl = $('#redeem-msg'); msgEl.textContent = '';
@@ -203,7 +230,7 @@
     // تأكدي من تسجيل الدخول
     if (!(await isLogged())){
       await auth0.loginWithRedirect({ appState: { plan } });
-      return; // سيُستأنف تلقائيًا بعد العودة
+      return; // سيُستأنف تلقائيًا بعد الرجوع
     }
 
     // اجلب الرمز الترويجي (اختياري)
@@ -211,7 +238,7 @@
 
     btn.disabled = true; const old = btn.textContent; btn.textContent = "جارِ التوجيه…";
     try{
-      const token = await auth0.getTokenSilently();
+      const token = await auth0.getTokenSilently(); // يعتمد على audience أعلاه
       const res = await fetch('/.netlify/functions/payments-create-invoice', {
         method:'POST',
         headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
@@ -219,14 +246,16 @@
       });
       const j = await res.json().catch(()=>({}));
       if(!res.ok || !j?.url){
+        console.warn('create-invoice error:', j);
         alert(j?.error || 'تعذّر إنشاء الفاتورة'); btn.disabled=false; btn.textContent=old; return;
       }
       window.location.href = j.url; // تحويل مباشر لصفحة الدفع من ميسّر
     }catch(e){
-      alert('خطأ مفاجئ'); btn.disabled=false; btn.textContent=old;
+      console.error(e);
+      alert('تعذّر الحصول على الإذن. جرّبي تسجيل الخروج ثم الدخول مرة أخرى.'); 
+      btn.disabled=false; btn.textContent=old;
     }
   }
-  // إتاحة الدالة عالميًا للأزرار
   window.subscribe = subscribe;
 
   // حدّث الواجهة عند تغيّر حالة Auth0
