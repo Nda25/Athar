@@ -4,9 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>حسابي — أثــر</title>
+
+  <!-- خطوط وستايل عام -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <meta name="color-scheme" content="dark light">
+
+  <!-- تنسيقات سريعة خاصة بالصفحة -->
   <style>
     :root{ --primary: var(--sea-600); }
     .container{ width:100%; max-width:980px; margin:0 auto; padding:0 16px; }
@@ -58,7 +62,7 @@
     .theme-picker button.is-active{ outline:3px solid color-mix(in oklab, var(--primary) 65%, white); outline-offset:2px }
     .theme-note{ font-size:12px; color:#6b7280; margin-top:6px }
 
-    /* ===== مودال القص (كما كان) ===== */
+    /* ===== مودال القص ===== */
     .modal{ position:fixed; inset:0; background:#0009; display:none; align-items:center; justify-content:center; z-index:2147483000; }
     .modal.show{ display:flex }
     .modal .panel{ width:min(96vw,760px); background:#0b1324; color:#e5e7eb; border-radius:14px; border:1px solid #1f2a44; box-shadow:0 20px 60px #0006; overflow:hidden }
@@ -85,10 +89,12 @@
   </style>
 </head>
 <body>
+  <!-- خلفيات الهوية -->
   <div class="global-bg"></div>
   <div class="backdrop"></div>
   <div class="pattern"></div>
 
+  <!-- شريط علوي -->
   <div class="topbar">
     <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
     <div class="actions">
@@ -97,6 +103,7 @@
     </div>
   </div>
 
+  <!-- هيدر -->
   <header>
     <div class="hero">
       <div class="hero-plate"></div>
@@ -105,9 +112,10 @@
     </div>
   </header>
 
+  <!-- محتوى -->
   <main>
     <div class="container page-grid">
-      <!-- ===== Header شخصي ===== -->
+      <!-- Header شخصي -->
       <section class="profile-header card" id="cardHeader" data-ready="0">
         <div class="ph-avatar">
           <img id="u-avatar" alt="صورة الحساب" src="assets/img/avatar-placeholder.png"
@@ -134,7 +142,7 @@
         </div>
       </section>
 
-      <!-- ===== الشبكة الرئيسية ===== -->
+      <!-- الشبكة الرئيسية -->
       <section class="grid-2">
         <!-- الاشتراك -->
         <div class="box card" id="cardSub" data-ready="0">
@@ -183,6 +191,7 @@
     </div>
   </main>
 
+  <!-- ذيل -->
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
@@ -217,10 +226,17 @@
     </div>
   </div>
 
-  <!-- SDKs -->
+  <!-- ======= SDKs وترتيب السكربتات ======= -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/supabase-client.js"></script>
+
+  <!-- إن كان require-auth لا يحمّل SDK Auth0، أبقي هذا السطر -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+
+  <!-- حارس الوصول قبل أي منطق يعتمد على Auth -->
+  <script src="assets/js/require-auth.js"></script>
+
+  <!-- ملفاتك العامة (لو عندك أشياء مشتركة) -->
   <script src="app.js"></script>
   <script src="assets/js/storage.js"></script>
 
@@ -238,7 +254,7 @@
       else { el.classList.add('inactive'); el.textContent='غير نشط'; }
     }
 
-    // ===== تلوين الواجهة (تُحفظ محليًا + Supabase user_prefs) =====
+    // ===== منتقي الألوان =====
     (function initThemePicker(){
       const root = document.documentElement;
       const picker = document.getElementById('themePicker');
@@ -288,10 +304,9 @@
       });
     })();
 
-    // ===== محرّر القص (نفس أسلوبك السابق) =====
+    // ===== محرّر القص =====
     const cropper = (function(){
       let modal, canvas, ctx, overlay, octx, img = null;
-      let dragging = false, lastX=0, lastY=0;
       let state = { zoom:1, minZoom:1, ox:0, oy:0, aspect:1, quality:0.82, max:768 };
 
       function getCropBox(W,H){
@@ -413,18 +428,27 @@
 
     // ===== تحميل بيانات الحساب + الفواتير =====
     async function initProfile(){
-      // جاهزية Auth
-      const client = window.auth0Client || window.auth;
-      if (!client || !client.isAuthenticated){ return; }
-      const logged = await client.isAuthenticated().catch(()=>false);
-      if (!logged){
-        await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
+      // انتظري توفر الكلاينت
+      let client = window.auth0Client || window.auth;
+      if (!client) { setTimeout(initProfile, 200); return; }
+
+      // هل في جلسة؟
+      const isAuthFn = client.isAuthenticated?.bind(client);
+      let logged = false;
+      try { logged = isAuthFn ? await isAuthFn() : false; } catch(_) {}
+
+      // لو مو مسجّل -> تسجيل دخول
+      if (!logged) {
+        try {
+          await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
+        } catch(_){}
         return;
       }
 
+      // جلب المستخدم والـ claims
       let user=null, claims=null;
       try { user = await client.getUser(); } catch(_){}
-      try { claims = await client.getIdTokenClaims(); } catch(_){}
+      try { claims = await client.getIdTokenClaims?.(); } catch(_){}
 
       // تعبئة الهيدر
       const name = localStorage.getItem('athar:displayName') || user?.name || user?.nickname || '—';
@@ -445,10 +469,9 @@
 
       const joined = user?.updated_at || user?.created_at || null;
       $('#u-joined').textContent = joined ? new Date(joined).toLocaleDateString('ar-SA') : '—';
-      // “آخر ظهور” من auth0 لا يأتي مباشرًا، نستخدم الآن الوقت الحالي كمؤشر
       $('#u-last').textContent = new Date().toLocaleString('ar-SA');
 
-      // تاريخ التفعيل/الانتهاء (إن كنتِ تحفظينه في Supabase memberships)
+      // تاريخ التفعيل/الانتهاء من Supabase (اختياري)
       try{
         if (window.supa && user?.email){
           const { data: m } = await window.supa
@@ -468,7 +491,7 @@
       }catch(_){}
       $('#cardSub').setAttribute('data-ready','1');
 
-      // صورة الحساب
+      // صورة الحساب + التفضيلات
       try{
         if (window.supa && user?.sub){
           const { data: pref } = await window.supa.from('user_prefs').select('display_name,avatar_url,theme_color').eq('user_sub', user.sub).maybeSingle();
@@ -526,15 +549,16 @@
         finally{ ev.target.value=''; }
       };
 
-      // تحميل الفواتير (من دالة محمية)
+      // تحميل الفواتير (من Function محميّة)
       try{
-        const token = await (window.auth0Client||window.auth).getToken({ audience: "https://api.athar" }).catch(()=>null)
-                    || await (window.auth0Client||window.auth).getTokenSilently?.().catch(()=>null);
-        const res = await fetch('/.netlify/functions/invoices-list', { headers: token ? { Authorization: 'Bearer '+token } : {} });
+        const token = await (client.getToken?.({ audience: "https://api.athar" }))?.catch(()=>null)
+                    || await client.getTokenSilently?.().catch(()=>null);
+        const res = await fetch('/.netlify/functions/invoices-list', {
+          headers: token ? { Authorization: 'Bearer '+token } : {}
+        });
         const out = await res.json().catch(()=>({}));
         if (res.ok && Array.isArray(out.rows) && out.rows.length){
-          const tb = $('#invBody');
-          tb.innerHTML='';
+          const tb = $('#invBody'); tb.innerHTML='';
           out.rows.forEach(r=>{
             const tr = document.createElement('tr');
             const d = r.created_at ? new Date(r.created_at).toLocaleString('ar-SA') : '—';
@@ -565,12 +589,9 @@
       }
     });
 
-    // شغّل عند جاهزية Auth0 (حارسِك يوحّد الحدث)
+    // شغّل عند جاهزية Auth0 ثم احتياط تشغيل مباشر
     window.addEventListener('auth0:ready', initProfile);
     if (window.auth0Client || window.auth) initProfile();
   </script>
-
-  <!-- حارس الوصول -->
-  <script src="assets/js/require-auth.js"></script>
 </body>
 </html>
