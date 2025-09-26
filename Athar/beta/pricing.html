@@ -42,10 +42,22 @@
         <p id="whoami" class="muted" style="text-align:center; margin:8px 0 0; display:none"></p>
 
         <div id="choose-plan" class="plans" style="margin-top:22px">
-          <div class="plan"><h4>أسبوعي</h4><div class="price">12.99 ر.س</div><button class="btn primary" data-plan="weekly">اشترك الآن</button></div>
-          <div class="plan"><h4>شهري</h4><div class="price">29.99 ر.س</div><button class="btn primary" data-plan="monthly">اشترك الآن</button></div>
-          <div class="plan"><h4>نصف سنوي</h4><div class="price">169.99 ر.س</div><button class="btn primary" data-plan="semi">اشترك الآن</button></div>
-          <div class="plan"><h4>سنوي</h4><div class="price">339.99 ر.س</div><button class="btn primary" data-plan="annual">اشترك الآن</button></div>
+          <div class="plan">
+            <h4>أسبوعي</h4><div class="price">12.99 ر.س</div>
+            <button class="btn primary" data-plan="weekly" onclick="subscribe('weekly')">اشترك الآن</button>
+          </div>
+          <div class="plan">
+            <h4>شهري</h4><div class="price">29.99 ر.س</div>
+            <button class="btn primary" data-plan="monthly" onclick="subscribe('monthly')">اشترك الآن</button>
+          </div>
+          <div class="plan">
+            <h4>نصف سنوي</h4><div class="price">169.99 ر.س</div>
+            <button class="btn primary" data-plan="semiannual" onclick="subscribe('semiannual')">اشترك الآن</button>
+          </div>
+          <div class="plan">
+            <h4>سنوي</h4><div class="price">339.99 ر.س</div>
+            <button class="btn primary" data-plan="annual" onclick="subscribe('annual')">اشترك الآن</button>
+          </div>
         </div>
 
         <div class="box" style="margin-top:18px">
@@ -101,15 +113,23 @@
   <script src="assets/js/storage.js"></script>
 
   <script>
-  (async function(){
-    const $ = (s)=>document.querySelector(s);
-    const toast = (m)=>{ const t=$('#toast'); if(!t){alert(m);return;} t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1300); };
+  // ===== Helper for toasts =====
+  const $ = (s)=>document.querySelector(s);
+  const toast = (m)=>{ const t=$('#toast'); if(!t){alert(m);return;} t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1300); };
 
+  let auth0; // will set below
+
+  // ===== Auth0 init =====
+  (async function initAuth(){
     const AUTH0_DOMAIN   = (window.__CFG && window.__CFG.auth0_domain)   || "dev-2f0fmbtj6u8o7en4.us.auth0.com";
     const AUTH0_CLIENTID = (window.__CFG && window.__CFG.auth0_clientId) || "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
     const REDIRECT_URI   = window.location.origin + window.location.pathname;
 
-    const auth0 = await createAuth0Client({ domain: AUTH0_DOMAIN, clientId: AUTH0_CLIENTID, authorizationParams: { redirect_uri: REDIRECT_URI } });
+    auth0 = await createAuth0Client({
+      domain: AUTH0_DOMAIN,
+      clientId: AUTH0_CLIENTID,
+      authorizationParams: { redirect_uri: REDIRECT_URI, audience: (window.__CFG && window.__CFG.api_audience) || "https://api.n-athar" }
+    });
 
     if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
       try {
@@ -117,89 +137,100 @@
         if (appState?.plan) localStorage.setItem('intended_plan', appState.plan);
       } catch(e) { console.warn("Auth0 callback error:", e); }
       window.history.replaceState({}, document.title, window.location.pathname);
+      // بعد العودة من تسجيل الدخول: لو فيه نية اشتراك، كمّلي مباشرة
+      const intended = localStorage.getItem('intended_plan');
+      if (intended) subscribe(intended);
     }
-
-    async function isLogged(){ try { return await auth0.isAuthenticated(); } catch(_) { return false; } }
-    async function refreshAuthUI(){
-      const logged = await isLogged();
-      const loginBtn  = $('#login');
-      const logoutBtn = $('#logout');
-      const whoami    = $('#whoami');
-
-      if (logged) {
-        let user=null;
-        try { user = await auth0.getUser(); } catch(_){}
-        loginBtn.textContent = user?.email || 'حسابي';
-        logoutBtn.style.display = 'inline-flex';
-        whoami.style.display='block';
-        whoami.textContent = user?.email ? ('مسجّل كـ ' + user.email) : 'حسابك نشِط';
-      } else {
-        loginBtn.textContent = 'الدخول / إنشاء حساب';
-        logoutBtn.style.display = 'none';
-        if (whoami) whoami.style.display='none';
-      }
-
-      document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(btn=>{
-        btn.textContent = logged ? 'إكمال الاشتراك' : 'اشترك الآن';
-      });
-    }
-
-    $('#login')?.addEventListener('click', () => auth0.loginWithRedirect({ appState: { plan: localStorage.getItem('intended_plan') || null } }));
-    $('#logout')?.addEventListener('click', () => auth0.logout({ logoutParams:{ returnTo: window.location.origin }}) );
-
-    async function saveIntent(plan){
-      let email=null, sub=null;
-      try { const user = await auth0.getUser(); email=user?.email||null; sub=user?.sub||null; } catch(_){}
-      const payload = { plan, user_id: sub, email, status:'pending', created_at:new Date().toISOString() };
-
-      const sb = (window.supa && typeof window.supa.from==='function') ? window.supa
-               : (window.supabaseClient && typeof window.supabaseClient.from==='function') ? window.supabaseClient
-               : null;
-
-      if (sb) {
-        try{ const { error } = await sb.from('payment_intents').insert(payload); if (error) throw error; toast('تم تسجيل طلب الاشتراك ✓'); return; }
-        catch(err){ console.warn('saveIntent supabase error -> fallback to localStorage', err); }
-      }
-      const list = JSON.parse(localStorage.getItem('athar:intents')||'[]'); list.push(payload);
-      localStorage.setItem('athar:intents', JSON.stringify(list));
-      toast('تم تسجيل طلب الاشتراك ✓');
-    }
-
-    document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const plan = btn.getAttribute('data-plan');
-        localStorage.setItem('intended_plan', plan);
-        if (!(await isLogged())) { await auth0.loginWithRedirect({ appState: { plan } }); return; }
-        await saveIntent(plan);
-      });
-    });
-
-    // تفعيل الرمز الترويجي
-    $('#redeem')?.addEventListener('click', async ()=>{
-      const code = ($('#promo')?.value || '').trim();
-      const msgEl = $('#redeem-msg'); msgEl.textContent = '';
-      if (!code){ msgEl.textContent = 'الرجاء إدخال الرمز'; return; }
-
-      try{
-        // نطلب توكن وصول مع audience المناسب
-        const token = await window.auth0SafeGetToken?.() || await auth0.getTokenSilently({ authorizationParams: { audience: (window.__CFG && window.__CFG.api_audience) || 'https://api.athar' }});
-        const res = await fetch('/.netlify/functions/promo-redeem', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ code })
-        });
-        const out = await res.text();
-        if (!res.ok) { msgEl.textContent = out || 'تعذر تفعيل الرمز'; return; }
-        const j = JSON.parse(out);
-        msgEl.textContent = 'تم التفعيل ✓، تاريخ الانتهاء: ' + (new Date(j.expires_at)).toLocaleDateString('ar-SA');
-      }catch(e){
-        msgEl.textContent = 'تعذر تفعيل الرمز';
-      }
-    });
 
     await refreshAuthUI();
-    window.addEventListener('auth0:ready', refreshAuthUI);
   })();
+
+  async function isLogged(){ try { return await auth0.isAuthenticated(); } catch(_) { return false; } }
+
+  async function refreshAuthUI(){
+    const logged = await isLogged();
+    const loginBtn  = $('#login');
+    const logoutBtn = $('#logout');
+    const whoami    = $('#whoami');
+
+    if (logged) {
+      let user=null;
+      try { user = await auth0.getUser(); } catch(_){}
+      loginBtn.textContent = user?.email || 'حسابي';
+      logoutBtn.style.display = 'inline-flex';
+      whoami.style.display='block';
+      whoami.textContent = user?.email ? ('مسجّل كـ ' + user.email) : 'حسابك نشِط';
+      document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(b=>b.textContent="إكمال الاشتراك");
+    } else {
+      loginBtn.textContent = 'الدخول / إنشاء حساب';
+      logoutBtn.style.display = 'none';
+      if (whoami) whoami.style.display='none';
+      document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(b=>b.textContent="اشترك الآن");
+    }
+  }
+
+  $('#login')?.addEventListener('click', () => auth0.loginWithRedirect({ appState: { plan: localStorage.getItem('intended_plan') || null } }));
+  $('#logout')?.addEventListener('click', () => auth0.logout({ logoutParams:{ returnTo: window.location.origin }}) );
+
+  // ===== Promo redeem (اختياري — يبقى كما هو ويُتحقق بالخادم) =====
+  $('#redeem')?.addEventListener('click', async ()=>{
+    const code = ($('#promo')?.value || '').trim();
+    const msgEl = $('#redeem-msg'); msgEl.textContent = '';
+    if (!code){ msgEl.textContent = 'الرجاء إدخال الرمز'; return; }
+
+    try{
+      const token = await auth0.getTokenSilently();
+      const res = await fetch('/.netlify/functions/promo-redeem', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ code })
+      });
+      const out = await res.text();
+      if (!res.ok) { msgEl.textContent = out || 'تعذر تفعيل الرمز'; return; }
+      const j = JSON.parse(out);
+      msgEl.textContent = 'تم التفعيل ✓، تاريخ الانتهاء: ' + (new Date(j.expires_at)).toLocaleDateString('ar-SA');
+    }catch(e){
+      msgEl.textContent = 'تعذر تفعيل الرمز';
+    }
+  });
+
+  // ===== الاشتراك: إنشاء فاتورة ميسّر والذهاب إليها =====
+  async function subscribe(plan){
+    const btn = document.querySelector(`[data-plan="${plan}"]`);
+    if (!btn) return;
+    localStorage.setItem('intended_plan', plan);
+
+    // تأكدي من تسجيل الدخول
+    if (!(await isLogged())){
+      await auth0.loginWithRedirect({ appState: { plan } });
+      return; // سيُستأنف تلقائيًا بعد العودة
+    }
+
+    // اجلب الرمز الترويجي (اختياري)
+    const promo = ($('#promo')?.value || '').trim() || null;
+
+    btn.disabled = true; const old = btn.textContent; btn.textContent = "جارِ التوجيه…";
+    try{
+      const token = await auth0.getTokenSilently();
+      const res = await fetch('/.netlify/functions/payments-create-invoice', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ plan, promo })
+      });
+      const j = await res.json().catch(()=>({}));
+      if(!res.ok || !j?.url){
+        alert(j?.error || 'تعذّر إنشاء الفاتورة'); btn.disabled=false; btn.textContent=old; return;
+      }
+      window.location.href = j.url; // تحويل مباشر لصفحة الدفع من ميسّر
+    }catch(e){
+      alert('خطأ مفاجئ'); btn.disabled=false; btn.textContent=old;
+    }
+  }
+  // إتاحة الدالة عالميًا للأزرار
+  window.subscribe = subscribe;
+
+  // حدّث الواجهة عند تغيّر حالة Auth0
+  window.addEventListener('auth0:ready', refreshAuthUI);
   </script>
 
   <script src="assets/js/require-auth.js"></script>
