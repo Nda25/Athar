@@ -113,7 +113,7 @@ const MOYASAR_SECRET = process.env.MOYASAR_SK;
           price_after_discount_sar: discounted
         },
         // (اختياري) رابط الرجوع بعد الدفع
-        // redirect_url: "https://n-athar.co/pricing.html?paid=1"
+      redirect_url: "https://n-athar.co/pricing.html?paid=1"
       })
     });
 
