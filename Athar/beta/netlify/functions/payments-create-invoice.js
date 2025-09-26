@@ -17,7 +17,7 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
 
-// أسعار الخطط بالـ ر.س
+// أسعار الخطط بالريال
 const PRICE_SAR = {
   weekly:     12.99,
   monthly:    29.99,
@@ -25,7 +25,7 @@ const PRICE_SAR = {
   annual:     339.99
 };
 
-// أيام كل خطة
+// عدد الأيام لكل خطة
 const PERIOD_DAYS = {
   weekly: 7,
   monthly: 30,
@@ -61,7 +61,7 @@ exports.handler = async (event) => {
       return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
     }
 
-    // 1) تحقق المستخدم
+    // 1) تحقق المستخدم (JWT)
     const gate = await requireUser(event);
     if (!gate.ok) return { statusCode: gate.status, headers: CORS, body: gate.error };
 
@@ -75,19 +75,24 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "Plan not supported" }) };
     }
 
-    // 3) السعر
+    // 3) السعر النهائي (هللات)
     const base = PRICE_SAR[plan];
     const percent = await resolvePromoPercent(promo);
     const discounted = Math.max(0, base * (1 - percent / 100));
     const amountHalala = Math.round(discounted * 100);
 
     // 4) إعدادات ميسّر
-    const MOYASAR_SECRET = process.env.MOYASAR_SK; // ضامنين إنها موجودة
+    const MOYASAR_SECRET = process.env.MOYASAR_SK;
     if (!MOYASAR_SECRET) {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "Missing Moyasar secret" }) };
     }
 
-    // 5) إنشاء الفاتورة
+    // 5) إنشاء الفاتورة لدى ميسّر
+    // ملاحظة: بعض إصدارات الـ API تستخدم return_url وأخرى redirect_url،
+    // فنرسل الحقلين لضمان التوافق.
+    const callbackUrl = "https://n-athar.co/.netlify/functions/payments-webhook";  // ← Webhook
+    const returnUrl   = "https://n-athar.co/pricing.html?paid=1";                 // ← رجوع للمستخدم
+
     const msRes = await fetch("https://api.moyasar.com/v1/invoices", {
       method: "POST",
       headers: {
@@ -107,8 +112,9 @@ exports.handler = async (event) => {
           price_sar: base,
           price_after_discount_sar: discounted
         },
-        // 👇 رابط الرجوع بعد الدفع (علّميه عندك)
-        redirect_url: "https://n-athar.co/pricing.html?paid=1"
+        callback_url: callbackUrl,   // 👈 مهم للويبهوك
+        return_url:   returnUrl,     // بعض الوثائق
+        redirect_url: returnUrl      // وبعضها يستخدم هذا الاسم
       })
     });
 
@@ -123,7 +129,7 @@ exports.handler = async (event) => {
       return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: "Moyasar create invoice failed" }) };
     }
 
-    // 6) نحفظ الـ intent + رابط الفاتورة
+    // 6) نحفظ intent + رابط الفاتورة
     await supabase.from("payment_intents").insert([{
       user_id: gate.user?.sub || null,
       email: (gate.user?.email || "").toLowerCase(),
@@ -132,11 +138,11 @@ exports.handler = async (event) => {
       amount_sar: discounted,
       gateway: "moyasar",
       invoice_id: out.id || null,
-      invoice_url: out.url || null,   // 👈 مهم
+      invoice_url: out.url || null,
       status: "created"
     }]);
 
-    // 7) نعيد رابط الدفع (ممكن نستعمله كرابط “عرض/سداد/إيصال”)
+    // 7) نعيد رابط الدفع
     return {
       statusCode: 200,
       headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
