@@ -538,7 +538,7 @@
 
       // الفواتير
       try{
-        const token = await (window.auth0Client||window.auth).getToken({ audience: "https://api.athar" }).catch(()=>null)
+        const token = await (window.auth0Client||window.auth).getToken({ audience: "https://api.n-athar" }).catch(()=>null)
                     || await (window.auth0Client||window.auth).getTokenSilently?.().catch(()=>null);
         const res = await fetch('/.netlify/functions/invoices-list', { headers: token ? { Authorization: 'Bearer '+token } : {} });
         const out = await res.json().catch(()=>({}));
