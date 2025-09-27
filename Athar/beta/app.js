@@ -285,3 +285,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     await toggleAdminButton();
   }
 });
+
+/* ======================= إعلان أعلى الموقع ======================= */
+// إعلان أعلى الموقع — يظهر إذا كان هناك إعلان فعّال الآن
+async function mountAnnouncementBar(){
+  try{
+    const res = await fetch('/.netlify/functions/admin-announcement?latest=1', { cache:'no-store' });
+    if (!res.ok) return;
+    const ann = await res.json();
+    if (!ann?.active || !ann?.text) return;
+
+    const bar = document.createElement('div');
+    bar.dir='rtl';
+    bar.style.cssText="background:#1f2937;color:#fff;padding:10px 14px;text-align:center;font-weight:800";
+    bar.textContent = ann.text;
+    document.body.prepend(bar);
+  }catch(_){}
+}
+document.addEventListener('DOMContentLoaded', mountAnnouncementBar);
+
+/* ======================= شريط تجربة 3 أيام (اختياري) ======================= */
+// يظهر فقط إذا كانت حالة المستخدم "trial" ويوجد claim باسم trial_expires
+async function mountTrialBanner(){
+  try{
+    if (!window.auth?.isAuthenticated) return;
+    const ok = await window.auth.isAuthenticated();
+    if (!ok) return;
+
+    const claims = await window.auth.getIdTokenClaims();
+    const NS  = "https://n-athar.co/";
+    const ALT = "https://athar.co/";
+    const status = claims?.[NS+"status"] ?? claims?.[ALT+"status"];
+    if (status !== "trial") return;
+
+    const expStr = claims?.[NS+"trial_expires"] ?? claims?.[ALT+"trial_expires"];
+    if (!expStr) return; // لو ما وصل claim للتاريخ ما نعرض عداد
+
+    const exp = new Date(expStr);
+    if (isNaN(+exp)) return;
+
+    function daysLeft(){
+      const ms = exp.getTime() - Date.now();
+      return Math.max(0, Math.ceil(ms / (1000*60*60*24)));
+    }
+
+    const dLeft = daysLeft();
+    if (dLeft <= 0) return;
+
+    const bar = document.createElement('div');
+    bar.dir = 'rtl';
+    bar.id  = 'trial-banner';
+    bar.style.cssText = "background:#fde68a;color:#1f2937;padding:10px 14px;text-align:center;font-weight:700";
+    bar.textContent = `أنتِ على الخطة التجريبية — تبقّى ${dLeft} يوم`;
+
+    // لو فيه شريط إعلان، ضعي التجربة تحته مباشرة
+    const first = document.body.firstElementChild;
+    if (first) {
+      first.insertAdjacentElement('afterend', bar);
+    } else {
+      document.body.prepend(bar);
+    }
+
+    // تحديث نص العدّاد يوميًا تقريبًا
+    const timer = setInterval(() => {
+      const n = daysLeft();
+      if (n <= 0) { clearInterval(timer); bar.remove(); return; }
+      bar.textContent = `أنتِ على الخطة التجريبية — تبقّى ${n} يوم`;
+    }, 60 * 60 * 1000); // تحديث كل ساعة
+  }catch(_){}
+}
+// نفّذي شريط التجربة بعد جاهزية Auth0 (لو claims متاحة)
+window.addEventListener('auth0:ready', mountTrialBanner, { once:true });
