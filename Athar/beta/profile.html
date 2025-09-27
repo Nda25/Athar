@@ -666,7 +666,7 @@ document.getElementById('u-joined').textContent =
 
       const { data, error } = await window.supa
         .from('current_membership')
-        .select('status, plan, expires_at')
+        .select('status, plan, end_at')
         .or(ors.join(','))
         .maybeSingle();
 
