@@ -632,28 +632,29 @@ document.getElementById('u-joined').textContent =
         sub: u?.sub || u?.user_id || u?.user?.sub || null
       };
     } catch { return { email: "", sub: null }; }
+  }function setMembershipUI({ status, plan, end_at, expires_at }) {
+  const expiry = expires_at || end_at || null;  // ← ناخذ الموجود
+  const isActive = status === 'active' && (!expiry || new Date(expiry) > new Date());
+
+  // ← اعتبري manual أيضًا مدفوع
+  const normalizedPlan = ['weekly','monthly','semi','annual','manual'].includes(plan)
+    ? 'paid'
+    : (plan || '—');
+
+  const badge = document.querySelector('[data-membership-badge]');
+  const planEl = document.querySelector('[data-membership-plan]');
+  const expEl  = document.querySelector('[data-membership-exp]');
+  if (badge){
+    badge.textContent = isActive ? 'مفعّل' : 'غير نشط';
+    badge.classList.remove('trial','active','inactive');
+    badge.classList.add(isActive ? 'active' : 'inactive');
   }
+  if (planEl) planEl.textContent = normalizedPlan;
+  if (expEl)  expEl.textContent  = expiry ? new Date(expiry).toLocaleDateString('ar-SA') : '—';
 
-  function setMembershipUI({ status, plan, expires_at }) {
-    const badge = document.querySelector('[data-membership-badge]');
-    const planEl = document.querySelector('[data-membership-plan]');
-    const expEl  = document.querySelector('[data-membership-exp]');
-
-    const isActive = status === 'active' && (!expires_at || new Date(expires_at) > new Date());
-
-    if (badge) {
-      badge.textContent = isActive ? 'مفعّل' : 'غير نشط';
-      badge.classList.remove('trial','active','inactive');
-      badge.classList.add(isActive ? 'active' : 'inactive');
-    }
-
-    const normalizedPlan = ['weekly','monthly','semi','annual'].includes(plan) ? 'paid' : (plan || '—');
-    if (planEl) planEl.textContent = normalizedPlan;
-    if (expEl)  expEl.textContent  = expires_at ? new Date(expires_at).toLocaleDateString('ar-SA') : '—';
-
-    const statusText = document.getElementById('u-status-text');
-    if (statusText) statusText.textContent = isActive ? 'مفعّل' : 'غير نشط';
-  }
+  const st = document.getElementById('u-status-text');
+  if (st) st.textContent = isActive ? 'مفعّل' : 'غير نشط';
+}
 
   async function fetchLiveMembership() {
     try {
