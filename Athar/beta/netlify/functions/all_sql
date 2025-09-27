@@ -1,0 +1,193 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.complaint_messages (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  complaint_id uuid NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  sender text NOT NULL CHECK (sender = ANY (ARRAY['user'::text, 'admin'::text])),
+  body text NOT NULL,
+  CONSTRAINT complaint_messages_pkey PRIMARY KEY (id),
+  CONSTRAINT complaint_messages_complaint_id_fkey FOREIGN KEY (complaint_id) REFERENCES public.complaints(id)
+);
+CREATE TABLE public.complaints (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_email text NOT NULL,
+  user_name text,
+  subject text NOT NULL,
+  type text NOT NULL CHECK (type = ANY (ARRAY['complaint'::text, 'suggestion'::text])),
+  message text NOT NULL,
+  order_number text,
+  channel text DEFAULT 'web'::text,
+  status text NOT NULL DEFAULT 'new'::text CHECK (status = ANY (ARRAY['new'::text, 'in_progress'::text, 'resolved'::text, 'rejected'::text])),
+  admin_notes text,
+  CONSTRAINT complaints_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.ksa_curriculum_v2025 (
+  id bigint NOT NULL DEFAULT nextval('ksa_curriculum_v2025_id_seq'::regclass),
+  subject text NOT NULL,
+  grade integer NOT NULL CHECK (grade >= 1 AND grade <= 12),
+  unit_name text,
+  lesson_name text NOT NULL,
+  objectives jsonb NOT NULL DEFAULT '[]'::jsonb,
+  vocab jsonb NOT NULL DEFAULT '[]'::jsonb,
+  outcomes text,
+  CONSTRAINT ksa_curriculum_v2025_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.memberships (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_sub text,
+  plan text NOT NULL DEFAULT 'free'::text CHECK (plan = ANY (ARRAY['free'::text, 'paid'::text, 'promo'::text, 'trial'::text, 'manual'::text])),
+  status text NOT NULL DEFAULT 'active'::text CHECK (status = ANY (ARRAY['pending'::text, 'active'::text, 'expired'::text, 'canceled'::text])),
+  start_at timestamp with time zone NOT NULL DEFAULT now(),
+  end_at timestamp with time zone,
+  activated_at timestamp with time zone,
+  activated_by text,
+  note text,
+  created_at timestamp with time zone DEFAULT now(),
+  email text UNIQUE,
+  user_id text UNIQUE,
+  tenant_id text,
+  updated_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone,
+  first_activation_date timestamp with time zone,
+  CONSTRAINT memberships_pkey PRIMARY KEY (id),
+  CONSTRAINT memberships_user_fkey FOREIGN KEY (user_sub) REFERENCES public.users(auth0_sub)
+);
+CREATE TABLE public.miyad_events (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id text NOT NULL,
+  subj text NOT NULL,
+  class text NOT NULL,
+  day text NOT NULL,
+  slot integer NOT NULL CHECK (slot >= 1 AND slot <= 12),
+  date date NOT NULL,
+  color text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT miyad_events_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.miyad_settings (
+  user_id text NOT NULL,
+  email text,
+  reminders_enabled boolean NOT NULL DEFAULT false,
+  remind_days_before integer NOT NULL DEFAULT 2 CHECK (remind_days_before >= 1 AND remind_days_before <= 14),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT miyad_settings_pkey PRIMARY KEY (user_id)
+);
+CREATE TABLE public.payment_intents (
+  id bigint NOT NULL DEFAULT nextval('payment_intents_id_seq'::regclass),
+  user_sub text NOT NULL,
+  email text,
+  plan text NOT NULL CHECK (plan = ANY (ARRAY['weekly'::text, 'monthly'::text, 'semi'::text, 'annual'::text])),
+  price_cents integer,
+  currency text DEFAULT 'SAR'::text,
+  status text NOT NULL DEFAULT 'recorded'::text CHECK (status = ANY (ARRAY['recorded'::text, 'awaiting_payment'::text, 'paid'::text, 'failed'::text, 'canceled'::text])),
+  note text,
+  created_at timestamp with time zone DEFAULT now(),
+  invoice_id text,
+  CONSTRAINT payment_intents_pkey PRIMARY KEY (id),
+  CONSTRAINT payment_intents_user_fkey FOREIGN KEY (user_sub) REFERENCES public.users(auth0_sub)
+);
+CREATE TABLE public.payments_log (
+  id bigint NOT NULL DEFAULT nextval('payments_log_id_seq'::regclass),
+  gateway text NOT NULL,
+  provider_event_id text,
+  event_type text,
+  object text,
+  status text,
+  amount numeric,
+  currency text,
+  email text,
+  user_sub text,
+  raw jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  invoice_id text,
+  invoice_url text,
+  amount_sar numeric,
+  CONSTRAINT payments_log_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.promo_codes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  code text NOT NULL UNIQUE,
+  kind text NOT NULL CHECK (kind = ANY (ARRAY['extend_days'::text, 'extend_months'::text])),
+  amount integer NOT NULL,
+  max_uses integer DEFAULT 1,
+  used_count integer DEFAULT 0,
+  expires_at timestamp with time zone,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT promo_codes_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.promo_redemptions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  code text NOT NULL,
+  user_email text,
+  user_id text,
+  redeemed_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT promo_redemptions_pkey PRIMARY KEY (id),
+  CONSTRAINT promo_redemptions_code_fkey FOREIGN KEY (code) REFERENCES public.promo_codes(code)
+);
+CREATE TABLE public.promos (
+  code text NOT NULL,
+  percent integer NOT NULL CHECK (percent >= 0 AND percent <= 100),
+  active boolean NOT NULL DEFAULT true,
+  expires_at timestamp with time zone,
+  max_uses integer,
+  used_count integer NOT NULL DEFAULT 0,
+  kind text DEFAULT 'percent'::text,
+  notes text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT promos_pkey PRIMARY KEY (code)
+);
+CREATE TABLE public.site_announcements (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  text text NOT NULL,
+  active boolean NOT NULL DEFAULT true,
+  start_at timestamp with time zone,
+  expires_at timestamp with time zone,
+  tenant_id text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT site_announcements_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.tool_usage (
+  id bigint NOT NULL DEFAULT nextval('tool_usage_id_seq'::regclass),
+  user_sub text NOT NULL,
+  tool_name text NOT NULL,
+  path text,
+  meta jsonb DEFAULT '{}'::jsonb,
+  user_agent text,
+  ip text,
+  used_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT tool_usage_pkey PRIMARY KEY (id),
+  CONSTRAINT tool_usage_user_sub_fkey FOREIGN KEY (user_sub) REFERENCES public.users(auth0_sub)
+);
+CREATE TABLE public.user_prefs (
+  user_sub text NOT NULL,
+  display_name text,
+  avatar_url text,
+  theme_color text,
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_prefs_pkey PRIMARY KEY (user_sub)
+);
+CREATE TABLE public.user_status (
+  user_id text NOT NULL,
+  email text NOT NULL,
+  full_name text,
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'active'::text, 'banned'::text])),
+  plan text,
+  expires_at timestamp with time zone,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT user_status_pkey PRIMARY KEY (user_id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  auth0_sub text NOT NULL UNIQUE,
+  email text,
+  name text,
+  picture text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT users_pkey PRIMARY KEY (id)
+);
