@@ -18,7 +18,7 @@ const supabase = createClient(
 // ===== إعدادات الخطط =====
 // الأسعار بالريال السعودي (SAR)
 const PRICE_SAR = {
-  weekly: 12.99,
+  weekly: 0.05,
   monthly: 29.99,
   semi: 169.99,     // نصف سنوي
   annual: 339.99
