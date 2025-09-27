@@ -146,7 +146,7 @@
             <span><strong>البريد:</strong> <span id="u-email">—</span></span> ·
             <span><strong>المعرّف:</strong> <span id="u-sub">—</span></span>
           </div>
-          <div id="acc-badge" class="badge inactive">غير نشط</div>
+<div id="acc-badge" class="badge inactive" data-membership-badge>غير نشط</div>
         </div>
         <div class="ph-actions">
           <a class="btn" href="pricing.html">إدارة الاشتراك</a>
@@ -164,8 +164,8 @@
             <div class="muted">تاريخ التسجيل:</div><div id="u-joined">—</div>
             <div class="muted">آخر ظهور:</div><div id="u-last">—</div>
             <div class="muted">حالة الحساب:</div><div id="u-status-text">—</div>
-            <div class="muted">الخطة الحالية:</div><div id="u-plan">—</div>
-            <div class="muted">تاريخ تفعيل/انتهاء:</div><div id="u-activation">—</div>
+<div class="muted">الخطة الحالية:</div><div id="u-plan" data-membership-plan>—</div>
+<div class="muted">تاريخ تفعيل/انتهاء:</div><div id="u-activation" data-membership-exp>—</div>
           </div>
         </div>
 
@@ -449,16 +449,26 @@
       document.getElementById('u-sub').textContent   = user?.sub || '—';
       document.getElementById('cardHeader').setAttribute('data-ready', '1');
 
-      const NS_NEW = "https://n-athar.co/";
-      const NS_OLD = "https://athar.co/";
-      const status = (claims && (claims[NS_NEW+"status"] || claims[NS_OLD+"status"])) || 'inactive';
-      renderBadge(status);
-      document.getElementById('u-status-text').textContent = (status==='active'?'مفعّل':status==='trial'?'تجريبي':'غير نشط');
+const NS_NEW = "https://n-athar.co/";
+const NS_OLD = "https://athar.co/";
 
-      const plan = (claims && (claims[NS_NEW+"plan"] || claims[NS_OLD+"plan"])) || '—';
-      document.getElementById('u-plan').textContent = plan;
-      // 👇 إن كانت تجربة، أعرض تاريخ البداية/الانتهاء من الـclaims
-if (status === 'trial') {
+// ❌ لا نحدّث الشارة ولا النص من الـclaims (نتركه للداتابيس)
+// const status = (claims && (claims[NS_NEW+"status"] || claims[NS_OLD+"status"])) || 'inactive';
+// renderBadge(status);
+// document.getElementById('u-status-text').textContent = (status==='active'?'مفعّل':status==='trial'?'تجريبي':'غير نشط');
+
+// ❌ لا نضبط الخطة من الـclaims (نتركها للداتابيس)
+// const plan = (claims && (claims[NS_NEW+"plan"] || claims[NS_OLD+"plan"])) || '—';
+// document.getElementById('u-plan').textContent = plan;
+
+// ✅ قيم مؤقتة لحين ما يجي التحديث من fetchLiveMembership()
+document.getElementById('u-status-text').textContent = '—';
+document.getElementById('u-plan').textContent = '—';
+
+// ✅ لو كانت تجربة (trial) ممكن نخلي عرض تواريخ التجربة من الـclaims كما هو
+//   (اختياري: تتركينه إذا مهم لكِ إظهار تواريخ التجربة من Auth0)
+const statusFromClaims = (claims && (claims[NS_NEW+"status"] || claims[NS_OLD+"status"])) || 'inactive';
+if (statusFromClaims === 'trial') {
   const trialStarted = claims?.[NS_NEW+"trial_started"] ?? claims?.[NS_OLD+"trial_started"] ?? null;
   const trialExpires = claims?.[NS_NEW+"trial_expires"] ?? claims?.[NS_OLD+"trial_expires"] ?? null;
 
@@ -610,7 +620,62 @@ document.getElementById('u-joined').textContent =
     window.addEventListener('auth0:ready', initProfile);
     if (window.auth0Client || window.auth) initProfile();
   </script>
+<script>
+  async function getAuthIdentity() {
+    try {
+      const cli = window.auth0Client || window.auth;
+      const u = await cli.getUser();
+      return {
+        email: (u?.email || "").toLowerCase(),
+        sub: u?.sub || u?.user_id || u?.user?.sub || null
+      };
+    } catch { return { email: "", sub: null }; }
+  }
 
+  function setMembershipUI({ status, plan, expires_at }) {
+    const badge = document.querySelector('[data-membership-badge]');
+    const planEl = document.querySelector('[data-membership-plan]');
+    const expEl  = document.querySelector('[data-membership-exp]');
+
+    const isActive = status === 'active' && (!expires_at || new Date(expires_at) > new Date());
+
+    if (badge) {
+      badge.textContent = isActive ? 'مفعّل' : 'غير نشط';
+      badge.classList.remove('trial','active','inactive');
+      badge.classList.add(isActive ? 'active' : 'inactive');
+    }
+
+    const normalizedPlan = ['weekly','monthly','semi','annual'].includes(plan) ? 'paid' : (plan || '—');
+    if (planEl) planEl.textContent = normalizedPlan;
+    if (expEl)  expEl.textContent  = expires_at ? new Date(expires_at).toLocaleDateString('ar-SA') : '—';
+
+    const statusText = document.getElementById('u-status-text');
+    if (statusText) statusText.textContent = isActive ? 'مفعّل' : 'غير نشط';
+  }
+
+  async function fetchLiveMembership() {
+    try {
+      const { email, sub } = await getAuthIdentity();
+      if (!email && !sub) return;
+
+      const ors = [];
+      if (sub)   ors.push(`user_sub.eq.${sub}`);
+      if (email) ors.push(`email.eq.${email}`);
+
+      const { data, error } = await window.supa
+        .from('current_membership')
+        .select('status, plan, expires_at')
+        .or(ors.join(','))
+        .maybeSingle();
+
+      if (!error && data) setMembershipUI(data);
+    } catch (e) {
+      console.warn('fetchLiveMembership error', e);
+    }
+  }
+
+  window.addEventListener('auth0:ready', fetchLiveMembership);
+</script>
   <!-- حارس الوصول (لا يعرّف $) -->
   <script src="assets/js/require-auth.js"></script>
 </body>
