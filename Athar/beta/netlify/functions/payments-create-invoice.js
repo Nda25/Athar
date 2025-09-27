@@ -77,8 +77,15 @@ exports.handler = async (event) => {
 console.log("=== DEBUG userObj ===");
 console.log(JSON.stringify(userObj, null, 2));
     const user_sub = userObj.sub || userObj.user?.sub || null;
-    const email    = (userObj.email || userObj.user?.email || "").toLowerCase();
 
+// نحاول نلقط الإيميل من أكثر من مكان
+let email = (
+  userObj.email ||
+  userObj.user?.email ||
+  userObj["https://athar.co/email"] ||   // بعض الـ claims تكون داخل namespace
+  userObj["https://athar/email"] ||
+  ""
+).toLowerCase();
     if (!user_sub && !email) {
       return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
     }
