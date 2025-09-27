@@ -171,21 +171,27 @@ exports.handler = async (event) => {
     }]).catch(() => {});
 
     // نسجّل في payments_log أيضًا (يساعد في صفحة الفواتير)
-    await supabase.from("payments_log").insert([{
-      gateway: "moyasar",
-      provider_event_id: out.id || null,
-      event_type: "invoice_created",
-      object: "invoice",
-      status: out.status || "created",
-      amount: discounted,
-      currency: "SAR",
-      email,
-      user_sub,
-      raw: out || null,
-      invoice_id: out.id || null,
-      invoice_url: out.url || null,
-      amount_sar: discounted
-    }]).catch(() => {});
+const { error: insertError1 } = await supabase
+  .from("payments_log")
+  .insert([{
+    gateway: "moyasar",
+    provider_event_id: out.id || null,
+    event_type: "invoice_created",
+    object: "invoice",
+    status: out.status || "created",
+    amount: discounted,
+    currency: "SAR",
+    email,
+    user_sub,
+    raw: out || null,
+    invoice_id: out.id || null,
+    invoice_url: out.url || null,
+    amount_sar: discounted
+  }]);
+
+if (insertError1) {
+  console.error("payments_log insert error:", insertError1.message);
+}
 
     // 7) نعيد رابط الدفع للمستخدم
     return {
