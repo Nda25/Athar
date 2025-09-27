@@ -1,42 +1,76 @@
 // /.netlify/functions/invoices-list.js
-// إرجاع فواتير المستخدم الحالي (محمي)
+// إرجاع فواتير/حركات الدفع للمستخدم الحالي (محمي)
 
 const { createClient } = require("@supabase/supabase-js");
 const { requireUser } = require("./_auth.js");
+const { CORS, preflight } = require("./_cors.js");
 
+// ===== Supabase (Service Role) =====
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE,
-  { auth: { persistSession: false } }
+  {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE}` } }
+  }
 );
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "GET, OPTIONS"
-};
-
 exports.handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
-  if (event.httpMethod !== "GET")     return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
+  // CORS preflight
+  const pf = preflight(event);
+  if (pf) return pf;
 
+  if (event.httpMethod !== "GET") {
+    return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
+  }
+
+  // تحقق المستخدم (JWT)
   const gate = await requireUser(event);
-  if (!gate.ok) return { statusCode: gate.status, headers: CORS, body: gate.error };
+  const userObj = gate?.user || gate;
+  const isOk = gate?.ok !== false;
+  if (!isOk || !userObj) {
+    return {
+      statusCode: gate?.status || 401,
+      headers: CORS,
+      body: JSON.stringify({ error: gate?.error || "Unauthorized" })
+    };
+  }
 
-  const email = (gate.user?.email || "").toLowerCase();
-  const sub   = gate.user?.sub || null;
-  if (!email && !sub) return { statusCode: 400, headers: CORS, body: "No user identity" };
+  const email = (userObj.email || userObj.user?.email || "").toLowerCase();
+  const sub   = userObj.sub || userObj.user?.sub || null;
+
+  if (!email && !sub) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "No user identity" }) };
+  }
 
   try {
-    const { data, error } = await supabase
+    let q = supabase
       .from("payments_log")
       .select("created_at,gateway,event_type,object,status,amount,currency,provider_event_id,invoice_id,invoice_url,email,user_sub,amount_sar")
-      .or(`email.eq.${email},user_sub.eq.${sub}`)
       .order("created_at", { ascending: false })
       .limit(50);
 
-    if (error) return { statusCode: 500, headers: CORS, body: error.message };
-    return { statusCode: 200, headers: { ...CORS, "Content-Type":"application/json; charset=utf-8" }, body: JSON.stringify({ ok:true, rows: data||[] }) };
+    // فلترة بحسب الهوية المتوفرة
+    if (email && sub) {
+      // ملاحظة: Supabase .or تعمل كنص — نبقيها بسيطة بالقيم المباشرة
+      q = q.or(`email.eq.${email},user_sub.eq.${sub}`);
+    } else if (email) {
+      q = q.eq("email", email);
+    } else if (sub) {
+      q = q.eq("user_sub", sub);
+    }
+
+    const { data, error } = await q;
+    if (error) {
+      return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: error.message }) };
+    }
+
+    return {
+      statusCode: 200,
+      headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ ok: true, rows: data || [] })
+    };
   } catch (e) {
-    return { statusCode: 500, headers: CORS, body: e.message || "Server error" };
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: e.message || "Server error" }) };
   }
+};
