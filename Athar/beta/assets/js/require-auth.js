@@ -5,9 +5,9 @@
 // =============================================
 (function AtharGuard(){
   // ---- إعدادات أساسية ----
-  const AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-  const AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-  const API_AUDIENCE = "https://api.n-athar";
+  const AUTH0_DOMAIN  = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+  const AUTH0_CLIENT  = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
+  const API_AUDIENCE  = "https://api.n-athar";
 
   // ✅ Callback ثابت (أضيفيه في Auth0 Allowed Callback URLs)
   const CALLBACK = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
@@ -31,6 +31,7 @@
     api_audience: API_AUDIENCE
   });
 
+  // حالة جاهزية عامة
   let __AUTH_READY_FIRED__ = false;
   function fireAuthReady(){
     if (__AUTH_READY_FIRED__) return;
@@ -46,10 +47,10 @@
   }
 
   // خرائط الصفحات
-  const PUBLIC = new Set(["index","pricing","programs","privacy","terms","refund-policy","whatsapp"]);
-  const LOGIN_ONLY = new Set(["profile"]);
-  const TOOLS = new Set(["athar","darsi","masar","miyad","ethraa","mulham","mueen"]);
-  const ADMIN = "admin";
+  const PUBLIC      = new Set(["index","pricing","programs","privacy","terms","refund-policy","whatsapp"]);
+  const LOGIN_ONLY  = new Set(["profile"]);
+  const TOOLS       = new Set(["athar","darsi","masar","miyad","ethraa","mulham","mueen"]);
+  const ADMIN       = "admin";
 
   const toPricing = (msg) => {
     try { if (msg) sessionStorage.setItem("athar:msg", msg); } catch {}
@@ -180,95 +181,124 @@
     } catch { return { active:false, status:"none", expires_at:null }; }
   }
 
-  // ======== المنفّذ الرئيسي ========
+  // ——— enforce: حارس الوصول الموحّد (يدعم trial من الـID Token) ———
+  let client = null;
+  let slug   = fileSlug();
+
   async function enforce(){
-    addMetaNoStore();
-    mountGuardOverlay();
-    const slug = fileSlug();
-    log("slug:", slug);
-
-    // الصفحات العامة
-    if (PUBLIC.has(slug)) {
-      try {
-        const tmp = await buildClient();
-        const redirected = await cleanupRedirectIfNeeded(tmp);
-        if (!redirected) { unmountGuardOverlay(); fireAuthReady(); }
-      } catch { unmountGuardOverlay(); fireAuthReady(); }
-      return;
-    }
-
-    // تهيئة العميل
-    let client;
     try {
-      client = await buildClient();
-      const redirected = await cleanupRedirectIfNeeded(client);
-      if (redirected) return; // رجّعناه بالفعل
-    } catch (e) { err("Auth0 init failed:", e?.message || e); unmountGuardOverlay(); return; }
+      // 1) جلب الحالة من الـ backend
+      let status = await fetchUserStatus(client).catch(() => ({ active:false, status:"inactive" }));
+      log("live status (from API):", status);
 
-    // صفحات login-only (profile)
-    if (LOGIN_ONLY.has(slug)) {
-      let authed = false;
-      try { authed = await client.isAuthenticated(); } catch {}
-
-      if (!authed) {
-        const returnTo = location.pathname + location.search + location.hash;
-        try { localStorage.setItem('afterLogin', returnTo); } catch(_){}
-        try {
-          await client.loginWithRedirect({
-            authorizationParams: { screen_hint: "login", redirect_uri: CALLBACK },
-            appState: { returnTo }
-          });
-          return;
-        } catch { return toPricing("الرجاء تسجيل الدخول للوصول إلى هذه الصفحة."); }
+      // 2) مزج حالة التجربة من الـID Token (مصدر الحقيقة لحالة trial)
+      try {
+        const claims = await client.getIdTokenClaims();
+        const NS  = "https://n-athar.co/";
+        const ALT = "https://athar.co/";
+        const tokenStatus = claims?.[NS + "status"] ?? claims?.[ALT + "status"];
+        if (!status.active && tokenStatus === "trial") {
+          status = { ...status, active: true, status: "trial" };
+          log("trial enabled via ID token claim");
+        }
+      } catch (e) {
+        warn("could not read ID token claims for trial check", e);
       }
 
+      // 3) قواعد الوصول
+      // الأدمن يتطلب active فقط (لا يسمح بالـtrial)
+      if (slug === ADMIN) {
+        if (!status.active || status.status !== "active") {
+          return toPricing("هذه الصفحة للمشتركين النشطين فقط.");
+        }
+        unmountGuardOverlay(); fireAuthReady(); return;
+      }
+
+      // أدوات البرامج (يسمح trial/active)
+      if (TOOLS.has(slug)) {
+        if (!status.active) {
+          return toPricing("حسابك غير مُفعّل (انتهت التجربة أو لم يتم التفعيل).");
+        }
+        unmountGuardOverlay(); fireAuthReady(); return;
+      }
+
+      // باقي الصفحات المحمية
+      if (!status.active) {
+        const msg = (status.status === "expired" || status.status === "inactive")
+          ? "حسابك غير مُفعّل. فضلاً اشتركي أو جدّدي الاشتراك."
+          : "هذه الصفحة للمشتركين فقط.";
+        return toPricing(msg);
+      }
+
+      // سماح
       unmountGuardOverlay();
       fireAuthReady();
+
+    } catch (e) {
+      warn("enforce() failed", e);
+      return toPricing("حدث خلل أثناء التحقق. أعيدي المحاولة بعد لحظات.");
+    }
+  }
+
+  // ——— تدفّق التشغيل الرئيسي ———
+  async function start(){
+    addMetaNoStore();
+    mountGuardOverlay();
+    slug = fileSlug();
+
+    client = await buildClient();
+
+    // نظافة ما بعد الرجوع من Auth0
+    const redirected = await cleanupRedirectIfNeeded(client);
+    if (redirected) return; // تم توجيه المستخدم
+
+    const isAuth = await client.isAuthenticated();
+
+    // صفحات عامة: لا حراسة
+    if (PUBLIC.has(slug)) {
+      unmountGuardOverlay(); fireAuthReady(); return;
+    }
+
+    // صفحة تسجيل الدخول/الملف الشخصي فقط
+    if (LOGIN_ONLY.has(slug)) {
+      if (!isAuth) {
+        try { localStorage.setItem('afterLogin', location.pathname + location.search + location.hash); } catch(_){}
+        await client.loginWithRedirect({
+          authorizationParams: {
+            prompt: "login",
+            redirect_uri: CALLBACK,
+            audience: API_AUDIENCE
+          },
+          appState: { returnTo: location.pathname + location.search + location.hash }
+        });
+        return;
+      }
+      unmountGuardOverlay(); fireAuthReady(); return;
+    }
+
+    // الصفحات المحمية (أدوات، أدمن، أو أي صفحة غير عامة)
+    if (!isAuth) {
+      try { localStorage.setItem('afterLogin', location.pathname + location.search + location.hash); } catch(_){}
+      await client.loginWithRedirect({
+        authorizationParams: {
+          prompt: "login",
+          redirect_uri: CALLBACK,
+          audience: API_AUDIENCE
+        },
+        appState: { returnTo: location.pathname + location.search + location.hash }
+      });
       return;
     }
 
-    // باقي الصفحات المحمية
-    let authed = false;
-    try { authed = await client.isAuthenticated(); } catch {}
-    if (!authed) {
-      const returnTo = location.pathname + location.search + location.hash;
-      try { localStorage.setItem('afterLogin', returnTo); } catch(_){}
-      try {
-        await client.loginWithRedirect({
-          authorizationParams: { screen_hint:"login", redirect_uri: CALLBACK },
-          appState: { returnTo }
-        });
-        return;
-      } catch {
-        return toPricing("الرجاء تسجيل الدخول للوصول إلى هذه الصفحة.");
-      }
-    }
-
-    // تحقق حالة الاشتراك
-    const status = await fetchUserStatus(client);
-    log("live status:", status);
-
-    if (slug === ADMIN) {
-      if (!status.active) return toPricing("هذه الصفحة للمشتركين النشطين فقط.");
-      unmountGuardOverlay(); fireAuthReady(); return;
-    }
-
-    if (TOOLS.has(slug)) {
-      if (!status.active) return toPricing("حسابك غير مُفعّل (انتهت التجربة أو لم يتم التفعيل).");
-      unmountGuardOverlay(); fireAuthReady(); return;
-    }
-
-    if (!status.active) return toPricing("هذه الصفحة للمشتركين النشطين فقط.");
-
-    unmountGuardOverlay();
-    fireAuthReady();
+    // الآن نطبّق قواعد الاشتراك/التجربة
+    await enforce();
   }
 
   // نقطة الدخول
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", enforce);
+    document.addEventListener("DOMContentLoaded", start);
   } else {
-    enforce();
+    start();
   }
 
   // الرجوع من الذاكرة (bfcache)
