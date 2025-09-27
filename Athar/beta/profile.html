@@ -452,32 +452,33 @@
 const NS_NEW = "https://n-athar.co/";
 const NS_OLD = "https://athar.co/";
 
-// ❌ لا نحدّث الشارة ولا النص من الـclaims (نتركه للداتابيس)
-// const status = (claims && (claims[NS_NEW+"status"] || claims[NS_OLD+"status"])) || 'inactive';
-// renderBadge(status);
-// document.getElementById('u-status-text').textContent = (status==='active'?'مفعّل':status==='trial'?'تجريبي':'غير نشط');
+// 1) اعرضي الحالة فورًا من الـclaims (فوري للمستخدم)
+const statusClaim =
+  (claims && (claims[NS_NEW + "status"] || claims[NS_OLD + "status"])) || "inactive";
+renderBadge(statusClaim);
+document.getElementById("u-status-text").textContent =
+  statusClaim === "active" ? "مفعّل" : statusClaim === "trial" ? "تجريبي" : "غير نشط";
 
-// ❌ لا نضبط الخطة من الـclaims (نتركها للداتابيس)
-// const plan = (claims && (claims[NS_NEW+"plan"] || claims[NS_OLD+"plan"])) || '—';
-// document.getElementById('u-plan').textContent = plan;
+// 2) اعرضي الخطة فورًا من الـclaims
+const planClaim =
+  (claims && (claims[NS_NEW + "plan"] || claims[NS_OLD + "plan"])) || "—";
+document.getElementById("u-plan").textContent = planClaim;
 
-// ✅ قيم مؤقتة لحين ما يجي التحديث من fetchLiveMembership()
-document.getElementById('u-status-text').textContent = '—';
-document.getElementById('u-plan').textContent = '—';
-
-// ✅ لو كانت تجربة (trial) ممكن نخلي عرض تواريخ التجربة من الـclaims كما هو
-//   (اختياري: تتركينه إذا مهم لكِ إظهار تواريخ التجربة من Auth0)
-const statusFromClaims = (claims && (claims[NS_NEW+"status"] || claims[NS_OLD+"status"])) || 'inactive';
-if (statusFromClaims === 'trial') {
-  const trialStarted = claims?.[NS_NEW+"trial_started"] ?? claims?.[NS_OLD+"trial_started"] ?? null;
-  const trialExpires = claims?.[NS_NEW+"trial_expires"] ?? claims?.[NS_OLD+"trial_expires"] ?? null;
-
+// 3) إن كانت تجربة (trial) اعرضي تواريخها من الـclaims
+if (statusClaim === "trial") {
+  const trialStarted = claims?.[NS_NEW + "trial_started"] ?? claims?.[NS_OLD + "trial_started"] ?? null;
+  const trialExpires = claims?.[NS_NEW + "trial_expires"] ?? claims?.[NS_OLD + "trial_expires"] ?? null;
   if (trialStarted || trialExpires) {
-    const s = trialStarted ? new Date(trialStarted).toLocaleDateString('ar-SA') : '—';
-    const e = trialExpires ? new Date(trialExpires).toLocaleDateString('ar-SA') : '—';
-    document.getElementById('u-activation').textContent = `${s} → ${e}`;
+    const s = trialStarted ? new Date(trialStarted).toLocaleDateString("ar-SA") : "—";
+    const e = trialExpires ? new Date(trialExpires).toLocaleDateString("ar-SA") : "—";
+    document.getElementById("u-activation").textContent = `${s} → ${e}`;
   }
 }
+
+// 4) بعد ما يطلع المحتوى للمستخدم مباشرة، خلّي قاعدة البيانات تحدّثها لو لقت جديد
+setTimeout(() => {
+  window.fetchLiveMembership && window.fetchLiveMembership();
+}, 0);
 
 // تاريخ التسجيل الحقيقي من Supabase.users (auth0_sub)
 let joinedDate = null;
