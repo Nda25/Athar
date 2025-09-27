@@ -76,6 +76,20 @@ exports.handler = async (event) => {
     }
 console.log("=== DEBUG userObj ===");
 console.log(JSON.stringify(userObj, null, 2));
+    const auth = event.headers.authorization || event.headers.Authorization || "";
+console.log("=== DEBUG rawAuthHeader ===", auth);
+
+if (auth.startsWith("Bearer ")) {
+  const jwt = auth.slice(7);
+  try {
+    const payload = JSON.parse(
+      Buffer.from((jwt.split(".")[1] || ""), "base64url").toString("utf8")
+    );
+    console.log("=== DEBUG decoded JWT payload ===", payload);
+  } catch (err) {
+    console.error("Failed to decode JWT:", err);
+  }
+}
 const user_sub = userObj.sub || userObj.user?.sub || null;
 
 // 1) جرّبي كل الحقول المعتادة + النيم سبيس
