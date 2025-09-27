@@ -17,7 +17,7 @@ const supabase = createClient(
 
 // ===== إعدادات الخطط =====
 const PRICE_SAR = {
-  weekly: 0.9,
+  weekly: 1,00,
   monthly: 29.99,
   semi: 169.99,
   annual: 339.99
