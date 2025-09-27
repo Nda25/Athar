@@ -45,8 +45,8 @@ exports.handler = async (event) => {
 
   try {
     let q = supabase
-      .from("payments_log")
-      .select("created_at,gateway,event_type,object,status,amount,currency,provider_event_id,invoice_id,invoice_url,email,user_sub,amount_sar")
+.from("invoices")
+.select("created_at,amount,amount_sar,currency,status,gateway,invoice_id,provider_event_id,email,user_sub")
       .order("created_at", { ascending: false })
       .limit(50);
 
