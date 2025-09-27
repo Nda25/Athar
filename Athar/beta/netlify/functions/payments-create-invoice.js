@@ -74,67 +74,58 @@ exports.handler = async (event) => {
     if (!isOk || !userObj) {
       return { statusCode: gate?.status || 401, headers: CORS, body: JSON.stringify({ error: gate?.error || "Unauthorized" }) };
     }
-console.log("=== DEBUG userObj ===");
-console.log(JSON.stringify(userObj, null, 2));
+
+    // === قراءة الـ payload مبكرًا ===
+    let payload = {};
+    try { payload = JSON.parse(event.body || "{}"); } catch {}
+
+    console.log("=== DEBUG userObj ===");
+    console.log(JSON.stringify(userObj, null, 2));
     const auth = event.headers.authorization || event.headers.Authorization || "";
-console.log("=== DEBUG rawAuthHeader ===", auth);
+    console.log("=== DEBUG rawAuthHeader ===", auth);
 
-if (auth.startsWith("Bearer ")) {
-  const jwt = auth.slice(7);
-  try {
-    const payload = JSON.parse(
-      Buffer.from((jwt.split(".")[1] || ""), "base64url").toString("utf8")
-    );
-    console.log("=== DEBUG decoded JWT payload ===", payload);
-  } catch (err) {
-    console.error("Failed to decode JWT:", err);
-  }
-}
-const user_sub = userObj.sub || userObj.user?.sub || null;
+    if (auth.startsWith("Bearer ")) {
+      const jwt = auth.slice(7);
+      try {
+        const p = JSON.parse(Buffer.from((jwt.split(".")[1] || ""), "base64url").toString("utf8"));
+        console.log("=== DEBUG decoded JWT payload ===", p);
+      } catch (err) {
+        console.error("Failed to decode JWT:", err);
+      }
+    }
 
-// 1) جرّبي كل الحقول المعتادة + النيم سبيس
-let email = (
-  userObj.email ||
-  userObj.user?.email ||
-  userObj["https://n-athar.co/email"] ||
-  userObj["https://athar.co/email"] ||
-  ""
-);
-email = (email || "").toLowerCase();
+    const user_sub = userObj.sub || userObj.user?.sub || null;
 
-// 2) لو ما لقيناه، فكّي الـ JWT من الهيدر وخذي الإيميل منه
-if (!email) {
-  const auth = event.headers.authorization || event.headers.Authorization || "";
-  const jwt  = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  try {
-    const payload = JSON.parse(
-      Buffer.from((jwt.split(".")[1] || ""), "base64url").toString("utf8")
-    );
-    email = (
-      payload.email ||
-      payload["https://n-athar.co/email"] ||
-      payload["https://athar.co/email"] ||
+    // === التقاط الإيميل من أكثر من مكان ===
+    let email = (
+      userObj.email ||
+      userObj.user?.email ||
+      userObj["https://n-athar.co/email"] ||
+      userObj["https://athar.co/email"] ||
       ""
-    ).toLowerCase();
-  } catch {}
-}
+    );
+    email = (email || "").toLowerCase();
 
-// 3) آخر حل: اسحبيه من جدول users حسب الـ sub
-if (!email && user_sub) {
-  const { data } = await supabase
-    .from("users")
-    .select("email")
-    .eq("auth0_sub", user_sub)
-    .maybeSingle();
-  if (data?.email) email = String(data.email).toLowerCase();
-}
+    // من الـ JWT إذا موجود
+    if (!email) {
+      const a = event.headers.authorization || event.headers.Authorization || "";
+      const jwt  = a.startsWith("Bearer ") ? a.slice(7) : "";
+      try {
+        const p = JSON.parse(Buffer.from((jwt.split(".")[1] || ""), "base64url").toString("utf8"));
+        email = (p.email || p["https://n-athar.co/email"] || p["https://athar.co/email"] || "").toLowerCase();
+      } catch {}
+    }
+
+    // من الـ payload القادم من الواجهة (fallback أخير)
+    if (!email && payload?.email) {
+      email = String(payload.email).toLowerCase();
+    }
+
     if (!user_sub && !email) {
       return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
     }
 
-    // 2) مدخلات الواجهة
-    let payload = {};
-    try { payload = JSON.parse(event.body || "{}"); } catch {}
+    // 2) مدخلات الواجهة (نستخدم payload المقروء أعلاه)
     const planRaw = payload.plan;
     const plan    = normalizePlan(planRaw);
     const promo   = (payload.promo || "").trim();
