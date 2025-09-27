@@ -74,7 +74,8 @@ exports.handler = async (event) => {
     if (!isOk || !userObj) {
       return { statusCode: gate?.status || 401, headers: CORS, body: JSON.stringify({ error: gate?.error || "Unauthorized" }) };
     }
-
+console.log("=== DEBUG userObj ===");
+console.log(JSON.stringify(userObj, null, 2));
     const user_sub = userObj.sub || userObj.user?.sub || null;
     const email    = (userObj.email || userObj.user?.email || "").toLowerCase();
 
