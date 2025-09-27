@@ -76,16 +76,44 @@ exports.handler = async (event) => {
     }
 console.log("=== DEBUG userObj ===");
 console.log(JSON.stringify(userObj, null, 2));
-    const user_sub = userObj.sub || userObj.user?.sub || null;
+const user_sub = userObj.sub || userObj.user?.sub || null;
 
-// نحاول نلقط الإيميل من أكثر من مكان
+// 1) جرّبي كل الحقول المعتادة + النيم سبيس
 let email = (
   userObj.email ||
   userObj.user?.email ||
-  userObj["https://athar.co/email"] ||   // بعض الـ claims تكون داخل namespace
-  userObj["https://athar/email"] ||
+  userObj["https://n-athar.co/email"] ||
+  userObj["https://athar.co/email"] ||
   ""
-).toLowerCase();
+);
+email = (email || "").toLowerCase();
+
+// 2) لو ما لقيناه، فكّي الـ JWT من الهيدر وخذي الإيميل منه
+if (!email) {
+  const auth = event.headers.authorization || event.headers.Authorization || "";
+  const jwt  = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  try {
+    const payload = JSON.parse(
+      Buffer.from((jwt.split(".")[1] || ""), "base64url").toString("utf8")
+    );
+    email = (
+      payload.email ||
+      payload["https://n-athar.co/email"] ||
+      payload["https://athar.co/email"] ||
+      ""
+    ).toLowerCase();
+  } catch {}
+}
+
+// 3) آخر حل: اسحبيه من جدول users حسب الـ sub
+if (!email && user_sub) {
+  const { data } = await supabase
+    .from("users")
+    .select("email")
+    .eq("auth0_sub", user_sub)
+    .maybeSingle();
+  if (data?.email) email = String(data.email).toLowerCase();
+}
     if (!user_sub && !email) {
       return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
     }
