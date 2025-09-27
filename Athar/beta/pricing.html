@@ -207,72 +207,77 @@
 
   <!-- سكربت الاشتراك المحدّث -->
   </script>
-  <script>
-    async function isLogged(){  // مكرر هنا لا بأس (scope منفصل)
-      try { return await window.auth?.isAuthenticated?.(); } catch(_) { return false; }
+<script>
+  async function isLogged(){
+    try { return await window.auth?.isAuthenticated?.(); } catch(_) { return false; }
+  }
+  async function getToken() {
+    try { return await window.auth.getTokenSilently(); }
+    catch (e) {
+      console.warn('getTokenSilently failed, trying popup', e);
+      if (window.auth?.getTokenWithPopup) return await window.auth.getTokenWithPopup();
+      throw e;
+    }
+  }
+
+  // ⬇️ استبدل الدالة كلها بهذا الإصدار
+  async function subscribe(plan){
+    const btn = document.querySelector(`[data-plan="${plan}"]`);
+    if (!btn) return;
+
+    try { localStorage.setItem('intended_plan', plan); } catch(_){}
+
+    // تأكيد الدخول
+    if (!(await isLogged())){
+      try { localStorage.setItem('afterLogin', '/pricing.html'); } catch(_){}
+      return window.auth?.loginWithRedirect?.();
     }
 
-    async function getToken() {
-      try {
-        return await window.auth.getTokenSilently();
-      } catch (e) {
-        console.warn('getTokenSilently failed, trying popup', e);
-        if (window.auth?.getTokenWithPopup) {
-          return await window.auth.getTokenWithPopup();
-        }
-        throw e;
+    // منع التكرار
+    if (btn.dataset.loading === '1') return;
+    btn.dataset.loading = '1';
+    const old = btn.textContent;
+    btn.disabled = true; btn.textContent = "جارِ التوجيه…";
+
+    // اجلب البريد من جلسة Auth0
+    let email = "";
+    try {
+      const u = await window.auth.getUser();
+      email = (u?.email || "").toLowerCase();
+    } catch(_) {}
+
+    const promo = (document.getElementById('promo')?.value || '').trim() || null;
+
+    try{
+      const token = await getToken();
+      if (!token) throw new Error('no_token');
+
+      // نرسل email ضمن الـ payload
+      const res = await fetch('/.netlify/functions/payments-create-invoice?ts=' + Date.now(), {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ plan, promo, email })
+      });
+
+      const raw = await res.text();
+      let j = {}; try { j = JSON.parse(raw); } catch {}
+
+      if (!res.ok || !j?.url) {
+        console.error('create-invoice failed', { status: res.status, raw });
+        alert(j?.error || `تعذّر إنشاء الفاتورة (status ${res.status}).`);
+        btn.disabled=false; btn.textContent=old; btn.dataset.loading=''; return;
       }
+
+      // افتح صفحة ميسّر
+      window.location.replace(j.url);
+
+    } catch(e){
+      console.error('subscribe error:', e);
+      alert('تعذّر إنشاء الفاتورة. جرّب تسجيل الخروج ثم الدخول مرة أخرى.');
+      btn.disabled=false; btn.textContent=old; btn.dataset.loading='';
     }
-
-    async function subscribe(plan){
-      const btn = document.querySelector(`[data-plan="${plan}"]`);
-      if (!btn) return;
-      try { localStorage.setItem('intended_plan', plan); } catch(_){}
-
-      // تأكد من تسجيل الدخول
-      if (!(await isLogged())){
-        try { localStorage.setItem('afterLogin', '/pricing.html'); } catch(_){}
-        return window.auth?.loginWithRedirect?.();
-      }
-
-      // منع النقر المكرر
-      if (btn.dataset.loading === '1') return;
-      btn.dataset.loading = '1';
-      const old = btn.textContent;
-      btn.disabled = true; btn.textContent = "جارِ التوجيه…";
-
-      const promo = (document.getElementById('promo')?.value || '').trim() || null;
-
-      try{
-        const token = await getToken();
-        if (!token) throw new Error('no_token');
-
-        const res = await fetch('/.netlify/functions/payments-create-invoice?ts=' + Date.now(), {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ plan, promo })
-        });
-
-        const raw = await res.text();
-        let j = {};
-        try { j = JSON.parse(raw); } catch { j = {}; }
-
-        if (!res.ok || !j?.url) {
-          console.error('create-invoice failed', { status: res.status, raw });
-          alert(j?.error || `تعذّر إنشاء الفاتورة (status ${res.status}).`);
-          btn.disabled=false; btn.textContent=old; btn.dataset.loading=''; return;
-        }
-
-        // افتح صفحة ميسّر
-        window.location.replace(j.url);
-
-      } catch(e){
-        console.error('subscribe error:', e);
-        alert('تعذّر إنشاء الفاتورة. جرّبي تسجيل الخروج ثم الدخول مرة أخرى.');
-        btn.disabled=false; btn.textContent=old; btn.dataset.loading='';
-      }
-    }
-    window.subscribe = subscribe;
+  }
+  window.subscribe = subscribe;
 
     // تحديث الواجهة عند جاهزية Auth0 + تغيير نص الأزرار
     window.addEventListener('auth0:ready', async ()=>{
