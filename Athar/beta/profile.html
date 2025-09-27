@@ -448,6 +448,7 @@
       document.getElementById('u-email').textContent = user?.email || '—';
       document.getElementById('u-sub').textContent   = user?.sub || '—';
       document.getElementById('cardHeader').setAttribute('data-ready', '1');
+      await fetchLiveMembership().catch(()=>{});
 
 const NS_NEW = "https://n-athar.co/";
 const NS_OLD = "https://athar.co/";
