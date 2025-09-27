@@ -6,7 +6,7 @@ const ORIGIN = process.env.ALLOWED_ORIGIN || "https://n-athar.co";
 // كائن الـ Headers الجاهز للإرجاع مع كل Response
 exports.CORS = {
   "Access-Control-Allow-Origin": ORIGIN,
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-moyasar-token",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS,DELETE,PUT",
   "Vary": "Origin"
 };
