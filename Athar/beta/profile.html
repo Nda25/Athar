@@ -457,11 +457,36 @@
 
       const plan = (claims && (claims[NS_NEW+"plan"] || claims[NS_OLD+"plan"])) || '—';
       document.getElementById('u-plan').textContent = plan;
+      // 👇 إن كانت تجربة، أعرض تاريخ البداية/الانتهاء من الـclaims
+if (status === 'trial') {
+  const trialStarted = claims?.[NS_NEW+"trial_started"] ?? claims?.[NS_OLD+"trial_started"] ?? null;
+  const trialExpires = claims?.[NS_NEW+"trial_expires"] ?? claims?.[NS_OLD+"trial_expires"] ?? null;
 
-      const joined = user?.updated_at || user?.created_at || null;
-      document.getElementById('u-joined').textContent = joined ? new Date(joined).toLocaleDateString('ar-SA') : '—';
+  if (trialStarted || trialExpires) {
+    const s = trialStarted ? new Date(trialStarted).toLocaleDateString('ar-SA') : '—';
+    const e = trialExpires ? new Date(trialExpires).toLocaleDateString('ar-SA') : '—';
+    document.getElementById('u-activation').textContent = `${s} → ${e}`;
+  }
+}
+
+// تاريخ التسجيل الحقيقي من Supabase.users (auth0_sub)
+let joinedDate = null;
+try {
+  if (window.supa && user?.sub) {
+    const { data: ju } = await window.supa
+      .from('users')
+      .select('created_at')
+      .eq('auth0_sub', user.sub)
+      .maybeSingle();
+    if (ju?.created_at) joinedDate = new Date(ju.created_at);
+  }
+} catch (_) {}
+
+document.getElementById('u-joined').textContent =
+  joinedDate ? joinedDate.toLocaleDateString('ar-SA')
+             : (user?.created_at ? new Date(user.created_at).toLocaleDateString('ar-SA')
+                                  : (user?.updated_at ? new Date(user.updated_at).toLocaleDateString('ar-SA') : '—'));
       document.getElementById('u-last').textContent = new Date().toLocaleString('ar-SA');
-
       try{
         if (window.supa && user?.email){
           const { data: m } = await window.supa
@@ -471,12 +496,19 @@
             .order('end_at', { ascending:false })
             .limit(1);
           const row = (Array.isArray(m) && m[0]) || null;
-          if (row){
-            const s = row.start_at ? new Date(row.start_at).toLocaleDateString('ar-SA') : '—';
-            const e = row.end_at   ? new Date(row.end_at).toLocaleDateString('ar-SA')   : '—';
-            document.getElementById('u-activation').textContent = `${s} → ${e}`;
-            if (row.plan && plan==='—') document.getElementById('u-plan').textContent = row.plan;
-          }
+         if (row){
+  const s = row.start_at ? new Date(row.start_at).toLocaleDateString('ar-SA') : '—';
+  const e = row.end_at   ? new Date(row.end_at).toLocaleDateString('ar-SA')   : '—';
+
+  const actEl = document.getElementById('u-activation');
+  if (status !== 'trial' || actEl.textContent === '—') {
+    actEl.textContent = `${s} → ${e}`;
+  }
+
+  if (row.plan && plan==='—') {
+    document.getElementById('u-plan').textContent = row.plan;
+  }
+}
         }
       }catch(_){}
       document.getElementById('cardSub').setAttribute('data-ready','1');
