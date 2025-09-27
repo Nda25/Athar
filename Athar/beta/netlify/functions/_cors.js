@@ -1,7 +1,7 @@
 // /.netlify/functions/_cors.js
 // Helper موحّد لإعدادات CORS
 
-const ORIGIN = process.env.ALLOWED_ORIGIN || "*";
+const ORIGIN = process.env.ALLOWED_ORIGIN || "https://n-athar.co";
 
 // كائن الـ Headers الجاهز للإرجاع مع كل Response
 exports.CORS = {
