@@ -114,7 +114,11 @@ async function getExistingMembership(user_sub, email) {
 async function upsertMembershipActive(meta) {
   const email    = (meta?.email || "").toLowerCase();
   const user_sub = meta?.user_sub || null;
-  const plan     = meta?.plan || "monthly";
+
+  // ✅ اعادة تعيين الخطة لتوافق قيود جدول memberships
+  const planRaw = meta?.plan || "monthly";
+  const plan = (["weekly","monthly","semi","annual"].includes(planRaw)) ? "paid" : planRaw;
+
   const days     = Math.max(1, Number(meta?.period_days || 30));
 
   if (!email && !user_sub) return;
@@ -136,7 +140,7 @@ async function upsertMembershipActive(meta) {
   const row = {
     user_sub: user_sub || null,
     email,
-    plan,
+    plan,                     // ← تبقى كما هي لكن بعد إعادة التعيين
     status: "active",
     start_at: now.toISOString(),
     end_at: null,
@@ -158,7 +162,6 @@ async function upsertMembershipActive(meta) {
     if (error) console.error("memberships insert error:", error.message);
   }
 }
-
 async function setMembershipStatus(meta, reason) {
   const email    = (meta?.email || "").toLowerCase();
   const user_sub = meta?.user_sub || null;
