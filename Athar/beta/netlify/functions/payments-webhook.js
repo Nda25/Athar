@@ -36,36 +36,63 @@ function getWebhookToken(event, bodyObj) {
   );
 }
 
+// --- استبدل الدالة كاملة بهذا الشكل ---
 function parseMoyasarEvent(body) {
+  // ميسّر أحيانًا يرسل root تحت data وأحيانًا مباشرة
   const root = body?.data ? body.data : body || {};
+
+  // بعض الحسابات ترسل event مثل: "payment.paid" أو "invoice_paid"
+  const typeRaw =
+    body?.type ||
+    body?.event ||
+    root?.type ||
+    root?.event ||
+    "";
+
+  // نطبّع الشكل: payment.paid -> payment_paid
+  const normType = String(typeRaw).toLowerCase().replace(/\./g, "_");
+
+  // الحالة إمّا تجي صريحة أو نستنتجها من الـ type
+  let status =
+    (root?.status || body?.status || "").toLowerCase();
+  if (!status) {
+    if (/_paid$/.test(normType)) status = "paid";
+    else if (/_refunded$/.test(normType)) status = "refunded";
+    else if (/_canceled$/.test(normType)) status = "canceled";
+    else if (/_expired$/.test(normType)) status = "expired";
+  }
+
+  // مسارات محتملة للميتابيانات داخل root/payment
+  const metadata =
+    root?.metadata ||
+    root?.payment?.metadata ||
+    body?.metadata ||
+    {};
+
+  // في الإشعارات، id قد يكون في body.id أو data.id؛
+  // أما invoice_id فقد يكون root.id إذا كان object=invoice
+  const provider_event_id = body?.id || root?.id || null;
+  const invoice_id = root?.invoice_id || root?.id || null;
+  const invoice_url = root?.url || root?.invoice_url || null;
+
+  // object نفسه قد يكون "payment" أو "invoice"
+  const object =
+    (root?.object || body?.object || "").toLowerCase() ||
+    (normType.includes("payment") ? "payment" :
+     normType.includes("invoice") ? "invoice" : "");
+
   return {
-    provider_event_id: body?.id || root?.id || null,
-    object: (root?.object || body?.object || "").toLowerCase(),
-    type:   (body?.type   || body?.event  || "").toLowerCase(),
-    status: (root?.status || body?.status || "").toLowerCase(),
-    amount: root?.amount ?? null,
+    provider_event_id,
+    object,
+    type: normType,          // مثال: payment_paid
+    status,                  // مثال: paid
+    amount: root?.amount ?? null,       // غالبًا بالهللات
     currency: root?.currency ?? null,
-    metadata: root?.metadata || body?.metadata || {},
-    invoice_id: root?.invoice_id || root?.id || null,
-    invoice_url: root?.url || null
+    metadata,
+    invoice_id,
+    invoice_url
   };
 }
-
-async function fetchInvoiceUrl(invoiceId) {
-  if (!invoiceId || !MOYASAR_SECRET) return null;
-  try {
-    const res = await fetch(`https://api.moyasar.com/v1/invoices/${invoiceId}`, {
-      headers: {
-        "Authorization": "Basic " + Buffer.from(MOYASAR_SECRET + ":").toString("base64")
-      }
-    });
-    const data = await res.json().catch(() => ({}));
-    return (res.ok && data?.url) ? data.url : null;
-  } catch {
-    return null;
-  }
-}
-
 // ---------- Membership helpers ----------
 async function getExistingMembership(user_sub, email) {
   let q = supabase
@@ -169,16 +196,28 @@ exports.handler = async (event) => {
   const evt = parseMoyasarEvent(bodyObj);
   const t = evt.type;
   const s = evt.status;
-  const meta = evt.metadata || {};
+  // نحاول نضمن وجود email / user_sub قدر الإمكان
+  let meta = evt.metadata || {};
+  if (!meta.email && bodyObj?.data?.payment?.metadata?.email) {
+    meta.email = bodyObj.data.payment.metadata.email;
+  }
+  if (!meta.user_sub && bodyObj?.data?.payment?.metadata?.user_sub) {
+    meta.user_sub = bodyObj.data.payment.metadata.user_sub;
+  }
 
   try {
-    if (t === "payment_paid" || s === "paid") {
+    const isPaid      = (s === "paid")      || /(^|_)paid$/.test(t);
+    const isRefunded  = (s === "refunded")  || /(^|_)refunded$/.test(t);
+    const isCanceled  = (s === "canceled")  || /(^|_)canceled$/.test(t);
+    const isExpired   = (s === "expired")   || /(^|_)expired$/.test(t);
+
+    if (isPaid) {
       await upsertMembershipActive(meta);
-    } else if (t === "payment_refunded" || s === "refunded") {
+    } else if (isRefunded) {
       await setMembershipStatus(meta, "refunded");
-    } else if (t === "payment_canceled" || s === "canceled") {
+    } else if (isCanceled) {
       await setMembershipStatus(meta, "canceled");
-    } else if (t === "payment_expired" || s === "expired") {
+    } else if (isExpired) {
       await setMembershipStatus(meta, "expired");
     }
   } catch (e) {
