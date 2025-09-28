@@ -1,328 +1,0 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>مُعين — تقسيم الخطة الأسبوعية</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <meta name="color-scheme" content="dark light" />
-  <style>
-    :root{ --accent:#2563eb; }
-    .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media(max-width:900px){ .form-grid{ grid-template-columns:1fr; } }
-    .field{ margin:10px 0 }
-    .field label{ display:block; font-weight:700; margin:6px 0 }
-    .field input,.field select,.field textarea{
-      width:100%; padding:12px; border-radius:12px;
-      border:1px solid rgba(37,99,235,.35)
-    }
-    .chips{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 }
-    .chip{ background:color-mix(in oklab, var(--accent) 14%, #fff); padding:4px 8px; border-radius:999px; font-size:.9rem }
-    .day-card{ border:1px dashed rgba(37,99,235,.35); border-radius:10px; padding:10px; margin-top:12px; }
-    .copy-row{ display:flex; gap:8px; flex-wrap:wrap; }
-    .small{ font-size:.92rem; color:var(--muted) }
-    .src-box{ background:color-mix(in oklab, var(--accent) 8%, #fff); border-radius:10px; padding:8px; margin-top:10px; }
-    details.edit{ background:#0001; border-radius:8px; padding:6px 8px; margin:8px 0 }
-    details.edit summary{ cursor:pointer; }
-    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    @media(max-width:800px){ .grid-2{ grid-template-columns:1fr; } }
-    textarea.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-  </style>
-</head>
-<body>
-  <div class="global-bg"></div>
-  <div class="backdrop"></div>
-  <div class="pattern"></div>
-
-  <div class="topbar">
-    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
-    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
-    <div class="user"><a class="btn" href="programs.html">مساحة إبداعي</a></div>
-  </div>
-
-  <header>
-    <div class="hero">
-      <h1 class="logo">مُعين</h1>
-      <div class="tag"><span class="dot"></span>نُولّد خطتك الأسبوعية — يومًا بيوم — دون خلط الدروس ✨</div>
-    </div>
-  </header>
-
-  <main>
-    <div class="container">
-      <section class="card">
-        <h2 class="title">مدخلات الخطة الأسبوعية</h2>
-        <p class="small">الخطة دائمًا من الأحد إلى الخميس (٥ أيام). سنوزّع الدروس على الأيام بشكل عادل، ولو كان درس واحد فسيُبنى على ٥ أجزاء متسلسلة.</p>
-
-        <form id="mueen-form" class="form" novalidate>
-          <div class="form-grid">
-            <div class="field">
-              <label>المادة</label>
-              <input id="f-subject" placeholder="مثال: الفيزياء، لغتي، الرياضيات." required />
-            </div>
-            <div class="field">
-              <label>المرحلة/الصف</label>
-              <select id="f-grade" required>
-                <option>أول ابتدائي</option><option>ثاني ابتدائي</option><option>ثالث ابتدائي</option>
-                <option>رابع ابتدائي</option><option>خامس ابتدائي</option><option>سادس ابتدائي</option>
-                <option>أول متوسط</option><option>ثاني متوسط</option><option>ثالث متوسط</option>
-                <option>أول ثانوي</option><option>ثاني ثانوي</option><option selected>ثالث ثانوي</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-grid">
-            <div class="field">
-              <label>عدد الدروس هذا الأسبوع</label>
-              <select id="f-count">
-                <option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>أسلوب اختيار الدروس</label>
-              <select id="f-mode">
-                <option value="manual" selected>أدخل أسماء الدروس يدويًا</option>
-                <option value="ai">دع مُعين يختارها وفق المنهج</option>
-              </select>
-            </div>
-          </div>
-
-          <div id="lesson-names" class="form-grid"></div>
-
-          <div class="actions-row" style="margin-top:10px">
-            <button type="button" class="btn primary" id="btn-generate">ولّدي الخطة</button>
-            <button type="button" class="btn" id="btn-copy-all">نسخ الخطة كاملة</button>
-            <span id="status" class="muted"></span>
-          </div>
-        </form>
-      </section>
-
-      <section class="card" id="out" style="display:none">
-        <h2 class="title">خطة الأسبوع</h2>
-        <div class="chips" id="meta"></div>
-
-        <div id="source-info" class="src-box" style="display:none">
-          <div><strong>المصادر الرسمية المستخدَمة:</strong></div>
-          <ul id="src-list" style="margin:6px 0 0"></ul>
-        </div>
-
-        <div id="days"></div>
-      </section>
-    </div>
-  </main>
-
-  <footer>
-    <p class="foot-line">التعليم شرارة صغيرة. تُضيء عقولًا كبيرة.</p>
-    <p class="foot-name">ندى المجيرش</p>
-    <div class="foot-links">
-      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-      <a href="complaints.html">الشكاوى والاقتراحات</a>
-    </div>
-  </footer>
-
-  <div class="toast" id="toast"></div>
-
-  <!-- SDKs -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-  <script defer src="assets/js/supabase-client.js"></script>
-  <script defer src="assets/js/require-auth.js"></script>
-  <script defer src="assets/js/storage.js"></script>
-
-  <script>
-    const $ = s=>document.querySelector(s);
-    const daysNames = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"];
-
-    function drawLessonInputs() {
-      const n = +$('#f-count').value || 5;
-      const wrap = $('#lesson-names'); wrap.innerHTML='';
-      const mode = $('#f-mode').value;
-      for (let i=1;i<=n;i++){
-        const div=document.createElement('div'); div.className='field';
-        div.innerHTML = `
-          <label>اسم الدرس ${i}</label>
-          <input class="ln" placeholder="${mode==='ai'?'(سيختاره مُعين تلقائيًا)':'اكتبي اسم الدرس كما في الكتاب'}" ${mode==='ai'?'disabled':''}/>
-        `;
-        wrap.appendChild(div);
-      }
-    }
-
-    function toast(msg){ const t=$("#toast"); t.textContent=msg; t.style.display='block';
-      clearTimeout(window.__t); window.__t=setTimeout(()=>t.style.display='none',1600); }
-
-    function chip(text){ const s=document.createElement('span'); s.className='chip'; s.textContent=text; return s; }
-
-    function linesToList(txt){ return (txt||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean); }
-    function listToLines(arr){ return (arr||[]).join("\n"); }
-
-    function renderSources(sources){
-      const box = $('#source-info'); const ul = $('#src-list'); ul.innerHTML='';
-      if (!Array.isArray(sources) || sources.length===0){ box.style.display='none'; return; }
-      sources.forEach(src=>{
-        const li=document.createElement('li');
-        const a=document.createElement('a');
-        a.href=src.url; a.textContent=src.title || src.url; a.target="_blank"; a.rel="noopener";
-        li.appendChild(a); ul.appendChild(li);
-      });
-      box.style.display='';
-    }
-
-    function renderPlan(data){
-      const meta = $('#meta'); meta.innerHTML='';
-      meta.appendChild(chip(data.meta.subject));
-      meta.appendChild(chip(`الصف: ${data.meta.grade_label}`));
-      meta.appendChild(chip(`أيام: ${data.meta.days.join('، ')}`));
-
-      renderSources(data.sources||[]);
-
-      const out = $('#days'); out.innerHTML='';
-      data.week.forEach((d,idx)=>{
-        const card=document.createElement('div'); card.className='day-card';
-        card.innerHTML=`
-          <h3 style="margin:0 0 6px">${d.day} — <span class="lnm">${d.lesson_name||'—'}</span>
-            ${d.segment_name?`<span class="small"> • ${d.segment_name}</span>`:''}
-            ${d.unit_name?` <span class="small">(${d.unit_name})</span>`:''}
-          </h3>
-          <div class="small" style="margin-bottom:6px">${data.meta.subject} • ${data.meta.grade_label}</div>
-
-          ${d.segment_goal?`<p class="small"><strong>هدف الجزء:</strong> ${d.segment_goal}</p>`:''}
-
-          <h4 style="margin:8px 0 4px">الأهداف</h4>
-          <ul class="obj-ul" style="margin:0 0 6px">${(d.objectives||[]).map(x=>`<li>${x}</li>`).join('')}</ul>
-
-          <h4 style="margin:8px 0 4px">المفردات الجديدة</h4>
-          <ul class="vocab-ul" style="margin:0 0 6px">${(d.vocab||[]).map(x=>`<li>${x}</li>`).join('')}</ul>
-
-          ${d.outcomes?`<h4 style="margin:8px 0 4px">النتائج المتوقعة</h4><p class="outcomes-p">${d.outcomes}</p>`:''}
-          <h4 style="margin:8px 0 4px">واجب منزلي مقترح</h4>
-          <p class="homework-p">${d.homework||'—'}</p>
-
-          <details class="edit">
-            <summary>✏️ تعديل سريع</summary>
-            <div class="grid-2" style="margin-top:8px">
-              <div>
-                <label class="small">الأهداف (كل سطر هدف)</label>
-                <textarea class="ta-obj mono" rows="6">${listToLines(d.objectives||[])}</textarea>
-              </div>
-              <div>
-                <label class="small">المفردات (كل سطر مفردة)</label>
-                <textarea class="ta-vocab mono" rows="6">${listToLines(d.vocab||[])}</textarea>
-              </div>
-              <div>
-                <label class="small">النتائج المتوقعة</label>
-                <textarea class="ta-out mono" rows="4">${d.outcomes||''}</textarea>
-              </div>
-              <div>
-                <label class="small">الواجب المنزلي</label>
-                <textarea class="ta-hw mono" rows="4">${d.homework||''}</textarea>
-              </div>
-            </div>
-            <div class="actions-row" style="margin-top:8px">
-              <button type="button" class="btn" data-act="apply" data-idx="${idx}">حفظ التعديل</button>
-            </div>
-          </details>
-
-          <div class="copy-row">
-            <button class="btn" data-act="copy" data-idx="${idx}">نسخ يوم ${d.day}</button>
-          </div>
-        `;
-        out.appendChild(card);
-      });
-
-      $('#out').style.display='';
-
-      out.querySelectorAll('button[data-act="copy"]').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          const d = data.week[+btn.dataset.idx];
-          const text =
-`${d.day} — ${d.lesson_name}${d.segment_name?` (${d.segment_name})`:''}
-
-[هدف الجزء]
-${d.segment_goal||'—'}
-
-[الأهداف]
-- ${(d.objectives||[]).join('\n- ')}
-
-[المفردات]
-- ${(d.vocab||[]).join('\n- ')}
-
-[النتائج]
-${d.outcomes||'—'}
-
-[الواجب]
-${d.homework||'—'}`;
-          navigator.clipboard.writeText(text).then(()=>toast('تم نسخ اليوم ✅'));
-        });
-      });
-
-      out.querySelectorAll('button[data-act="apply"]').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          const idx = +btn.dataset.idx;
-          const card = btn.closest('.day-card');
-          const objs   = (card.querySelector('.ta-obj').value || '').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-          const vocab  = (card.querySelector('.ta-vocab').value || '').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-          const outc   = card.querySelector('.ta-out').value.trim();
-          const hw     = card.querySelector('.ta-hw').value.trim();
-
-          data.week[idx].objectives = objs;
-          data.week[idx].vocab      = vocab;
-          data.week[idx].outcomes   = outc;
-          data.week[idx].homework   = hw;
-
-          card.querySelector('.obj-ul').innerHTML   = objs.map(x=>`<li>${x}</li>`).join('');
-          card.querySelector('.vocab-ul').innerHTML = vocab.map(x=>`<li>${x}</li>`).join('');
-          card.querySelector('.outcomes-p').textContent = outc || '—';
-          card.querySelector('.homework-p').textContent = hw || '—';
-
-          const toastEl=$("#toast"); toastEl.textContent='تم حفظ التعديل ✅'; toastEl.style.display='block';
-          clearTimeout(window.__t); window.__t=setTimeout(()=>toastEl.style.display='none',1600);
-        });
-      });
-    }
-
-    async function authToken(){
-      return window.auth.getTokenSilently({ audience: "https://api.athar" });
-    }
-
-    async function generate(){
-      const subject = $('#f-subject').value.trim();
-      const grade   = $('#f-grade').value;
-      const mode    = $('#f-mode').value;
-      const count   = +$('#f-count').value || 5;
-      const names   = [...document.querySelectorAll('.ln')].map(i=>i.value.trim()).filter(Boolean);
-
-      if (!subject){ const t=$("#toast"); t.textContent='اكتبي اسم المادة'; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); return; }
-      $('#status').textContent='جارٍ التوليد.'; $('#btn-generate').disabled=true;
-
-      try{
-        const token = await authToken();
-        const res = await fetch('/.netlify/functions/mueen', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
-          body: JSON.stringify({ subject, grade, lessonsMode: mode, lessonsCount: count, lessonNames: names, sourceMode: 'authoritative' })
-        });
-        const j = await res.json().catch(()=> ({}));
-        if(!res.ok){ $('#status').textContent = j?.error || 'تعذّر التوليد'; $('#btn-generate').disabled=false; return; }
-        if (j?.meta?.note){ const t=$("#toast"); t.textContent=j.meta.note; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); }
-        $('#status').textContent = 'تم ✓';
-        renderPlan(j);
-      }catch(e){ $('#status').textContent='تعذّر التوليد'; }
-      finally{ $('#btn-generate').disabled=false; }
-    }
-
-    document.addEventListener('DOMContentLoaded', ()=>{
-      drawLessonInputs();
-      $('#f-count').addEventListener('change', drawLessonInputs);
-      $('#f-mode').addEventListener('change', drawLessonInputs);
-      $('#btn-generate').addEventListener('click', generate);
-      $('#btn-copy-all').addEventListener('click', ()=>{
-        const txt = $('#days').innerText.trim();
-        navigator.clipboard.writeText(txt).then(()=>{ const t=$("#toast"); t.textContent='تم نسخ الخطة كلها ✅'; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); });
-      });
-    });
-  </script>
-</body>
-</html>

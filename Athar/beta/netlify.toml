@@ -1,3 +1,5 @@
+# netlify.toml
+
 [build]
   publish   = "."
   functions = "netlify/functions"
@@ -10,3 +12,8 @@
   # تأكد من تثبيتهم في package.json أيضًا
   external_node_modules = ["@supabase/supabase-js", "jwks-rsa", "jsonwebtoken", "nodemailer", "@google/generative-ai"]
   included_files = ["netlify/functions/**"]
+
+# ⬇️ أضيفي هذا كما هو (لا تعدّلين اللي فوق)
+[[scheduled.functions]]
+  name = "remind-miyad"
+  cron = "0 7 * * *"   # كل يوم 7 صباحًا UTC
