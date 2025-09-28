@@ -1,4 +1,3 @@
-// /.netlify/functions/_cors.js
 const ORIGIN = process.env.ALLOWED_ORIGIN || "https://n-athar.co";
 
 exports.CORS = {
@@ -14,10 +13,10 @@ exports.preflight = (event) => {
       statusCode: 204,
       headers: {
         ...exports.CORS,
-        "Content-Type": "application/json"  // ✅ إضافة Content-Type للتوحيد
       },
       body: ""
     };
   }
   return null;
 };
+
