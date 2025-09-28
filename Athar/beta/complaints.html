@@ -180,7 +180,7 @@
         // 2) popup
         try{
           await window.auth.login({ authorizationParams:{ prompt:"login", screen_hint:"login" }});
-          const t2 = await window.auth.getToken({ audience:"https://api.athar" });
+          const t2 = await window.auth.getToken({ audience:"https://api.n-athar" });
           if (t2) return t2;
         }catch(_){}
         // 3) local fallback (لو لديك require-auth يضع التوكِن في localStorage)
