@@ -58,7 +58,7 @@
           <div class="form-grid">
             <div class="field">
               <label>المادة</label>
-              <input id="f-subject" placeholder="مثال: الفيزياء، لغتي، الرياضيات…" required />
+              <input id="f-subject" placeholder="مثال: الفيزياء، لغتي، الرياضيات." required />
             </div>
             <div class="field">
               <label>المرحلة/الصف</label>
@@ -112,7 +112,7 @@
   </main>
 
   <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-line">التعليم شرارة صغيرة. تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
     <div class="foot-links">
       <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
@@ -295,7 +295,7 @@ ${d.homework||'—'}`;
       const names   = [...document.querySelectorAll('.ln')].map(i=>i.value.trim()).filter(Boolean);
 
       if (!subject){ const t=$("#toast"); t.textContent='اكتبي اسم المادة'; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); return; }
-      $('#status').textContent='جارٍ التوليد…'; $('#btn-generate').disabled=true;
+      $('#status').textContent='جارٍ التوليد.'; $('#btn-generate').disabled=true;
 
       try{
         const token = await authToken();

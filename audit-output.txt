@@ -1,0 +1,268 @@
+ملفات المشروع: 59
+
+— Athar/beta/admin.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+
+— Athar/beta/assets/js/auth0_old.js
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/assets/js/dom-helpers.js
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/assets/js/mueen.js
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ Audience خاطئ (api.athar)
+     ➜ بدّلي إلى audience: "https://api.n-athar" + fallback getTokenSilently
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/assets/js/mutasiq.js
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/assets/js/require-auth.js
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/assets/js/storage.js
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/assets/js/supabase-client.js
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/assets/js/theme.js
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/assets/js/ui.js
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/athar.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/audit-athar.js
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+
+— Athar/beta/complaints.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ Audience خاطئ (api.athar)
+     ➜ بدّلي إلى audience: "https://api.n-athar" + fallback getTokenSilently
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/darsi.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/DELET mu3een.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/ethraa.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/index.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/masar.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/miyad.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/mueen.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/mulham.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/mutasiq.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/netlify/functions/admin-activate.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/admin-announcement.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/admin-users-list.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/complaints-create.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/complaints-get.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/complaints-list.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/complaints-reply.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/complaints-update.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/gemini-ethraa.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/log-tool-usage.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/moyasar-webhook.js
+   ✗ استيراد ESM داخل netlify/functions
+     ➜ حوّلي الملف لصيغة CommonJS (require/module.exports) أو فعّلي ESM للمشروع كامل
+
+— Athar/beta/netlify/functions/mueen-plan.js
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ CORS نجمي (*) بدل ALLOWED_ORIGIN
+     ➜ استخدمي _cors.js مع ALLOWED_ORIGIN من البيئة
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/mulham.js
+   ✗ CORS نجمي (*) بدل ALLOWED_ORIGIN
+     ➜ استخدمي _cors.js مع ALLOWED_ORIGIN من البيئة
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/murtakaz.js
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/promo-redeem.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/remind-miyad.js
+   ✗ استيراد ESM داخل netlify/functions
+     ➜ حوّلي الملف لصيغة CommonJS (require/module.exports) أو فعّلي ESM للمشروع كامل
+   ✗ وظيفة ميعاد بلا جدول تشغيل
+     ➜ أضيفي [[scheduled.functions]] في netlify.toml (كرون)
+
+— Athar/beta/netlify/functions/storage-ensure.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/strategy.js
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/upsert-user.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/netlify/functions/user-status.js
+   ✗ يفتقد لاستخدام _cors.js
+     ➜ أضيفي: const { CORS, preflight } = require("./_cors.js"); واستخدامهما
+
+— Athar/beta/pricing.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/privacy.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/profile.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+   ✗ جلب الفواتير في profile مع جدول غير صحيح أو استعلام قديم
+     ➜ تأكدي أن الوظيفة ترجع من جدول invoices وأن الواجهة تعرض same fields
+
+— Athar/beta/programs.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/refund-policy.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/terms.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/beta/whatsapp.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+— Athar/index.html
+   ✗ يحتوي مقاطع مبتورة (…) أو ...
+     ➜ استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...
+   ✗ لا يوجد كود عرض للإعلان في الواجهة
+     ➜ أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه
+
+المكتملة بدون مشاكل: 9/59
+إن أردتِ JSON كامل: أضيفي > audit.json عند التشغيل وافتحيه بجدول.
+
+حُفظ تقرير JSON في: /workspaces/Athar/audit-report.json
