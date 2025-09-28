@@ -14,7 +14,14 @@ exports.CORS = {
 // هيلبر للتعامل مع Preflight requests
 exports.preflight = (event) => {
   if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers: exports.CORS, body: "" };
+    return {
+      statusCode: 204,
+      headers: {
+        ...exports.CORS,
+        "Content-Type": "application/json"   // ✅ إضافة Content-Type
+      },
+      body: ""
+    };
   }
   return null;
 };
