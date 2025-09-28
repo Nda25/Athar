@@ -186,29 +186,31 @@
   let slug   = fileSlug();
 
   async function enforce(){
+
+    let status;
     try {
-// 1) جلب الحالة من الـ backend
-let status = await fetchUserStatus(client).catch(() => ({ active:false, status:"inactive" }));
-log("live status (from API):", status);
+      // 1) جلب الحالة من الـ backend
+      status = await fetchUserStatus(client).catch(() => ({ active:false, status:"inactive" }));
+      log("live status (from API):", status);
 
-// 2) مزج حالة التجربة من الـID Token (مصدر الحقيقة لحالة trial)
-try {
-  const claims = await client.getIdTokenClaims();
-  const NS  = "https://n-athar.co/";
-  const ALT = "https://athar.co/";
-  const tokenStatus = claims?.[NS + "status"] ?? claims?.[ALT + "status"];
-  const trialExp    = claims?.[NS + "trial_expires"] ?? claims?.[ALT + "trial_expires"];
+      // 2) مزج حالة التجربة من الـID Token (مصدر الحقيقة لحالة trial)
+      try {
+        const claims = await client.getIdTokenClaims();
+        const NS  = "https://n-athar.co/";
+        const ALT = "https://athar.co/";
+        const tokenStatus = claims?.[NS + "status"] ?? claims?.[ALT + "status"];
+        const trialExp    = claims?.[NS + "trial_expires"] ?? claims?.[ALT + "trial_expires"];
 
-  // لو الـAPI قالت غير نشط لكن التوكن يقول Trial → فعّلي الوصول مؤقتًا
-  if (!status.active && tokenStatus === "trial") {
-    status.active = true;
-    status.status = "trial";
-    if (trialExp) status.trial_expires = trialExp;
-    log("trial enabled via ID token claim");
-  }
-} catch (_) {
-  warn("could not read ID token claims for trial check");
-}
+        // لو الـAPI قالت غير نشط لكن التوكن يقول Trial → فعّلي الوصول مؤقتًا
+        if (!status.active && tokenStatus === "trial") {
+          status.active = true;
+          status.status = "trial";
+          if (trialExp) status.trial_expires = trialExp;
+          log("trial enabled via ID token claim");
+        }
+      } catch (_) {
+        warn("could not read ID token claims for trial check");
+      }
       // 3) قواعد الوصول
       // الأدمن يتطلب active فقط (لا يسمح بالـtrial)
       if (slug === ADMIN) {
