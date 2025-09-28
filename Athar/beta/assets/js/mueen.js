@@ -39,15 +39,15 @@
     if (!window.auth) return null;
     try {
       if (typeof window.auth.getTokenSilently === 'function') {
-        return await window.auth.getTokenSilently({ authorizationParams:{ audience:'https://api.athar' } });
+        return await window.auth.getTokenSilently({ authorizationParams:{ audience:'https://api.n-athar' } });
       }
       if (typeof window.auth.getToken === 'function') {
-        return await window.auth.getToken({ audience:'https://api.athar' });
+        return await window.auth.getToken({ audience:'https://api.n-athar' });
       }
     } catch(e){
       try {
         if (typeof window.auth.getTokenWithPopup === 'function') {
-          return await window.auth.getTokenWithPopup({ authorizationParams:{ audience:'https://api.athar' } });
+          return await window.auth.getTokenWithPopup({ authorizationParams:{ audience:'https://api.n-athar' } });
         }
       } catch(_) {}
     }
