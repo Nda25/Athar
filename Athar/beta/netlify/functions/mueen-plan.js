@@ -4,6 +4,7 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@supabase/supabase-js");
 const { requireUser } = require("./_auth.js");
+const { CORS, preflight } = require("./_cors.js");
 
 // ===== Supabase (SR) =====
 const supabase = createClient(
@@ -35,17 +36,16 @@ async function isActiveMembership(user_sub, email) {
 }
 
 // CORS خفيف
-const CORS = {
-  "Access-Control-Allow-Origin":"*",
-  "Access-Control-Allow-Methods":"POST,OPTIONS",
-  "Access-Control-Allow-Headers":"Content-Type, Authorization"
-};
+
 
 exports.handler = async (event) => {
-  try{
-    if (event.httpMethod === "OPTIONS") return { statusCode:204, headers:CORS, body:"" };
-    if (event.httpMethod !== "POST") return { statusCode:405, headers:CORS, body:"Method Not Allowed" };
+  const pf = preflight?.(event);
+  if (pf) return pf;
 
+  try {
+    if (event.httpMethod !== "POST") {
+      return { statusCode:405, headers:CORS, body:"Method Not Allowed" };
+    }
     // حراسة
     const gate = await requireUser(event);
     if (!gate.ok) return { statusCode: gate.status, headers:CORS, body: gate.error };
@@ -65,10 +65,6 @@ exports.handler = async (event) => {
     const mode    = p.mode || "manual";
     const lessons = Array.isArray(p.lessons) ? p.lessons.filter(Boolean).slice(0,5) : [];
 
-    // تحضير Prompt صارم:
-    // المرحلة 1: استخراج "أهداف الدرس الأساسية" + "مفرداته" أولاً (Lesson Canon).
-    // المرحلة 2: توزيع هذه الأهداف على 5 أيام (Segment 1..5) دون إضافة مفردات خارج الـ Canon.
-    const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"];
 
     // (اختياري للمستقبل) مصادر رسمية تُحقن هنا:
     const officialContext = ""; // اتركيه فارغًا الآن. عند التوصيل بمصدر رسمي نملأه ونُلزم النموذج بعدم الخروج عنه.
