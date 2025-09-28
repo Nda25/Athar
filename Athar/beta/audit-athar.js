@@ -1,6 +1,9 @@
+// tools/audit-athar.js
+// يفحص المشروع سطر-سطر ويطبع تقرير لكل ملف: كامل/يحتاج تعديل + السبب
+// تشغيل: node tools/audit-athar.js
+
 const fs = require('fs');
 const path = require('path');
-
 
 const ROOT = process.cwd();
 const GLOB_DIRS = [
@@ -13,9 +16,9 @@ const EXT = new Set(['.js', '.mjs', '.cjs', '.html', '.htm', '.ts']);
 const checks = [
   {
     id: 'ellipsis',
-    label: 'يحتوي مقاطع مبتورة (.) أو ...',
+    label: 'يحتوي مقاطع مبتورة (…) أو ...',
     test: (s) => /(\u2026|(^|\s)\.\.\.(\s|$))/.test(s),
-    fix: 'استبدال المقاطع المبتورة بنسخ كاملة بدون . أو ...'
+    fix: 'استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ...'
   },
   {
     id: 'audience-old',

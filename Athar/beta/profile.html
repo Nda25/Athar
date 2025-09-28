@@ -581,35 +581,64 @@ document.getElementById('u-joined').textContent =
       };
 
       // الفواتير
-      try{
-        const token = await (window.auth0Client||window.auth).getToken({ audience: "https://api.n-athar" }).catch(()=>null)
-                    || await (window.auth0Client||window.auth).getTokenSilently?.().catch(()=>null);
-        const res = await fetch('/.netlify/functions/invoices-list', { headers: token ? { Authorization: 'Bearer '+token } : {} });
-        const out = await res.json().catch(()=>({}));
-        if (res.ok && Array.isArray(out.rows) && out.rows.length){
-          const tb = document.getElementById('invBody'); tb.innerHTML='';
-          out.rows.forEach(r=>{
+      // الفواتير
+      try {
+        const token =
+          await (window.auth0Client || window.auth)
+            .getToken({ audience: "https://api.n-athar" }).catch(() => null)
+          || await (window.auth0Client || window.auth)
+            .getTokenSilently?.().catch(() => null);
+
+        const res = await fetch('/.netlify/functions/invoices-list', {
+          headers: token ? { Authorization: 'Bearer ' + token } : {}
+        });
+
+        const out = await res.json().catch(() => ({}));
+
+        if (res.ok && Array.isArray(out.rows) && out.rows.length) {
+          const tb = document.getElementById('invBody');
+          tb.innerHTML = '';
+
+          out.rows.forEach(r => {
             const tr = document.createElement('tr');
-            const d = r.created_at ? new Date(r.created_at).toLocaleString('ar-SA') : '—';
-            const amount = r.amount ? (Number(r.amount)/100).toFixed(2)+' ر.س' : (r.amount_sar ? (Number(r.amount_sar).toFixed(2)+' ر.س') : '—');
-            const st = (r.status||'').toLowerCase();
+
+            // التاريخ
+            const d = r.created_at
+              ? new Date(r.created_at).toLocaleString('ar-SA')
+              : '—';
+
+            // المبلغ + العملة
+            const cur = (r.currency || 'SAR').toUpperCase();
+            const amtSar = (typeof r.amount_sar === 'number')
+              ? Number(r.amount_sar).toFixed(2)
+              : (r.amount ? (Number(r.amount) / 100).toFixed(2) : null);
+            const amountTxt = amtSar
+              ? (cur === 'SAR' ? `${amtSar} ر.س` : `${amtSar} ${cur}`)
+              : '—';
+
+            // الحالة
+            const st = (r.status || '').toLowerCase() || '—';
+
             tr.innerHTML = `
               <td>${d}</td>
-              <td>${amount}</td>
+              <td>${amountTxt}</td>
               <td>${r.gateway || 'moyasar'}</td>
-              <td><span class="pill ${st}">${st||'—'}</span></td>
-              <td>${r.invoice_id || r.provider_event_id || '—'}</td>`;
+              <td><span class="pill ${st}">${st}</span></td>
+              <td>${r.invoice_id || r.provider_event_id || '—'}</td>
+            `;
             tb.appendChild(tr);
           });
-          document.getElementById('invTable').style.display='table';
-          document.getElementById('invEmpty').style.display='none';
+
+          document.getElementById('invTable').style.display = 'table';
+          document.getElementById('invEmpty').style.display = 'none';
         } else {
-          document.getElementById('invTable').style.display='none';
-          document.getElementById('invEmpty').style.display='';
+          document.getElementById('invTable').style.display = 'none';
+          document.getElementById('invEmpty').style.display = '';
         }
-      }catch(_){}
-      document.getElementById('cardInvoices').setAttribute('data-ready','1');
-    }
+      } catch (_) {}
+
+      document.getElementById('cardInvoices')
+        .setAttribute('data-ready', '1');
 
     // خروج
     document.addEventListener('click', (e)=>{
