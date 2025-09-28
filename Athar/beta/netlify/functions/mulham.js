@@ -5,7 +5,7 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@supabase/supabase-js");
 const { requireUser } = require("./_auth.js");
-
+const { CORS, preflight } = require("./_cors.js");
 // ===== Supabase client (Service Role) =====
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -55,32 +55,28 @@ function hashInt(str) {
   return Math.abs(h >>> 0);
 }
 
-// ===== CORS مبسّط لطلبات POST =====
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+
 
 exports.handler = async (event) => {
+  // ✅ تعامل موحّد مع preflight
+  const pf = preflight?.(event);
+  if (pf) return pf;
+
   try {
-    if (event.httpMethod === "OPTIONS") {
-      return { statusCode: 204, headers: CORS_HEADERS, body: "" };
-    }
     if (event.httpMethod !== "POST") {
-      return { statusCode: 405, headers: CORS_HEADERS, body: "Method Not Allowed" };
+      return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
     }
 
     // 0) التحقق من المستخدم (JWT من Auth0)
     const gate = await requireUser(event);
-    if (!gate.ok) return { statusCode: gate.status, headers: CORS_HEADERS, body: gate.error };
+    if (!gate.ok) return { statusCode: gate.status, headers: CORS, body: gate.error };
 
     // 0.1) قفل حسب الاشتراك (لا توليد إن لم يكن Active)
     const ok = await isActiveMembership(gate.user?.sub, gate.user?.email);
     if (!ok) {
       return {
         statusCode: 402,
-        headers: CORS_HEADERS,
+        headers: CORS,
         body: "Membership is not active (trial expired or not activated)."
       };
     }
@@ -89,13 +85,13 @@ exports.handler = async (event) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing");
-      return { statusCode: 500, headers: CORS_HEADERS, body: "Missing GEMINI_API_KEY" };
+      return { statusCode: 500, headers: CORS, body: "Missing GEMINI_API_KEY" };
     }
 
     // 2) جسم الطلب
     let payload = {};
     try { payload = JSON.parse(event.body || "{}"); }
-    catch { return { statusCode: 400, headers: CORS_HEADERS, body: "Bad JSON body" }; }
+    catch { return { statusCode: 400, headers: CORS, body: "Bad JSON body" }; }
 
     const {
       subject = "",
@@ -109,7 +105,6 @@ exports.handler = async (event) => {
       variant = ""
     } = payload;
 
-    // تحقق خفيف
     const TIME = Math.min(60, Math.max(5, Number(time)||20));
     const SUBJ = String(subject||"").slice(0,120);
     const TOP  = String(topic||SUBJ||"").slice(0,160);
@@ -117,7 +112,6 @@ exports.handler = async (event) => {
     const AGE_LABEL = { p1:"ابتدائي دُنيا", p2:"ابتدائي عُليا", m:"متوسط", h:"ثانوي" };
     const ageLabel = AGE_LABEL[age] || "ابتدائي عُليا";
 
-    // 3) برومبت صارم (رؤية 2030 + مهارات القرن 21 + مناهج 2025)
     const constraints = [];
     if (noTools) constraints.push("يجب أن تكون كل الأنشطة Zero-prep (بدون قص/لصق/بطاقات/أدوات).");
     constraints.push(`الزمن المتاح إجماليًا ~ ${TIME} دقيقة؛ اجعل كل نشاط قابلاً للتنفيذ داخل هذا السقف.`);
@@ -175,8 +169,7 @@ ${seedNote}
 بدون أي نص خارج JSON.
 `.trim();
 
-    // 4) Gemini
-    const genAI = new GoogleGenerativeAI(apiKey);
+const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const req = {
@@ -193,7 +186,6 @@ ${seedNote}
 
     const result = await model.generateContent(req);
 
-    // 5) JSON parsing
     const text =
       (typeof result?.response?.text === "function" ? result.response.text() : "") ||
       result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
@@ -201,7 +193,7 @@ ${seedNote}
 
     if (!text) {
       console.error("Empty response from model", result);
-      return { statusCode: 502, headers: CORS_HEADERS, body: "Empty response from model" };
+      return { statusCode: 502, headers: CORS, body: "Empty response from model" };
     }
 
     let data;
@@ -211,16 +203,15 @@ ${seedNote}
       try { data = JSON.parse(cleaned); }
       catch (e) {
         console.error("Model returned non-JSON:", cleaned.slice(0, 400));
-        return { statusCode: 500, headers: CORS_HEADERS, body: "Model returned non-JSON response" };
+        return { statusCode: 500, headers: CORS, body: "Model returned non-JSON response" };
       }
     }
 
     if (!data || !Array.isArray(data.categories)) {
-      console.error("Invalid JSON shape", data);
-      return { statusCode: 500, headers: CORS_HEADERS, body: "Invalid JSON shape" };
+      return { statusCode: 500, headers: CORS, body: "Invalid JSON shape" };
     }
 
-    // ===== اختيار نشاط مختلف لكل فئة بناء على hash من المعطيات =====
+    // ===== اختيار نشاط =====
     function normalizeActivity(a = {}) {
       const dur = typeof a.duration === "number" && a.duration > 0
         ? a.duration
@@ -258,13 +249,9 @@ ${seedNote}
 
     for (const cat of (data.categories || [])) {
       const name = (cat.name || "").toLowerCase();
-      if (name.includes("حرك")) {
-        sets.movement = pickActivity(cat);
-      } else if (name.includes("جمع")) {
-        sets.group = pickActivity(cat);
-      } else if (name.includes("فرد")) {
-        sets.individual = pickActivity(cat);
-      }
+      if (name.includes("حرك")) sets.movement = pickActivity(cat);
+      else if (name.includes("جمع")) sets.group = pickActivity(cat);
+      else if (name.includes("فرد")) sets.individual = pickActivity(cat);
     }
 
     const cats = data.categories || [];
@@ -283,13 +270,13 @@ ${seedNote}
 
     return {
       statusCode: 200,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json; charset=utf-8" },
+      headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({ meta, sets, tips })
     };
 
   } catch (err) {
     console.error("Mulham error:", err);
     const msg = (err && err.stack) ? err.stack : (err?.message || String(err));
-    return { statusCode: 500, headers: CORS_HEADERS, body: `Mulham function failed: ${msg}` };
+    return { statusCode: 500, headers: CORS, body: `Mulham function failed: ${msg}` };
   }
 };
