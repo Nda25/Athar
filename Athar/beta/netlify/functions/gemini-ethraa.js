@@ -1,3 +1,4 @@
+const { CORS, preflight } = require("./_cors.js");
 // netlify/functions/gemini-ethraa.js
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
@@ -52,6 +53,8 @@ function tagFreshness(card) {
 }
 
 exports.handler = async (event) => {
+  const pre = preflight(event);
+  if (pre) return pre;
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -227,7 +230,7 @@ ${lesson ? `يفضّل مواءمة ضمنية مع "${lesson}".` : ''}`.trim();
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      headers: { ...CORS }},
       body: JSON.stringify(payload)
     };
   } catch (e) {

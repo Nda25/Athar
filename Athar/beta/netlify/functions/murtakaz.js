@@ -1,7 +1,10 @@
+const { CORS, preflight } = require("./_cors.js");
 // netlify/functions/murtakaz.js  (CommonJS)
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 exports.handler = async (event) => {
+  const pre = preflight(event);
+  if (pre) return pre;
   try {
     if (event.httpMethod !== "POST") {
       return { statusCode: 405, body: "Method Not Allowed" };
@@ -144,7 +147,7 @@ ${noveltyNote}
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json; charset=utf-8" },
+      headers: { ...CORS }},
       body
     };
 

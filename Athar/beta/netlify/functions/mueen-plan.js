@@ -39,26 +39,28 @@ async function isActiveMembership(user_sub, email) {
 
 
 exports.handler = async (event) => {
+  const pre = preflight(event);
+  if (pre) return pre;
   const pf = preflight?.(event);
   if (pf) return pf;
 
   try {
     if (event.httpMethod !== "POST") {
-      return { statusCode:405, headers:CORS, body:"Method Not Allowed" };
+      return { statusCode:405, headers: { ...CORS }, body:"Method Not Allowed" };
     }
     // حراسة
     const gate = await requireUser(event);
-    if (!gate.ok) return { statusCode: gate.status, headers:CORS, body: gate.error };
+    if (!gate.ok) return { statusCode: gate.status, headers: { ...CORS }, body: gate.error };
     const active = await isActiveMembership(gate.user?.sub, gate.user?.email);
-    if (!active) return { statusCode:402, headers:CORS, body:"Membership is not active." };
+    if (!active) return { statusCode:402, headers: { ...CORS }, body:"Membership is not active." };
 
     // مفاتيح
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_API_KEY) return { statusCode:500, headers:CORS, body:"Missing GEMINI_API_KEY" };
+    if (!GEMINI_API_KEY) return { statusCode:500, headers: { ...CORS }, body:"Missing GEMINI_API_KEY" };
 
     // المدخلات
     let p = {};
-    try { p = JSON.parse(event.body||"{}"); } catch { return { statusCode:400, headers:CORS, body:"Bad JSON" }; }
+    try { p = JSON.parse(event.body||"{}"); } catch { return { statusCode:400, headers: { ...CORS }, body:"Bad JSON" }; }
     const subject = (p.subject||"").trim();
     const grade   = (p.grade||"").trim();
     const count   = Math.min(5, Math.max(1, Number(p.count)||1));
@@ -134,7 +136,7 @@ ${officialContext ? "اعتمد فقط على المصادر التالية:\n"+
     const raw =
       (typeof result?.response?.text === "function" ? result.response.text() : "") ||
       result?.response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    if (!raw) return { statusCode:502, headers:CORS, body:"Empty response" };
+    if (!raw) return { statusCode:502, headers: { ...CORS }, body:"Empty response" };
 
     let j;
     try{ j = JSON.parse(raw); }
@@ -201,12 +203,12 @@ ${officialContext ? "اعتمد فقط على المصادر التالية:\n"+
 
     return {
       statusCode:200,
-      headers:{ ...CORS, "Content-Type":"application/json; charset=utf-8" },
+      headers: { ...CORS }, "Content-Type":"application/json; charset=utf-8" },
       body: JSON.stringify(payload)
     };
 
   }catch(e){
     console.error("mueen-plan error:", e);
-    return { statusCode:500, headers:CORS, body: e.message || "Server error" };
+    return { statusCode:500, headers: { ...CORS }, body: e.message || "Server error" };
   }
 };

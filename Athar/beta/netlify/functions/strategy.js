@@ -1,5 +1,8 @@
+const { CORS, preflight } = require("./_cors.js");
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
+  const pre = preflight(event);
+  if (pre) return pre;
   // نسمح فقط بـ POST
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
@@ -153,7 +156,7 @@ ${VARIANT_NOTE}
     try {
       const res = await fetch(url, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { ...CORS }},
         body: JSON.stringify(makeReqBody(promptText)),
         signal: controller.signal
       });
@@ -220,7 +223,7 @@ ${VARIANT_NOTE}
 
       return {
         statusCode: 200,
-        headers: { "content-type": "application/json; charset=utf-8" },
+        headers: { ...CORS }},
         body: JSON.stringify(data)
       };
 

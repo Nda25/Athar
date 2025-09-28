@@ -1,3 +1,4 @@
+const { CORS, preflight } = require("./_cors.js");
 // /netlify/functions/complaints-update.js
 // POST /.netlify/functions/complaints-update
 // body: { complaint_id, status }  // status in: new|in_progress|resolved|rejected
@@ -13,6 +14,8 @@ const supabase = createClient(
 );
 
 exports.handler = async (event) => {
+  const pre = preflight(event);
+  if (pre) return pre;
   // تحقّق الصلاحيات + الميثود
   const gate = await requireAdmin(event);
   if (!gate.ok) return { statusCode: gate.status, body: gate.error };

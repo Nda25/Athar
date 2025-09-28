@@ -1,9 +1,12 @@
+const { CORS, preflight } = require("./_cors.js");
 // GET /.netlify/functions/admin-users-list?q=...&active=true|false&limit=20&offset=0
 // يعرض أحدث المستخدمين مع حالة الاشتراك (من v_user_status) + fallback إلى users عند عدم توفر الـ View
 const { requireAdmin } = require("./_auth");
 const { createClient } = require("@supabase/supabase-js");
 
 exports.handler = async (event) => {
+  const pre = preflight(event);
+  if (pre) return pre;
   const gate = await requireAdmin(event);
   if (!gate.ok) return { statusCode: gate.status, body: gate.error };
 
@@ -57,7 +60,7 @@ exports.handler = async (event) => {
     if (q) search.append("or", `(name.ilike.*${q}*,email.ilike.*${q}*)`);
 
     const res = await fetch(`${base}?${search.toString()}`, {
-      headers: {
+      headers: { ...CORS }
         apikey: SERVICE,
         Authorization: `Bearer ${SERVICE}`,
       }
@@ -69,7 +72,7 @@ exports.handler = async (event) => {
     let prefsBySub = {};
     if (subs.length) {
       const pr = await fetch(`${SUPABASE_URL}/rest/v1/user_prefs?select=user_sub,display_name,avatar_url&user_sub=in.(${subs.map(s=>`"${s}"`).join(",")})`, {
-        headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` }
+        headers: { ...CORS }, Authorization: `Bearer ${SERVICE}` }
       });
       const prefs = await pr.json();
       prefsBySub = Object.fromEntries((prefs||[]).map(p => [p.user_sub, p]));
@@ -80,7 +83,7 @@ exports.handler = async (event) => {
     const emails = users.map(u => (u.email||"").toLowerCase()).filter(Boolean);
     if (emails.length) {
       const mr = await fetch(`${SUPABASE_URL}/rest/v1/memberships?select=email,expires_at,end_at&email=in.(${emails.map(e=>`"${e}"`).join(",")})`, {
-        headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` }
+        headers: { ...CORS }, Authorization: `Bearer ${SERVICE}` }
       });
       const ms = await mr.json();
       // اختاري أحدث سطر لكل إيميل (أبسطياً)

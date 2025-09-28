@@ -58,25 +58,27 @@ function hashInt(str) {
 
 
 exports.handler = async (event) => {
+  const pre = preflight(event);
+  if (pre) return pre;
   // ✅ تعامل موحّد مع preflight
   const pf = preflight?.(event);
   if (pf) return pf;
 
   try {
     if (event.httpMethod !== "POST") {
-      return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
+      return { statusCode: 405, headers: { ...CORS }, body: "Method Not Allowed" };
     }
 
     // 0) التحقق من المستخدم (JWT من Auth0)
     const gate = await requireUser(event);
-    if (!gate.ok) return { statusCode: gate.status, headers: CORS, body: gate.error };
+    if (!gate.ok) return { statusCode: gate.status, headers: { ...CORS }, body: gate.error };
 
     // 0.1) قفل حسب الاشتراك (لا توليد إن لم يكن Active)
     const ok = await isActiveMembership(gate.user?.sub, gate.user?.email);
     if (!ok) {
       return {
         statusCode: 402,
-        headers: CORS,
+        headers: { ...CORS },
         body: "Membership is not active (trial expired or not activated)."
       };
     }
@@ -85,13 +87,13 @@ exports.handler = async (event) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing");
-      return { statusCode: 500, headers: CORS, body: "Missing GEMINI_API_KEY" };
+      return { statusCode: 500, headers: { ...CORS }, body: "Missing GEMINI_API_KEY" };
     }
 
     // 2) جسم الطلب
     let payload = {};
     try { payload = JSON.parse(event.body || "{}"); }
-    catch { return { statusCode: 400, headers: CORS, body: "Bad JSON body" }; }
+    catch { return { statusCode: 400, headers: { ...CORS }, body: "Bad JSON body" }; }
 
     const {
       subject = "",
@@ -193,7 +195,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
     if (!text) {
       console.error("Empty response from model", result);
-      return { statusCode: 502, headers: CORS, body: "Empty response from model" };
+      return { statusCode: 502, headers: { ...CORS }, body: "Empty response from model" };
     }
 
     let data;
@@ -203,12 +205,12 @@ const genAI = new GoogleGenerativeAI(apiKey);
       try { data = JSON.parse(cleaned); }
       catch (e) {
         console.error("Model returned non-JSON:", cleaned.slice(0, 400));
-        return { statusCode: 500, headers: CORS, body: "Model returned non-JSON response" };
+        return { statusCode: 500, headers: { ...CORS }, body: "Model returned non-JSON response" };
       }
     }
 
     if (!data || !Array.isArray(data.categories)) {
-      return { statusCode: 500, headers: CORS, body: "Invalid JSON shape" };
+      return { statusCode: 500, headers: { ...CORS }, body: "Invalid JSON shape" };
     }
 
     // ===== اختيار نشاط =====
@@ -270,13 +272,13 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
     return {
       statusCode: 200,
-      headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
+      headers: { ...CORS }, "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({ meta, sets, tips })
     };
 
   } catch (err) {
     console.error("Mulham error:", err);
     const msg = (err && err.stack) ? err.stack : (err?.message || String(err));
-    return { statusCode: 500, headers: CORS, body: `Mulham function failed: ${msg}` };
+    return { statusCode: 500, headers: { ...CORS }, body: `Mulham function failed: ${msg}` };
   }
 };
