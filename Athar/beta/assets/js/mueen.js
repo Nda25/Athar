@@ -160,7 +160,7 @@ ${day.homework||''}
 
   // نداء الدالة
   $('#btn-generate').addEventListener('click', async ()=>{
-    status.textContent='جارٍ التوليد…';
+    status.textContent='جارٍ التوليد.';
     const token = await getAuthToken();
     if (!token){ status.textContent='غير مصرح — سجّلي الدخول'; toast('غير مصرح — سجّلي الدخول'); return; }
 

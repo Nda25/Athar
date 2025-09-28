@@ -83,7 +83,7 @@
     document.head.appendChild(s);
     const d = document.createElement("div");
     d.id = "athar-guard";
-    d.innerHTML = `<div class="box"><div class="spin"></div><div>جاري التحقق من الصلاحيات…</div></div>`;
+    d.innerHTML = `<div class="box"><div class="spin"></div><div>جاري التحقق من الصلاحيات.</div></div>`;
     document.documentElement.appendChild(d);
   }
   function unmountGuardOverlay(){

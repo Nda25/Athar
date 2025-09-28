@@ -1,0 +1,752 @@
+[
+  {
+    "file": "Athar/beta/admin.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/app.js",
+    "ok": true,
+    "issues": []
+  },
+  {
+    "file": "Athar/beta/assets/js/auth0_old.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/assets/js/dom-helpers.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/assets/js/mueen.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "audience-old",
+        "label": "Audience خاطئ (api.athar)",
+        "fix": "بدّلي إلى audience: \"https://api.n-athar\" + fallback getTokenSilently"
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/assets/js/mutasiq.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/assets/js/require-auth.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/assets/js/storage.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/assets/js/supabase-client.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/assets/js/theme.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/assets/js/ui.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/assets/vendor/auth0-spa-js.production.js",
+    "ok": true,
+    "issues": []
+  },
+  {
+    "file": "Athar/beta/athar.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/audit-athar.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/complaints.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "audience-old",
+        "label": "Audience خاطئ (api.athar)",
+        "fix": "بدّلي إلى audience: \"https://api.n-athar\" + fallback getTokenSilently"
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/darsi.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/DELET mu3een.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/ethraa.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/index.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/masar.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/miyad.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/mueen.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/mulham.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/mutasiq.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/_auth.js",
+    "ok": true,
+    "issues": []
+  },
+  {
+    "file": "Athar/beta/netlify/functions/_cors.js",
+    "ok": true,
+    "issues": []
+  },
+  {
+    "file": "Athar/beta/netlify/functions/admin-activate.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/admin-announcement.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/admin-users-list.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/complaints-create.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/complaints-get.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/complaints-list.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/complaints-reply.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/complaints-update.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/ethraa.js",
+    "ok": true,
+    "issues": []
+  },
+  {
+    "file": "Athar/beta/netlify/functions/gemini-ethraa.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/invoices-list.js",
+    "ok": true,
+    "issues": []
+  },
+  {
+    "file": "Athar/beta/netlify/functions/log-tool-usage.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/moyasar-webhook.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "esm-in-functions",
+        "label": "استيراد ESM داخل netlify/functions",
+        "fix": "حوّلي الملف لصيغة CommonJS (require/module.exports) أو فعّلي ESM للمشروع كامل"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/mueen-plan.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "cors-wildcard",
+        "label": "CORS نجمي (*) بدل ALLOWED_ORIGIN",
+        "fix": "استخدمي _cors.js مع ALLOWED_ORIGIN من البيئة"
+      },
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/mulham.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "cors-wildcard",
+        "label": "CORS نجمي (*) بدل ALLOWED_ORIGIN",
+        "fix": "استخدمي _cors.js مع ALLOWED_ORIGIN من البيئة"
+      },
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/murtakaz.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/payments-create-invoice.js",
+    "ok": true,
+    "issues": []
+  },
+  {
+    "file": "Athar/beta/netlify/functions/payments-webhook.js",
+    "ok": true,
+    "issues": []
+  },
+  {
+    "file": "Athar/beta/netlify/functions/promo-redeem.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/remind-miyad.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "esm-in-functions",
+        "label": "استيراد ESM داخل netlify/functions",
+        "fix": "حوّلي الملف لصيغة CommonJS (require/module.exports) أو فعّلي ESM للمشروع كامل"
+      },
+      {
+        "id": "miyad-no-schedule",
+        "label": "وظيفة ميعاد بلا جدول تشغيل",
+        "fix": "أضيفي [[scheduled.functions]] في netlify.toml (كرون)"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/storage-ensure.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/strategy.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/upsert-user.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/netlify/functions/user-status.js",
+    "ok": false,
+    "issues": [
+      {
+        "id": "missing-cors-helper",
+        "label": "يفتقد لاستخدام _cors.js",
+        "fix": "أضيفي: const { CORS, preflight } = require(\"./_cors.js\"); واستخدامهما"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/pricing.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/privacy.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/profile.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      },
+      {
+        "id": "profile-invoices-fetch",
+        "label": "جلب الفواتير في profile مع جدول غير صحيح أو استعلام قديم",
+        "fix": "تأكدي أن الوظيفة ترجع من جدول invoices وأن الواجهة تعرض same fields"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/programs.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/refund-policy.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/terms.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/beta/whatsapp.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  },
+  {
+    "file": "Athar/functions/strategy.js",
+    "ok": true,
+    "issues": []
+  },
+  {
+    "file": "Athar/index.html",
+    "ok": false,
+    "issues": [
+      {
+        "id": "ellipsis",
+        "label": "يحتوي مقاطع مبتورة (…) أو ...",
+        "fix": "استبدال المقاطع المبتورة بنسخ كاملة بدون … أو ..."
+      },
+      {
+        "id": "announcement-missing-mount",
+        "label": "لا يوجد كود عرض للإعلان في الواجهة",
+        "fix": "أضيفي mountAnnouncementBar() لجلب آخر إعلان وعرضه"
+      }
+    ]
+  }
+]

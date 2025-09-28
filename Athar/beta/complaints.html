@@ -45,7 +45,7 @@
   <header>
     <div class="hero">
       <h1 class="logo">الشكاوى والاقتراحات</h1>
-      <div class="tag"><span class="dot"></span>حرصًا على رضاكم… صوتكم يهمّنا ✨</div>
+      <div class="tag"><span class="dot"></span>حرصًا على رضاكم. صوتكم يهمّنا ✨</div>
     </div>
   </header>
 
@@ -81,7 +81,7 @@
 
           <div class="field">
             <label>الرسالة</label>
-            <textarea id="f-message" rows="6" placeholder="اكتب التفاصيل هنا…" required></textarea>
+            <textarea id="f-message" rows="6" placeholder="اكتب التفاصيل هنا." required></textarea>
             <div class="hint">لا تشارك بيانات حساسة. اذكر رقم الطلب إن كانت الشكوى متعلقة بعملية شراء.</div>
           </div>
 
@@ -118,7 +118,7 @@
 
   <!-- فوتر أثــر الموحد -->
   <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-line">التعليم شرارة صغيرة. تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
     <div class="foot-links">
       <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
@@ -230,7 +230,7 @@
         if (!subject || !message){ setStatus('الرجاء تعبئة العنوان والرسالة'); return; }
 
         try{
-          lock(true); setStatus('جارٍ الإرسال…');
+          lock(true); setStatus('جارٍ الإرسال.');
           const token = await getTokenFlexible();
 
           const payload = {

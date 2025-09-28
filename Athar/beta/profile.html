@@ -205,7 +205,7 @@
 
   <!-- الذيل -->
   <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+    <p class="foot-line">التعليم شرارة صغيرة. تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
     <nav class="foot-links">
       <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
@@ -664,7 +664,7 @@ document.getElementById('u-joined').textContent =
     } catch { return { email:'', sub:null }; }
   }
 
-  // 2) تحديث الواجهة — يدعم end_at أو expires_at، ويحوّل manual/weekly/monthly… إلى paid
+  // 2) تحديث الواجهة — يدعم end_at أو expires_at، ويحوّل manual/weekly/monthly. إلى paid
   function setMembershipUI({ status, plan, start_at, end_at, expires_at }) {
     const expiry = expires_at || end_at || null;
     const isActive = status === 'active' && (!expiry || new Date(expiry) > new Date());
