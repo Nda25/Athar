@@ -124,21 +124,21 @@ ${VARIANT_NOTE}
 
 const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
-  function makeReqBody(promptText){
-    return {
-      contents: [{ role: "user", parts: [{ text: promptText }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema,
-        candidateCount: 1,
-        maxOutputTokens: 2048,
-        temperature: 0.8,
-        topK: 64,
-        topP: 0.9
-      },
-      safetySettings: []
-    };
-  }
+function makeReqBody(promptText){
+  return {
+    contents: [{ role: "user", parts: [{ text: promptText }] }],
+    generationConfig: {
+      response_mime_type: "application/json",
+      response_schema: responseSchema,
+      candidateCount: 1,
+      maxOutputTokens: 2048,
+      temperature: 0.8,
+      topK: 64,
+      topP: 0.9
+    },
+    safetySettings: []
+  };
+}
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
