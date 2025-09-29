@@ -5,13 +5,13 @@ exports.handler = async (event) => {
   if (pre) return pre;
   // نسمح فقط بـ POST
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+return { statusCode: 405, headers: { ...CORS }, body: "Method Not Allowed" };
   }
 
   // نقرأ جسم الطلب بأمان
   let payload = {};
   try { payload = JSON.parse(event.body || "{}"); }
-  catch { return { statusCode: 400, body: "Bad JSON body" }; }
+  catch { return { statusCode: 400, headers: { ...CORS }, body: "Bad JSON body" }; }
 
   const { stage, subject, bloomType, lesson, variant } = payload;
 
@@ -22,7 +22,7 @@ exports.handler = async (event) => {
   const RETRIES    = +(process.env.RETRIES || 2);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
 
-  if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+  if (!API_KEY) return { statusCode: 500, headers: { ...CORS }, body: "Missing GEMINI_API_KEY" };
 
   // توصيف الأسلوب حسب المرحلة (لغة/أنشطة مناسبة للعمر)
   const STAGE_GUIDE = {
@@ -239,11 +239,11 @@ ${VARIANT_NOTE}
       }
 
       if (isTimeout) {
-        return { statusCode: 504, body: "Gateway Timeout: model did not respond in time" };
+return { statusCode: 504, headers: { ...CORS }, body: "Gateway Timeout: model did not respond in time" };
       }
       const code = status || 500;
       const body = err.body || String(err.message || err);
-      return { statusCode: code, body };
+return { statusCode: code, headers: { ...CORS }, body };
     }
   }
 };
