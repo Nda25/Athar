@@ -1,7 +1,5 @@
 const { CORS, preflight } = require("./_cors.js");
-
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-
 
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
@@ -20,18 +18,22 @@ exports.handler = async (event) => {
 
   const { stage, subject, bloomType, lesson, variant } = payload;
 
-  // إعدادات من متغيّرات البيئة (ضعيها في Netlify dashboard)
-  const API_KEY    = process.env.GEMINI_API_KEY;
+  // إعدادات من متغيّرات البيئة
+  const API_KEY = process.env.GEMINI_API_KEY;
+  const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-1.0-pro'; // <-- إضافة هذا السطر لتحديد اسم النموذج
+  
   const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-1.0-pro' });
+  const model = genAI.getGenerativeModel({ model: MODEL_NAME }); // <-- استخدام المتغير الجديد هنا
 
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
-  const RETRIES    = +(process.env.RETRIES || 2);
+  const RETRIES = +(process.env.RETRIES || 2);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
 
   if (!API_KEY) {
     return { statusCode: 500, headers: { ...CORS }, body: "Missing GEMINI_API_KEY" };
   }
+
+
 
   // توصيف الأسلوب حسب المرحلة
   const STAGE_GUIDE = {
@@ -122,7 +124,7 @@ ${VARIANT_NOTE}
     }
   };
 
-const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
   function makeReqBody(promptText){
     return {
