@@ -230,11 +230,11 @@ ${lesson ? `يفضّل مواءمة ضمنية مع "${lesson}".` : ''}`.trim();
 
     return {
       statusCode: 200,
-      headers: { ...CORS }},
+      headers: { ...CORS },
       body: JSON.stringify(payload)
     };
   } catch (e) {
     console.error('ethraa-fatal:', e?.message || e);
-    return { statusCode: 500, body: JSON.stringify({ ok: false, error: 'server_error' }) };
+    return { statusCode: 500, headers: { ...CORS }, body: JSON.stringify({ ok: false, error: 'server_error' }) };
   }
 };
