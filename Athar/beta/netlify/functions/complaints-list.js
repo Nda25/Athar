@@ -6,7 +6,7 @@ exports.handler = async (event) => {
   const pre = preflight(event);
   if (pre) return pre;
   const gate = await requireAdmin(event);
-  if (!gate.ok) return { statusCode: gate.status, headers: { ...CORS }}, body: gate.error };
+  if (!gate.ok) return { statusCode: gate.status, headers: { ...CORS }, body: gate.error };
 
   const { SUPABASE_URL, SUPABASE_SERVICE_ROLE } = process.env;
   const params = new URLSearchParams(event.queryStringParameters || {});
