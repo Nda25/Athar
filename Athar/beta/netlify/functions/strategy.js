@@ -1,5 +1,5 @@
 const { CORS, preflight } = require("./_cors.js");
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+
 
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
@@ -20,9 +20,9 @@ exports.handler = async (event) => {
 
   // إعدادات من متغيّرات البيئة
   const API_KEY = process.env.GEMINI_API_KEY;
-  const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-1.0-pro'; // <-- إضافة هذا السطر لتحديد اسم النموذج
+const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-1.5-flash";
   
-  const genAI = new GoogleGenerativeAI(API_KEY);
+
   const model = genAI.getGenerativeModel({ model: MODEL_NAME }); // <-- استخدام المتغير الجديد هنا
 
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
@@ -124,7 +124,7 @@ ${VARIANT_NOTE}
     }
   };
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
   function makeReqBody(promptText){
     return {
