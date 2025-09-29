@@ -23,8 +23,6 @@ exports.handler = async (event) => {
 const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-1.5-flash";
   
 
-  const model = genAI.getGenerativeModel({ model: MODEL_NAME }); // <-- استخدام المتغير الجديد هنا
-
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
   const RETRIES = +(process.env.RETRIES || 2);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
