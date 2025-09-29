@@ -1,11 +1,13 @@
 const { CORS, preflight } = require("./_cors.js");
+
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
   const pre = preflight(event);
   if (pre) return pre;
+
   // نسمح فقط بـ POST
   if (event.httpMethod !== "POST") {
-return { statusCode: 405, headers: { ...CORS }, body: "Method Not Allowed" };
+    return { statusCode: 405, headers: { ...CORS }, body: "Method Not Allowed" };
   }
 
   // نقرأ جسم الطلب بأمان
@@ -22,9 +24,11 @@ return { statusCode: 405, headers: { ...CORS }, body: "Method Not Allowed" };
   const RETRIES    = +(process.env.RETRIES || 2);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
 
-  if (!API_KEY) return { statusCode: 500, headers: { ...CORS }, body: "Missing GEMINI_API_KEY" };
+  if (!API_KEY) {
+    return { statusCode: 500, headers: { ...CORS }, body: "Missing GEMINI_API_KEY" };
+  }
 
-  // توصيف الأسلوب حسب المرحلة (لغة/أنشطة مناسبة للعمر)
+  // توصيف الأسلوب حسب المرحلة
   const STAGE_GUIDE = {
     "primary-lower": `
 - الفئة: ابتدائي دنيا (الأول–الثالث).
@@ -64,7 +68,6 @@ return { statusCode: 405, headers: { ...CORS }, body: "Method Not Allowed" };
   ].join(" | ")}
 - لا تعيدي أي صياغات سبق استخدامها ضمن نفس الفكرة؛ بدّلي الزاوية والمنتج النهائي ومخرجات التعلم وأساليب التقويم كليًا.`;
 
-  // برومبت أقوى: قياس/بلوم/خطوات بالدقائق/تفريد/روبرك مختصر/مصادر
   const BASE_PROMPT =
 `أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
 ${stageNote}
@@ -124,7 +127,7 @@ ${VARIANT_NOTE}
         responseSchema,
         candidateCount: 1,
         maxOutputTokens: 2048,
-        temperature: 0.8,     // تنويع أعلى (مع الحفاظ على قيود الدقة)
+        temperature: 0.8,
         topK: 64,
         topP: 0.9
       },
@@ -135,7 +138,7 @@ ${VARIANT_NOTE}
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   const MIN = { goals:3, steps:4, examples:2 };
-  function isEmptyStr(s){ return !s || !String(s).trim(); }
+  const isEmptyStr = (s) => !s || !String(s).trim();
   function isComplete(d){
     if (!d) return false;
     const mustStrings = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
@@ -145,7 +148,6 @@ ${VARIANT_NOTE}
     if ((d.steps||[]).length < MIN.steps) return false;
     if ((d.examples||[]).length < MIN.examples) return false;
     for (const c of d.citations){ if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false; }
-    // ضمان وجود "الدقيقة" في الخطوات (قابل للتنفيذ زمنيًا)
     if (!d.steps.every(s => /الدقيقة\s*\d+\s*[-–]\s*\d+/.test(String(s)))) return false;
     return true;
   }
@@ -156,7 +158,7 @@ ${VARIANT_NOTE}
     try {
       const res = await fetch(url, {
         method: "POST",
-        headers: { ...CORS }},
+        headers: { "Content-Type": "application/json" }, // ✅ طلب خارجي: فقط نوع المحتوى
         body: JSON.stringify(makeReqBody(promptText)),
         signal: controller.signal
       });
@@ -221,9 +223,10 @@ ${VARIANT_NOTE}
         variant: variant || null
       };
 
+      // ✅ رد النجاح بهيدر CORS
       return {
         statusCode: 200,
-        headers: { ...CORS }},
+        headers: { ...CORS },
         body: JSON.stringify(data)
       };
 
@@ -239,11 +242,11 @@ ${VARIANT_NOTE}
       }
 
       if (isTimeout) {
-return { statusCode: 504, headers: { ...CORS }, body: "Gateway Timeout: model did not respond in time" };
+        return { statusCode: 504, headers: { ...CORS }, body: "Gateway Timeout: model did not respond in time" };
       }
       const code = status || 500;
       const body = err.body || String(err.message || err);
-return { statusCode: code, headers: { ...CORS }, body };
+      return { statusCode: code, headers: { ...CORS }, body };
     }
   }
 };
