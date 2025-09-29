@@ -19,7 +19,7 @@ exports.handler = async (event) => {
 
   // إعدادات من متغيّرات البيئة (ضعيها في Netlify dashboard)
   const API_KEY    = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash"; // أو "gemini-1.5-pro"
+const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-1.0-pro' });
 
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
   const RETRIES    = +(process.env.RETRIES || 2);
