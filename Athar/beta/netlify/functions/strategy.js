@@ -19,7 +19,7 @@ exports.handler = async (event) => {
 
   // إعدادات من متغيّرات البيئة (ضعيها في Netlify dashboard)
   const API_KEY    = process.env.GEMINI_API_KEY;
-  const MODEL      = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash-001";
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
   const RETRIES    = +(process.env.RETRIES || 2);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
@@ -117,7 +117,7 @@ ${VARIANT_NOTE}
     }
   };
 
-const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${API_KEY}`;
+const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
   function makeReqBody(promptText){
     return {
