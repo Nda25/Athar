@@ -72,7 +72,7 @@ exports.handler = async (event) => {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     // نستخدم pro لصرامة أعلى في الالتزام
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-1.0-pro' });
 
     // نطاق الزمن
     const now = new Date();
