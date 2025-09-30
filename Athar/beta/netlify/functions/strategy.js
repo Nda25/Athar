@@ -20,8 +20,7 @@ exports.handler = async (event) => {
 
   // إعدادات من متغيّرات البيئة
 
-const RAW_MODEL = process.env.GEMINI_MODEL?.trim();
-const MODEL_NAME = (RAW_MODEL ? RAW_MODEL.replace(/-latest$/,'') : "gemini-1.0-pro");
+const MODEL_NAME = (process.env.GEMINI_MODEL?.trim() || "gemini-1.5-flash");
   
 
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
@@ -123,7 +122,7 @@ ${VARIANT_NOTE}
     }
   };
 
-const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
 function makeReqBody(promptText){
   return {
