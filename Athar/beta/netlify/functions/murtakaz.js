@@ -23,7 +23,7 @@ exports.handler = async (event) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+  const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-1.5-flash" });
 
     const AGE_LABELS = { p1: "ابتدائي دُنيا", p2: "ابتدائي عُليا", m: "متوسط", h: "ثانوي" };
     const ageLabel = AGE_LABELS[age] || age || "—";
@@ -147,7 +147,7 @@ ${noveltyNote}
 
     return {
       statusCode: 200,
-      headers: { ...CORS }},
+  headers: { ...CORS },
       body
     };
 

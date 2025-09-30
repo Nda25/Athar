@@ -172,7 +172,7 @@ ${seedNote}
 `.trim();
 
 const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-1.5-flash" });
 
     const req = {
       contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -272,7 +272,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
     return {
       statusCode: 200,
-      headers: { ...CORS }, "Content-Type": "application/json; charset=utf-8" },
+  headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({ meta, sets, tips })
     };
 
