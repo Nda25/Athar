@@ -128,8 +128,6 @@ function makeReqBody(promptText){
   return {
     contents: [{ role: "user", parts: [{ text: promptText }] }],
     generationConfig: {
-      response_mime_type: "application/json",
-      response_schema: responseSchema,
       candidateCount: 1,
       maxOutputTokens: 2048,
       temperature: 0.8,
