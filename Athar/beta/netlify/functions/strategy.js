@@ -19,11 +19,7 @@ exports.handler = async (event) => {
   const { stage, subject, bloomType, lesson, variant } = payload;
 
   // إعدادات من متغيّرات البيئة
-<<<<<<< HEAD
-  const API_KEY = process.env.GEMINI_API_KEY;
-=======
-
->>>>>>> e4007c1
+const API_KEY = process.env.GEMINI_API_KEY;
 const MODEL_NAME = (process.env.GEMINI_MODEL?.trim() || "gemini-1.5-flash");
   
 
