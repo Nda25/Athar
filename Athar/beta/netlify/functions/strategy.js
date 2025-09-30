@@ -122,7 +122,7 @@ ${VARIANT_NOTE}
     }
   };
 
-const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
 function makeReqBody(promptText){
   return {
