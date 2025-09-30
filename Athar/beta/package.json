@@ -2,7 +2,7 @@
   "name": "athar",
   "private": true,
   "dependencies": {
-"@google/generative-ai": "latest"
+    "@google/generative-ai": "latest",
     "@supabase/supabase-js": "^2.44.0",
     "nodemailer": "^6.9.10",
     "jsonwebtoken": "^9.0.2",
