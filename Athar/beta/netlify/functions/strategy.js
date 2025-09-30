@@ -48,25 +48,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: err.message || "Gemini error" })
     };
   }
-};
-
-      if (!isComplete(data) && attempt <= RETRIES) {
-        attempt++;
-        await sleep(BACKOFF_MS * attempt);
-        promptText =
-`${BASE_PROMPT}
-
-الاستجابة السابقة كانت ناقصة/غير عملية. أعِد إرسال **JSON مكتمل** يملأ كل الحقول بنصوص غير فارغة،
-وبحد أدنى (${MIN.goals}) أهداف قابلة للقياس، (${MIN.steps}) خطوات تبدأ بـ "الدقيقة X–Y"، (${MIN.examples}) أمثلة جديدة.
-لا تضِف أي نص خارج JSON.`;
-        continue;
-      }
-
-      if (!isComplete(data)) {
-        const err = new Error("Incomplete response from model after retries");
-        err.status = 502;
-        throw err;
-      }
 
       data._meta = {
         stage: stage || "",
