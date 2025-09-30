@@ -1,5 +1,5 @@
 const { CORS, preflight } = require("./_cors.js");
-
+const API_KEY = process.env.GEMINI_API_KEY;
 
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
@@ -19,8 +19,9 @@ exports.handler = async (event) => {
   const { stage, subject, bloomType, lesson, variant } = payload;
 
   // إعدادات من متغيّرات البيئة
-  const API_KEY = process.env.GEMINI_API_KEY;
-const MODEL_NAME = (process.env.GEMINI_MODEL?.trim() || "gemini-1.5-flash");
+
+const RAW_MODEL = process.env.GEMINI_MODEL?.trim();
+const MODEL_NAME = (RAW_MODEL ? RAW_MODEL.replace(/-latest$/,'') : "gemini-1.5-flash");
   
 
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
