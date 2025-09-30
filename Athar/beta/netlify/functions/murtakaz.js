@@ -1,10 +1,7 @@
-const { CORS, preflight } = require("./_cors.js");
 // netlify/functions/murtakaz.js  (CommonJS)
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   try {
     if (event.httpMethod !== "POST") {
       return { statusCode: 405, body: "Method Not Allowed" };
@@ -23,18 +20,18 @@ exports.handler = async (event) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
     const AGE_LABELS = { p1: "ابتدائي دُنيا", p2: "ابتدائي عُليا", m: "متوسط", h: "ثانوي" };
     const ageLabel = AGE_LABELS[age] || age || "—";
     const dhow = (v) => (v==null || v===undefined ? "—" : String(v));
 
-    // تشديد الدقة والملاءمة وعدم التكرار والقياس. داخل نفس القوالب دون تغيير الحقول
+    // تشديد الدقة والملاءمة وعدم التكرار والقياس… داخل نفس القوالب دون تغيير الحقول
     const strictJSON = `
 أنت مخطط دروس ذكي لمدارس السعودية (مناهج 2025+) بالعربية الفصحى.
 - لا تكتب أي نص خارج JSON.
 - أعطِ تفاصيل قابلة للتطبيق والقياس، تراعي ${ageLabel} وزمن الحصة (${dhow(duration)||45} دقيقة) وبيئة الصف السعودية.
-- اجعل الأنشطة عملية وملائمة لواقع المدرسة، وتدعم مهارات القرن 21 ورؤية 2030 (تعاون، تواصل، تفكير ناقد، ابتكار، مواطنة رقمية.).
+- اجعل الأنشطة عملية وملائمة لواقع المدرسة، وتدعم مهارات القرن 21 ورؤية 2030 (تعاون، تواصل، تفكير ناقد، ابتكار، مواطنة رقمية…).
 - مواءمة بلوم: انسج الأهداف والأنشطة والتقويم بأفعال ومهام تتطابق مع "${dhow(bloomMain)}" (+ "${dhow(bloomSupport)}" إن وُجد).
 - امنع التكرار: لو مُمرّر متغير "variant" فاعتمد زاوية وتنظيمًا مختلفين 100% (عنوان مختلف، تسلسل مختلف، منتج نهائي مختلف).
 - اجعل كل سؤال تقويم واضح الصياغة ومرتبطًا مباشرة بالموضوع، مع تذكرة خروج أو أداة تقييم سريعة.
@@ -147,7 +144,7 @@ ${noveltyNote}
 
     return {
       statusCode: 200,
-  headers: { ...CORS },
+      headers: { "Content-Type": "application/json; charset=utf-8" },
       body
     };
 

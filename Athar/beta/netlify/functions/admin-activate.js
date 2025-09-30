@@ -1,4 +1,3 @@
-const { CORS, preflight } = require("./_cors.js");
 // /netlify/functions/admin-activate.js
 const { createClient } = require("@supabase/supabase-js");
 const { requireAdmin } = require("./_auth.js");
@@ -10,8 +9,6 @@ const supabase = createClient(
 );
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }

@@ -1,4 +1,3 @@
-const { CORS, preflight } = require("./_cors.js");
 // netlify/functions/gemini-ethraa.js
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
@@ -53,8 +52,6 @@ function tagFreshness(card) {
 }
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -72,7 +69,7 @@ exports.handler = async (event) => {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     // نستخدم pro لصرامة أعلى في الالتزام
-const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
     // نطاق الزمن
     const now = new Date();
@@ -230,11 +227,11 @@ ${lesson ? `يفضّل مواءمة ضمنية مع "${lesson}".` : ''}`.trim();
 
     return {
       statusCode: 200,
-      headers: { ...CORS },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify(payload)
     };
   } catch (e) {
     console.error('ethraa-fatal:', e?.message || e);
-    return { statusCode: 500, headers: { ...CORS }, body: JSON.stringify({ ok: false, error: 'server_error' }) };
+    return { statusCode: 500, body: JSON.stringify({ ok: false, error: 'server_error' }) };
   }
 };

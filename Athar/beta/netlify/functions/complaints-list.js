@@ -1,12 +1,9 @@
-const { CORS, preflight } = require("./_cors.js");
 // GET /.netlify/functions/complaints-list?status=new|in_progress|resolved|rejected&type=complaint|suggestion&q=...&limit=20&offset=0
 const { requireAdmin } = require("./_auth");
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   const gate = await requireAdmin(event);
-  if (!gate.ok) return { statusCode: gate.status, headers: { ...CORS }, body: gate.error };
+  if (!gate.ok) return { statusCode: gate.status, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: gate.error };
 
   const { SUPABASE_URL, SUPABASE_SERVICE_ROLE } = process.env;
   const params = new URLSearchParams(event.queryStringParameters || {});
@@ -25,7 +22,7 @@ exports.handler = async (event) => {
     if (q)      search.append("or", `(subject.ilike.*${q}*,message.ilike.*${q}*,user_email.ilike.*${q}*)`);
 
     const res = await fetch(`${base}?${search.toString()}`, {
-      headers: { ...CORS }
+      headers: {
         "apikey": SUPABASE_SERVICE_ROLE,
         "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE}`,
         "Content-Type": "application/json",
@@ -35,12 +32,12 @@ exports.handler = async (event) => {
 
     if (!res.ok){
       const txt = await res.text().catch(()=> '');
-      return { statusCode: 500, headers: { ...CORS }}, body: txt || "Supabase REST error" };
+      return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: txt || "Supabase REST error" };
     }
 
     const rows = await res.json();
-    return { statusCode: 200, headers: { ...CORS }}, body: JSON.stringify({ ok:true, rows }) };
+    return { statusCode: 200, headers:{'Content-Type':'application/json; charset=utf-8'}, body: JSON.stringify({ ok:true, rows }) };
   } catch (e) {
-    return { statusCode: 500, headers: { ...CORS }}, body: e.message || "Server error" };
+    return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: e.message || "Server error" };
   }
 };

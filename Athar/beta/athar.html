@@ -202,7 +202,7 @@
   </main>
 
   <footer>
-    <p class="foot-line">التعليم شرارة صغيرة. تُضيء عقولًا كبيرة.</p>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
 
     <nav class="foot-links">
@@ -288,7 +288,7 @@
     function setLoading(isLoading){
       if (isLoading){
         goBtn.dataset._label = goBtn.textContent;
-        goBtn.textContent = "قيد الإبداع  . ✨";
+        goBtn.textContent = "قيد الإبداع  … ✨";
         goBtn.disabled = true;
         regenBtn.disabled = true;
       } else {
@@ -396,7 +396,7 @@
         return;
       }
       $("#err").style.display = "none";
-      statusEl.textContent = "جاري تحويل شغفك إلى استراتيجية ملموسة .✨";
+      statusEl.textContent = "جاري تحويل شغفك إلى استراتيجية ملموسة …✨";
       setLoading(true);
       try{
         const data = await callStrategy({

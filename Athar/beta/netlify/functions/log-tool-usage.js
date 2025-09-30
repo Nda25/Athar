@@ -1,4 +1,3 @@
-const { CORS, preflight } = require("./_cors.js");
 // netlify/functions/log-tool-usage.js
 const { createClient } = require('@supabase/supabase-js');
 
@@ -7,8 +6,6 @@ const serviceKey  = process.env.SUPABASE_SERVICE_ROLE;
 const supaAdmin   = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }

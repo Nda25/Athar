@@ -1,4 +1,3 @@
-const { CORS, preflight } = require("./_cors.js");
 // /netlify/functions/user-status.js
 // يرجّع حالة اشتراك المستخدم (active/expired/none) + تاريخ الانتهاء
 // يعتمد على: Auth0 JWT + Supabase SERVICE ROLE
@@ -66,8 +65,6 @@ async function fetchMembershipStatus(user_sub, email) {
 }
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   if (event.httpMethod !== "GET") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
@@ -85,7 +82,7 @@ exports.handler = async (event) => {
 
   return {
     statusCode: 200,
-    headers: { ...CORS }, "Cache-Control": "no-store" },
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
     body: JSON.stringify({
       ok: true,
       user_sub: sub,

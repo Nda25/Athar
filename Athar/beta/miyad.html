@@ -198,7 +198,7 @@
           <span class="pill">كل موعد يظهر معه اللون + المادة + الفصل</span>
         </div>
         <div class="events" id="list"></div>
-        <p class="print-note">هذا اليوم سيمضي. وسيبقى منه الأثـر 🌿</p>
+        <p class="print-note">هذا اليوم سيمضي… وسيبقى منه الأثـر 🌿</p>
       </section>
 
       <!-- بطاقة إعدادات التذكير عبر الإيميل -->
@@ -236,7 +236,7 @@
   </main>
 
 <footer>
-  <p class="foot-line">التعليم شرارة صغيرة. تُضيء عقولًا كبيرة.</p>
+  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
   <p class="foot-name">ندى المجيرش</p>
 
   <nav class="foot-links">
@@ -434,7 +434,7 @@ async function saveReminderSettings() {
     remind_days_before: days_before
   };
 
-  stat.textContent = 'جارٍ الحفظ.';
+  stat.textContent = 'جارٍ الحفظ…';
   const { error } = await sb.from('miyad_settings').upsert(payload, { onConflict: 'user_id' });
   if (error) { console.error('saveReminderSettings error:', error); stat.textContent='تعذّر الحفظ'; toast('تعذّر الحفظ'); return; }
 

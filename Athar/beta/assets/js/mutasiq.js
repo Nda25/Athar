@@ -56,7 +56,7 @@ const state = {
     r1:{ title:'مواعيد مهمة', body:'', color:'#dbeafe' },
     r2:{ title:'تذكيرات',     body:'', color:'#e0f2fe' },
     r3:{ title:'مهام الطلاب', body:'', color:'#fce7f3' },
-    footerLine:'التعليم شرارة صغيرة. تُضيء عقولًا كبيرة.',
+    footerLine:'التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.',
     footerName:'ندى المجيرش',
   },
   // الفواصل

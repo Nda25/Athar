@@ -154,17 +154,17 @@
           <div class="cols-2" id="mode-topic">
             <div class="field">
               <label>المادة</label>
-              <input id="f-subject" placeholder="رياضيات / علوم / لغة عربية .">
+              <input id="f-subject" placeholder="رياضيات / علوم / لغة عربية …">
             </div>
             <div class="field">
               <label>الموضوع</label>
-              <input id="f-topic" placeholder="الكسور / دورة حياة النبات / المبتدأ والخبر .">
+              <input id="f-topic" placeholder="الكسور / دورة حياة النبات / المبتدأ والخبر …">
             </div>
           </div>
 
           <div class="field" id="mode-text" style="display:none">
             <label>النص للتحليل</label>
-            <textarea id="f-text" rows="5" placeholder="ألصقي فقرة من المصدر. (سنستنتج الأهداف ومستوى بلوم)"></textarea>
+            <textarea id="f-text" rows="5" placeholder="ألصقي فقرة من المصدر… (سنستنتج الأهداف ومستوى بلوم)"></textarea>
           </div>
 
           <div class="cols-2">
@@ -201,7 +201,7 @@
             </div>
             <div class="field">
               <label>ملاحظات خاصة (اختياري)</label>
-              <input id="f-notes" placeholder="قيود صفية، أدوات متاحة.">
+              <input id="f-notes" placeholder="قيود صفية، أدوات متاحة…">
             </div>
           </div>
 
@@ -314,7 +314,7 @@
   </main>
 
 <footer>
-  <p class="foot-line">التعليم شرارة صغيرة. تُضيء عقولًا كبيرة.</p>
+  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
   <p class="foot-name">ندى المجيرش</p>
 
   <nav class="foot-links">
@@ -477,12 +477,12 @@ function metaSnapshot(){
       const adapt = (document.getElementById('f-adapt').value === 'on');
 
       // تحقّق سريع
-      if (mode==='topic' && !topic) { toastMsg('اكتبي الموضوع.'); return; }
-      if (mode==='text'  && !sourceText) { toastMsg('الصقي نصًا للتحليل.'); return; }
+      if (mode==='topic' && !topic) { toastMsg('اكتبي الموضوع…'); return; }
+      if (mode==='text'  && !sourceText) { toastMsg('الصقي نصًا للتحليل…'); return; }
 
       // حالة انتظار
       btnGen.disabled = true; btnGen.dataset._label = btnGen.textContent;
-      btnGen.textContent = 'نولّد خطة ذكية. ✨';
+      btnGen.textContent = 'نولّد خطة ذكية… ✨';
 
       try{
         const res = await fetch('/.netlify/functions/murtakaz', {

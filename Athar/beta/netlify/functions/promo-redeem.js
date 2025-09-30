@@ -1,4 +1,3 @@
-const { CORS, preflight } = require("./_cors.js");
 // netlify/functions/promo-redeem.js
 // POST /promo-redeem  { code }
 // يتطلب مستخدمًا مسجّلاً؛ يتحقق من الرمز في promo_codes ويُسجّل الاسترداد ويُمدّد العضوية.
@@ -9,8 +8,6 @@ const { createClient } = require("@supabase/supabase-js");
 const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE, { auth:{ persistSession:false } });
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   if (event.httpMethod !== "POST") return { statusCode:405, body:"Method Not Allowed" };
 
   const gate = await requireUser(event);

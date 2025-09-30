@@ -1,4 +1,3 @@
-const { CORS, preflight } = require("./_cors.js");
 // GET /.netlify/functions/complaints-get?id=<uuid>
 // Admin only
 
@@ -12,13 +11,11 @@ const supabase = createClient(
 );
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   const gate = await requireAdmin(event);
-  if (!gate.ok) return { statusCode: gate.status, headers: { ...CORS }}, body: gate.error };
+  if (!gate.ok) return { statusCode: gate.status, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: gate.error };
 
   const id = (event.queryStringParameters || {}).id;
-  if (!id) return { statusCode: 400, headers: { ...CORS }}, body: "Missing id" };
+  if (!id) return { statusCode: 400, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Missing id" };
 
   try {
     const { data: complaint, error: cErr } = await supabase
@@ -27,8 +24,8 @@ exports.handler = async (event) => {
       .eq("id", id)
       .single();
 
-    if (cErr) return { statusCode: 500, headers: { ...CORS }}, body: cErr.message };
-    if (!complaint) return { statusCode: 404, headers: { ...CORS }}, body: "Not found" };
+    if (cErr) return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: cErr.message };
+    if (!complaint) return { statusCode: 404, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Not found" };
 
     const { data: messages, error: mErr } = await supabase
       .from("complaint_messages")
@@ -36,14 +33,14 @@ exports.handler = async (event) => {
       .eq("complaint_id", id)
       .order("created_at", { ascending: true });
 
-    if (mErr) return { statusCode: 500, headers: { ...CORS }}, body: mErr.message };
+    if (mErr) return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: mErr.message };
 
     return {
       statusCode: 200,
-      headers: { ...CORS }},
+      headers:{ "Content-Type":"application/json; charset=utf-8" },
       body: JSON.stringify({ ok: true, complaint, messages })
     };
   } catch (e) {
-    return { statusCode: 500, headers: { ...CORS }}, body: e.message || "Server error" };
+    return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: e.message || "Server error" };
   }
 };

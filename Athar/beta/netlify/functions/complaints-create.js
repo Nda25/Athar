@@ -1,4 +1,3 @@
-const { CORS, preflight } = require("./_cors.js");
 // POST body: { subject, type: 'complaint'|'suggestion', message, email?, name?, order_number? }
 // يتطلب مستخدم مسجّل (JWT) + (اختياري) اشتراك نشط
 
@@ -46,14 +45,12 @@ async function isActive(user_sub, email) {
 }
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, headers: { ...CORS }}, body: "Method Not Allowed" };
+    return { statusCode: 405, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Method Not Allowed" };
   }
 
   const gate = await requireUser(event);
-  if (!gate.ok) return { statusCode: gate.status, headers: { ...CORS }}, body: gate.error };
+  if (!gate.ok) return { statusCode: gate.status, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: gate.error };
 
   try {
     const data = JSON.parse(event.body || "{}");
@@ -64,7 +61,7 @@ exports.handler = async (event) => {
     const orderNo = data.order_number ? String(data.order_number).trim() : null;
 
     if (!subject || !message || !["complaint","suggestion"].includes(type)) {
-      return { statusCode: 400, headers: { ...CORS }}, body: "Invalid payload" };
+      return { statusCode: 400, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Invalid payload" };
     }
 
     const userEmail = (data.email || gate.user.email || "").toLowerCase();
@@ -72,13 +69,13 @@ exports.handler = async (event) => {
     const userSub   = gate.user.sub;
 
     if (!userEmail) {
-      return { statusCode: 400, headers: { ...CORS }}, body: "Missing user email" };
+      return { statusCode: 400, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Missing user email" };
     }
 
     if (REQUIRE_ACTIVE) {
       const active = await isActive(userSub, userEmail);
       if (!active) {
-        return { statusCode: 403, headers: { ...CORS }}, body: "Only active subscribers can send complaints/suggestions" };
+        return { statusCode: 403, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Only active subscribers can send complaints/suggestions" };
       }
     }
 
@@ -100,7 +97,7 @@ exports.handler = async (event) => {
 
     if (insErr) {
       console.error("complaints: insert error", insErr);
-      return { statusCode: 500, headers: { ...CORS }}, body: "Failed to create complaint" };
+      return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: "Failed to create complaint" };
     }
 
     if (inserted?.id) {
@@ -118,11 +115,11 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { ...CORS }},
+      headers: { "Content-Type":"application/json; charset=utf-8" },
       body: JSON.stringify({ ok: true, complaint: inserted, whatsapp })
     };
   } catch (e) {
     console.error("complaints-create error:", e);
-    return { statusCode: 500, headers: { ...CORS }}, body: e.message || "Server error" };
+    return { statusCode: 500, headers:{'Content-Type':'text/plain; charset=utf-8'}, body: e.message || "Server error" };
   }
 };

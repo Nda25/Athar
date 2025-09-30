@@ -1,4 +1,3 @@
-const { CORS, preflight } = require("./_cors.js");
 // netlify/functions/admin-announcement.js
 const { createClient } = require("@supabase/supabase-js");
 const { requireAdmin } = require("./_auth.js");
@@ -12,8 +11,6 @@ function res(status, body) {
 }
 
 exports.handler = async (event) => {
-  const pre = preflight(event);
-  if (pre) return pre;
   const method = event.httpMethod;
 
   if (method === "GET") {

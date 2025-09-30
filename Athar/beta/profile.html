@@ -205,7 +205,7 @@
 
   <!-- الذيل -->
   <footer>
-    <p class="foot-line">التعليم شرارة صغيرة. تُضيء عقولًا كبيرة.</p>
+    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
     <p class="foot-name">ندى المجيرش</p>
     <nav class="foot-links">
       <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
@@ -513,11 +513,11 @@ document.getElementById('u-joined').textContent =
   const e = row.end_at   ? new Date(row.end_at).toLocaleDateString('ar-SA')   : '—';
 
   const actEl = document.getElementById('u-activation');
-  if (statusClaim !== 'trial' || actEl.textContent === '—') {
+  if (status !== 'trial' || actEl.textContent === '—') {
     actEl.textContent = `${s} → ${e}`;
   }
 
-  if (row.plan && (planClaim === "—" || !planClaim || document.getElementById('u-plan').textContent === '—')) {
+  if (row.plan && plan==='—') {
     document.getElementById('u-plan').textContent = row.plan;
   }
 }
@@ -581,64 +581,35 @@ document.getElementById('u-joined').textContent =
       };
 
       // الفواتير
-      // الفواتير
-      try {
-        const token =
-          await (window.auth0Client || window.auth)
-            .getToken({ audience: "https://api.n-athar" }).catch(() => null)
-          || await (window.auth0Client || window.auth)
-            .getTokenSilently?.().catch(() => null);
-
-        const res = await fetch('/.netlify/functions/invoices-list', {
-          headers: token ? { Authorization: 'Bearer ' + token } : {}
-        });
-
-        const out = await res.json().catch(() => ({}));
-
-        if (res.ok && Array.isArray(out.rows) && out.rows.length) {
-          const tb = document.getElementById('invBody');
-          tb.innerHTML = '';
-
-          out.rows.forEach(r => {
+      try{
+        const token = await (window.auth0Client||window.auth).getToken({ audience: "https://api.n-athar" }).catch(()=>null)
+                    || await (window.auth0Client||window.auth).getTokenSilently?.().catch(()=>null);
+        const res = await fetch('/.netlify/functions/invoices-list', { headers: token ? { Authorization: 'Bearer '+token } : {} });
+        const out = await res.json().catch(()=>({}));
+        if (res.ok && Array.isArray(out.rows) && out.rows.length){
+          const tb = document.getElementById('invBody'); tb.innerHTML='';
+          out.rows.forEach(r=>{
             const tr = document.createElement('tr');
-
-            // التاريخ
-            const d = r.created_at
-              ? new Date(r.created_at).toLocaleString('ar-SA')
-              : '—';
-
-            // المبلغ + العملة
-            const cur = (r.currency || 'SAR').toUpperCase();
-            const amtSar = (typeof r.amount_sar === 'number')
-              ? Number(r.amount_sar).toFixed(2)
-              : (r.amount ? (Number(r.amount) / 100).toFixed(2) : null);
-            const amountTxt = amtSar
-              ? (cur === 'SAR' ? `${amtSar} ر.س` : `${amtSar} ${cur}`)
-              : '—';
-
-            // الحالة
-            const st = (r.status || '').toLowerCase() || '—';
-
+            const d = r.created_at ? new Date(r.created_at).toLocaleString('ar-SA') : '—';
+            const amount = r.amount ? (Number(r.amount)/100).toFixed(2)+' ر.س' : (r.amount_sar ? (Number(r.amount_sar).toFixed(2)+' ر.س') : '—');
+            const st = (r.status||'').toLowerCase();
             tr.innerHTML = `
               <td>${d}</td>
-              <td>${amountTxt}</td>
+              <td>${amount}</td>
               <td>${r.gateway || 'moyasar'}</td>
-              <td><span class="pill ${st}">${st}</span></td>
-              <td>${r.invoice_id || r.provider_event_id || '—'}</td>
-            `;
+              <td><span class="pill ${st}">${st||'—'}</span></td>
+              <td>${r.invoice_id || r.provider_event_id || '—'}</td>`;
             tb.appendChild(tr);
           });
-
-          document.getElementById('invTable').style.display = 'table';
-          document.getElementById('invEmpty').style.display = 'none';
+          document.getElementById('invTable').style.display='table';
+          document.getElementById('invEmpty').style.display='none';
         } else {
-          document.getElementById('invTable').style.display = 'none';
-          document.getElementById('invEmpty').style.display = '';
+          document.getElementById('invTable').style.display='none';
+          document.getElementById('invEmpty').style.display='';
         }
-      } catch (_) {}
-
-      document.getElementById('cardInvoices')
-        .setAttribute('data-ready', '1');
+      }catch(_){}
+      document.getElementById('cardInvoices').setAttribute('data-ready','1');
+    }
 
     // خروج
     document.addEventListener('click', (e)=>{
@@ -664,7 +635,7 @@ document.getElementById('u-joined').textContent =
     } catch { return { email:'', sub:null }; }
   }
 
-  // 2) تحديث الواجهة — يدعم end_at أو expires_at، ويحوّل manual/weekly/monthly. إلى paid
+  // 2) تحديث الواجهة — يدعم end_at أو expires_at، ويحوّل manual/weekly/monthly… إلى paid
   function setMembershipUI({ status, plan, start_at, end_at, expires_at }) {
     const expiry = expires_at || end_at || null;
     const isActive = status === 'active' && (!expiry || new Date(expiry) > new Date());

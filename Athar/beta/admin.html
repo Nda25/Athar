@@ -196,7 +196,7 @@
 
         <div class="card" id="c-detail">
           <h3 style="margin-top:0">التفاصيل</h3>
-          <div id="c-empty" class="muted">اختر عنصرًا من القائمة.</div>
+          <div id="c-empty" class="muted">اختر عنصرًا من القائمة…</div>
 
           <div id="c-box" class="hidden">
             <p><strong>العنوان:</strong> <span id="cd-subject">—</span></p>
@@ -222,7 +222,7 @@
 
             <div class="field">
               <label>الرد على المرسل</label>
-              <textarea id="cd-reply" rows="4" placeholder="اكتب الرد هنا."></textarea>
+              <textarea id="cd-reply" rows="4" placeholder="اكتب الرد هنا…"></textarea>
             </div>
             <div class="actions-row">
               <button class="btn primary" id="cd-send">إرسال الرد</button>
@@ -457,7 +457,7 @@
     const start   = toIso('ann-start-cal','ann-start-g','ann-start-h');
     const expires = toIso('ann-end-cal','ann-end-g','ann-end-h');
     const stat = document.getElementById('ann-status');
-    stat.textContent = 'جارٍ النشر.';
+    stat.textContent = 'جارٍ النشر…';
     try{
       await apiFetch('/.netlify/functions/admin-announcement', {
         method:'POST',
@@ -482,7 +482,7 @@
     const unit    = document.getElementById('act-unit').value;
     const note    = document.getElementById('act-note').value.trim() || null;
     const stat = document.getElementById('act-status');
-    stat.textContent = 'جارٍ التفعيل.';
+    stat.textContent = 'جارٍ التفعيل…';
     try{
       const j = await apiFetch('/.netlify/functions/admin-activate', {
         method:'POST',
@@ -589,7 +589,7 @@
     const next = document.getElementById('cd-next').value || null;
     const stat = document.getElementById('cd-statusmsg');
     if (!msg) { toast('أكتب الرد'); return; }
-    stat.textContent = 'جارٍ الإرسال.';
+    stat.textContent = 'جارٍ الإرسال…';
     try{
       await apiFetch('/.netlify/functions/complaints-reply', {
         method:'POST',

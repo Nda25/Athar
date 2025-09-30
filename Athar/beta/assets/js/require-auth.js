@@ -83,7 +83,7 @@
     document.head.appendChild(s);
     const d = document.createElement("div");
     d.id = "athar-guard";
-    d.innerHTML = `<div class="box"><div class="spin"></div><div>جاري التحقق من الصلاحيات.</div></div>`;
+    d.innerHTML = `<div class="box"><div class="spin"></div><div>جاري التحقق من الصلاحيات…</div></div>`;
     document.documentElement.appendChild(d);
   }
   function unmountGuardOverlay(){
@@ -186,11 +186,9 @@
   let slug   = fileSlug();
 
   async function enforce(){
-
-    let status;
     try {
       // 1) جلب الحالة من الـ backend
-      status = await fetchUserStatus(client).catch(() => ({ active:false, status:"inactive" }));
+      let status = await fetchUserStatus(client).catch(() => ({ active:false, status:"inactive" }));
       log("live status (from API):", status);
 
       // 2) مزج حالة التجربة من الـID Token (مصدر الحقيقة لحالة trial)
@@ -199,18 +197,14 @@
         const NS  = "https://n-athar.co/";
         const ALT = "https://athar.co/";
         const tokenStatus = claims?.[NS + "status"] ?? claims?.[ALT + "status"];
-        const trialExp    = claims?.[NS + "trial_expires"] ?? claims?.[ALT + "trial_expires"];
-
-        // لو الـAPI قالت غير نشط لكن التوكن يقول Trial → فعّلي الوصول مؤقتًا
         if (!status.active && tokenStatus === "trial") {
-          status.active = true;
-          status.status = "trial";
-          if (trialExp) status.trial_expires = trialExp;
+          status = { ...status, active: true, status: "trial" };
           log("trial enabled via ID token claim");
         }
-      } catch (_) {
-        warn("could not read ID token claims for trial check");
+      } catch (e) {
+        warn("could not read ID token claims for trial check", e);
       }
+
       // 3) قواعد الوصول
       // الأدمن يتطلب active فقط (لا يسمح بالـtrial)
       if (slug === ADMIN) {

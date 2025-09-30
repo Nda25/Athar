@@ -39,15 +39,15 @@
     if (!window.auth) return null;
     try {
       if (typeof window.auth.getTokenSilently === 'function') {
-        return await window.auth.getTokenSilently({ authorizationParams:{ audience:'https://api.n-athar' } });
+        return await window.auth.getTokenSilently({ authorizationParams:{ audience:'https://api.athar' } });
       }
       if (typeof window.auth.getToken === 'function') {
-        return await window.auth.getToken({ audience:'https://api.n-athar' });
+        return await window.auth.getToken({ audience:'https://api.athar' });
       }
     } catch(e){
       try {
         if (typeof window.auth.getTokenWithPopup === 'function') {
-          return await window.auth.getTokenWithPopup({ authorizationParams:{ audience:'https://api.n-athar' } });
+          return await window.auth.getTokenWithPopup({ authorizationParams:{ audience:'https://api.athar' } });
         }
       } catch(_) {}
     }
@@ -160,7 +160,7 @@ ${day.homework||''}
 
   // نداء الدالة
   $('#btn-generate').addEventListener('click', async ()=>{
-    status.textContent='جارٍ التوليد.';
+    status.textContent='جارٍ التوليد…';
     const token = await getAuthToken();
     if (!token){ status.textContent='غير مصرح — سجّلي الدخول'; toast('غير مصرح — سجّلي الدخول'); return; }
 

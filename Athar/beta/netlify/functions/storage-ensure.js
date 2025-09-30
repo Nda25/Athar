@@ -1,9 +1,6 @@
-const { CORS, preflight } = require("./_cors.js");
 // POST /.netlify/functions/storage-ensure
 // ينشئ bucket: avatars (عام) ويضبط سياسات القراءة/الرفع إن لم تكن موجودة
 exports.handler = async () => {
-  const pre = preflight(event);
-  if (pre) return pre;
   try {
     const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY)
@@ -11,14 +8,14 @@ exports.handler = async () => {
 
     // 1) تأكد وجود البكِت
     const list = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
-      headers: { ...CORS }, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` }
+      headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` }
     }).then(r => r.json());
 
     const has = Array.isArray(list) && list.find(b => b.name === "avatars");
     if (!has) {
       const mk = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
         method: "POST",
-        headers: { ...CORS }
+        headers: {
           apikey: SUPABASE_SERVICE_KEY,
           Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
           "Content-Type": "application/json"
@@ -61,7 +58,7 @@ exports.handler = async () => {
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/rpc/execute_sql`, {
         method: "POST",
-        headers: { ...CORS }
+        headers: {
           apikey: SUPABASE_SERVICE_KEY,
           Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
           "Content-Type": "application/json"
