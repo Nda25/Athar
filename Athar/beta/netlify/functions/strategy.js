@@ -49,35 +49,6 @@ exports.handler = async (event) => {
     };
   }
 };
-    const timer = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }, // ✅ طلب خارجي: فقط نوع المحتوى
-        body: JSON.stringify(makeReqBody(promptText)),
-      });
-      const text = await res.text();
-      if (!res.ok) {
-        const err = new Error(`HTTP ${res.status}`);
-        err.status = res.status;
-        err.body = text;
-        throw err;
-      }
-      const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-        err.status = 502;
-        err.body = raw.slice(0,300);
-        throw err;
-      }
-      return data;
-    } finally { clearTimeout(timer); }
-  }
-
-  let attempt = 0;
-  let promptText = BASE_PROMPT;
-
-  while (true) {
-    try {
-      let data = await callOnce(promptText);
 
       if (!isComplete(data) && attempt <= RETRIES) {
         attempt++;
@@ -107,28 +78,4 @@ exports.handler = async (event) => {
 
       // ✅ رد النجاح بهيدر CORS
       return {
-        statusCode: 200,
-        headers: { ...CORS },
-        body: JSON.stringify(data)
-      };
 
-    } catch (err) {
-      attempt++;
-      const status = err.status || 0;
-      const isTimeout = /timeout|AbortError/i.test(String(err?.message));
-      const retriable = isTimeout || [429,500,502,503,504].includes(status);
-
-      if (retriable && attempt <= RETRIES) {
-        await sleep(BACKOFF_MS * attempt);
-        continue;
-      }
-
-      if (isTimeout) {
-        return { statusCode: 504, headers: { ...CORS }, body: "Gateway Timeout: model did not respond in time" };
-      }
-      const code = status || 500;
-      const body = err.body || String(err.message || err);
-      return { statusCode: code, headers: { ...CORS }, body };
-    }
-  }
-};
