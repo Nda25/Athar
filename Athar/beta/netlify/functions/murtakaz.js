@@ -1,96 +1,74 @@
 // netlify/functions/murtakaz.js  (CommonJS)
-// مولّد خطط "مُرتكز" — نسخة مُحدّثة للعمل مع Gemini 1.5 (v1beta)
+// مُرتكز — يولّد خطة درس عبر Gemini مع fallback تلقائي بين v1 و v1beta.
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-/* إعدادات عامة */
-const CORS_HEADERS = {
+/* ===== CORS ===== */
+const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 
-// اسم الموديل الموصى به حالياً
-const MODEL_ID = "gemini-1.5-pro-latest"; // بدّليه إلى "gemini-1.5-flash-latest" لو تبين الأرخص
-const API_VERSION = "v1beta";             // لتجنّب تعارض النسخ التي تظهر برسالة 404/Not found
+/* ===== ضبط الموديلات =====
+   - PRIMARY: مناسب لـ v1 (أسماء -latest)
+   - FALLBACK: مناسب لـ v1beta (بدون -latest)
+   يمكنك تغييرها من متغيرات البيئة إن أحببت. */
+const MODEL_PRIMARY  = process.env.GEMINI_MODEL_ID_PRIMARY  || "gemini-1.5-pro-latest";
+const MODEL_FALLBACK = process.env.GEMINI_MODEL_ID_FALLBACK || "gemini-1.5-pro";
 
 exports.handler = async (event) => {
   try {
-    // Preflight
     if (event.httpMethod === "OPTIONS") {
-      return { statusCode: 204, headers: CORS_HEADERS, body: "" };
+      return { statusCode: 204, headers: CORS, body: "" };
     }
-
     if (event.httpMethod !== "POST") {
-      return { statusCode: 405, headers: CORS_HEADERS, body: "Method Not Allowed" };
+      return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return { statusCode: 500, headers: CORS_HEADERS, body: "Missing GEMINI_API_KEY" };
+      return { statusCode: 500, headers: CORS, body: "Missing GEMINI_API_KEY" };
     }
 
-    // قراءة جسم الطلب
+    const genAI = new GoogleGenerativeAI(apiKey);
+
     const {
-      mode,            // "topic" أو "text"
-      subject,         // المادة
-      topic,           // الموضوع (إن وُجد)
-      sourceText,      // نص للتحليل إن كان النمط "text"
-      age,             // p1/p2/m/h أو نص
-      duration,        // مدة الحصة بالدقائق
-      bloomMain,       // مستوى بلوم الأساسي
-      bloomSupport,    // مستوى بلوم الداعم
-      goalCount,       // عدد الأهداف
-      notes,           // ملاحظات المعلّم
-      level,           // مستوى الصف
-      adapt,           // تعلم تكيفي (boolean)
-      variant          // مفتاح للتنويع الجذري
+      mode, subject, topic, sourceText,
+      age, duration, bloomMain, bloomSupport,
+      goalCount, notes, level, adapt, variant
     } = safeJson(event.body, {});
 
-    // تهيئة Gemini
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: MODEL_ID,
-      apiVersion: API_VERSION
-    });
-
-    // تسميات الفئات العمرية
+    /* ===== تجهيز البرومبت ===== */
     const AGE_LABELS = { p1: "ابتدائي دُنيا", p2: "ابتدائي عُليا", m: "متوسط", h: "ثانوي" };
     const ageLabel = AGE_LABELS[age] || age || "—";
     const dhow = (v) => (v == null ? "—" : String(v));
+    const goalN = Math.max(1, Number(goalCount) || 2);
 
-    // قواعد الصياغة الصارمة (إخراج JSON فقط)
     const strictJSON = `
-أنت مخطط دروس ذكي لمدارس السعودية (مناهج 2025+) بالعربية الفصحى.
-- لا تكتب أي نص خارج JSON.
-- أعطِ تفاصيل قابلة للتطبيق والقياس، تراعي ${ageLabel} وزمن الحصة (${dhow(duration || 45)} دقيقة) وبيئة الصف السعودية.
-- مواءمة بلوم: انسج الأهداف والأنشطة والتقويم بأفعال ومهام تتطابق مع "${dhow(bloomMain)}" (+ "${dhow(bloomSupport)}" إن وُجد).
-- امنع التكرار: لو مُمرّر متغير "variant" فاعتمد زاوية وتنظيمًا مختلفين 100%.
-- اجعل "structure" خطوات قبل/أثناء/بعد بمؤشرات زمنية تقريبية ضمن زمن الحصة.
-- اجعل "goals" ذكية (قابلة للقياس) ومُصاغة بأفعال بلوم الصحيحة للمستوى.
-- اجعل "activities" متعددة الزوايا: تمهيد محسوس/نشاط تعاوني/تمرين فردي/منتج نهائي قصير.
-- اجعل "diff": (دعم)، (إثراء)، (مرونة العرض).
-- "success": معيار نجاح قصير قابل للملاحظة.
-- اللغة عربية سليمة خالية من الحشو.
+أنت مخطط دروس ذكي لمدارس السعودية (مناهج 2025+).
+- لا تكتب أي شيء خارج JSON.
+- اجعل الأهداف والأنشطة قابلة للقياس وتراعي ${ageLabel} وزمن ${dhow(duration||45)} دقيقة.
+- طابق أفعال بلوم مع "${dhow(bloomMain)}" (+ "${dhow(bloomSupport)}" إن وُجد).
+- "structure" = قبل/أثناء/بعد مع دقائق تقريبية داخل زمن الحصة.
+- "diff" = [دعم، إثراء، مرونة العرض]. "success" = معيار قصير قابل للملاحظة.
 - JSON فقط.
 `.trim();
 
-    const goalN = Math.max(1, Number(goalCount) || 2);
+    const pre    = Math.min(10, Math.max(3, Math.round((duration || 45) * 0.20)));
+    const during = Math.max(15, Math.round((duration || 45) * 0.55));
+    const post   = Math.max(5, Math.round((duration || 45) * 0.25));
 
     function buildPrompt(reinforceNovelty = false) {
-      const novelty = variant || Date.now();
-      const noveltyNote = reinforceNovelty
-        ? `[تنويع صارم] بدّل العناوين والتسلسل والمنتج النهائي وطرق التقييم جذريًا. لا تُعيد أي صياغة سابقة.`
-        : `لو وُجد variant=${novelty}: اختر عنوانًا وهيكلة ونشاطًا/منتجًا نهائيًا مختلفًا جذريًا.`;
-
-      const pre = Math.min(10, Math.max(3, Math.round((duration || 45) * 0.20)));
-      const during = Math.max(15, Math.round((duration || 45) * 0.55));
-      const post = Math.max(5, Math.round((duration || 45) * 0.25));
+      const nov = variant || Date.now();
+      const note = reinforceNovelty
+        ? `[تنويع صارم] غيّر العنوان والتسلسل والمنتج النهائي جذريًا.`
+        : `لو وُجد variant=${nov} فلتكن الاستجابة مختلفة جذريًا.`;
 
       return `
 ${strictJSON}
 
-أعِد JSON بهذه الحقول والقيم فقط:
+أعد JSON بهذه المفاتيح فقط:
 {
   "meta": {
     "topic": "عنوان مختصر مبتكر ومحدد",
@@ -102,64 +80,76 @@ ${strictJSON}
   "goals": [ ${Array.from({length: goalN}).map(() => `"__"`).join(", ")} ],
   "success": "__",
   "structure": ["قبل (تهيئة ${pre}د): __", "أثناء (${during}د): __", "بعد (${post}د): __"],
-  "activities": ["تمهيد محسوس ملائم للعمر", "نشاط رئيسي تعاوني موجّه بوضوح", "تمرين تطبيق فردي قصير", "منتج تقويمي نهائي أو عرض وجيز"],
-  "assessment": ["س١ (واضح ومباشر مرتبط بالموضوع): __", "س٢ (أعلى قليلاً في بلوم): __", "س٣ (تذكرة خروج قابلة للقياس): __"],
+  "activities": ["تمهيد محسوس", "نشاط تعاوني رئيسي", "تطبيق فردي قصير", "منتج نهائي/عرض وجيز"],
+  "assessment": ["س١ واضح مباشر: __", "س٢ أعلى في بلوم: __", "س٣ تذكرة خروج قابلة للقياس: __"],
   "diff": ["دعم: __", "إثراء: __", "مرونة العرض: __"],
   "oneMin": "نص الدقيقة الواحدة الملائم"
 }
 
 المعطيات:
 - المادة: ${dhow(subject)}
-- النمط: ${dhow(mode)}  (topic/text)
-- الموضوع (إن وُجد): ${dhow(topic)}
-- النص للتحليل (إن وُجد): ${(sourceText || "—").slice(0, 1200)}
+- النمط: ${dhow(mode)} (topic/text)
+- الموضوع: ${dhow(topic)}
+- النص للتحليل: ${(sourceText || "—").slice(0, 1200)}
 - ملاحظات المعلم: ${dhow(notes)}
 - مستوى الصف: ${dhow(level)}
 - تعلم تكيفي: ${adapt ? "نعم" : "لا"}
-- Bloom (أساسي/داعم): ${dhow(bloomMain)} / ${dhow(bloomSupport)}
-- زمن الحصة (د): ${dhow(duration || 45)}
-- الفئة العمرية: ${ageLabel}
-- variant: ${novelty}
+- Bloom: ${dhow(bloomMain)} / ${dhow(bloomSupport)}
+- الزمن: ${dhow(duration||45)} دقيقة
+- variant: ${nov}
 
-${noveltyNote}
+${note}
 - إن كان النمط "text": استخرج Topic مناسبًا من النص ووافق الأهداف معه.
-- استخدم أمثلة واقعية من بيئة المدرسة السعودية.
-- أخرج JSON فقط لا غير.
+- أمثلة واقعية من بيئة المدرسة السعودية.
+- JSON فقط.
 `.trim();
     }
 
-    async function callOnce(promptText) {
+    /* ===== مولّد مع fallback تلقائي ===== */
+    async function generateWithFallback(promptText) {
+      // المحاولة 1 — v1 (أسماء -latest)
+      try {
+        const model = genAI.getGenerativeModel({ model: MODEL_PRIMARY /* (v1 الافتراضي) */ });
+        return await ask(model, promptText);
+      } catch (e) {
+        const s = String(e && e.message || e);
+        const looksLikeVersionMismatch =
+          s.includes("404") || s.toLowerCase().includes("not found") || s.includes("v1beta");
+        if (!looksLikeVersionMismatch) throw e;
+        // المحاولة 2 — v1beta (بدون -latest)
+        const model = genAI.getGenerativeModel({ model: MODEL_FALLBACK, apiVersion: "v1beta" });
+        return await ask(model, promptText);
+      }
+    }
+
+    async function ask(model, promptText) {
       const result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: promptText }] }]
       });
+      const raw = (result?.response?.text?.() || "").trim();
 
-      const raw = (result.response && result.response.text && result.response.text()) || "";
-      const text = String(raw).trim();
-
-      // التقاط JSON حتى لو التفّ داخل نص
       let payload;
       try {
-        const m = text.match(/\{[\s\S]*\}$/m) || text.match(/\{[\s\S]*\}/m);
-        payload = JSON.parse(m ? m[0] : text);
+        const m = raw.match(/\{[\s\S]*\}$/m) || raw.match(/\{[\s\S]*\}/m);
+        payload = JSON.parse(m ? m[0] : raw);
       } catch (e) {
         const err = new Error("Bad JSON from model");
-        err.body = text.slice(0, 400);
+        err.body = raw.slice(0, 400);
         throw err;
       }
       return payload;
     }
 
-    // محاولة أولى ثم تشديد التنويع لو فشل
+    // أولًا طبيعي، ولو فشل نعيد بالبنية المشددة للتنويع
     let payload;
     try {
-      payload = await callOnce(buildPrompt(false));
+      payload = await generateWithFallback(buildPrompt(false));
     } catch {
-      payload = await callOnce(buildPrompt(true));
+      payload = await generateWithFallback(buildPrompt(true));
     }
 
-    // تنظيف الحد الأدنى دون تغيير شكل الحقول
     const safeArr = (a) => Array.isArray(a) ? a.filter(Boolean) : [];
-    const responseBody = {
+    const body = {
       meta: payload.meta || {
         topic: topic || "—",
         age: age || "",
@@ -178,22 +168,21 @@ ${noveltyNote}
 
     return {
       statusCode: 200,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify(responseBody)
+      headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(body)
     };
 
   } catch (err) {
     console.error("murtakaz error:", err);
-    const msg = (err && err.message) ? err.message : String(err);
     return {
       statusCode: 500,
-      headers: { ...CORS_HEADERS, "Content-Type": "text/plain; charset=utf-8" },
-      body: `Server error: ${msg}`
+      headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
+      body: `Server error: ${err.message || String(err)}`
     };
   }
 };
 
-/* ===== أدوات مساعدة صغيرة ===== */
+/* ===== Utils ===== */
 function safeJson(str, fallback = null) {
   try { return JSON.parse(str || "null") ?? fallback; }
   catch { return fallback; }
