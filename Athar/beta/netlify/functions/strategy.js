@@ -1,5 +1,5 @@
 const { CORS, preflight } = require("./_cors.js");
-
+const API_KEY = process.env.GEMINI_API_KEY;
 
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
@@ -19,7 +19,11 @@ exports.handler = async (event) => {
   const { stage, subject, bloomType, lesson, variant } = payload;
 
   // إعدادات من متغيّرات البيئة
+<<<<<<< HEAD
   const API_KEY = process.env.GEMINI_API_KEY;
+=======
+
+>>>>>>> e4007c1
 const MODEL_NAME = (process.env.GEMINI_MODEL?.trim() || "gemini-1.5-flash");
   
 
@@ -128,8 +132,6 @@ function makeReqBody(promptText){
   return {
     contents: [{ role: "user", parts: [{ text: promptText }] }],
     generationConfig: {
-      response_mime_type: "application/json",
-      response_schema: responseSchema,
       candidateCount: 1,
       maxOutputTokens: 2048,
       temperature: 0.8,
