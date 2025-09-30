@@ -21,7 +21,7 @@ exports.handler = async (event) => {
   // إعدادات من متغيّرات البيئة
 
 const RAW_MODEL = process.env.GEMINI_MODEL?.trim();
-const MODEL_NAME = (RAW_MODEL ? RAW_MODEL.replace(/-latest$/,'') : "gemini-1.5-flash");
+const MODEL_NAME = (RAW_MODEL ? RAW_MODEL.replace(/-latest$/,'') : "gemini-1.0-pro");
   
 
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
