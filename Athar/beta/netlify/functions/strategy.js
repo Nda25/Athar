@@ -48,15 +48,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: err.message || "Gemini error" })
     };
   }
-
-      data._meta = {
-        stage: stage || "",
-        subject: subject || "",
-        bloomType: bloomType || "",
-        lesson: lesson || "",
-        variant: variant || null
-      };
-
-      // ✅ رد النجاح بهيدر CORS
+}
       return {
 
