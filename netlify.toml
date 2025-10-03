@@ -1,0 +1,9 @@
+[build]
+  base    = "Athar/beta"
+  publish = "Athar/beta"
+  command = ""
+[functions]
+  directory    = "Athar/beta/netlify/functions"
+  node_bundler = "esbuild"
+[build.environment]
+  NODE_VERSION = "18"
