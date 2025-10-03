@@ -34,7 +34,7 @@ exports.handler = async (event) => {
   const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
 
   // مهَل خفيفة
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 33000);
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 41000);
   const RETRIES    = +(process.env.RETRIES    || 0);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
 
