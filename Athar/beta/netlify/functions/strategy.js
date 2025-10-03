@@ -12,20 +12,20 @@ exports.handler = async (event) => {
 
   const { stage, subject, bloomType, lesson, variant } = payload;
 
-  // إعدادات من متغيّرات البيئة (ضعيها في Netlify dashboard)
+  // ===== إعدادات من متغيّرات البيئة =====
   const API_KEY = process.env.GEMINI_API_KEY;
-  // نقرأ من ENV، وإلا نستخدم alias ثابت ثم بدائل احتياط
-  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+  // قدّمي flash-lite (أسرع)، ثم flash كاحتياط
+  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
   const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
 
-  // مهل ومحاولات أخف لتجنّب 504 طويلة
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 15000);
-  const RETRIES    = +(process.env.RETRIES    || 1);
-  const BACKOFF_MS = +(process.env.BACKOFF_MS || 800);
+  // مهل ومحاولات خفيفة لتجنّب انتظار طويل
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);  // 12s للمحاولة
+  const RETRIES    = +(process.env.RETRIES    || 0);      // بلا إعادة داخل نفس الموديل
+  const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
 
   if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
-  // توصيف الأسلوب حسب المرحلة (لغة/أنشطة مناسبة للعمر)
+  // ===== توصيف الأسلوب حسب المرحلة =====
   const STAGE_GUIDE = {
     "primary-lower": `
 - الفئة: ابتدائي دنيا (الأول–الثالث).
@@ -65,7 +65,7 @@ exports.handler = async (event) => {
   ].join(" | ")}
 - لا تعيدي أي صياغات سبق استخدامها ضمن نفس الفكرة؛ بدّلي الزاوية والمنتج النهائي ومخرجات التعلم وأساليب التقويم كليًا.`;
 
-  // برومبت أقوى: قياس/بلوم/خطوات بالدقائق/تفريد/روبرك مختصر/مصادر
+  // ===== البرومبت =====
   const BASE_PROMPT =
 `أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
 ${stageNote}
@@ -87,7 +87,7 @@ ${VARIANT_NOTE}
 - examples: 2 إلى 4 عناصر (جديدة عن الخطوات)
 - صِيغي بلغة عربية دقيقة ومختصرة ومناسبة للعمر؛ بدون أي نص خارجي خارج JSON.`;
 
-  // مخطط الاستجابة + required
+  // ===== مخطط الاستجابة =====
   const responseSchema = {
     type: "OBJECT",
     required: [
@@ -140,9 +140,10 @@ ${VARIANT_NOTE}
         responseMimeType: "application/json",
         responseSchema,
         candidateCount: 1,
-        maxOutputTokens: 2048,
-        temperature: 0.8,     // تنويع أعلى (مع الحفاظ على قيود الدقة)
-        topK: 64,
+        // تخفيف الحمل لتسريع الاستجابة
+        maxOutputTokens: 1100,
+        temperature: 0.6,
+        topK: 32,
         topP: 0.9
       },
       safetySettings: []
@@ -154,6 +155,7 @@ ${VARIANT_NOTE}
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
     try {
+      console.log(`[strategy] -> model=${model} timeout=${TIMEOUT_MS}`);
       const res = await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -162,9 +164,10 @@ ${VARIANT_NOTE}
       });
       const text = await res.text();
       if (!res.ok) {
+        console.error(`[strategy] HTTP ${res.status} body: ${text.slice(0,400)}`);
         const err = new Error(`HTTP ${res.status}`);
         err.status = res.status;
-        err.body = text;
+        err.body = text.slice(0,400);
         throw err;
       }
       let json;
@@ -188,14 +191,14 @@ ${VARIANT_NOTE}
     } finally { clearTimeout(timer); }
   }
 
-  // ==== التنفيذ مع fallback (يحافظ على منطقك + يعيد المحاولة بنموذج آخر)
+  // ==== التنفيذ مع fallback (يجرب موديلات متعددة بسرعة) ====
   let promptText = BASE_PROMPT;
 
   for (const MODEL of FALLBACKS) {
     let attempt = 0;
     while (attempt <= RETRIES) {
       try {
-        let data = await callOnce(MODEL, promptText);
+        const data = await callOnce(MODEL, promptText);
 
         if (!isComplete(data) && attempt <= RETRIES) {
           attempt++;
@@ -243,9 +246,10 @@ ${VARIANT_NOTE}
         break;
       }
     }
-    // جرّبي الموديل التالي
   }
 
   // كل المحاولات فشلت عبر كل الموديلات
-  return { statusCode: 504, body: "Gateway Timeout: model did not respond in time" };
+  const msg = "Gateway Timeout: model did not respond in time";
+  console.error(`[strategy] final-fail status=504 body=${msg}`);
+  return { statusCode: 504, body: msg };
 };
