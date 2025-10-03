@@ -1,6 +1,6 @@
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
-  // CORS
+  // ---- CORS
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -13,19 +13,19 @@ exports.handler = async (event) => {
     };
   }
 
-  // POST فقط
+  // ---- POST فقط
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // قراءة جسم الطلب
+  // ---- جسم الطلب
   let payload = {};
   try { payload = JSON.parse(event.body || "{}"); }
   catch { return { statusCode: 400, body: "Bad JSON body" }; }
 
-  const { stage, subject, bloomType, lesson, variant } = payload;
+  const { stage, subject, bloomType, lesson, variant, diag } = payload;
 
-  // ===== الإعدادات =====
+  // ---- إعدادات
   const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
@@ -33,12 +33,12 @@ exports.handler = async (event) => {
   const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
   const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
 
-  // مهَل خفيفة مع محاولة واحدة لكل موديل
+  // مهَل خفيفة
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);
   const RETRIES    = +(process.env.RETRIES    || 0);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
 
-  // ===== دليل الأسلوب حسب المرحلة =====
+  // ---- دليل الأسلوب
   const STAGE_GUIDE = {
     "primary-lower": `
 - الفئة: ابتدائي دنيا (الأول–الثالث).
@@ -98,7 +98,6 @@ ${VARIANT_NOTE}
 - examples: 2 إلى 4 عناصر (جديدة عن الخطوات)
 - صِيغي بلغة عربية دقيقة ومختصرة ومناسبة للعمر؛ بدون أي نص خارجي خارج JSON.`;
 
-  // ===== مخطط الاستجابة =====
   const responseSchema = {
     type: "OBJECT",
     required: [
@@ -150,7 +149,7 @@ ${VARIANT_NOTE}
         responseMimeType: "application/json",
         responseSchema,
         candidateCount: 1,
-        maxOutputTokens: 1100,
+        maxOutputTokens: 900,   // تخفيف الحمل
         temperature: 0.6,
         topK: 32,
         topP: 0.9
@@ -190,7 +189,25 @@ ${VARIANT_NOTE}
     } finally { clearTimeout(timer); }
   }
 
-  // ==== التنفيذ مع fallbacks ====
+  // ---- وضع التشخيص السريع
+  if (diag === true) {
+    try {
+      const data = await callOnce(FALLBACKS[0], "اختبار قصير جداً. أرسلي JSON {\"ok\":true} فقط.");
+      return {
+        statusCode: 200,
+        headers: { "content-type":"application/json; charset=utf-8", "Access-Control-Allow-Origin":"*" },
+        body: JSON.stringify({ model: FALLBACKS[0], ok: true, data })
+      };
+    } catch (e) {
+      return {
+        statusCode: e.status || 500,
+        headers: { "Access-Control-Allow-Origin":"*" },
+        body: `DIAG ERROR (${FALLBACKS[0]}): ${e.status||""} :: ${e.body || e.message}`
+      };
+    }
+  }
+
+  // ---- التنفيذ مع fallbacks
   let promptText = BASE_PROMPT;
 
   for (const MODEL of FALLBACKS) {
@@ -244,8 +261,7 @@ ${VARIANT_NOTE}
           await sleep(BACKOFF_MS * attempt);
           continue;
         }
-        // انتقلي للموديل التالي
-        break;
+        break; // جرّبي الموديل التالي
       }
     }
   }
