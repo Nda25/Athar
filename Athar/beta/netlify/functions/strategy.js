@@ -1,5 +1,18 @@
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
+  // CORS (مفيد لو صار preflight)
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+      body: "",
+    };
+  }
+
   // نسمح فقط بـ POST
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
@@ -15,11 +28,11 @@ exports.handler = async (event) => {
   // ===== إعدادات من متغيّرات البيئة =====
   const API_KEY = process.env.GEMINI_API_KEY;
   // قدّمي flash-lite (أسرع)، ثم flash كاحتياط
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
-const FALLBACKS = [PRIMARY_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"];
-const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);
-const RETRIES    = +(process.env.RETRIES    || 0);   // محاولة واحدة فقط لكل موديل
-const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
+  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+  const FALLBACKS = [PRIMARY_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);
+  const RETRIES    = +(process.env.RETRIES    || 0);   // محاولة واحدة فقط لكل موديل
+  const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
 
   if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
@@ -119,8 +132,8 @@ ${VARIANT_NOTE}
   function isEmptyStr(s){ return !s || !String(s).trim(); }
   function isComplete(d){
     if (!d) return false;
-    const mustStrings = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
-    for (const k of mustStrings) if (isEmptyStr(d[k])) return false;
+    const must = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
+    for (const k of must) if (isEmptyStr(d[k])) return false;
     for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
     if ((d.goals||[]).length < MIN.goals) return false;
     if ((d.steps||[]).length < MIN.steps) return false;
@@ -227,7 +240,10 @@ ${VARIANT_NOTE}
 
         return {
           statusCode: 200,
-          headers: { "content-type": "application/json; charset=utf-8" },
+          headers: {
+            "content-type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*"
+          },
           body: JSON.stringify(data)
         };
 
@@ -249,5 +265,9 @@ ${VARIANT_NOTE}
   // كل المحاولات فشلت عبر كل الموديلات
   const msg = "Gateway Timeout: model did not respond in time";
   console.error(`[strategy] final-fail status=504 body=${msg}`);
-  return { statusCode: 504, body: msg };
+  return {
+    statusCode: 504,
+    headers: { "Access-Control-Allow-Origin": "*" },
+    body: msg
+  };
 };
