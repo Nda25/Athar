@@ -14,7 +14,7 @@ exports.handler = async (event) => {
 
   // إعدادات من متغيّرات البيئة (ضعيها في Netlify dashboard)
   const API_KEY    = process.env.GEMINI_API_KEY;
-  const MODEL      = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const MODEL      = process.env.GEMINI_MODEL || "gemini-2.5-flash-flash-flash";
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
   const RETRIES    = +(process.env.RETRIES || 2);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
