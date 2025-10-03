@@ -1,6 +1,6 @@
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
-  // ---- CORS
+  // ==== CORS ====
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -13,91 +13,77 @@ exports.handler = async (event) => {
     };
   }
 
-  // ---- POST فقط
+  // ==== POST فقط ====
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // ---- جسم الطلب
+  // ==== جسم الطلب ====
   let payload = {};
   try { payload = JSON.parse(event.body || "{}"); }
   catch { return { statusCode: 400, body: "Bad JSON body" }; }
 
   const { stage, subject, bloomType, lesson, variant, diag } = payload;
 
-  // ---- إعدادات
+  // ==== إعدادات البيئة ====
   const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
-  // استخدمي الألياس الرسمية فقط
+  // NOTE: الزمي aliases الرسمية السريعة
   const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
   const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
 
-  // مهَل خفيفة
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 60000);
-  const RETRIES    = +(process.env.RETRIES    || 0);
-  const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
+  // Netlify (خطة عادية) يمهل الوظيفة ~10s → نخلي مهلة داخلية 8s
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 8000);
+  const RETRIES    = +(process.env.RETRIES    || 0);   // بلا محاولات إضافية
+  const BACKOFF_MS = +(process.env.BACKOFF_MS || 400);
 
-  // ---- دليل الأسلوب
+  // ==== أدلة الأسلوب ====
   const STAGE_GUIDE = {
-    "primary-lower": `
-- الفئة: ابتدائي دنيا (الأول–الثالث).
-- التعليمات: لغة بسيطة جداً، جُمل قصيرة، أنشطة لعب/حركة/بطاقات/مجموعات صغيرة، وقت نشاط قصير.
-- الأمثلة محسوسة وقريبة من حياة الطفل (ألعاب، صور، قصص قصيرة).`,
-    "primary-upper": `
-- الفئة: ابتدائي عليا (الرابع–السادس).
-- التعليمات: لغة واضحة، خطوات مرقمة، عمل تعاوني بسيط، مشاريع صفية صغيرة، ربط بالواقع.
-- الأمثلة تُنمّي التنظيم الذاتي وحل المشكلات.`,
-    "middle": `
-- الفئة: متوسط.
-- التعليمات: استقصاء موجه، نقاشات صفية، تجارب مصغّرة، مهام تفكير ناقد، تعلّم قائم على المشكلة.
-- الأمثلة تُنمّي التحليل والمقارنة وصياغة فرضيات.`,
-    "secondary": `
-- الفئة: ثانوي.
-- التعليمات: صرامة أكاديمية أعلى، منهجيات بحث/مختبر، عرض نتائج، نقاش نقدي، تفكير عالي الرتبة.
-- الأمثلة تربط بالمستقبل/المسارات وتوظيف مهارات القرن 21.`
+    "primary-lower": `- الفئة: ابتدائي دنيا. لغة بسيطة، أنشطة قصيرة/حركية.`,
+    "primary-upper": `- الفئة: ابتدائي عليا. خطوات مرقمة، تعاون بسيط، ربط بالواقع.`,
+    "middle":        `- الفئة: متوسط. استقصاء موجه، نقاش، تجارب مصغّرة.`,
+    "secondary":     `- الفئة: ثانوي. نقاش نقدي، مشاريع/بحث مختصر.`
   };
-
-  const stageNote = STAGE_GUIDE[stage] || `
-- الفئة: عام.
-- التعليمات: صياغة واضحة ومتدرجة من السهل إلى الصعب مع أمثلة مناسبة للعمر.`;
-
+  const stageNote = STAGE_GUIDE[stage] || `- الفئة: عام. صياغة واضحة ومتدرجة.`;
   const typePart   = (bloomType && bloomType !== "الكل") ? `(تصنيف بلوم: "${bloomType}")` : "(تصنيف بلوم: اختاري مستويات ملائمة)";
   const lessonPart = lesson ? `ومناسبة لدرس "${lesson}"` : "";
 
   const VARIANT_NOTE = `
-- IMPORTANT: أعطِ استراتيجية مختلفة جذريًا عن أي مقترح سابق. غيّر آلية التنظيم (محطات/تعاقب أدوار/مناظرة/قلب الصف/مسرحة/لعب أدوار/مختبر مصغّر/محاكاة …).
-- strategy_name فريد 100%، لا يُكرر أسماء الدروس/المواد أو أي عبارة وردت في الطلب.
-- استخدم بذرة تنويع داخلية (novelty seed): ${[
+- IMPORTANT: استراتيجية مختلفة جذريًا عن أي مقترح سابق (محطات/مناظرة/قلب الصف/محاكاة/لعب أدوار...).
+- strategy_name فريد 100% ولا يكرر أسماء الدروس/المواد.
+- novelty seed: ${[
     stage || "any-stage",
     subject || "any-subject",
     bloomType || "any-bloom",
     (lesson || "any-lesson"),
     (variant || Date.now())
   ].join(" | ")}
-- لا تعيدي أي صياغات سبق استخدامها ضمن نفس الفكرة؛ بدّلي الزاوية والمنتج النهائي ومخرجات التعلم وأساليب التقويم كليًا.`;
+- بدّلي الزاوية والمنتج النهائي وأساليب التقويم كليًا.`;
 
+  // ==== البرومبت ====
   const BASE_PROMPT =
 `أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
 ${stageNote}
 ${VARIANT_NOTE}
 
 القيود الإلزامية:
-- أعطِ خطوات "قابلة للتنفيذ" تبدأ بصيغة زمنية (مثال: "الدقيقة 0–5: …").
-- اجعل "goals" قابلة للقياس (أفعال سلوكية + معيار %/عدد/زمن).
-- اجعل "assessment" يشمل أدوات تقويم عملية + "روبرك مختصر" (3 مستويات مع مؤشرات).
-- اربط كل ذلك بمستويات بلوم الملائمة داخل "bloom" (يمكن مستوى أو مستويان).
-- "diff_support/core/challenge": أنشطة مختلفة حقيقية، لكل مستوى مخرج observable (منتج/أداء).
-- "materials": مواد محددة وواضحة (اكتبيها كسطر واحد مفصول بـ "؛ ").
-- "examples": أمثلة تطبيق واقعية مبتكرة وغير مباشرة، لا تُكرر محتوى الخطوات.
-- "expected_impact": صياغة أثر متوقّع مع مؤشرات نجاح (مثلاً: % إتقان، عدد مُنتجات، زمن إنجاز).
+- ابدئي كل خطوة بصيغة زمنية: "الدقيقة 0–5: …".
+- "goals": قابلة للقياس (فعل سلوكي + معيار %/عدد/زمن).
+- "assessment": أدوات عملية + "روبرك مختصر" (3 مستويات بمؤشرات).
+- اربط بمستويات بلوم الملائمة داخل "bloom".
+- "diff_support/core/challenge": منتجات/أداء observable لكل مستوى.
+- "materials": عناصر محددة كسطر واحد مفصول بـ "؛ ".
+- "examples": أمثلة جديدة لا تكرر خطوات التنفيذ.
+- "expected_impact": مؤشرات نجاح (% إتقان/عدد منتجات/زمن إنجاز).
 
-أرسلي **فقط** JSON وفق المخطط التالي واملئي كل الحقول بنصوص غير فارغة:
-- goals: 3 إلى 6 عناصر (صياغة قابلة للقياس)
-- steps: 4 إلى 8 عناصر (ابدئي كل عنصر بـ "الدقيقة X–Y")
-- examples: 2 إلى 4 عناصر (جديدة عن الخطوات)
-- صِيغي بلغة عربية دقيقة ومختصرة ومناسبة للعمر؛ بدون أي نص خارجي خارج JSON.`;
+أرسلي فقط JSON بالمخطط التالي واملئي جميع الحقول:
+- goals: 3–6
+- steps: 4–8 (تبدأ بـ "الدقيقة X–Y")
+- examples: 2–4
+- بلا أي نص خارج JSON. لغة عربية دقيقة ومختصرة.`;
 
+  // ==== مخطط الاستجابة ====
   const responseSchema = {
     type: "OBJECT",
     required: [
@@ -106,27 +92,25 @@ ${VARIANT_NOTE}
       "expected_impact","citations"
     ],
     properties: {
-      strategy_name: { type: "STRING" },
-      bloom:         { type: "STRING" },
-      importance:    { type: "STRING" },
-      materials:     { type: "STRING" },
-      goals:         { type: "ARRAY", items: { type: "STRING" }, minItems: 3 },
-      steps:         { type: "ARRAY", items: { type: "STRING" }, minItems: 4 },
-      examples:      { type: "ARRAY", items: { type: "STRING" }, minItems: 2 },
-      assessment:    { type: "STRING" },
-      diff_support:  { type: "STRING" },
-      diff_core:     { type: "STRING" },
-      diff_challenge:{ type: "STRING" },
+      strategy_name:{ type:"STRING" },
+      bloom:{ type:"STRING" },
+      importance:{ type:"STRING" },
+      materials:{ type:"STRING" },
+      goals:{ type:"ARRAY", items:{ type:"STRING" }, minItems:3 },
+      steps:{ type:"ARRAY", items:{ type:"STRING" }, minItems:4 },
+      examples:{ type:"ARRAY", items:{ type:"STRING" }, minItems:2 },
+      assessment:{ type:"STRING" },
+      diff_support:{ type:"STRING" },
+      diff_core:{ type:"STRING" },
+      diff_challenge:{ type:"STRING" },
       expected_impact:{ type:"STRING" },
-      citations:     { type: "ARRAY", items: { type: "OBJECT", required:["title","benefit"], properties: {
-        title:   { type: "STRING" },
-        benefit: { type: "STRING" }
+      citations:{ type:"ARRAY", items:{ type:"OBJECT", required:["title","benefit"], properties:{
+        title:{ type:"STRING" }, benefit:{ type:"STRING" }
       }}}
     }
   };
 
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
+  const sleep = (ms)=> new Promise(r=>setTimeout(r, ms));
   const MIN = { goals:3, steps:4, examples:2 };
   const isEmptyStr = (s)=> !s || !String(s).trim();
   function isComplete(d){
@@ -134,10 +118,10 @@ ${VARIANT_NOTE}
     const must = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
     for (const k of must) if (isEmptyStr(d[k])) return false;
     for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
-    if ((d.goals||[]).length < MIN.goals) return false;
-    if ((d.steps||[]).length < MIN.steps) return false;
-    if ((d.examples||[]).length < MIN.examples) return false;
-    for (const c of d.citations){ if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false; }
+    if (d.goals.length < MIN.goals) return false;
+    if (d.steps.length < MIN.steps) return false;
+    if (d.examples.length < MIN.examples) return false;
+    for (const c of d.citations) if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false;
     if (!d.steps.every(s => /الدقيقة\s*\d+\s*[-–]\s*\d+/.test(String(s)))) return false;
     return true;
   }
@@ -149,8 +133,9 @@ ${VARIANT_NOTE}
         responseMimeType: "application/json",
         responseSchema,
         candidateCount: 1,
-        maxOutputTokens: 900,   // تخفيف الحمل
-        temperature: 0.6,
+        // تخفيف الحمل لتسليم ضمن 8 ثوانٍ تقريبًا
+        maxOutputTokens: 650,
+        temperature: 0.5,
         topK: 32,
         topP: 0.9
       },
@@ -163,7 +148,6 @@ ${VARIANT_NOTE}
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
     try {
-      console.log(`[strategy] -> model=${model} timeout=${TIMEOUT_MS}`);
       const res = await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -172,44 +156,43 @@ ${VARIANT_NOTE}
       });
       const text = await res.text();
       if (!res.ok) {
-        console.error(`[strategy] HTTP ${res.status} body: ${text.slice(0,400)}`);
         const err = new Error(`HTTP ${res.status}`);
         err.status = res.status;
-        err.body = text.slice(0,400);
+        err.body = text.slice(0, 400);
         throw err;
       }
-      let outer; try { outer = JSON.parse(text); } catch {
-        const err = new Error("Bad JSON from API"); err.status = 502; err.body = text.slice(0,300); throw err;
-      }
+      let outer;
+      try { outer = JSON.parse(text); }
+      catch { const e = new Error("Bad JSON from API"); e.status = 502; e.body = text.slice(0,300); throw e; }
       const raw = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-      let data; try { data = JSON.parse(raw); } catch {
-        const err = new Error("Bad model JSON"); err.status = 502; err.body = raw.slice(0,300); throw err;
-      }
+      let data;
+      try { data = JSON.parse(raw); }
+      catch { const e = new Error("Bad model JSON"); e.status = 502; e.body = raw.slice(0,300); throw e; }
       return data;
     } finally { clearTimeout(timer); }
   }
 
-  // ---- وضع التشخيص السريع
+  // ==== وضع التشخيص السريع ====
   if (diag === true) {
     try {
-      const data = await callOnce(FALLBACKS[0], "اختبار قصير جداً. أرسلي JSON {\"ok\":true} فقط.");
+      const model = FALLBACKS[0];
+      const data = await callOnce(model, 'أرسلي JSON {"ok":true} فقط.');
       return {
         statusCode: 200,
         headers: { "content-type":"application/json; charset=utf-8", "Access-Control-Allow-Origin":"*" },
-        body: JSON.stringify({ model: FALLBACKS[0], ok: true, data })
+        body: JSON.stringify({ model, data })
       };
     } catch (e) {
       return {
         statusCode: e.status || 500,
         headers: { "Access-Control-Allow-Origin":"*" },
-        body: `DIAG ERROR (${FALLBACKS[0]}): ${e.status||""} :: ${e.body || e.message}`
+        body: `DIAG ERROR: ${e.status || ""} :: ${e.body || e.message}`
       };
     }
   }
 
-  // ---- التنفيذ مع fallbacks
+  // ==== التنفيذ مع fallbacks (سريعة) ====
   let promptText = BASE_PROMPT;
-
   for (const MODEL of FALLBACKS) {
     let attempt = 0;
     while (attempt <= RETRIES) {
@@ -219,12 +202,11 @@ ${VARIANT_NOTE}
         if (!isComplete(data) && attempt <= RETRIES) {
           attempt++;
           await sleep(BACKOFF_MS * attempt);
-          promptText =
-`${BASE_PROMPT}
+          promptText = `${BASE_PROMPT}
 
-الاستجابة السابقة كانت ناقصة/غير عملية. أعِد إرسال **JSON مكتمل** يملأ كل الحقول بنصوص غير فارغة،
-وبحد أدنى (${MIN.goals}) أهداف قابلة للقياس، (${MIN.steps}) خطوات تبدأ بـ "الدقيقة X–Y"، (${MIN.examples}) أمثلة جديدة.
-لا تضِف أي نص خارج JSON.`;
+الاستجابة السابقة كانت ناقصة/غير عملية. أعِدي إرسال JSON مكتمل
+(${MIN.goals}) أهداف قابلة للقياس، (${MIN.steps}) خطوات تبدأ بـ "الدقيقة X–Y"، (${MIN.examples}) أمثلة جديدة.
+لا تضيفي أي نص خارج JSON.`;
           continue;
         }
 
@@ -253,21 +235,14 @@ ${VARIANT_NOTE}
         };
 
       } catch (err) {
-        attempt++;
-        const status = err.status || 0;
-        const isTimeout = /timeout|AbortError/i.test(String(err?.message));
-        const retriable = isTimeout || [429,500,502,503,504].includes(status);
-        if (retriable && attempt <= RETRIES) {
-          await sleep(BACKOFF_MS * attempt);
-          continue;
-        }
-        break; // جرّبي الموديل التالي
+        // إذا فشل هذا الموديل → جرّبي الذي يليه
+        break;
       }
     }
   }
 
+  // ==== فشل نهائي ====
   const msg = "Gateway Timeout: model did not respond in time";
-  console.error(`[strategy] final-fail status=504 body=${msg}`);
   return {
     statusCode: 504,
     headers: { "Access-Control-Allow-Origin": "*" },
