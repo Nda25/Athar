@@ -13,11 +13,15 @@ exports.handler = async (event) => {
   const { stage, subject, bloomType, lesson, variant } = payload;
 
   // إعدادات من متغيّرات البيئة (ضعيها في Netlify dashboard)
-  const API_KEY    = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
-  const RETRIES    = +(process.env.RETRIES || 2);
-  const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
+  const API_KEY = process.env.GEMINI_API_KEY;
+  // نقرأ من ENV، وإلا نستخدم alias ثابت ثم بدائل احتياط
+  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+  const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
+
+  // مهل ومحاولات أخف لتجنّب 504 طويلة
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 15000);
+  const RETRIES    = +(process.env.RETRIES    || 1);
+  const BACKOFF_MS = +(process.env.BACKOFF_MS || 800);
 
   if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
@@ -111,24 +115,6 @@ ${VARIANT_NOTE}
     }
   };
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
-
-  function makeReqBody(promptText){
-    return {
-      contents: [{ role: "user", parts: [{ text: promptText }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema,
-        candidateCount: 1,
-        maxOutputTokens: 2048,
-        temperature: 0.8,     // تنويع أعلى (مع الحفاظ على قيود الدقة)
-        topK: 64,
-        topP: 0.9
-      },
-      safetySettings: []
-    };
-  }
-
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   const MIN = { goals:3, steps:4, examples:2 };
@@ -147,7 +133,24 @@ ${VARIANT_NOTE}
     return true;
   }
 
-  async function callOnce(promptText){
+  function makeReqBody(promptText){
+    return {
+      contents: [{ role: "user", parts: [{ text: promptText }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema,
+        candidateCount: 1,
+        maxOutputTokens: 2048,
+        temperature: 0.8,     // تنويع أعلى (مع الحفاظ على قيود الدقة)
+        topK: 64,
+        topP: 0.9
+      },
+      safetySettings: []
+    };
+  }
+
+  async function callOnce(model, promptText){
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
     try {
@@ -185,62 +188,64 @@ ${VARIANT_NOTE}
     } finally { clearTimeout(timer); }
   }
 
-  let attempt = 0;
+  // ==== التنفيذ مع fallback (يحافظ على منطقك + يعيد المحاولة بنموذج آخر)
   let promptText = BASE_PROMPT;
 
-  while (true) {
-    try {
-      let data = await callOnce(promptText);
+  for (const MODEL of FALLBACKS) {
+    let attempt = 0;
+    while (attempt <= RETRIES) {
+      try {
+        let data = await callOnce(MODEL, promptText);
 
-      if (!isComplete(data) && attempt <= RETRIES) {
-        attempt++;
-        await sleep(BACKOFF_MS * attempt);
-        promptText =
+        if (!isComplete(data) && attempt <= RETRIES) {
+          attempt++;
+          await sleep(BACKOFF_MS * attempt);
+          promptText =
 `${BASE_PROMPT}
 
 الاستجابة السابقة كانت ناقصة/غير عملية. أعِد إرسال **JSON مكتمل** يملأ كل الحقول بنصوص غير فارغة،
 وبحد أدنى (${MIN.goals}) أهداف قابلة للقياس، (${MIN.steps}) خطوات تبدأ بـ "الدقيقة X–Y"، (${MIN.examples}) أمثلة جديدة.
 لا تضِف أي نص خارج JSON.`;
-        continue;
+          continue;
+        }
+
+        if (!isComplete(data)) {
+          const err = new Error("Incomplete response from model after retries");
+          err.status = 502;
+          throw err;
+        }
+
+        data._meta = {
+          stage: stage || "",
+          subject: subject || "",
+          bloomType: bloomType || "",
+          lesson: lesson || "",
+          variant: variant || null,
+          model: MODEL
+        };
+
+        return {
+          statusCode: 200,
+          headers: { "content-type": "application/json; charset=utf-8" },
+          body: JSON.stringify(data)
+        };
+
+      } catch (err) {
+        attempt++;
+        const status = err.status || 0;
+        const isTimeout = /timeout|AbortError/i.test(String(err?.message));
+        const retriable = isTimeout || [429,500,502,503,504].includes(status);
+        if (retriable && attempt <= RETRIES) {
+          await sleep(BACKOFF_MS * attempt);
+          continue;
+        }
+        // إذا فشل هذا الموديل، ننتقل للفول باك التالي
+        break;
       }
-
-      if (!isComplete(data)) {
-        const err = new Error("Incomplete response from model after retries");
-        err.status = 502;
-        throw err;
-      }
-
-      data._meta = {
-        stage: stage || "",
-        subject: subject || "",
-        bloomType: bloomType || "",
-        lesson: lesson || "",
-        variant: variant || null
-      };
-
-      return {
-        statusCode: 200,
-        headers: { "content-type": "application/json; charset=utf-8" },
-        body: JSON.stringify(data)
-      };
-
-    } catch (err) {
-      attempt++;
-      const status = err.status || 0;
-      const isTimeout = /timeout|AbortError/i.test(String(err?.message));
-      const retriable = isTimeout || [429,500,502,503,504].includes(status);
-
-      if (retriable && attempt <= RETRIES) {
-        await sleep(BACKOFF_MS * attempt);
-        continue;
-      }
-
-      if (isTimeout) {
-        return { statusCode: 504, body: "Gateway Timeout: model did not respond in time" };
-      }
-      const code = status || 500;
-      const body = err.body || String(err.message || err);
-      return { statusCode: code, body };
     }
+    // جرّبي الموديل التالي
   }
+
+  // كل المحاولات فشلت عبر كل الموديلات
+  return { statusCode: 504, body: "Gateway Timeout: model did not respond in time" };
 };
