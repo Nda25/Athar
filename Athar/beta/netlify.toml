@@ -1,12 +1,22 @@
+# netlify.toml (في جذر الريبو)
+
 [build]
-  publish   = "."
-  functions = "netlify/functions"
+  base      = "Athar/beta"      # هذا يقول لنتلايفي اشتغل داخل Athar/beta
+  publish   = "."               # يَنشر ملفات Athar/beta نفسها (HTML/CSS/JS)
+  command   = ""                # ما عندك خطوة build
 
 [build.environment]
   NODE_VERSION = "18"
 
 [functions]
+  directory = "netlify/functions"        # نسبةً إلى Athar/beta
   node_bundler = "esbuild"
-  # تأكد من تثبيتهم في package.json أيضًا
-  external_node_modules = ["@supabase/supabase-js", "jwks-rsa", "jsonwebtoken", "nodemailer", "@google/generative-ai"]
+  # تأكّد إنها موجودة في package.json
+  external_node_modules = [
+    "@supabase/supabase-js",
+    "jwks-rsa",
+    "jsonwebtoken",
+    "nodemailer",
+    "@google/generative-ai"
+  ]
   included_files = ["netlify/functions/**"]
