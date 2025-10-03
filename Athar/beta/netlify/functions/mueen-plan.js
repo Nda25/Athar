@@ -123,7 +123,7 @@ ${officialContext ? "اعتمد فقط على المصادر التالية:\n"+
 `.trim();
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model:"gemini-2.5-flash-flash-flash" });
+    const model = genAI.getGenerativeModel({ model:"gemini-2.5-flash-flash-flash-flash" });
     const req = {
       contents:[{ role:"user", parts:[{ text: prompt }] }],
       generationConfig:{

@@ -7,7 +7,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "https://n-athar.co,http
   .split(",").map(s => s.trim()).filter(Boolean);
 
 // استخدمي pro-latest (أعلى جودة) أو flash-latest (أرخص وأسرع أثناء التجارب)
-const MODEL_ID = process.env.GEMINI_MODEL_ID || "gemini-2.5-flash-flash-pro-latest";
+const MODEL_ID = process.env.GEMINI_MODEL_ID || "gemini-2.5-flash-flash-flash-pro-latest";
 
 // حدود أمان بسيطة
 const MAX_BODY_BYTES = +(process.env.MAX_BODY_BYTES || 200 * 1024); // 200KB
