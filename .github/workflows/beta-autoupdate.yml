@@ -3,16 +3,25 @@ on:
   schedule:
     - cron: "0 0 * * *"   # يومياً عند منتصف الليل UTC
   workflow_dispatch:
+
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      # تحديث مكتبة Google AI
       - run: npm i -S @google/generative-ai@latest
+
+      # تشغيل سكربت استبدال أسماء الموديلات داخل مجلد beta
       - run: ./Athar/scripts/replace-model-literals.sh
+
+      # إعداد هوية البوت للـ commit
       - run: git config user.name "auto-bot"
       - run: git config user.email "bot@example.com"
+
+      # رفع التغييرات
       - run: git add -A
       - run: |
-          git commit -m "chore(beta): auto-update Gemini" || echo "no changes"
+          git commit -m "chore(beta): auto-update Gemini → gemini-flash-latest" || echo "no changes"
       - run: git push
