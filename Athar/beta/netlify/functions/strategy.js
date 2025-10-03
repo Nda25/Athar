@@ -34,7 +34,7 @@ exports.handler = async (event) => {
   const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
 
   // Netlify (خطة عادية) يمهل الوظيفة ~10s → نخلي مهلة داخلية 8s
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 8000);
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 800000);
   const RETRIES    = +(process.env.RETRIES    || 0);   // بلا محاولات إضافية
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 400);
 
