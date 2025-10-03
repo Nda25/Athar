@@ -29,8 +29,8 @@ exports.handler = async (event) => {
   const API_KEY = process.env.GEMINI_API_KEY;
   // قدّمي flash-lite (أسرع)، ثم flash كاحتياط
   const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
-  const FALLBACKS = [PRIMARY_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"];
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);
+const FALLBACKS = [PRIMARY_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 30000);
   const RETRIES    = +(process.env.RETRIES    || 0);   // محاولة واحدة فقط لكل موديل
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
 
