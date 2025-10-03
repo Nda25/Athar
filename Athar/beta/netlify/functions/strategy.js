@@ -16,11 +16,10 @@ exports.handler = async (event) => {
   const API_KEY = process.env.GEMINI_API_KEY;
   // قدّمي flash-lite (أسرع)، ثم flash كاحتياط
 const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
-+ const FALLBACKS = [PRIMARY_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"];
-  // مهل ومحاولات خفيفة لتجنّب انتظار طويل
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);  // 12s للمحاولة
-  const RETRIES    = +(process.env.RETRIES    || 0);      // بلا إعادة داخل نفس الموديل
-  const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
+const FALLBACKS = [PRIMARY_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);
+const RETRIES    = +(process.env.RETRIES    || 0);   // محاولة واحدة فقط لكل موديل
+const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
 
   if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
