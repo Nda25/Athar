@@ -1,6 +1,6 @@
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
-  // CORS (مفيد لو صار preflight)
+  // CORS
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -13,30 +13,32 @@ exports.handler = async (event) => {
     };
   }
 
-  // نسمح فقط بـ POST
+  // POST فقط
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // نقرأ جسم الطلب بأمان
+  // قراءة جسم الطلب
   let payload = {};
   try { payload = JSON.parse(event.body || "{}"); }
   catch { return { statusCode: 400, body: "Bad JSON body" }; }
 
   const { stage, subject, bloomType, lesson, variant } = payload;
 
-  // ===== إعدادات من متغيّرات البيئة =====
+  // ===== الإعدادات =====
   const API_KEY = process.env.GEMINI_API_KEY;
-  // قدّمي flash-lite (أسرع)، ثم flash كاحتياط
-  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
-const FALLBACKS = [PRIMARY_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"];
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 30000);
-  const RETRIES    = +(process.env.RETRIES    || 0);   // محاولة واحدة فقط لكل موديل
-  const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
-
   if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
-  // ===== توصيف الأسلوب حسب المرحلة =====
+  // استخدمي الألياس الرسمية فقط
+  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
+  const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
+
+  // مهَل خفيفة مع محاولة واحدة لكل موديل
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);
+  const RETRIES    = +(process.env.RETRIES    || 0);
+  const BACKOFF_MS = +(process.env.BACKOFF_MS || 500);
+
+  // ===== دليل الأسلوب حسب المرحلة =====
   const STAGE_GUIDE = {
     "primary-lower": `
 - الفئة: ابتدائي دنيا (الأول–الثالث).
@@ -63,7 +65,6 @@ const FALLBACKS = [PRIMARY_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"];
   const typePart   = (bloomType && bloomType !== "الكل") ? `(تصنيف بلوم: "${bloomType}")` : "(تصنيف بلوم: اختاري مستويات ملائمة)";
   const lessonPart = lesson ? `ومناسبة لدرس "${lesson}"` : "";
 
-  // لو طلبنا بديل: نُجبر التنويع وتغيير الفكرة جذريًا
   const VARIANT_NOTE = `
 - IMPORTANT: أعطِ استراتيجية مختلفة جذريًا عن أي مقترح سابق. غيّر آلية التنظيم (محطات/تعاقب أدوار/مناظرة/قلب الصف/مسرحة/لعب أدوار/مختبر مصغّر/محاكاة …).
 - strategy_name فريد 100%، لا يُكرر أسماء الدروس/المواد أو أي عبارة وردت في الطلب.
@@ -76,7 +77,6 @@ const FALLBACKS = [PRIMARY_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"];
   ].join(" | ")}
 - لا تعيدي أي صياغات سبق استخدامها ضمن نفس الفكرة؛ بدّلي الزاوية والمنتج النهائي ومخرجات التعلم وأساليب التقويم كليًا.`;
 
-  // ===== البرومبت =====
   const BASE_PROMPT =
 `أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
 ${stageNote}
@@ -129,7 +129,7 @@ ${VARIANT_NOTE}
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   const MIN = { goals:3, steps:4, examples:2 };
-  function isEmptyStr(s){ return !s || !String(s).trim(); }
+  const isEmptyStr = (s)=> !s || !String(s).trim();
   function isComplete(d){
     if (!d) return false;
     const must = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
@@ -139,7 +139,6 @@ ${VARIANT_NOTE}
     if ((d.steps||[]).length < MIN.steps) return false;
     if ((d.examples||[]).length < MIN.examples) return false;
     for (const c of d.citations){ if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false; }
-    // ضمان وجود "الدقيقة" في الخطوات (قابل للتنفيذ زمنيًا)
     if (!d.steps.every(s => /الدقيقة\s*\d+\s*[-–]\s*\d+/.test(String(s)))) return false;
     return true;
   }
@@ -151,7 +150,6 @@ ${VARIANT_NOTE}
         responseMimeType: "application/json",
         responseSchema,
         candidateCount: 1,
-        // تخفيف الحمل لتسريع الاستجابة
         maxOutputTokens: 1100,
         temperature: 0.6,
         topK: 32,
@@ -181,28 +179,18 @@ ${VARIANT_NOTE}
         err.body = text.slice(0,400);
         throw err;
       }
-      let json;
-      try { json = JSON.parse(text); }
-      catch {
-        const err = new Error("Bad JSON from API");
-        err.status = 502;
-        err.body = text.slice(0,300);
-        throw err;
+      let outer; try { outer = JSON.parse(text); } catch {
+        const err = new Error("Bad JSON from API"); err.status = 502; err.body = text.slice(0,300); throw err;
       }
-      const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-      let data;
-      try { data = JSON.parse(raw); }
-      catch {
-        const err = new Error("Bad model JSON");
-        err.status = 502;
-        err.body = raw.slice(0,300);
-        throw err;
+      const raw = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+      let data; try { data = JSON.parse(raw); } catch {
+        const err = new Error("Bad model JSON"); err.status = 502; err.body = raw.slice(0,300); throw err;
       }
       return data;
     } finally { clearTimeout(timer); }
   }
 
-  // ==== التنفيذ مع fallback (يجرب موديلات متعددة بسرعة) ====
+  // ==== التنفيذ مع fallbacks ====
   let promptText = BASE_PROMPT;
 
   for (const MODEL of FALLBACKS) {
@@ -256,13 +244,12 @@ ${VARIANT_NOTE}
           await sleep(BACKOFF_MS * attempt);
           continue;
         }
-        // إذا فشل هذا الموديل، ننتقل للفول باك التالي
+        // انتقلي للموديل التالي
         break;
       }
     }
   }
 
-  // كل المحاولات فشلت عبر كل الموديلات
   const msg = "Gateway Timeout: model did not respond in time";
   console.error(`[strategy] final-fail status=504 body=${msg}`);
   return {
