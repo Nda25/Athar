@@ -21,31 +21,19 @@ exports.handler = async (event) => {
   // ==== جسم الطلب ====
   let payload = {};
   try { payload = JSON.parse(event.body || "{}"); }
-  catch { 
-    return { 
-      statusCode: 400, 
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: "Bad JSON body" 
-    }; 
-  }
+  catch { return { statusCode: 400, body: "Bad JSON body" }; }
 
-  const { stage, subject, bloomType, lesson, variant, diag, tiny } = payload;
+  const { stage, subject, bloomType, lesson, variant, diag } = payload;
 
   // ==== إعدادات البيئة ====
   const API_KEY = process.env.GEMINI_API_KEY;
-  if (!API_KEY) {
-    return { 
-      statusCode: 500, 
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: "Missing GEMINI_API_KEY" 
-    };
-  }
+  if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
-  // استخدمي الألياس الرسمية السريعة
+  // aliases الرسمية
   const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
   const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
 
-  // مهلة داخلية مناسبة لقيود Netlify
+  // مهَل مناسبة لوظائف Netlify
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);
   const RETRIES    = +(process.env.RETRIES    || 0);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 400);
@@ -57,24 +45,26 @@ exports.handler = async (event) => {
     "middle":        `- الفئة: متوسط. استقصاء موجه، نقاش، تجارب مصغّرة.`,
     "secondary":     `- الفئة: ثانوي. نقاش نقدي، مشاريع/بحث مختصر.`
   };
-  const stageNote  = STAGE_GUIDE[stage] || `- الفئة: عام. صياغة واضحة ومتدرجة.`;
-  const typePart   = (bloomType && bloomType !== "الكل") ? `(تصنيف بلوم: "${bloomType}")` : "(تصنيف بلوم: اختاري مستويات ملائمة)";
+  const stageNote = STAGE_GUIDE[stage] || `- الفئة: عام. صياغة واضحة ومتدرجة.`;
+  const typePart   = (bloomType && bloomType !== "الكل")
+    ? `(تصنيف بلوم: "${bloomType}")`
+    : "(تصنيف بلوم: اختاري مستويات ملائمة)";
   const lessonPart = lesson ? `ومناسبة لدرس "${lesson}"` : "";
 
   const VARIANT_NOTE = `
 - IMPORTANT: استراتيجية مختلفة جذريًا عن أي مقترح سابق (محطات/مناظرة/قلب الصف/محاكاة/لعب أدوار...).
 - strategy_name فريد 100% ولا يكرر أسماء الدروس/المواد.
 - novelty seed: ${[
-      stage || "any-stage",
-      subject || "any-subject",
-      bloomType || "any-bloom",
-      (lesson || "any-lesson"),
-      (variant || Date.now())
-    ].join(" | ")}
+    stage || "any-stage",
+    subject || "any-subject",
+    bloomType || "any-bloom",
+    (lesson || "any-lesson"),
+    (variant || Date.now())
+  ].join(" | ")}
 - بدّلي الزاوية والمنتج النهائي وأساليب التقويم كليًا.`;
 
   // ==== البرومبت ====
-  const BASE_PROMPT_FULL =
+  const BASE_PROMPT =
 `أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
 ${stageNote}
 ${VARIANT_NOTE}
@@ -95,29 +85,13 @@ ${VARIANT_NOTE}
 - examples: 2–4
 - بلا أي نص خارج JSON. لغة عربية دقيقة ومختصرة.`;
 
-  // نسخة خفيفة جدًا للتشخيص/السرعة
-  const BASE_PROMPT_TINY =
-`أريد مخطط استراتيجية تدريس سريع لمادة ${subject} ${typePart} ${lessonPart}.
-${stageNote}
-
-أرسلي **فقط JSON** بهذه الحقول:
-{
-  "strategy_name": "...",
-  "goals": ["هدف قابل للقياس", "هدف قابل للقياس"],
-  "steps": ["الدقيقة 0–5: ...", "الدقيقة 5–10: ..."]
-}
-- لا تضيفي حقول أخرى.
-- كل خطوة تبدأ بعبارة "الدقيقة X–Y".
-- صياغة عربية مختصرة.`;
-
   // ==== مخطط الاستجابة ====
-  // كامل
-  const schemaFull = {
+  const responseSchema = {
     type: "OBJECT",
     required: [
       "strategy_name","bloom","importance","materials","goals","steps",
       "examples","assessment","diff_support","diff_core","diff_challenge",
-      "expected_impact" /* citations أصبحت اختيارية */
+      "expected_impact","citations"
     ],
     properties: {
       strategy_name:{ type:"STRING" },
@@ -132,51 +106,25 @@ ${stageNote}
       diff_core:{ type:"STRING" },
       diff_challenge:{ type:"STRING" },
       expected_impact:{ type:"STRING" },
-      // citations اختيارية الآن
-      citations:{ type:"ARRAY", items:{ type:"OBJECT", properties:{
+      citations:{ type:"ARRAY", items:{ type:"OBJECT", required:["title","benefit"], properties:{
         title:{ type:"STRING" }, benefit:{ type:"STRING" }
       }}}
     }
   };
 
-  // خفيف
-  const schemaTiny = {
-    type: "OBJECT",
-    required: ["strategy_name","goals","steps"],
-    properties: {
-      strategy_name:{ type:"STRING" },
-      goals:{ type:"ARRAY", items:{ type:"STRING" }, minItems:2 },
-      steps:{ type:"ARRAY", items:{ type:"STRING" }, minItems:2 }
-    }
-  };
-
-  const responseSchema = tiny ? schemaTiny : schemaFull;
-
   const sleep = (ms)=> new Promise(r=>setTimeout(r, ms));
-
-  // حدود دنيا ديناميكية حسب النمط
-  const MIN = tiny ? { goals:2, steps:2, examples:0 } : { goals:3, steps:4, examples:2 };
+  const MIN = { goals:3, steps:4, examples:2 };
   const isEmptyStr = (s)=> !s || !String(s).trim();
-
   function isComplete(d){
     if (!d) return false;
-
-    if (tiny) {
-      if (isEmptyStr(d.strategy_name)) return false;
-      if (!Array.isArray(d.goals) || d.goals.length < MIN.goals) return false;
-      if (!Array.isArray(d.steps) || d.steps.length < MIN.steps) return false;
-      if (!d.steps.every(s => /الدقيقة\s*\d+\s*[-–]\s*\d+/.test(String(s)))) return false;
-      return true;
-    }
-
     const must = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
     for (const k of must) if (isEmptyStr(d[k])) return false;
-    for (const k of ["goals","steps","examples"]) if (!Array.isArray(d[k])) return false;
-    if (d.goals.length    < MIN.goals)    return false;
-    if (d.steps.length    < MIN.steps)    return false;
-    if (d.examples.length < MIN.examples) return false;
+    for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
+    if ((d.goals||[]).length   < MIN.goals)   return false;
+    if ((d.steps||[]).length   < MIN.steps)   return false;
+    if ((d.examples||[]).length< MIN.examples)return false;
+    for (const c of d.citations){ if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false; }
     if (!d.steps.every(s => /الدقيقة\s*\d+\s*[-–]\s*\d+/.test(String(s)))) return false;
-    // citations أصبحت اختيارية؛ لا نتحقق منها
     return true;
   }
 
@@ -187,7 +135,8 @@ ${stageNote}
         responseMimeType: "application/json",
         responseSchema,
         candidateCount: 1,
-        maxOutputTokens: tiny ? 380 : 750,
+        // تخفيف الحمل
+        maxOutputTokens: 650,
         temperature: 0.5,
         topK: 32,
         topP: 0.9
@@ -195,6 +144,9 @@ ${stageNote}
       safetySettings: []
     };
   }
+
+  // آخر نص خام وصلنا من النموذج (للإظهار عند النقص)
+  let lastRawText = null;
 
   async function callOnce(model, promptText){
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
@@ -216,23 +168,12 @@ ${stageNote}
       }
       let outer;
       try { outer = JSON.parse(text); }
-      catch {
-        const e = new Error("Bad JSON from API"); 
-        e.status = 502; 
-        e.body = text.slice(0,300); 
-        throw e; 
-      }
-
-      const raw = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-      // لوق للنص الخام (شوفيه في Netlify logs)
-      try { console.log("[strategy][RAW]", raw.slice(0, 500)); } catch {}
+      catch { const e = new Error("Bad JSON from API"); e.status = 502; e.body = text.slice(0,300); throw e; }
+      lastRawText = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
 
       let data;
-      try { data = JSON.parse(raw); }
-      catch {
-        // بدلاً من الفشل: نرجّع الـ RAW للواجهة لتشخيص الكسر
-        return { _raw: raw, _model: model };
-      }
+      try { data = JSON.parse(lastRawText || "{}"); }
+      catch { const e = new Error("Bad model JSON"); e.status = 502; e.body = (lastRawText || "").slice(0,300); throw e; }
       return data;
     } finally { clearTimeout(timer); }
   }
@@ -245,7 +186,7 @@ ${stageNote}
       return {
         statusCode: 200,
         headers: { "content-type":"application/json; charset=utf-8", "Access-Control-Allow-Origin":"*" },
-        body: JSON.stringify({ model, data })
+        body: JSON.stringify({ model, data, rawText: lastRawText })
       };
     } catch (e) {
       return {
@@ -257,7 +198,6 @@ ${stageNote}
   }
 
   // ==== التنفيذ مع fallbacks ====
-  const BASE_PROMPT = tiny ? BASE_PROMPT_TINY : BASE_PROMPT_FULL;
   let promptText = BASE_PROMPT;
 
   for (const MODEL of FALLBACKS) {
@@ -266,44 +206,32 @@ ${stageNote}
       try {
         const data = await callOnce(MODEL, promptText);
 
-        // لو رجعنا RAW بدل JSON (كسر في البارسينق) نمرره كما هو للواجهة
-        if (data && data._raw) {
+        // لو ناقص → أرجع JSON تشخيصي بدل ما نرمي 504/502
+        if (!isComplete(data)) {
           return {
             statusCode: 200,
             headers: {
               "content-type": "application/json; charset=utf-8",
               "Access-Control-Allow-Origin": "*"
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({
+              debug: "incomplete",
+              model: MODEL,
+              message: "Model returned incomplete JSON. Showing raw text & parsed object for debugging.",
+              rawText: lastRawText,
+              parsed: data
+            })
           };
         }
 
-        if (!isComplete(data) && attempt <= RETRIES) {
-          attempt++;
-          await sleep(BACKOFF_MS * attempt);
-          promptText = `${BASE_PROMPT}
-
-الاستجابة السابقة كانت ناقصة/غير عملية. أعِدي إرسال JSON مكتمل فقط.
-${tiny ? `- على الأقل (${MIN.goals}) أهداف و(${MIN.steps}) خطوات تبدأ بـ "الدقيقة X–Y".` :
-`- (${MIN.goals}) أهداف قابلة للقياس، (${MIN.steps}) خطوات تبدأ بـ "الدقيقة X–Y"، (${MIN.examples}) أمثلة جديدة.`}
-لا تضيفي أي نص خارج JSON.`;
-          continue;
-        }
-
-        if (!isComplete(data)) {
-          const err = new Error("Incomplete response from model after retries");
-          err.status = 502;
-          throw err;
-        }
-
+        // مكتمل ✅
         data._meta = {
           stage: stage || "",
           subject: subject || "",
           bloomType: bloomType || "",
           lesson: lesson || "",
           variant: variant || null,
-          model: MODEL,
-          tiny: !!tiny
+          model: MODEL
         };
 
         return {
@@ -316,13 +244,13 @@ ${tiny ? `- على الأقل (${MIN.goals}) أهداف و(${MIN.steps}) خطو�
         };
 
       } catch (err) {
-        // جرّبي الموديل التالي
+        // فشل هذا الموديل → جرّبي الذي يليه
         break;
       }
     }
   }
 
-  // ==== فشل نهائي ====
+  // ==== فشل نهائي (نادراً ما نوصل هنا الآن) ====
   const msg = "Gateway Timeout: model did not respond in time";
   return {
     statusCode: 504,
