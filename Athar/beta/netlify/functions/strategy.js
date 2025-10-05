@@ -33,13 +33,15 @@ exports.handler = async (event) => {
 
   // ==== إعدادات البيئة ====
   const API_KEY = process.env.GEMINI_API_KEY;
-  if (!API_KEY) return { statusCode: 500, headers: { "Access-Control-Allow-Origin": "*" }, body: "Missing GEMINI_API_KEY" };
+  if (!API_KEY) {
+    return { statusCode: 500, headers: { "Access-Control-Allow-Origin": "*" }, body: "Missing GEMINI_API_KEY" };
+  }
 
-  // aliases الرسمية (سريعة)
+  // aliases الرسمية السريعة
   const PRIMARY_MODEL  = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
   const FALLBACKS      = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
 
-  // مهَل مناسبة لوظائف Netlify (معظم الخطط 10–26s)
+  // مهَل مناسبة لوظائف Netlify
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 20000);
   const RETRIES    = +(process.env.RETRIES    || 0);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 400);
@@ -69,7 +71,7 @@ exports.handler = async (event) => {
   ].join(" | ")}
 - بدّلي الزاوية والمنتج النهائي وأساليب التقويم كليًا.`;
 
-  // ==== البرومبت الأساسي ====
+  // ==== البرومبت ====
   const BASE_PROMPT =
 `أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
 ${stageNote}
@@ -122,17 +124,26 @@ ${VARIANT_NOTE}
   const MIN = { goals:3, steps:4, examples:2 };
   const isEmptyStr = (s)=> !s || !String(s).trim();
 
+  // يقبل أرقام عربية وإنجليزية ويكفي 3 خطوات على الأقل بزمن
   function isComplete(d){
     if (!d) return false;
+
     const must = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
     for (const k of must) if (isEmptyStr(d[k])) return false;
+
     for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
-    if ((d.goals||[]).length   < MIN.goals)    return false;
-    if ((d.steps||[]).length   < MIN.steps)    return false;
-    if ((d.examples||[]).length< MIN.examples) return false;
-    for (const c of d.citations){ if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false; }
-    // قابل للتنفيذ زمنيًا
-    if (!d.steps.every(s => /الدقيقة\s*\d+\s*[-–]\s*\d+/.test(String(s)))) return false;
+    if ((d.goals||[]).length    < MIN.goals)    return false;
+    if ((d.steps||[]).length    < MIN.steps)    return false;
+    if ((d.examples||[]).length < MIN.examples) return false;
+
+    for (const c of d.citations || []) {
+      if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false;
+    }
+
+    const timeRe = /الدقيقة\s*[0-9\u0660-\u0669]+\s*[-–]\s*[0-9\u0660-\u0669]+/u;
+    const timedCount = (d.steps||[]).filter(s => timeRe.test(String(s))).length;
+    if (timedCount < Math.min(3, (d.steps||[]).length)) return false;
+
     return true;
   }
 
@@ -152,7 +163,7 @@ ${VARIANT_NOTE}
     };
   }
 
-  // آخر نص خام وصلنا من النموذج (للتشخيص)
+  // آخر نص خام من النموذج (للتشخيص)
   let lastRawText = null;
 
   async function callOnce(model, promptText){
@@ -186,7 +197,6 @@ ${VARIANT_NOTE}
     } finally { clearTimeout(timer); }
   }
 
-  // محاولة إصلاح تلقائي لو رجع ناقص
   function makeRepairPrompt(prevText){
     return `${BASE_PROMPT}
 
@@ -199,7 +209,7 @@ ${(prevText||"").slice(0,1800)}
 لا تضيفي أي نص خارج JSON.`;
   }
 
-  // ==== وضع التشخيص السريع (اختياري) ====
+  // ==== وضع التشخيص السريع ====
   if (diag === true) {
     try {
       const model = FALLBACKS[0];
@@ -236,7 +246,7 @@ ${(prevText||"").slice(0,1800)}
           };
         }
 
-        // غير مكتمل → جهز محاولة إصلاح مرة وحدة
+        // محاولة إصلاح واحدة
         if (attempt === 0) {
           promptText = makeRepairPrompt(lastRawText);
           attempt++;
@@ -244,17 +254,14 @@ ${(prevText||"").slice(0,1800)}
           continue;
         }
 
-        // لو فشل بعد الإصلاح أيضًا، جرّبي الموديل التالي
-        break;
-
+        break; // جرّبي الموديل التالي
       } catch (_err) {
-        // جرّبي الموديل التالي
-        break;
+        break; // جرّبي الموديل التالي
       }
     }
   }
 
-  // ==== إن ظلّ ناقص بعد كل المحاولات → رجّع تشخيص بدل 504 ====
+  // ==== إن ظلّ ناقص → رجّع تشخيص واضح بدل 504 ====
   return {
     statusCode: 200,
     headers: { "content-type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" },
