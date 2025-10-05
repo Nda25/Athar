@@ -23,20 +23,21 @@ exports.handler = async (event) => {
   try { payload = JSON.parse(event.body || "{}"); }
   catch { return { statusCode: 400, body: "Bad JSON body" }; }
 
-  const { stage, subject, bloomType, lesson, variant, diag } = payload;
+  const qs = event.queryStringParameters || {};
+  const diag = payload.diag === true || qs.diag === "1" || qs.diag === "true";
+
+  const { stage, subject, bloomType, lesson, variant } = payload;
 
   // ==== إعدادات البيئة ====
   const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
-  // NOTE: الزمي aliases الرسمية السريعة
-  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
-  const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
+  // alias رسمي سريع
+  const MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
 
-  // Netlify (خطة عادية) يمهل الوظيفة ~10s → نخلي مهلة داخلية 8s
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 800000);
-  const RETRIES    = +(process.env.RETRIES    || 0);   // بلا محاولات إضافية
-  const BACKOFF_MS = +(process.env.BACKOFF_MS || 400);
+  // مهل مخفّضة (تناسب حدود Netlify)
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 8000);  // 8s داخلية
+  const MAX_TOKENS = +(process.env.MAX_TOKENS || 600);   // حمل قليل للتشخيص
 
   // ==== أدلة الأسلوب ====
   const STAGE_GUIDE = {
@@ -63,7 +64,7 @@ exports.handler = async (event) => {
 
   // ==== البرومبت ====
   const BASE_PROMPT =
-`أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
+`أريد استراتيجية تدريس لمادة ${subject || "أي مادة"} ${typePart} ${lessonPart}.
 ${stageNote}
 ${VARIANT_NOTE}
 
@@ -71,7 +72,7 @@ ${VARIANT_NOTE}
 - ابدئي كل خطوة بصيغة زمنية: "الدقيقة 0–5: …".
 - "goals": قابلة للقياس (فعل سلوكي + معيار %/عدد/زمن).
 - "assessment": أدوات عملية + "روبرك مختصر" (3 مستويات بمؤشرات).
-- اربط بمستويات بلوم الملائمة داخل "bloom".
+- "bloom": اربطي المستويات المناسبة.
 - "diff_support/core/challenge": منتجات/أداء observable لكل مستوى.
 - "materials": عناصر محددة كسطر واحد مفصول بـ "؛ ".
 - "examples": أمثلة جديدة لا تكرر خطوات التنفيذ.
@@ -110,7 +111,6 @@ ${VARIANT_NOTE}
     }
   };
 
-  const sleep = (ms)=> new Promise(r=>setTimeout(r, ms));
   const MIN = { goals:3, steps:4, examples:2 };
   const isEmptyStr = (s)=> !s || !String(s).trim();
   function isComplete(d){
@@ -133,8 +133,7 @@ ${VARIANT_NOTE}
         responseMimeType: "application/json",
         responseSchema,
         candidateCount: 1,
-        // تخفيف الحمل لتسليم ضمن 8 ثوانٍ تقريبًا
-        maxOutputTokens: 650,
+        maxOutputTokens: MAX_TOKENS, // حمل قليل لتسليم أسرع
         temperature: 0.5,
         topK: 32,
         topP: 0.9
@@ -172,80 +171,43 @@ ${VARIANT_NOTE}
     } finally { clearTimeout(timer); }
   }
 
-  // ==== وضع التشخيص السريع ====
-  if (diag === true) {
+  // ==== وضع التشخيص (body أو ?diag=1) ====
+  if (diag) {
     try {
-      const model = FALLBACKS[0];
-      const data = await callOnce(model, 'أرسلي JSON {"ok":true} فقط.');
+      const data = await callOnce(MODEL, 'أرسلي JSON {"ok":true} فقط.');
       return {
         statusCode: 200,
         headers: { "content-type":"application/json; charset=utf-8", "Access-Control-Allow-Origin":"*" },
-        body: JSON.stringify({ model, data })
+        body: JSON.stringify({ model: MODEL, ok: true, data, timeout_ms: TIMEOUT_MS, max_tokens: MAX_TOKENS })
       };
     } catch (e) {
       return {
         statusCode: e.status || 500,
         headers: { "Access-Control-Allow-Origin":"*" },
-        body: `DIAG ERROR: ${e.status || ""} :: ${e.body || e.message}`
+        body: `DIAG ERROR (${MODEL}): ${e.status || ""} :: ${e.body || e.message}`
       };
     }
   }
 
-  // ==== التنفيذ مع fallbacks (سريعة) ====
-  let promptText = BASE_PROMPT;
-  for (const MODEL of FALLBACKS) {
-    let attempt = 0;
-    while (attempt <= RETRIES) {
-      try {
-        const data = await callOnce(MODEL, promptText);
-
-        if (!isComplete(data) && attempt <= RETRIES) {
-          attempt++;
-          await sleep(BACKOFF_MS * attempt);
-          promptText = `${BASE_PROMPT}
-
-الاستجابة السابقة كانت ناقصة/غير عملية. أعِدي إرسال JSON مكتمل
-(${MIN.goals}) أهداف قابلة للقياس، (${MIN.steps}) خطوات تبدأ بـ "الدقيقة X–Y"، (${MIN.examples}) أمثلة جديدة.
-لا تضيفي أي نص خارج JSON.`;
-          continue;
-        }
-
-        if (!isComplete(data)) {
-          const err = new Error("Incomplete response from model after retries");
-          err.status = 502;
-          throw err;
-        }
-
-        data._meta = {
-          stage: stage || "",
-          subject: subject || "",
-          bloomType: bloomType || "",
-          lesson: lesson || "",
-          variant: variant || null,
-          model: MODEL
-        };
-
-        return {
-          statusCode: 200,
-          headers: {
-            "content-type": "application/json; charset=utf-8",
-            "Access-Control-Allow-Origin": "*"
-          },
-          body: JSON.stringify(data)
-        };
-
-      } catch (err) {
-        // إذا فشل هذا الموديل → جرّبي الذي يليه
-        break;
-      }
+  // ==== التنفيذ (بدون fallbacks للتشخيص) ====
+  try {
+    const data = await callOnce(MODEL, BASE_PROMPT);
+    if (!isComplete(data)) {
+      const e = new Error("Incomplete response from model");
+      e.status = 502; throw e;
     }
+    data._meta = { stage: stage||"", subject: subject||"", bloomType: bloomType||"", lesson: lesson||"", variant: variant||null, model: MODEL };
+    return {
+      statusCode: 200,
+      headers: { "content-type":"application/json; charset=utf-8", "Access-Control-Allow-Origin":"*" },
+      body: JSON.stringify(data)
+    };
+  } catch (e) {
+    const code = e.status || (/timeout/i.test(String(e.message)) ? 504 : 500);
+    return {
+      statusCode: code,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: (e.body || e.message || "Unknown error").slice(0,500)
+    };
   }
-
-  // ==== فشل نهائي ====
-  const msg = "Gateway Timeout: model did not respond in time";
-  return {
-    statusCode: 504,
-    headers: { "Access-Control-Allow-Origin": "*" },
-    body: msg
-  };
 };
