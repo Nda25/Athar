@@ -15,26 +15,32 @@ exports.handler = async (event) => {
 
   // ==== POST فقط ====
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+    return {
+      statusCode: 405,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: "Method Not Allowed"
+    };
   }
 
   // ==== جسم الطلب ====
   let payload = {};
   try { payload = JSON.parse(event.body || "{}"); }
-  catch { return { statusCode: 400, body: "Bad JSON body" }; }
+  catch {
+    return { statusCode: 400, headers: { "Access-Control-Allow-Origin": "*" }, body: "Bad JSON body" };
+  }
 
   const { stage, subject, bloomType, lesson, variant, diag } = payload;
 
   // ==== إعدادات البيئة ====
   const API_KEY = process.env.GEMINI_API_KEY;
-  if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+  if (!API_KEY) return { statusCode: 500, headers: { "Access-Control-Allow-Origin": "*" }, body: "Missing GEMINI_API_KEY" };
 
-  // aliases الرسمية
-  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
-  const FALLBACKS = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
+  // aliases الرسمية (سريعة)
+  const PRIMARY_MODEL  = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
+  const FALLBACKS      = [PRIMARY_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"];
 
-  // مهَل مناسبة لوظائف Netlify
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 12000);
+  // مهَل مناسبة لوظائف Netlify (معظم الخطط 10–26s)
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 20000);
   const RETRIES    = +(process.env.RETRIES    || 0);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 400);
 
@@ -63,7 +69,7 @@ exports.handler = async (event) => {
   ].join(" | ")}
 - بدّلي الزاوية والمنتج النهائي وأساليب التقويم كليًا.`;
 
-  // ==== البرومبت ====
+  // ==== البرومبت الأساسي ====
   const BASE_PROMPT =
 `أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
 ${stageNote}
@@ -115,15 +121,17 @@ ${VARIANT_NOTE}
   const sleep = (ms)=> new Promise(r=>setTimeout(r, ms));
   const MIN = { goals:3, steps:4, examples:2 };
   const isEmptyStr = (s)=> !s || !String(s).trim();
+
   function isComplete(d){
     if (!d) return false;
     const must = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
     for (const k of must) if (isEmptyStr(d[k])) return false;
     for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
-    if ((d.goals||[]).length   < MIN.goals)   return false;
-    if ((d.steps||[]).length   < MIN.steps)   return false;
-    if ((d.examples||[]).length< MIN.examples)return false;
+    if ((d.goals||[]).length   < MIN.goals)    return false;
+    if ((d.steps||[]).length   < MIN.steps)    return false;
+    if ((d.examples||[]).length< MIN.examples) return false;
     for (const c of d.citations){ if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false; }
+    // قابل للتنفيذ زمنيًا
     if (!d.steps.every(s => /الدقيقة\s*\d+\s*[-–]\s*\d+/.test(String(s)))) return false;
     return true;
   }
@@ -135,8 +143,7 @@ ${VARIANT_NOTE}
         responseMimeType: "application/json",
         responseSchema,
         candidateCount: 1,
-        // تخفيف الحمل
-        maxOutputTokens: 650,
+        maxOutputTokens: 800,
         temperature: 0.5,
         topK: 32,
         topP: 0.9
@@ -145,7 +152,7 @@ ${VARIANT_NOTE}
     };
   }
 
-  // آخر نص خام وصلنا من النموذج (للإظهار عند النقص)
+  // آخر نص خام وصلنا من النموذج (للتشخيص)
   let lastRawText = null;
 
   async function callOnce(model, promptText){
@@ -169,6 +176,7 @@ ${VARIANT_NOTE}
       let outer;
       try { outer = JSON.parse(text); }
       catch { const e = new Error("Bad JSON from API"); e.status = 502; e.body = text.slice(0,300); throw e; }
+
       lastRawText = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
 
       let data;
@@ -178,7 +186,20 @@ ${VARIANT_NOTE}
     } finally { clearTimeout(timer); }
   }
 
-  // ==== وضع التشخيص السريع ====
+  // محاولة إصلاح تلقائي لو رجع ناقص
+  function makeRepairPrompt(prevText){
+    return `${BASE_PROMPT}
+
+الاستجابة السابقة كانت ناقصة أو غير صالحة JSON:
+----
+${(prevText||"").slice(0,1800)}
+----
+
+أعيدي إرسال **JSON مكتمل وصحيح** يملأ كل الحقول ويبدأ كل عنصر في steps بـ "الدقيقة X–Y".
+لا تضيفي أي نص خارج JSON.`;
+  }
+
+  // ==== وضع التشخيص السريع (اختياري) ====
   if (diag === true) {
     try {
       const model = FALLBACKS[0];
@@ -197,64 +218,50 @@ ${VARIANT_NOTE}
     }
   }
 
-  // ==== التنفيذ مع fallbacks ====
+  // ==== التنفيذ مع fallbacks + محاولة إصلاح ====
   let promptText = BASE_PROMPT;
 
   for (const MODEL of FALLBACKS) {
     let attempt = 0;
-    while (attempt <= RETRIES) {
+    while (attempt <= RETRIES + 1) { // +1 لمحاولة إصلاح
       try {
         const data = await callOnce(MODEL, promptText);
 
-        // لو ناقص → أرجع JSON تشخيصي بدل ما نرمي 504/502
-        if (!isComplete(data)) {
+        if (isComplete(data)) {
+          data._meta = { stage: stage||"", subject: subject||"", bloomType: bloomType||"", lesson: lesson||"", variant: variant||null, model: MODEL };
           return {
             statusCode: 200,
-            headers: {
-              "content-type": "application/json; charset=utf-8",
-              "Access-Control-Allow-Origin": "*"
-            },
-            body: JSON.stringify({
-              debug: "incomplete",
-              model: MODEL,
-              message: "Model returned incomplete JSON. Showing raw text & parsed object for debugging.",
-              rawText: lastRawText,
-              parsed: data
-            })
+            headers: { "content-type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" },
+            body: JSON.stringify(data)
           };
         }
 
-        // مكتمل ✅
-        data._meta = {
-          stage: stage || "",
-          subject: subject || "",
-          bloomType: bloomType || "",
-          lesson: lesson || "",
-          variant: variant || null,
-          model: MODEL
-        };
+        // غير مكتمل → جهز محاولة إصلاح مرة وحدة
+        if (attempt === 0) {
+          promptText = makeRepairPrompt(lastRawText);
+          attempt++;
+          await sleep(BACKOFF_MS);
+          continue;
+        }
 
-        return {
-          statusCode: 200,
-          headers: {
-            "content-type": "application/json; charset=utf-8",
-            "Access-Control-Allow-Origin": "*"
-          },
-          body: JSON.stringify(data)
-        };
+        // لو فشل بعد الإصلاح أيضًا، جرّبي الموديل التالي
+        break;
 
-      } catch (err) {
-        // فشل هذا الموديل → جرّبي الذي يليه
+      } catch (_err) {
+        // جرّبي الموديل التالي
         break;
       }
     }
   }
 
-  // ==== فشل نهائي (نادراً ما نوصل هنا الآن) ====
-  const msg = "Gateway Timeout: model did not respond in time";
+  // ==== إن ظلّ ناقص بعد كل المحاولات → رجّع تشخيص بدل 504 ====
   return {
-    statusCode: 504,
-    headers: { "Access-Control-Allow-Origin": "*" },
-    body: msg
+    statusCode: 200,
+    headers: { "content-type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" },
+    body: JSON.stringify({
+      debug: "incomplete",
+      message: "Model returned incomplete JSON after retries.",
+      rawText: lastRawText
+    })
   };
 };
