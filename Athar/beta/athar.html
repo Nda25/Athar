@@ -198,8 +198,22 @@
       </div>
     </section>
 
-    <p id="err" class="muted" style="text-align:center; display:none">رجاءً اختر المرحلة والمادة.</p>
+
+    <!-- صندوق التشخيص -->
+    <section id="dbg" class="card" style="display:none; margin-top:10px">
+      <h3>تشخيص</h3>
+      <p class="muted">
+        النموذج أعاد JSON ناقص؛ تم عرض ما أمكن من الحقول. أدناه النص الخام للمراجعة:
+      </p>
+      <pre id="dbg-raw" style="white-space:pre-wrap;direction:ltr"></pre>
+    </section>
+
+    <!-- رسالة الخطأ (واحد فقط) -->
+    <p id="err" class="muted" style="text-align:center; display:none">
+      رجاءً اختر المرحلة والمادة.
+    </p>
   </main>
+
 
   <footer>
     <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
@@ -244,7 +258,7 @@
 <!-- سكربت الصفحة (المصحّح) -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // ============ البيانات ============
+  // ========= البيانات =========
   const SUBJECTS = {
     "primary-lower": ["اللغة العربية","الرياضيات","العلوم","مهارات رقمية","اللغة الإنجليزية","الدراسات الإسلامية","التربية الفنية","التربية البدنية والدفاع عن النفس","مهارات حياتية وأسرية"],
     "primary-upper": ["اللغة العربية","الرياضيات","العلوم","المهارات الرقمية","اللغة الإنجليزية","الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد","التربية الفنية","التربية البدنية والدفاع عن النفس"],
@@ -252,21 +266,21 @@ document.addEventListener('DOMContentLoaded', () => {
     "secondary":     ["الفيزياء","الكيمياء","الأحياء","الرياضيات","اللغة العربية","اللغة الإنجليزية","التاريخ","الدراسات الإسلامية","مهارات رقمية","علم الأرض والفضاء","التفكير الناقد"]
   };
 
-  // ============ عناصر الواجهة ============
-  const $ = (s) => document.querySelector(s);
+  // ========= عناصر الواجهة =========
+  const $ = s => document.querySelector(s);
   const stageSel   = $('#stage');
   const subjectSel = $('#subject');
-  const bloomSel   = $('#type');   // ← مهم: id الصحيح لحقل بلوم
+  const bloomSel   = $('#type');   // مهم: id الصحيح
   const lessonInp  = $('#lesson');
   const goBtn      = $('#go');
   const regenBtn   = $('#regen');
   const statusEl   = $('#status');
 
-  // تعبئة المواد عند اختيار المرحلة
+  // تعبئة المواد عند تغيير المرحلة
   stageSel.addEventListener('change', () => {
     const s = stageSel.value;
     subjectSel.innerHTML = '<option value="" selected disabled>اختر المادة</option>';
-    (SUBJECTS[s] || []).forEach((m) => {
+    (SUBJECTS[s] || []).forEach(m => {
       const opt = document.createElement('option');
       opt.value = m; opt.textContent = m;
       subjectSel.appendChild(opt);
@@ -274,15 +288,10 @@ document.addEventListener('DOMContentLoaded', () => {
     subjectSel.disabled = !(SUBJECTS[s] && SUBJECTS[s].length);
   });
 
-  function readStageLabel(v){
-    return {"primary-lower":"ابتدائي — دنيا","primary-upper":"ابتدائي — عليا","middle":"متوسط","secondary":"ثانوي"}[v] || v;
-  }
-  function safe(s){ return String(s||'').replace(/[<>&]/g, ch => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[ch])); }
-  function listTo(ul, arr){
-    if (!ul) return;
-    const a = Array.isArray(arr) ? arr : [];
-    ul.innerHTML = a.map(x => `<li>${safe(x)}</li>`).join('');
-  }
+  const readStageLabel = v => ({"primary-lower":"ابتدائي — دنيا","primary-upper":"ابتدائي — عليا","middle":"متوسط","secondary":"ثانوي"}[v] || v);
+  const safe = s => String(s||'').replace(/[<>&]/g, ch => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[ch]));
+  const listTo = (ul, arr)=>{ if(!ul) return; const a=Array.isArray(arr)?arr:[]; ul.innerHTML = a.map(x=>`<li>${safe(x)}</li>`).join(''); };
+
   function setLoading(on){
     if (on){
       goBtn.dataset._label = goBtn.textContent;
@@ -294,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ============ الاتصال بالوظيفة السحابية ============
+  // ========= الاتصال بالخادم =========
   async function callStrategy(payload){
     const res = await fetch('/.netlify/functions/strategy', {
       method:'POST',
@@ -302,21 +311,13 @@ document.addEventListener('DOMContentLoaded', () => {
       body: JSON.stringify(payload)
     });
     const text = await res.text();
-
     let data;
     try { data = JSON.parse(text); }
     catch { throw new Error(`رد غير متوقع من الخادم:\n${text}`); }
-
-    if (data && data.debug === 'incomplete') {
-      const out = $('#out'); out.style.display = 'block';
-      $('#title').textContent = 'تشخيص';
-      $('#importance').innerHTML = `<pre>${safe(data.rawText||'—')}</pre>`;
-      return Promise.reject(new Error('الاستجابة غير مكتملة (تشخيص)'));
-    }
     return data;
   }
 
-  // ============ طباعة الناتج ============
+  // ========= طباعة الناتج =========
   function paintOutput(data, meta){
     $('#title').textContent = data.strategy_name || '—';
 
@@ -368,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let h=0; for (let i=0;i<parts.length;i++){ h=((h<<5)-h)+parts.charCodeAt(i); h|=0; } return String(h);
   };
 
-  // ============ التوليد ============
+  // ========= التوليد =========
   async function generate(variant=null, _retry=0){
     const stage   = stageSel.value;
     const subject = subjectSel.value;
@@ -380,12 +381,27 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     $('#err').style.display = 'none';
+    $('#dbg').style.display = 'none'; // إخفاء صندوق التشخيص السابق
     statusEl.textContent = 'جاري تحويل شغفك إلى استراتيجية ملموسة …✨';
     setLoading(true);
 
     try{
       const data = await callStrategy({ stage, subject, bloomType:bloom, lesson, variant: variant || Math.floor(Math.random()*1e9) });
 
+      const meta = { stage, stageLabel: readStageLabel(stage), subject, bloomType:bloom, lesson };
+
+      // رد تشخيصي؟
+      if (data && data.debug === 'incomplete') {
+        if (data.parsed && typeof data.parsed === 'object') {
+          paintOutput(data.parsed, meta);
+        }
+        const dbg = $('#dbg'), raw = $('#dbg-raw');
+        if (dbg && raw) { raw.textContent = data.rawText || '(لا يوجد نص خام)'; dbg.style.display='block'; }
+        statusEl.textContent = 'تم (تشخيص) ✨';
+        return;
+      }
+
+      // رد مكتمل
       const seen = loadSeen();
       const sig = signatureOf(data);
       if (seen.has(sig) && _retry < 3){
@@ -393,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       seen.add(sig); saveSeen(seen);
 
-      paintOutput(data, { stage, stageLabel: readStageLabel(stage), subject, bloomType:bloom, lesson });
+      paintOutput(data, meta);
       statusEl.textContent = 'تـــم ✨';
     }catch(err){
       console.error(err);
