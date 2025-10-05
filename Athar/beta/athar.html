@@ -298,28 +298,49 @@
       }
     }
 
-    async function callStrategy({stage, subject, bloomType, lesson, variant}){
-      const res = await fetch("/.netlify/functions/strategy", {
-        method: "POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify({ stage, subject, bloomType, lesson, variant })
-      });
-      if(!res.ok){
-        const txt = await res.text();
-        throw new Error("خطأ من الخادم: "+res.status+" | "+txt);
-      }
-      return res.json();
-    }
+fetch("/.netlify/functions/strategy", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    stage: document.querySelector("#stage").value,
+    subject: document.querySelector("#subject").value,
+    bloomType: document.querySelector("#bloom").value,
+    lesson: document.querySelector("#lesson").value
+  })
+})
+.then(res => res.json())
+.then(data => {
+  // ✅ لو الرد فيه debug يعني ناقص → نعرض rawText
+  if (data.debug === "incomplete") {
+    document.querySelector("#results").innerHTML = `
+      <h3>🔎 Debug Mode</h3>
+      <p><b>Model:</b> ${data.model}</p>
+      <p><b>Raw Text:</b></p>
+      <pre>${data.rawText || "—"}</pre>
+      <p><b>Parsed JSON:</b></p>
+      <pre>${JSON.stringify(data.parsed, null, 2)}</pre>
+    `;
+    return;
+  }
 
-    function listTo(el, arr){
-      el.innerHTML = "";
-      (arr||[]).forEach(v=>{
-        const t = (v||"").toString().trim();
-        if(!t) return;
-        const li = document.createElement('li'); li.textContent = t;
-        el.appendChild(li);
-      });
-    }
+  // ✅ الرد مكتمل → نعرض الحقول في الصفحة
+  document.querySelector("#materials").textContent = data.materials || "—";
+  document.querySelector("#importance").textContent = data.importance || "—";
+  document.querySelector("#goals").innerHTML = (data.goals||[]).map(g=>`<li>${g}</li>`).join("");
+  document.querySelector("#steps").innerHTML = (data.steps||[]).map(s=>`<li>${s}</li>`).join("");
+  document.querySelector("#examples").innerHTML = (data.examples||[]).map(e=>`<li>${e}</li>`).join("");
+  document.querySelector("#assessment").textContent = data.assessment || "—";
+  document.querySelector("#diff").innerHTML = `
+    <p><b>Support:</b> ${data.diff_support}</p>
+    <p><b>Core:</b> ${data.diff_core}</p>
+    <p><b>Challenge:</b> ${data.diff_challenge}</p>
+  `;
+  document.querySelector("#impact").textContent = data.expected_impact || "—";
+  document.querySelector("#citations").innerHTML = (data.citations||[]).map(c=>`<li>${c.title} — ${c.benefit}</li>`).join("");
+})
+.catch(err => {
+  document.querySelector("#results").innerHTML = `<p style="color:red">⚠️ خطأ: ${err.message}</p>`;
+});
 
     function paintOutput(data, meta){
       $("#title").textContent = data.strategy_name || "—";
