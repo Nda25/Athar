@@ -79,9 +79,9 @@ ${VARIANT_NOTE}
 - "expected_impact": مؤشرات نجاح (% إتقان/عدد منتجات/زمن إنجاز).
 
 أرسلي فقط JSON بالمخطط التالي واملئي جميع الحقول:
-- goals: 3–6
-- steps: 4–8 (تبدأ بـ "الدقيقة X–Y")
-- examples: 2–4
+- goals: 2–3
+- steps: 3–4
+- examples: 1–2
 - بلا أي نص خارج JSON. لغة عربية دقيقة ومختصرة.`;
 
   // ==== مخطط الاستجابة ====
@@ -133,7 +133,7 @@ ${VARIANT_NOTE}
         responseMimeType: "application/json",
         responseSchema,
         candidateCount: 1,
-        maxOutputTokens: MAX_TOKENS, // حمل قليل لتسليم أسرع
+maxOutputTokens: 350,
         temperature: 0.5,
         topK: 32,
         topP: 0.9
