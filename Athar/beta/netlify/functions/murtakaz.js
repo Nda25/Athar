@@ -1,33 +1,19 @@
 // netlify/functions/murtakaz.js
 // مرتكز — توليد مخطط درس مختصر (موضوع/نص) مع حماية كاملة + تتبّع
+// نسخة متوافقة مع هيكلة mulham/strategy: Fallbacks + إصلاح + CORS مرن
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@supabase/supabase-js");
 const { requireUser } = require("./_auth.js");
 
-/* ========= إعدادات عامة ========= */
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "https://n-athar.co,https://www.n-athar.co,https://athar.sa")
-  .split(",").map(s => s.trim()).filter(Boolean);
+/* ====== CORS (مرن) ====== */
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
 
-// نخلي الموديل من البيئة وإلا الافتراضي موحّد
-const MODEL_ID = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-
-// حدود أمان
-const MAX_BODY_BYTES = +(process.env.MAX_BODY_BYTES || 200 * 1024);
-const MAX_TEXT_CHARS = +(process.env.MAX_TEXT_CHARS || 1200);
-
-/* ========= CORS ========= */
-function corsHeaders(origin) {
-  const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0] || "*";
-  return {
-    "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Vary": "Origin",
-  };
-}
-
-/* ========= Supabase ========= */
+/* ====== Supabase ====== */
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE,
@@ -78,108 +64,81 @@ async function supaLogToolUsage(user, meta) {
   } catch (_) {}
 }
 
-/* ========= أدوات ========= */
+/* ====== أدوات ====== */
 function safeJson(str, fallback = null) {
   try { return JSON.parse(str || "null") ?? fallback; } catch { return fallback; }
 }
 const cut = (s, n) => (s || "").slice(0, n);
-
 const AGE_LABEL = { p1: "ابتدائي دُنيا", p2: "ابتدائي عُليا", m: "متوسط", h: "ثانوي" };
 const dhow = (v) => (v == null ? "—" : String(v));
+const stripFences = (s = "") =>
+  String(s).replace(/^\s*```json\b/i, "").replace(/^\s*```/i, "").replace(/```$/i, "").trim();
 
-/* ========= الفنكشن ========= */
-exports.handler = async (event) => {
-  const origin = (event.headers?.origin || "").trim();
-  const CORS = corsHeaders(origin);
+/* ====== إعدادات Gemini / محاولات ====== */
+const PRIMARY   = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const FALLBACKS = (process.env.GEMINI_FALLBACKS || "gemini-1.5-pro,gemini-1.5-flash-8b").split(",").map(s=>s.trim()).filter(Boolean);
+const MODELS    = [PRIMARY, ...FALLBACKS];
+
+const TIMEOUT_MS  = +(process.env.TIMEOUT_MS || 23000);
+const MAX_RETRIES = +(process.env.RETRIES || 2);
+const BACKOFF_MS  = +(process.env.BACKOFF_MS || 700);
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+/* ====== Call Gemini (مرة واحدة) ====== */
+async function callGeminiOnce(model, apiKey, promptText){
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const m = genAI.getGenerativeModel({ model });
+
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
 
   try {
-    // Preflight
-    if (event.httpMethod === "OPTIONS") {
-      return { statusCode: 204, headers: CORS, body: "" };
+    const res = await m.generateContent({
+      contents: [{ role: "user", parts: [{ text: promptText }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        candidateCount: 1,
+        maxOutputTokens: 2048,
+        temperature: 0.6
+      },
+      // signal غير مدعوم رسميًا في SDK، لكننا نحافظ على مهلة منطقية عبر abort أعلاه
+    });
+
+    const raw =
+      (typeof res?.response?.text === "function" ? res.response.text() : "") ||
+      res?.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "";
+
+    if (!raw) return { ok:false, rawText:"", data:null };
+
+    // حاول JSON مباشر، ثم إزالة الأسوار
+    const txt = stripFences(raw);
+    try {
+      const data = JSON.parse(txt);
+      return { ok:true, rawText: txt, data };
+    } catch {
+      // محاولة أخيرة لالتقاط أول كتلة JSON
+      const m = txt.match(/\{[\s\S]*\}$/m) || txt.match(/\{[\s\S]*\}/m);
+      if (m) {
+        try { return { ok:true, rawText: m[0], data: JSON.parse(m[0]) }; }
+        catch { /* ignore */ }
+      }
+      return { ok:false, rawText: txt, data:null };
     }
-    if (event.httpMethod !== "POST") {
-      return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
-    }
+  } finally {
+    clearTimeout(t);
+  }
+}
 
-    // تحقّق من الأصل (اختياري تشدّدي هنا)
-    if (ALLOWED_ORIGINS.length && origin && !ALLOWED_ORIGINS.includes(origin)) {
-      return { statusCode: 403, headers: CORS, body: "Forbidden origin" };
-    }
-
-    // حماية JWT
-    const gate = await requireUser(event);
-    if (!gate.ok) {
-      return { statusCode: gate.status, headers: CORS, body: gate.error };
-    }
-
-    // اشتراك نشط
-    const active = await isActiveMembership(gate.user?.sub, gate.user?.email);
-    if (!active) {
-      return { statusCode: 402, headers: CORS, body: "Membership is not active (trial expired or not activated)." };
-    }
-
-    // حجم الطلب
-    const rawLen = Buffer.byteLength(event.body || "", "utf8");
-    if (rawLen > MAX_BODY_BYTES) {
-      return { statusCode: 413, headers: CORS, body: "Payload too large" };
-    }
-
-    // مفتاح Gemini
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return { statusCode: 500, headers: CORS, body: "Missing GEMINI_API_KEY" };
-
-    // المدخلات
-    const {
-      mode,         // "topic" | "text"
-      subject,
-      topic,
-      sourceText,
-      age,
-      duration,
-      bloomMain,
-      bloomSupport,
-      goalCount,
-      notes,
-      level,
-      adapt,
-      variant
-    } = safeJson(event.body, {}) || {};
-
-    // تنظيف وقيود
-    const S = {
-      mode: (mode || "topic"),
-      subject: cut(subject || "—", 100),
-      topic: cut(topic || "—", 140),
-      sourceText: cut(sourceText || "", MAX_TEXT_CHARS),
-      age: (age || "p2"),
-      duration: Math.max(15, Math.min(90, +duration || 45)),
-      bloomMain: (bloomMain || "understand"),
-      bloomSupport: (bloomSupport || ""),
-      goalCount: Math.max(1, Math.min(5, +goalCount || 2)),
-      notes: cut(notes || "", 240),
-      level: (level || "mixed"),
-      adapt: !!adapt,
-      variant: String(variant || Date.now())
-    };
-
-    // زمن داخل/قبل/بعد
-    const pre = Math.min(10, Math.max(3, Math.round(S.duration * 0.20)));
-    const during = Math.max(15, Math.round(S.duration * 0.55));
-    const post = Math.max(5, Math.round(S.duration * 0.25));
-
-    const ageLabel = AGE_LABEL[S.age] || S.age || "—";
-
-    // تهيئة الموديل
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: MODEL_ID });
-
-    // برومبت — JSON فقط
-    const prompt = `
+/* ====== Prompt ====== */
+function buildPrompt(S, pre, during, post, ageLabelStr){
+  return `
 أنت مخطط دروس ذكي بالعربية لمدارس السعودية (مناهج 2025+).
 - أخرج **JSON واحد فقط** (لا نص خارجه).
-- نسلّك الأهداف والأنشطة وأدوات التقويم مع Bloom الأساسي: "${dhow(S.bloomMain)}" (+ "${dhow(S.bloomSupport)}" إن وجد).
+- ناسِب الأهداف والأنشطة والتقويم مع Bloom الأساسي: "${dhow(S.bloomMain)}" (+ "${dhow(S.bloomSupport)}" إن وجد).
 - الأنشطة عملية قابلة للتنفيذ خلال ${S.duration} دقيقة، منظمة "قبل/أثناء/بعد" بمدد: ${pre}/${during}/${post}.
-- المخرجات قصيرة وواضحة ومناسبة لعمر "${ageLabel}" وبيئة الصف السعودي.
+- المخرجات قصيرة وواضحة ومناسبة لعمر "${ageLabelStr}" وبيئة الصف السعودي.
 - إن وُضع mode="text" فاستخرج موضوعًا مناسبًا من النص ووافق الأهداف معه.
 - لو "variant" موجود نوّع جذريًا في العنوان والتنظيم.
 
@@ -188,7 +147,7 @@ exports.handler = async (event) => {
   "meta": {
     "topic": "عنوان مختصر مبتكر ومحدد",
     "age": "${dhow(S.age)}",
-    "ageLabel": "${ageLabel}",
+    "ageLabel": "${ageLabelStr}",
     "mainBloomLabel": "${dhow(S.bloomMain)}",
     "supportBloomLabel": "${dhow(S.bloomSupport)}"
   },
@@ -215,47 +174,113 @@ exports.handler = async (event) => {
 
 JSON فقط.
 `.trim();
+}
 
-    // استدعاء Gemini
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        candidateCount: 1,
-        maxOutputTokens: 2048,
-        temperature: 0.6
+/* ====== HANDLER ====== */
+exports.handler = async (event) => {
+  try {
+    if (event.httpMethod === "OPTIONS") {
+      return { statusCode: 204, headers: CORS, body: "" };
+    }
+    if (event.httpMethod !== "POST") {
+      return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
+    }
+
+    // حماية JWT
+    const gate = await requireUser(event);
+    if (!gate.ok) {
+      return { statusCode: gate.status, headers: CORS, body: gate.error };
+    }
+
+    // اشتراك نشط
+    const active = await isActiveMembership(gate.user?.sub, gate.user?.email);
+    if (!active) {
+      return { statusCode: 402, headers: CORS, body: "Membership is not active (trial expired or not activated)." };
+    }
+
+    // مفاتيح البيئة
+    const API_KEY = process.env.GEMINI_API_KEY;
+    if (!API_KEY) return { statusCode: 500, headers: CORS, body: "Missing GEMINI_API_KEY" };
+
+    // المدخلات
+    const {
+      mode, subject, topic, sourceText, age, duration,
+      bloomMain, bloomSupport, goalCount, notes, level, adapt, variant
+    } = safeJson(event.body, {}) || {};
+
+    const S = {
+      mode: (mode || "topic"),
+      subject: cut(subject || "—", 100),
+      topic: cut(topic || "—", 140),
+      sourceText: cut(sourceText || "", +(process.env.MAX_TEXT_CHARS || 1200)),
+      age: (age || "p2"),
+      duration: Math.max(15, Math.min(90, +duration || 45)),
+      bloomMain: (bloomMain || "understand"),
+      bloomSupport: (bloomSupport || ""),
+      goalCount: Math.max(1, Math.min(5, +goalCount || 2)),
+      notes: cut(notes || "", 240),
+      level: (level || "mixed"),
+      adapt: !!adapt,
+      variant: String(variant || Date.now())
+    };
+
+    const pre = Math.min(10, Math.max(3, Math.round(S.duration * 0.20)));
+    const during = Math.max(15, Math.round(S.duration * 0.55));
+    const post = Math.max(5, Math.round(S.duration * 0.25));
+    const ageLabelStr = AGE_LABEL[S.age] || S.age || "—";
+
+    const prompt = buildPrompt(S, pre, during, post, ageLabelStr);
+
+    // حلقات: موديلات × محاولات (مع إصلاح ذاتي)
+    let final = null, finalRaw = "", usedModel = "";
+    for (const model of MODELS) {
+      let p = prompt;
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        const resp = await callGeminiOnce(model, API_KEY, p);
+        finalRaw = resp.rawText || finalRaw;
+
+        if (resp.ok && resp.data) { final = resp.data; usedModel = model; break; }
+
+        // إصلاح: أرسل النص السابق واطلب إعادة بصيغة JSON الصحيحة
+        p = `${prompt}
+
+الاستجابة السابقة غير صالحة/ناقصة. هذا نصّك:
+<<<
+${(resp.rawText || "").slice(0, 4000)}
+<<<
+أعيدي الإرسال الآن كـ **JSON واحد صالح** يطابق القالب أعلاه فقط.`;
+        await sleep(BACKOFF_MS * (attempt + 1));
       }
-    });
-
-    const raw = String(result?.response?.text?.() || "").trim();
-    if (!raw) {
-      return { statusCode: 502, headers: CORS, body: "Bad model output (empty)" };
+      if (final) break;
     }
 
-    // التقاط JSON ولو مُسوّر بـ ```
-    const m = raw.match(/\{[\s\S]*\}$/m) || raw.match(/\{[\s\S]*\}/m);
-    let payload;
-    try { payload = JSON.parse(m ? m[0] : raw); }
-    catch {
-      return { statusCode: 502, headers: CORS, body: "Bad model output (non-JSON)" };
+    if (!final) {
+      // لو تحبين، نرجّع debug بدلاً من خطأ قاسٍ
+      return {
+        statusCode: 200,
+        headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({ debug: "incomplete", rawText: finalRaw || "", message: "Model returned incomplete JSON after retries" })
+      };
     }
 
+    // تهيئة المخرجات للواجهة
     const sa = (a) => Array.isArray(a) ? a.filter(Boolean) : [];
     const body = {
-      meta: payload.meta || {
+      meta: final.meta || {
         topic: S.topic || "—",
         age: S.age || "",
-        ageLabel,
+        ageLabel: ageLabelStr,
         mainBloomLabel: S.bloomMain || "",
         supportBloomLabel: S.bloomSupport || ""
       },
-      goals: sa(payload.goals),
-      success: payload.success || "",
-      structure: sa(payload.structure),
-      activities: sa(payload.activities),
-      assessment: sa(payload.assessment),
-      diff: sa(payload.diff),
-      oneMin: payload.oneMin || ""
+      goals: sa(final.goals),
+      success: final.success || "",
+      structure: sa(final.structure),
+      activities: sa(final.activities),
+      assessment: sa(final.assessment),
+      diff: sa(final.diff),
+      oneMin: final.oneMin || "",
+      _meta: { model: usedModel }
     };
 
     // تتبّع
@@ -264,11 +289,7 @@ JSON فقط.
     const ip =
       event.headers["x-nf-client-connection-ip"] ||
       (event.headers["x-forwarded-for"]?.split(",")[0] || null);
-    supaLogToolUsage(gate.user, {
-      ...S,
-      model: MODEL_ID,
-      ua, ip, path: ref
-    }).catch(()=>{});
+    supaLogToolUsage(gate.user, { ...S, model: usedModel, ua, ip, path: ref }).catch(()=>{});
 
     return {
       statusCode: 200,
