@@ -409,7 +409,6 @@ ${prevRaw}
     }
 
     // ==== بناء sets مع منع التكرار والفلترة العمرية ====
-    const TIME = Math.min(60, Math.max(5, Number(time)||20));
     const seedStr = `${variant}|${TOP}|${age}|${bloom}|${TIME}`;
     const idxSeed = hashInt(seedStr);
 
