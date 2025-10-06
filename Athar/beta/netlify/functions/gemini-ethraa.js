@@ -1,266 +1,220 @@
 // netlify/functions/gemini-ethraa.js
 // ================================================================
-// توليد "بطاقات إثراء" بمحتوى صحيح وجاهز للتطبيق، مع حماية + تتبّع
+// بطاقات إثراء بمحتوى "جاهز ومحدد" (وليس أسئلة للطالبات)
+// + حماية Auth0 (requireUser)  + تسجيل استخدام عبر log-tool-usage
 // ================================================================
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { requireUser } = require("./_auth.js");           // حماية
-const { supaLogToolUsage } = require("./_log.js");       // تتبّع الاستخدام
+const { requireUser } = require("./_auth.js");
 
-// -------- أدوات مساعدة --------
+// ---------------- أدوات مساعدة ----------------
 const clampCards = (arr, min = 3, max = 6) => {
   if (!Array.isArray(arr)) return [];
-  const uniq = [];
-  const seen = new Set();
+  const uniq = [], seen = new Set();
   for (const it of arr) {
-    const t = String(it?.title || "").trim();
-    const i = String(it?.idea || "").trim();
-    if (!t || !i) continue;
-    const key = (t + "|" + i).toLowerCase();
+    const title = String(it?.title || "").trim();
+    const idea  = String(it?.idea  || "").trim();
+    if (!title || !idea) continue;
+    const key = (title + "|" + idea).toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     uniq.push({
-      title: t,                                   // عنوان موجز/قابل للطباعة
-      brief: String(it?.brief || "").trim(),      // لماذا/قيمة تربوية مختصرة
-      idea: i,                                    // خطوات تنفيذ مباشرة (ليس أسئلة مفتوحة)
-      source: it?.source ? String(it.source).trim() : undefined,        // مصدر موثوق (اختياري)
-      evidence_date: it?.evidence_date || null,   // YYYY-MM-DD أو null
-      freshness: it?.freshness || null            // يُملأ لاحقًا
+      title,
+      brief: String(it?.brief || "").trim(),
+      idea,
+      source: it?.source ? String(it.source).trim() : "",
+      evidence_date: it?.evidence_date || null,
+      freshness: it?.freshness || null
     });
     if (uniq.length >= max) break;
   }
   return uniq.length >= min ? uniq : [];
 };
 
-const stageLabel = (code) =>
-  ({
-    p1: "ابتدائي دُنيا",
-    p2: "ابتدائي عُليا",
-    m: "متوسط",
-    h: "ثانوي",
-  }[code] || code || "ثانوي");
+const stageLabel = code => ({
+  p1: "ابتدائي دُنيا",
+  p2: "ابتدائي عُليا",
+  m:  "متوسط",
+  h:  "ثانوي",
+}[code] || code || "ثانوي");
 
-function daysBetween(iso) {
+const daysBetween = (iso) => {
   try {
     const d = new Date(iso);
     if (isNaN(d.valueOf())) return Infinity;
-    const now = new Date();
-    return Math.floor((now - d) / (1000 * 60 * 60 * 24));
-  } catch {
-    return Infinity;
-  }
-}
-
-function tagFreshness(card) {
+    return Math.floor((Date.now() - d.getTime()) / (1000*60*60*24));
+  } catch { return Infinity; }
+};
+const tagFreshness = (card) => {
   const days = card?.evidence_date ? daysBetween(card.evidence_date) : Infinity;
-  card.freshness = days <= 180 ? "new" : "general"; // خلال 6 أشهر = حديث
+  card.freshness = days <= 180 ? "new" : "general";
   return card;
-}
-
+};
 const stripCodeFence = (txt) =>
-  String(txt || "")
-    .replace(/^\s*```json/i, "")
-    .replace(/^\s*```/i, "")
-    .replace(/```$/i, "")
-    .trim();
+  String(txt||"").replace(/^\s*```json/i,"").replace(/^\s*```/i,"").replace(/```$/i,"").trim();
 
-// ------------------- المعرّف الرئيسي (بحماية) -------------------
+// ---------------- المعالج الرئيسي (بحماية) ----------------
 exports.handler = requireUser(async (event, user) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // قراءة المدخلات
+  // المدخلات
   let body = {};
-  try {
-    body = JSON.parse(event.body || "{}");
-  } catch {
-    return { statusCode: 400, body: JSON.stringify({ ok: false, error: "bad_json" }) };
-  }
-  const { subject, stage = "h", focus = "auto", lesson } = body || {};
+  try { body = JSON.parse(event.body || "{}"); }
+  catch { return { statusCode: 400, body: JSON.stringify({ ok:false, error:"bad_json" }) }; }
+
+  const { subject, stage = "h", focus = "auto", lesson } = body;
   if (!subject) {
-    return { statusCode: 400, body: JSON.stringify({ ok: false, error: "missing_subject" }) };
+    return { statusCode: 400, body: JSON.stringify({ ok:false, error:"missing_subject" }) };
   }
 
   // إعداد Gemini
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return { statusCode: 500, body: JSON.stringify({ ok: false, error: "missing_api_key" }) };
+    return { statusCode: 500, body: JSON.stringify({ ok:false, error:"missing_api_key" }) };
   }
-
-  // نُعدّ أكثر من موديل كـ fallback (المسميات الصحيحة المستقرة)
-  const modelNames = [
+  const models = [
     process.env.GEMINI_MODEL || "gemini-1.5-pro",
     "gemini-1.5-flash",
   ];
-
   const genAI = new GoogleGenerativeAI(apiKey);
 
-  // نافذة الزمن للمستجدات
+  // نافذة مستجدات للسنة الماضية
   const now = new Date();
-  const y = now.getFullYear();
-  const since = `${y - 1}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-    now.getDate()
-  ).padStart(2, "0")}`;
+  const since = `${now.getFullYear()-1}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
 
-  // --- تعليمات نظام: JSON فقط + منع الأسئلة المفتوحة ---
+  // ـــــ تعليمات نظام صارمة (JSON فقط + خطوات تنفيذية) ـــــ
   const baseSystem = `
-أنت مساعد إثرائي للمعلمين باللغة العربية.
-أعيدي **فقط JSON واحدًا** بهذا الشكل:
+أنت مساعد إثرائي للمعلمين بالعربية.
+أعيدي **فقط JSON واحدًا** بالشكل:
 {
  "cards":[
    {
-     "title":"...",          // موجز ودقيق (مثلاً: "خرافة: الإلكترونات تدور كالكواكب")
-     "brief":"...",          // شرح صحيح مختصر أو قيمة تربوية
-     "idea":"...",           // خطوات تنفيذ مباشرة قابلة للتطبيق (أوامر عملية)، بدون أسئلة مفتوحة أو "ناقش/تخيل"
-     "source":"https://...", // مصدر موثوق عند الاقتضاء (خبر/ورقة/مقال تعليمي)، وإلا اتركيه خاليًا
-     "evidence_date":"YYYY-MM-DD" // تاريخ حديث مستدل من المصدر إن توافر، وإلا null
+     "title":"...",          // معلومة/تصحيح حقيقي موجز (مثال: "خرافة: الإلكترونات تدور كالكواكب")
+     "brief":"...",          // تفسير/تصحيح صحيح مختصر
+     "idea":"...",           // خطوات تنفيذ عملية مباشرة (أوامر قابلة للتنفيذ)، بدون "ناقشي/تخيلي/اسألي"
+     "source":"https://...", // مصدر موثوق إن توفر، وإلا اتركيه فارغًا ""
+     "evidence_date":"YYYY-MM-DD" // تاريخ حديث من المصدر إن توفر، وإلا null
    }
  ]
 }
-- أعيدي 3 إلى 6 بطاقات غير مكررة.
-- تجنبي عبارات من نوع: "فكر/ناقشي/اطلبي من الطالبات أن..." واجعلي "idea" **إجراءات تنفيذية مباشرة** (1–5 خطوات).
-- راعي المرحلة "${stageLabel(stage)}" في الأسلوب.
-- إن تعذر المصدر الحديث، اجعلي "source":"" و "evidence_date": null.
-- **لا** تكتبي أي نص خارج JSON.
+- أعيدي 3–6 بطاقات غير مكررة.
+- تجنبي أي أسئلة مفتوحة داخل "idea"؛ اذكري إجراءات تنفيذية قصيرة (1–5 خطوات) يمكن أداءها خلال 5–10 دقائق.
+- راعي المرحلة "${stageLabel(stage)}".
+- ممنوع أي نص خارج JSON.
 `.trim();
 
-  // قوالب محتوى تضمن "محتوى صحيح" وليس أسئلة:
-  const qLatest = (s, st) => `
+  // قوالب طلب تضمن "محتوى محدد جاهز"
+  const qLatest = (s) => `
 بطاقات عن **أحدث مستجدات** "${s}" منذ ${since}.
-لكل بطاقة:
-- "title": صيغي العنوان بمعلومة/ناتج بحثي حقيقي موجز.
-- "brief": لماذا يهم تربويًا.
-- "idea": خطوات تنفيذ مباشرة (عرض قصير/تجربة آمنة/ورقة سريعة) تُظهر المعلومة، بدون أسئلة مفتوحة.
-${lesson ? `إن أمكن، اربطي ضمنيًا بدرس "${lesson}".` : ""}
+لكل بطاقة اجعلي "title" حقيقة/نتيجة موثوقة، و"idea" عرض/تجربة/نشاط قصير بخطوات محددة تمامًا (بدون أسئلة).
+${lesson ? `اربطِي ضمنيًا بدرس "${lesson}" إن أمكن.` : ""}
 `.trim();
 
   const qMyth = (s, st) => `
-بطاقات **خرافات شائعة وتصحيحها العلمي** في "${s}" (${stageLabel(st)}).
-لكل بطاقة:
-- "title": يبدأ بـ "خرافة:" ثم نص الخرافة الشائع.
-- "brief": التصحيح العلمي الصحيح المختصر المدعوم بتفسير مبسط.
-- "idea": خطوات تنفيذ عملية قصيرة لعرض الدليل أو المثال المصحّح (تجربة/محاكاة/عرض مرئي) **بدون أسئلة مفتوحة**.
-- "source": إن أمكن مصدر يذكر التصحيح أو مرجع تعليمي موثوق.
+بطاقات **خرافات شائعة + التصحيح العلمي** في "${s}" (${stageLabel(st)}).
+- "title": يبدأ بـ "خرافة:" ثم نص الخرافة المنتشرة.
+- "brief": التصحيح العلمي المختصر الدقيق.
+- "idea": تنفيذ عملي قصير يبرهن التصحيح (تجربة آمنة/عرض مرئي/محاكاة محددة) **بدون أسئلة مفتوحة**.
+- "source": مرجع موثوق إن توفر.
 `.trim();
 
   const qOdd = (s, st) => `
-بطاقات **حقائق مدهشة وموثوقة** في "${s}" تناسب "${stageLabel(st)}".
-- "title": حقيقة دقيقة واحدة.
-- "brief": تفسير مبسط صحيح.
-- "idea": تنفيذ عملي قصير مباشر يبرهن الحقيقة (تجربة آمنة أو عرض قصير).
+بطاقات **حقائق مدهشة دقيقة** في "${s}" تناسب "${stageLabel(st)}":
+- "title": حقيقة واحدة دقيقة.
+- "brief": تفسير صحيح مبسّط.
+- "idea": خطوات تنفيذ قصيرة تُظهر الحقيقة مباشرة.
 `.trim();
 
   const qIdeas = (s, st) => `
-بطاقات **أفكار إثرائية عملية جاهزة** لمادة "${s}" تناسب "${stageLabel(st)}".
-- اجعلي "idea" إجراءات تنفيذية خطوة بخطوة (مواد، تحضير، تنفيذ) بدون أي أسئلة مفتوحة.
-- المخرجات قابلة للملاحظة في الصف خلال 5–10 دقائق.
+بطاقات **أفكار إثرائية جاهزة** لـ"${s}" تناسب "${stageLabel(st)}":
+- "idea": مواد مطلوبة + 3–5 خطوات تنفيذ مباشرة + نتيجة متوقعة يمكن ملاحظتها سريعًا.
 `.trim();
 
   const pipelines = {
     latest: [qLatest, qMyth, qOdd, qIdeas],
-    myth: [qMyth, qLatest, qOdd, qIdeas],
-    odd: [qOdd, qLatest, qMyth, qIdeas],
-    ideas: [qIdeas, qLatest, qMyth, qOdd],
-    auto: [qMyth, qLatest, qOdd, qIdeas], // نبدأ بالخرافات لأنها مطلبك الأهم
+    myth:   [qMyth, qLatest, qOdd, qIdeas],
+    odd:    [qOdd, qLatest, qMyth, qIdeas],
+    ideas:  [qIdeas, qLatest, qMyth, qOdd],
+    auto:   [qMyth, qLatest, qOdd, qIdeas], // نبدأ بالخرافات حسب طلبك
   };
   const tries = pipelines[focus] || pipelines.auto;
 
-  // --- التوليد بمحاولات عبر أكثر من "قالب" وأكثر من "موديل" ---
+  // التوليد مع تعدد النماذج والقوالب
   let cards = [];
-  outer: for (const modelName of modelNames) {
-    const model = genAI.getGenerativeModel({ model: modelName });
-
+  outer: for (const m of models) {
+    const model = genAI.getGenerativeModel({ model: m });
     for (const q of tries) {
       try {
-        const prompt = `${baseSystem}\n\n${q(subject, stage)}`.trim();
-        const result = await model.generateContent(prompt);
-        const text = stripCodeFence((await result.response).text());
-        const parsed = JSON.parse(text);
+        const prompt = `${baseSystem}\n\n${q(subject, stage)}`;
+        const res = await model.generateContent(prompt);
+        const txt = stripCodeFence((await res.response).text());
+        const parsed = JSON.parse(txt);
         const out = clampCards(parsed.cards || []);
         if (out.length) {
           cards = out.map(tagFreshness);
           break outer;
         }
-      } catch (err) {
-        console.error("ethraa-step-error:", modelName, err?.message || err);
+      } catch (e) {
+        console.error("ethraa-step-error:", m, e?.message || e);
       }
     }
   }
 
-  // --- fallback مضمون لو فشل الجيل تمامًا ---
+  // fallback مضمون إن فشل كل شيء
   if (!cards.length) {
-    cards = clampCards(
-      [
-        {
-          title: `خرافة: الإلكترونات "تدور" حول النواة كالكواكب`,
-          brief:
-            "الوصف المداري الحديث هو سُحُب احتمالية (مدارات موجية)، وليس مسارات دائرية كلاسيكية.",
-          idea:
-            "خطوات تنفيذ: 1) اعرض رسمَي بوهر مقابل السحابة الإلكترونية. 2) شغّل محاكاة سحابة إلكترونية (GIF ثابت مسبقًا). 3) أختم ببطاقة مقارنة جاهزة توضح الفارق (مدار كلاسيكي مقابل دالة موجية).",
-          source: "",
-          evidence_date: null,
-        },
-        {
-          title: "حقيقة: سرعة الضوء في الفراغ ثابتة ≈ 3×10⁸ م/ث",
-          brief:
-            "ثباتها أساس النسبية الخاصة ويؤدي لظواهر تمدد الزمن وانكماش الطول.",
-          idea:
-            "خطوات تنفيذ: 1) اعرض قيمة c على لوحة. 2) فيديو 60 ثانية يوضح القياس الليزري للمسافة/الزمن. 3) ورقة مصغّرة فيها تمرين حسابي جاهز لاستنتاج زمن وصول الضوء لمسافة معلومة.",
-          source: "",
-          evidence_date: null,
-        },
-        {
-          title: "فكرة عملية: مطياف جيبي للهاتف",
-          brief:
-            "مطياف ورقي بسيط يبرهن تفريق الضوء وإظهار خطوط طيفية ملونة.",
-          idea:
-            "خطوات تنفيذ: 1) وزّع شبكة حيود ورق أسود وشريط لاصق. 2) قص نافذة وركّب الشبكة. 3) وجّه نحو مصباح أبيض آمن، سيرى الطلاب الطيف فورًا. 4) التقط صورة توثيقية.",
-          source: "",
-          evidence_date: null,
-        },
-      ],
-      3,
-      6
-    ).map(tagFreshness);
+    cards = clampCards([
+      {
+        title: `خرافة: الإلكترونات "تدور" حول النواة كالكواكب`,
+        brief: "النموذج الحديث يصف سُحُب احتمالية (مدارات موجية) وليس مسارات دائرية.",
+        idea: "1) اعرض صورة مقارنة: نموذج بوهر vs سحابة إلكترونية. 2) شغّل GIF لمحاكاة السحابة. 3) وزّع بطاقة مقارنة جاهزة يملأها الطلاب (مدار كلاسيكي/مداري موجي).",
+        source: "",
+        evidence_date: null
+      },
+      {
+        title: "حقيقة: سرعة الضوء في الفراغ ثابتة ≈ 3×10⁸ م/ث",
+        brief: "أساس النسبية الخاصة ويقود لتمدد الزمن.",
+        idea: "1) اعرض قيمة c. 2) فيديو 60 ثانية لقياس مسافة/زمن بالليزر. 3) ورقة صغيرة لحساب زمن وصول الضوء لمسافة 1 كم.",
+        source: "",
+        evidence_date: null
+      },
+      {
+        title: "فكرة عملية: مطياف جيبي للهاتف",
+        brief: "مطياف ورقي بسيط يبين تفريق الضوء.",
+        idea: "مواد: شبكة حيود + ورق أسود + شريط. خطوات: 1) قص نافذة 1×3 سم. 2) لصق الشبكة. 3) توجيهه لمصباح أبيض آمن. 4) تصوير الطيف.",
+        source: "",
+        evidence_date: null
+      }
+    ]).map(tagFreshness);
   }
 
-  // --- بدائل "قريبة من المجال" إذا كل النتائج قديمة ---
-  const staleCount = cards.filter((c) => (c.freshness || "general") === "general")
-    .length;
+  // بدائل قريبة من المجال إذا كانت النتائج قديمة كلها
+  const staleCount = cards.filter(c => (c.freshness||"general")==="general").length;
   let nearby = [];
   if (cards.length && staleCount === cards.length) {
     try {
-      for (const modelName of modelNames) {
-        const model = genAI.getGenerativeModel({ model: modelName });
-        const promptNearby = `${baseSystem}
+      for (const m of models) {
+        const model = genAI.getGenerativeModel({ model: m });
+        const promptN = `${baseSystem}
 
-أعطِ 3–6 بطاقات بديلة **قريبة من مجال** "${subject}" تركّز على توجهات حديثة (آخر 12 شهرًا)
-مثل: تطبيقات ناشئة/تقنيات تعليمية عملية، بصيغة خطوات تنفيذية مباشرة، ومع "evidence_date" إن أمكن.
-${lesson ? `واستئناسًا بدرس "${lesson}".` : ""}`.trim();
-
-        const resN = await model.generateContent(promptNearby);
-        const textN = stripCodeFence((await resN.response).text());
-        const parsedN = JSON.parse(textN);
-        const outN = clampCards(parsedN.cards || []);
-        if (outN.length) {
-          nearby = outN.map(tagFreshness);
-          break;
-        }
+أعطِ 3–6 بطاقات بديلة **قريبة من مجال** "${subject}" تركز على توجهات حديثة (آخر 12 شهرًا)
+بخطوات تنفيذية مباشرة، وأدخل "evidence_date" إن توفر.
+${lesson ? `مواءمة ضمنية مع "${lesson}".` : ""}`;
+        const r = await model.generateContent(promptN);
+        const txt = stripCodeFence((await r.response).text());
+        const parsed = JSON.parse(txt);
+        const out = clampCards(parsed.cards || []);
+        if (out.length) { nearby = out.map(tagFreshness); break; }
       }
     } catch (e) {
       console.error("ethraa-nearby-error:", e?.message || e);
     }
   }
 
-  // --- بصمات (اختياري للواجهة) ---
   const sig = (d) => {
-    const s = (d.title || "") + "|" + (d.idea || "");
-    let h = 0;
-    for (let i = 0; i < s.length; i++) {
-      h = (h << 5) - h + s.charCodeAt(i);
-      h |= 0;
-    }
+    const s = (d.title||"") + "|" + (d.idea||"");
+    let h=0; for (let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
     return String(h);
   };
 
@@ -269,34 +223,38 @@ ${lesson ? `واستئناسًا بدرس "${lesson}".` : ""}`.trim();
     cards,
     nearby: nearby.length ? nearby : undefined,
     _meta: {
-      subject,
-      stage,
-      focus: focus || "auto",
-      lesson: lesson || null,
+      subject, stage, focus: focus || "auto", lesson: lesson || null,
       all_stale: !!(cards.length && staleCount === cards.length),
       count: cards.length,
-      dedup_sigs: cards.map(sig),
-    },
+      dedup_sigs: cards.map(sig)
+    }
   };
 
-  // --- تتبّع الاستخدام في Supabase ---
+  // تسجيل استخدام الأداة (بدون كسر الطلب لو فشل)
   try {
-    await supaLogToolUsage(user, "ethraa", {
-      subject,
-      stage,
-      focus: focus || "auto",
-      lesson: lesson || null,
-      count: payload._meta.count,
-      all_stale: payload._meta.all_stale,
-    });
+    const userEmail =
+      user?.user?.email ||
+      user?.payload?.email ||
+      null;
+
+    if (userEmail) {
+      await fetch(`${process.env.PUBLIC_BASE_URL || ""}/.netlify/functions/log-tool-usage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tool_name: "ethraa",
+          user_email: userEmail,
+          meta: payload._meta
+        })
+      }).catch(()=>{});
+    }
   } catch (e) {
-    // لا نُفشل الطلب بسبب اللوج
     console.error("ethraa-log-error:", e?.message || e);
   }
 
   return {
     statusCode: 200,
     headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload)
   };
 });
