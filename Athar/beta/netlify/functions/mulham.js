@@ -1,11 +1,11 @@
 // netlify/functions/mulham.js
 // ================================================================
-// مُلهم: توليد أنشطة قصيرة (حركي/جماعي/فردي) + وصف + خطوات + تذكرة خروج + أثر
+// مُلهم: أنشطة قصيرة (حركي/جماعي/فردي) + وصف + خطوات + تذكرة خروج + أثر
 // - حماية Auth0 (requireUser)
 // - فحص عضوية Supabase
-// - استدعاء Gemini عبر REST مع responseSchema
-// - محاولات متعددة + fallback بين الموديلات + إصلاح ذاتي
-// - إخراج ثابت: { meta, sets:{movement,group,individual}, tips }
+// - Gemini عبر REST مع responseSchema + محاولات + إصلاح ذاتي
+// - فلترة صارمة للملاءمة العمرية + منع التكرار
+// - إخراج: { meta, sets:{movement,group,individual}, tips }
 // ================================================================
 
 const { createClient } = require("@supabase/supabase-js");
@@ -43,9 +43,7 @@ async function isActiveMembership(user_sub, email) {
     const row = rows?.[0];
     const exp = row?.end_at || row?.expires_at;
     return exp ? new Date(exp) > new Date() : false;
-  } catch (_) {
-    return false;
-  }
+  } catch (_) { return false; }
 }
 
 // ===== Helpers =====
@@ -70,6 +68,43 @@ function hashInt(str) {
 
 const AGE_LABEL = { p1:"ابتدائي دُنيا", p2:"ابتدائي عُليا", m:"متوسط", h:"ثانوي" };
 
+// ===== قواعد الملاءمة العمرية =====
+const AGE_RULES = {
+  p1: {
+    banned: [
+      "نقاش فلسفي","برهان رياضي معقّد","تجارب كيميائية خطرة","مواد حارقة","لهب","كحول",
+      "نقاش سياسي","محتوى عنيف","قفز عشوائي طويل","عدو مستمر","مسرحية طويلة"
+    ],
+    prefer: ["قصة قصيرة","بطاقات مصوّرة","حركة بسيطة آمنة","تصنيف/مطابقة","لعب أدوار مبسّط","تلوين/طي ورق"]
+  },
+  p2: {
+    banned: [
+      "مبرهنة معقّدة","تجارب خطرة","مواد حارقة","لهب","كحول",
+      "نقاش فلسفي عميق","قفز عشوائي طويل","سباقات عالية الشدة","إرهاق بدني"
+    ],
+    prefer: ["مشاهدة/استكشاف قصير","تمثيل مبسّط","لوحات لاصقة","خريطة مفاهيم سهلة","قياس بسيط آمن"]
+  },
+  m: {
+    banned: [
+      "مواد خطرة","لهب","كحول","مفرقعات","محتوى غير لائق",
+      "رقص جماعي","مطاردة","ركض عشوائي","قفز عشوائي"
+    ],
+    prefer: ["تجربة آمنة صغيرة","محاكاة","تحقيق مصغّر","نقاش موجّه بأسئلة محددة","تفكير نقدي بمحددات"]
+  },
+  h: {
+    banned: [
+      "رقص","مطاردة","ركض عشوائي","قفز عشوائي","ألعاب طفولية بحتة",
+      "مواد خطرة","لهب","أحماض مركّزة","محتوى غير لائق"
+    ],
+    prefer: ["تحليل حالة","محاكاة علمية","عرض قصير مبني بيانات","تجربة آمنة منخفضة المخاطر","ورقة عمل تطبيقية"]
+  }
+};
+
+function textContainsAny(text, arr){
+  const t = (text||"").toLowerCase();
+  return arr.some(w => t.includes(w.toLowerCase()));
+}
+
 // ===== Normalizers =====
 function arr(x){ return Array.isArray(x) ? x.filter(Boolean).slice(0,10) : []; }
 function txt(x){ return (typeof x === "string" ? x.trim() : "") || ""; }
@@ -79,7 +114,7 @@ function normalizeActivity(a = {}, TIME = 20) {
     ? Math.round(a.duration)
     : Math.max(5, Math.min(20, Math.round(TIME/2)));
   return {
-    ideaHook:        txt(a.ideaHook || a.title),
+    ideaHook:        txt(a.title || a.ideaHook),
     desc:            txt(a.summary  || a.description),
     duration:        dur,
     materials:       arr(a.materials),
@@ -91,6 +126,25 @@ function normalizeActivity(a = {}, TIME = 20) {
       differentiation: txt(a.differentiation || a.diff_levels)
     }
   };
+}
+
+// مناسب للعمر؟
+function isAgeSuitable(age, act){
+  const rules = AGE_RULES[age] || AGE_RULES.h;
+  const hay = [
+    act.title, act.summary, act.description, act.notes,
+    ...(Array.isArray(act.steps) ? act.steps : []),
+    ...(Array.isArray(act.materials) ? act.materials : [])
+  ].filter(Boolean).join(" | ");
+  if (textContainsAny(hay, rules.banned)) return false;
+  return true; // نسمح؛ المفضلات تُوجّه البرومبت، لكن لا نُلزم
+}
+
+// منع التكرار عبر (title+steps)
+function dedupKey(act){
+  const title = String(act.title||"").trim();
+  const firstStep = Array.isArray(act.steps)&&act.steps[0]? String(act.steps[0]).trim() : "";
+  return (title + "|" + firstStep).toLowerCase();
 }
 
 // ===== Schema (يوجّه Gemini) =====
@@ -147,7 +201,7 @@ const responseSchema = {
   }
 };
 
-// ====== Gemini REST caller (نفس نمط بقية ملفاتك) ======
+// ===== Gemini REST caller =====
 async function callGeminiOnce({ apiKey, model, TIMEOUT_MS, prompt }) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const controller = new AbortController();
@@ -188,7 +242,6 @@ async function callGeminiOnce({ apiKey, model, TIMEOUT_MS, prompt }) {
     try { data = JSON.parse(raw); }
     catch { return { ok:false, rawText: raw, data: null }; }
 
-    // شكل مبدئي صحيح؟
     if (!data || !Array.isArray(data.categories)) {
       return { ok:false, rawText: raw, data: null };
     }
@@ -198,7 +251,6 @@ async function callGeminiOnce({ apiKey, model, TIMEOUT_MS, prompt }) {
   }
 }
 
-// ====== Handler ======
 exports.handler = async (event) => {
   try {
     // CORS
@@ -258,24 +310,26 @@ exports.handler = async (event) => {
     const TOP  = String(topic||SUBJ||"").slice(0,160);
     const ageLabel = AGE_LABEL[age] || "ابتدائي عُليا";
 
-    // نافذة
+    // قيود للبرومبت (تتضمن منع أنشطة غير مناسبة حسب العمر)
     const constraints = [];
-    if (noTools) constraints.push("يجب أن تكون كل الأنشطة Zero-prep (بدون قص/لصق/بطاقات/أدوات).");
-    constraints.push(`الزمن المتاح إجماليًا ~ ${TIME} دقيقة؛ اجعل كل نشاط قابلاً للتنفيذ داخل هذا السقف.`);
-    constraints.push(`مستوى بلوم المستهدف: ${bloom}. المرحلة الدراسية: ${ageLabel}.`);
-    constraints.push("استخدم لغة عربية سليمة وعبارات قصيرة مناسبة تمامًا للفئة العمرية.");
-    constraints.push("راعِ السلامة والأمان وعدم الحاجة لأدوات خطرة.");
-    constraints.push("أدرج خطوات عملية واضحة، ومعايير نجاح ضمنية في كل نشاط، وأسئلة خروج عربية سليمة.");
-    constraints.push("نوّع بين الحركي/التعاوني/الفردي دون تكرار الفكرة.");
-    constraints.push("اربط بسياقات من واقع الطالب في السعودية وبما ينسجم مع مهارات القرن 21 ورؤية 2030.");
+    if (noTools) constraints.push("جميع الأنشطة Zero-prep (بدون قص/لصق/بطاقات/أدوات).");
+    constraints.push(`الزمن الإجمالي ~ ${TIME} دقيقة؛ كل نشاط ضمن السقف.`);
+    constraints.push(`بلوم: ${bloom}. المرحلة: ${ageLabel}. لغة عربية سليمة وجُمَل قصيرة.`);
+    constraints.push("سلامة وأمان — لا مواد خطرة/لهب/أحماض/محتوى غير لائق.");
+    constraints.push("الخطوات إجراءات تنفيذية مباشرة (لا 'ناقشوا/تخيلوا/فكّروا' كتعليمات).");
+    constraints.push("تنويع بين (حركي/تعاوني/فردي) دون تكرار الفكرة.");
+    constraints.push("سياقات من واقع الطالب في السعودية + مهارات القرن 21 + رؤية 2030.");
+
+    const rules = AGE_RULES[age] || AGE_RULES.h;
+    const bannedHint = rules.banned.length ? `تجنّب تمامًا العناصر التالية: ${rules.banned.join("، ")}.` : "";
+    const preferHint = rules.prefer.length ? `يفضّل أن تتجه الأنشطة ناحية: ${rules.prefer.join("، ")}.` : "";
 
     const adaptations = [];
-    if (adaptLow)  adaptations.push("تكيف منخفض التحفيز: مهام قصيرة جدًا، تعزيز فوري، فواصل حركة.");
+    if (adaptLow)  adaptations.push("تكيف منخفض التحفيز: مهام قصيرة جدًا، تعزيز فوري، فواصل حركة اختيارية.");
     if (adaptDiff) adaptations.push("فروق فردية: مستويات أداء (سهل/متوسط/متقدم) أو منتجات بديلة.");
 
     const seedNote = `بذرة التنويع: ${variant || "base"}`;
 
-    // برومبت (نفس مخططك الأصلي + منع الأسئلة المفتوحة داخل الخطوات)
     const prompt = `
 أنت مصمم تعلّم خبير في الأنشطة الصفّية القصيرة المبتكرة.
 انتج حزمة أنشطة ضمن ثلاث فئات ثابتة:
@@ -284,11 +338,13 @@ exports.handler = async (event) => {
 المجال: "${SUBJ}"، الموضوع: "${TOP}".
 
 ${constraints.map(s => "- " + s).join("\n")}
+- ${bannedHint}
+- ${preferHint}
 ${adaptations.length ? "\nالتكييفات المطلوبة:\n" + adaptations.map(s=>"- "+s).join("\n") : ""}
 
 ${seedNote}
 
-أجب **فقط** بصيغة JSON المطابقة للمخطط (schema) المرفق، وامنع العبارات المفتوحة مثل "ناقشوا/تخيلوا/فكروا..." داخل "steps" — اجعلها **إجراءات تنفيذية مباشرة**.
+أجب **فقط** بصيغة JSON المطابقة للمخطط (schema) المرفق، وامنع العبارات المفتوحة داخل "steps" — اجعلها **إجراءات تنفيذية مباشرة**.
 `.trim();
 
     // محاولات: موديلات × محاولات مع إصلاح ذاتي
@@ -299,11 +355,11 @@ ${seedNote}
     function repairPrompt(prevRaw) {
       return `${prompt}
 
-الرد السابق كان ناقصًا/غير صالح. هذا هو النص:
+الرد السابق كان ناقصًا/غير صالح أو احتوى عناصر غير مناسبة للعمر. هذا هو النص:
 <<<
 ${prevRaw}
 <<<
-أعيد الآن **JSON واحدًا مطابقًا للمخطط** (meta + categories + tips) بلا أي نص خارج JSON.`;
+أعيد الآن **JSON واحدًا مطابقًا للمخطط** (meta + categories + tips) بلا أي نص خارج JSON، مع الالتزام التام بالملاءمة العمرية ومنع التكرار.`;
     }
 
     for (const model of MODELS) {
@@ -352,32 +408,80 @@ ${prevRaw}
       };
     }
 
-    // ==== بناء sets (اختيار عنصر واحد من كل فئة بناءً على hash) ====
+    // ==== بناء sets مع منع التكرار والفلترة العمرية ====
+    const TIME = Math.min(60, Math.max(5, Number(time)||20));
     const seedStr = `${variant}|${TOP}|${age}|${bloom}|${TIME}`;
     const idxSeed = hashInt(seedStr);
 
-    function pickActivity(cat) {
+    function pickFirstSuitable(cat, usedKeys) {
       const acts = Array.isArray(cat?.activities) ? cat.activities : [];
-      if (acts.length === 0) return {};
-      const idx = idxSeed % acts.length;
-      return normalizeActivity(acts[idx], TIME);
+      for (let i = 0; i < acts.length; i++) {
+        const act = acts[i];
+        const key = dedupKey(act);
+        if (usedKeys.has(key)) continue;
+        if (!isAgeSuitable(age, act)) continue;
+        usedKeys.add(key);
+        return normalizeActivity(act, TIME);
+      }
+      return {}; // لا مناسب
     }
 
+    const used = new Set();
     const sets = { movement:{}, group:{}, individual:{} };
-    for (const cat of (final.categories || [])) {
+
+    const cats = Array.isArray(final.categories) ? final.categories : [];
+    // محاولة بحسب أسماء الفئات
+    for (const cat of cats) {
       const name = (cat.name || "").toLowerCase();
       if (name.includes("حرك")) {
-        sets.movement = pickActivity(cat);
+        sets.movement = pickFirstSuitable(cat, used);
       } else if (name.includes("جمع")) {
-        sets.group = pickActivity(cat);
+        sets.group = pickFirstSuitable(cat, used);
       } else if (name.includes("فرد")) {
-        sets.individual = pickActivity(cat);
+        sets.individual = pickFirstSuitable(cat, used);
       }
     }
-    const cats = final.categories || [];
-    if (!sets.movement.ideaHook && cats[0]) sets.movement   = pickActivity(cats[0]);
-    if (!sets.group.ideaHook     && cats[1]) sets.group      = pickActivity(cats[1]);
-    if (!sets.individual.ideaHook&& cats[2]) sets.individual = pickActivity(cats[2]);
+    // تعبئة النواقص من بقية القوائم
+    for (const fillKey of ["movement","group","individual"]) {
+      if (sets[fillKey]?.ideaHook) continue;
+      for (const cat of cats) {
+        const cand = pickFirstSuitable(cat, used);
+        if (cand && cand.ideaHook) { sets[fillKey] = cand; break; }
+      }
+    }
+
+    // لو بقيت خانة فارغة تمامًا، نضع نشاطًا آمنًا افتراضيًا مناسبًا للعمر
+    function safeFallback(title, desc){
+      return {
+        ideaHook: title,
+        desc,
+        duration: Math.max(5, Math.min(20, Math.round(TIME/2))),
+        materials: [],
+        steps: ["قدّم التوجيه الافتتاحي في دقيقة","نفّذ المهمة المباشرة بخطوتين","ختم سريع وملاحظة تقويمية"],
+        exitTicket: "اكتب جملة تُلخّص فكرة النشاط (30–60 ثانية).",
+        expectedImpact: "رفع المشاركة وتحقيق هدف الدرس بصورة عملية.",
+        diff: { lowMotivation:"جُمل أقصر وخيار بديل بسيط.", differentiation:"مستويات أداء (سهل/متوسط/متقدم)." }
+      };
+    }
+
+    if (!sets.movement?.ideaHook) {
+      sets.movement = safeFallback(
+        age === "h" ? "تحليل صورة/رسم بياني واقف (وقفة معرض)" : "جولة ملصقات هادئة",
+        "نشاط واقف بسيط وآمن، ملائم للعمر، يضمن حركة خفيفة بلا مطاردة/قفز."
+      );
+    }
+    if (!sets.group?.ideaHook) {
+      sets.group = safeFallback(
+        "لغز جماعي قصير بالبطاقات",
+        "تعاون موجّه بخطوات واضحة ونتاج ملموس."
+      );
+    }
+    if (!sets.individual?.ideaHook) {
+      sets.individual = safeFallback(
+        "ورقة تطبيق مصغّرة",
+        "إنجاز فردي سريع يقيس الفهم بوضوح."
+      );
+    }
 
     const tips = Array.isArray(final.tips) ? final.tips.filter(Boolean).slice(0,10) : [];
 
