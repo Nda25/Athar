@@ -1,6 +1,6 @@
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
-  // ==== CORS & Methods ====
+  // ==== CORS ====
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -12,6 +12,8 @@ exports.handler = async (event) => {
       body: "",
     };
   }
+
+  // ==== POST فقط ====
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -20,7 +22,7 @@ exports.handler = async (event) => {
     };
   }
 
-  // ==== Parse body ====
+  // ==== جسم الطلب ====
   let payload = {};
   try { payload = JSON.parse(event.body || "{}"); }
   catch {
@@ -29,54 +31,55 @@ exports.handler = async (event) => {
 
   const { stage, subject, bloomType, lesson, variant, diag } = payload;
 
-  // ==== Env ====
-  const API_KEY    = process.env.GEMINI_API_KEY;
+  // ==== إعدادات البيئة ====
+  const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) return { statusCode: 500, headers: { "Access-Control-Allow-Origin": "*" }, body: "Missing GEMINI_API_KEY" };
 
-  // نماذج Gemini 1.5 (متوافقة مع نسختك الثانية)
-  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-  const FALLBACKS     = [PRIMARY_MODEL, "gemini-1.5-flash-lite"];
+  const PRIMARY_MODEL  = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const FALLBACKS      = [PRIMARY_MODEL, "gemini-1.5-flash-8b", "gemini-1.5-flash-latest"];
 
-  // مهَل ومحاولات
   const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
   const RETRIES    = +(process.env.RETRIES    || 2);
   const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
 
-  // ==== Guides ====
+  // ==== أدلة الأسلوب حسب المرحلة ====
   const STAGE_GUIDE = {
-    "primary-lower": `- الفئة: ابتدائي دنيا. لغة بسيطة، أنشطة قصيرة حركية، أمثلة محسة.`,
-    "primary-upper": `- الفئة: ابتدائي عليا. خطوات مرقمة، تعاون بسيط، ربط واقعي.`,
+    "primary-lower": `- الفئة: ابتدائي دنيا. لغة بسيطة جدًا، نشاطات قصيرة/حركية.`,
+    "primary-upper": `- الفئة: ابتدائي عليا. خطوات مرقّمة، تعاون بسيط، ربط بالواقع.`,
     "middle":        `- الفئة: متوسط. استقصاء موجّه، نقاش، تجارب مصغّرة.`,
-    "secondary":     `- الفئة: ثانوي. نقاش نقدي، مشاريع/بحث مختصر، تطبيقات مهنية.`
+    "secondary":     `- الفئة: ثانوي. نقاش نقدي، مشاريع قصيرة، مخرجات قابلة للتقييم.`
   };
-  const stageNote = STAGE_GUIDE[stage] || `- الفئة: عامة. صياغة واضحة ومتدرجة.`;
-  const typePart   = (bloomType && bloomType !== "الكل") ? `(تصنيف بلوم: "${bloomType}")` : "(تصنيف بلوم: اختاري مستويات ملائمة)";
+  const stageNote = STAGE_GUIDE[stage] || `- الفئة: عام. صياغة واضحة ومتدرجة.`;
+
+  const typePart   = (bloomType && bloomType !== "الكل")
+    ? `(تصنيف بلوم: "${bloomType}")`
+    : "(تصنيف بلوم: اختاري مستويات ملائمة)";
   const lessonPart = lesson ? `ومناسبة لدرس "${lesson}"` : "";
 
   const VARIANT_NOTE = `
 - IMPORTANT: استراتيجية مختلفة جذريًا عن أي مقترح سابق (محطات/مناظرة/قلب الصف/محاكاة/لعب أدوار...).
 - strategy_name فريد 100% ولا يكرر أسماء الدروس/المواد.
 - novelty seed: ${[
-    stage || "any-stage",
-    subject || "any-subject",
-    bloomType || "any-bloom",
-    (lesson || "any-lesson"),
-    (variant || Date.now())
-  ].join(" | ")}
+      stage || "any-stage",
+      subject || "any-subject",
+      bloomType || "any-bloom",
+      (lesson || "any-lesson"),
+      (variant || Date.now())
+    ].join(" | ")}
 - بدّلي الزاوية والمنتج النهائي وأساليب التقويم كليًا.`;
 
-  // ==== Prompt ====
+  // ==== البرومبت الأساسي ====
   const BASE_PROMPT =
 `أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
 ${stageNote}
 ${VARIANT_NOTE}
 
 القيود الإلزامية:
-- ابدئي كل خطوة بصيغة زمنية: "الدقيقة 0–5: …" (أرقام عربية أو هندية مقبولة).
+- ابدئي كل خطوة بصيغة زمنية: "الدقيقة 0–5: …".
 - "goals": قابلة للقياس (فعل سلوكي + معيار %/عدد/زمن).
 - "assessment": أدوات عملية + "روبرك مختصر" (3 مستويات بمؤشرات).
-- اربطي مستويات بلوم الملائمة داخل "bloom".
-- "diff_support/core/challenge": منتجات/أداء observable لكل مستوى.
+- اربطي بمستويات بلوم الملائمة داخل "bloom".
+- "diff_support/core/challenge": منتجات/أداء Observable لكل مستوى.
 - "materials": عناصر محددة كسطر واحد مفصول بـ "؛ ".
 - "examples": أمثلة جديدة لا تكرر خطوات التنفيذ.
 - "expected_impact": مؤشرات نجاح (% إتقان/عدد منتجات/زمن إنجاز).
@@ -87,7 +90,7 @@ ${VARIANT_NOTE}
 - examples: 2–4
 - بلا أي نص خارج JSON. لغة عربية دقيقة ومختصرة.`;
 
-  // ==== Response schema ====
+  // ==== مخطط الاستجابة ====
   const responseSchema = {
     type: "OBJECT",
     required: [
@@ -114,23 +117,24 @@ ${VARIANT_NOTE}
     }
   };
 
-  // ==== Helpers ====
   const sleep = (ms)=> new Promise(r=>setTimeout(r, ms));
+
+  // تحققات إضافية
   const MIN = { goals:3, steps:4, examples:2 };
   const isEmptyStr = (s)=> !s || !String(s).trim();
+  const STEP_RE = /الدقيقة\s*[0-9٠-٩]+\s*[-–]\s*[0-9٠-٩]+/; // يدعم الأرقام العربية أيضًا
+
   function isComplete(d){
     if (!d) return false;
     const must = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
     for (const k of must) if (isEmptyStr(d[k])) return false;
-    // مصفوفات
-    if (!Array.isArray(d.goals) || d.goals.length < MIN.goals) return false;
-    if (!Array.isArray(d.steps) || d.steps.length < MIN.steps) return false;
-    if (!Array.isArray(d.examples) || d.examples.length < MIN.examples) return false;
-    // citations: لا تمنع الاكتمال إذا ناقصة، لكن طبّعي إلى مصفوفة
-    if (!Array.isArray(d.citations)) d.citations = [];
-    // تحقق الزمن في الخطوات
-    const timeRe = /الدقيقة\s*[\u0660-\u06690-9]+\s*[-–]\s*[\u0660-\u06690-9]+/;
-    if (!d.steps.every(s => timeRe.test(String(s)))) return false;
+    for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
+    if ((d.goals||[]).length   < MIN.goals)    return false;
+    if ((d.steps||[]).length   < MIN.steps)    return false;
+    if ((d.examples||[]).length< MIN.examples) return false;
+    for (const c of d.citations){ if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false; }
+    // قابل للتنفيذ زمنيًا
+    if (!d.steps.every(s => STEP_RE.test(String(s)))) return false;
     return true;
   }
 
@@ -141,7 +145,7 @@ ${VARIANT_NOTE}
         responseMimeType: "application/json",
         responseSchema,
         candidateCount: 1,
-        maxOutputTokens: 900, // كفاية للمخطط مع التزام الوقت
+        maxOutputTokens: 900,
         temperature: 0.55,
         topK: 32,
         topP: 0.9
@@ -150,14 +154,13 @@ ${VARIANT_NOTE}
     };
   }
 
-  let lastRawText = null;
+  const urlFor = (model)=> `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
 
   async function callOnce(model, promptText){
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
     try {
-      const res = await fetch(url, {
+      const res = await fetch(urlFor(model), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(makeReqBody(promptText)),
@@ -167,19 +170,17 @@ ${VARIANT_NOTE}
       if (!res.ok) {
         const err = new Error(`HTTP ${res.status}`);
         err.status = res.status;
-        err.body = text.slice(0, 400);
+        err.body = text.slice(0, 500);
         throw err;
       }
       let outer;
       try { outer = JSON.parse(text); }
-      catch { const e = new Error("Bad JSON from API"); e.status = 502; e.body = text.slice(0,300); throw e; }
+      catch { const e = new Error("Bad JSON from API"); e.status = 502; e.body = text.slice(0,500); throw e; }
 
-      lastRawText = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
-
+      const raw = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
       let data;
-      try { data = JSON.parse(lastRawText || "{}"); }
-      catch { const e = new Error("Bad model JSON"); e.status = 502; e.body = (lastRawText || "").slice(0,300); throw e; }
-
+      try { data = JSON.parse(raw); }
+      catch { const e = new Error("Bad model JSON"); e.status = 502; e.body = raw.slice(0,1200); throw e; }
       return data;
     } finally { clearTimeout(timer); }
   }
@@ -187,25 +188,19 @@ ${VARIANT_NOTE}
   function makeRepairPrompt(prevText){
     return `${BASE_PROMPT}
 
-الاستجابة السابقة كانت ناقصة أو لا تحقق شرط الزمن في الخطوات.
-أعيدي إرسال **JSON مكتمل وصحيح** يملأ كل الحقول ويبدأ كل عنصر في steps بـ "الدقيقة X–Y".
-لا تضيفي أي نص خارج JSON.
-
-السابق للاطلاع فقط:
-----
-${(prevText||"").slice(0,1800)}
-----`;
+الاستجابة السابقة كانت ناقصة أو غير مطابقة للمخطط. أَعِدي إرسال **JSON مكتمل وصحيح** يملأ كل الحقول
+ويبدأ كل عنصر في steps بـ "الدقيقة X–Y". لا تضيفي أي نص خارج JSON.`;
   }
 
-  // ==== DIAG quick mode ====
+  // ==== وضع التشخيص الاختياري ====
   if (diag === true) {
     try {
       const model = FALLBACKS[0];
-      const data = await callOnce(model, 'أرسلي JSON {"ok":true} فقط.');
+      const echo = await callOnce(model, 'أرسلي JSON {"ok":true} فقط.');
       return {
         statusCode: 200,
         headers: { "content-type":"application/json; charset=utf-8", "Access-Control-Allow-Origin":"*" },
-        body: JSON.stringify({ model, data, rawText: lastRawText })
+        body: JSON.stringify({ model, echo })
       };
     } catch (e) {
       return {
@@ -216,65 +211,43 @@ ${(prevText||"").slice(0,1800)}
     }
   }
 
-  // ==== Main run with fallbacks + repair attempts ====
+  // ==== التنفيذ مع fallbacks + محاولة إصلاح ====
   let promptText = BASE_PROMPT;
 
   for (const MODEL of FALLBACKS) {
     let attempt = 0;
-    while (attempt <= RETRIES + 1) { // +1 لمحاولة الإصلاح
+    while (attempt <= RETRIES + 1) { // +1 لمحاولة إصلاح
       try {
         const data = await callOnce(MODEL, promptText);
-
         if (isComplete(data)) {
-          data._meta = {
-            stage: stage || "",
-            subject: subject || "",
-            bloomType: bloomType || "",
-            lesson: lesson || "",
-            variant: variant || null,
-            model: MODEL
-          };
+          data._meta = { stage: stage||"", subject: subject||"", bloomType: bloomType||"", lesson: lesson||"", variant: variant||null, model: MODEL };
           return {
             statusCode: 200,
-            headers: { "content-type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" },
+            headers: { "content-type":"application/json; charset=utf-8", "Access-Control-Allow-Origin":"*" },
             body: JSON.stringify(data)
           };
         }
-
-        // أول فشل → جرّبي إصلاح صارم
+        // تحضير محاولة إصلاح واحدة
         if (attempt === 0) {
-          promptText = makeRepairPrompt(lastRawText);
+          promptText = makeRepairPrompt();
           attempt++;
           await sleep(BACKOFF_MS);
           continue;
         }
-        break; // جرّبي الموديل التالي
+        // خلاف ذلك… انتقلي للموديل التالي
+        break;
 
-      } catch (err) {
-        // خطأ شبكي/مهلة → جرّبي نفس الموديل ضمن RETRIES
-        attempt++;
-        const status = err.status || 0;
-        const isTimeout = /timeout|AbortError/i.test(String(err?.message));
-        const retriable = isTimeout || [429,500,502,503,504].includes(status);
-        if (retriable && attempt <= RETRIES) {
-          await sleep(BACKOFF_MS * attempt);
-          continue;
-        }
+      } catch (e) {
+        // أخطاء وقتية → جرّبي موديل آخر
         break;
       }
     }
   }
 
-  // ==== Incomplete after all attempts → return debug with parsed ====
-  const parsed = (()=>{ try { return JSON.parse(lastRawText || "{}"); } catch { return null; } })();
+  // بعد كل المحاولات نعيد خطأ واضح (بدون كائن تشخيص يكسّر الواجهة)
   return {
-    statusCode: 200,
-    headers: { "content-type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" },
-    body: JSON.stringify({
-      debug: "incomplete",
-      message: "Model returned incomplete JSON after retries.",
-      rawText: lastRawText,
-      parsed
-    })
+    statusCode: 502,
+    headers: { "content-type":"text/plain; charset=utf-8", "Access-Control-Allow-Origin":"*" },
+    body: "Model returned incomplete JSON after retries."
   };
 };
