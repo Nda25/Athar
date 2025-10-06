@@ -1,91 +1,70 @@
 // netlify/functions/strategy.js
 exports.handler = async (event) => {
-  // ==== CORS ====
-  if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-      body: "",
-    };
-  }
+  // نسمح فقط بـ POST
   if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: "Method Not Allowed",
-    };
+    return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // ==== Body ====
+  // نقرأ جسم الطلب بأمان
   let payload = {};
   try { payload = JSON.parse(event.body || "{}"); }
-  catch {
-    return { statusCode: 400, headers: { "Access-Control-Allow-Origin": "*" }, body: "Bad JSON body" };
-  }
+  catch { return { statusCode: 400, body: "Bad JSON body" }; }
 
-  const { stage, subject, bloomType, lesson, variant, diag } = payload;
+  const { stage, subject, bloomType, lesson, variant } = payload;
 
-  // ==== ENV ====
-  const API_KEY = process.env.GEMINI_API_KEY;
-  if (!API_KEY) {
-    return { statusCode: 500, headers: { "Access-Control-Allow-Origin": "*" }, body: "Missing GEMINI_API_KEY" };
-  }
+  // إعدادات من متغيّرات البيئة
+  const API_KEY     = process.env.GEMINI_API_KEY;
+  const PRIMARY     = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const FALLBACKS   = (process.env.GEMINI_FALLBACKS || "gemini-1.5-flash-8b,gemini-1.5-flash-latest,gemini-1.5-pro")
+                        .split(",").map(s=>s.trim()).filter(Boolean);
+  const MODELS      = [PRIMARY, ...FALLBACKS];
 
-  const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-  // أضفت pro كخيار أخير (لو حسابك يسمح). لو رجّع 403 ننتقل لغيره.
-  const FALLBACKS = [PRIMARY_MODEL, "gemini-1.5-flash-8b", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
+  const TIMEOUT_MS  = +(process.env.TIMEOUT_MS || 23000);
+  const MAX_RETRIES = +(process.env.RETRIES || 2);        // إعادة المحاولة داخل نفس الموديل
+  const BACKOFF_MS  = +(process.env.BACKOFF_MS || 700);
 
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 35000);
-  const RETRIES    = +(process.env.RETRIES    || 2);
-  const BACKOFF_MS = +(process.env.BACKOFF_MS || 800);
+  if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
 
-  // ==== Guides ====
-  const STAGE_GUIDE = {
-    "primary-lower": `- الفئة: ابتدائي دنيا. لغة بسيطة جدًا، نشاطات قصيرة/حركية.`,
-    "primary-upper": `- الفئة: ابتدائي عليا. خطوات مرقّمة، تعاون بسيط، ربط بالواقع.`,
-    "middle":        `- الفئة: متوسط. استقصاء موجّه، نقاش، تجارب مصغّرة.`,
-    "secondary":     `- الفئة: ثانوي. نقاش نقدي، مشاريع قصيرة، مخرجات قابلة للتقييم.`
+  // توصيف المرحلة (يؤثر على نبرة الاستراتيجية)
+  const STAGE_HINT = {
+    "primary-lower": "ابتدائي دنيا (أعمار 6–9)، أنشطة حسية قصيرة، لغة بسيطة جداً، أمثلة من الحياة اليومية.",
+    "primary-upper": "ابتدائي عليا (أعمار 10–12)، تعليم بنائي، أمثلة ملموسة وتمثيل بصري.",
+    "middle":        "متوسط (أعمار 13–15)، تعلّم تعاوني وتدرّج نحو التفكير المجرد.",
+    "secondary":     "ثانوي (أعمار 16–18)، تفكير ناقد، تطبيقات واقعية، مصطلحات دقيقة دون تعقيد لغوي."
   };
-  const stageNote = STAGE_GUIDE[stage] || `- الفئة: عام. صياغة واضحة ومتدرجة.`;
 
-  const typePart   = (bloomType && bloomType !== "الكل") ? `(تصنيف بلوم: "${bloomType}")` : "(تصنيف بلوم: اختاري مستويات ملائمة)";
-  const lessonPart = lesson ? `ومناسبة لدرس "${lesson}"` : "";
+  // بناء أجزاء البرومبت حسب المدخلات
+  const tPart   = (bloomType && bloomType !== "الكل") ? ` (تصنيف بلوم: ${bloomType})` : "";
+  const lPart   = lesson ? ` ومناسبة لدرس بعنوان: "${lesson}"` : "";
+  const sPart   = stage ? `\nالجمهور: ${STAGE_HINT[stage] || "ثانوي (لغة واضحة وأنشطة مناسبة للعمر)."}` : "";
 
-  const VARIANT_NOTE = `
-- IMPORTANT: استراتيجية مختلفة جذريًا (محطات/مناظرة/قلب الصف/محاكاة/لعب أدوار...).
-- strategy_name فريد 100%.
-- novelty seed: ${[
-    stage || "any-stage", subject || "any-subject", bloomType || "any-bloom",
-    (lesson || "any-lesson"), (variant || Date.now())
-  ].join(" | ")}
-- بدّلي الزاوية والمنتج النهائي وأساليب التقويم.`;
-
+  // برومبت أساسي مُحكّم — يطلب JSON فقط
   const BASE_PROMPT =
-`أريد استراتيجية تدريس لمادة ${subject} ${typePart} ${lessonPart}.
-${stageNote}
-${VARIANT_NOTE}
+`أنت خبيرة مناهج. أنشئي استراتيجية تدريس لمادة "${subject}"${tPart}${lPart}.
+اكتبي **كائن JSON واحد فقط** واملئي جميع الحقول بنص عربي واضح موجز مناسب للعمر، بدون أي نص خارج JSON.
 
-القيود الإلزامية:
-- ابدئي كل خطوة بصيغة زمنية: "الدقيقة 0–5: …".
-- "goals": قابلة للقياس (فعل سلوكي + معيار %/عدد/زمن).
-- "assessment": أدوات عملية + "روبرك مختصر" (3 مستويات بمؤشرات).
-- اربطي بمستويات بلوم داخل "bloom".
-- "diff_support/core/challenge": منتجات Observable لكل مستوى.
-- "materials": عناصر محددة مفصولة بـ "؛ ".
-- "examples": لا تكرر خطوات التنفيذ.
-- "expected_impact": مؤشرات نجاح (%/عدد/زمن).
+المتطلبات:
+- "strategy_name": اسم الاستراتيجية جذاب ودالّ.
+- "bloom": صرّحي بالمستوى/المستويات.
+- "importance": لماذا هذه الاستراتيجية مفيدة لهذا الدرس وهذه المرحلة.
+- "materials": مواد/أدوات محددة قابلة للتجهيز.
+- "goals": 3–6 أهداف سلوكية قابلة للقياس (أفعال ملاحظة + معيار نجاح رقمي أو وصفي واضح).
+- "steps": 5–8 خطوات عملية مرتبة زمنيًا. يُفضّل البدء بصيغة "الدقيقة X–Y: …".
+- "examples": 2–4 أمثلة عملية/مهمات تطبيقية قصيرة.
+- "assessment": أدوات تقويم/تذاكر خروج محددة وكيفية الحكم (Rubric مختصر عند الحاجة).
+- "diff_support": دعم المتعثرين.
+- "diff_core": مستوى أساسي لمعظم الطلاب.
+- "diff_challenge": تحديات المتقدمين.
+- "expected_impact": أثر متوقع على التعلم.
+- "citations": على الأقل مرجعان بصيغة [{"title":"…","benefit":"…"}] توضّح فائدة كل مرجع.
 
-أرسلي فقط JSON بالمخطط التالي واملئي جميع الحقول:
-- goals: 3–6
-- steps: 4–8 (تبدأ بـ "الدقيقة X–Y")
-- examples: 2–4
-- بلا أي نص خارج JSON. لغة عربية دقيقة ومختصرة.`;
+إرشادات الأسلوب:
+- جُمَل قصيرة واضحة، مصطلحات دقيقة، دون حشو أو تنميق.
+- لا تُكرر عناوين الحقول داخل النص.
+${sPart}
+`;
 
-  // ==== Schema ====
+  // مخطط الاستجابة (يوجّه الموديل) — لا نعتمد عليه وحده للتحقق
   const responseSchema = {
     type: "OBJECT",
     required: [
@@ -94,204 +73,201 @@ ${VARIANT_NOTE}
       "expected_impact","citations"
     ],
     properties: {
-      strategy_name:{ type:"STRING" },
-      bloom:{ type:"STRING" },
-      importance:{ type:"STRING" },
-      materials:{ type:"STRING" },
-      goals:{ type:"ARRAY", items:{ type:"STRING" }, minItems:3 },
-      steps:{ type:"ARRAY", items:{ type:"STRING" }, minItems:4 },
-      examples:{ type:"ARRAY", items:{ type:"STRING" }, minItems:2 },
-      assessment:{ type:"STRING" },
-      diff_support:{ type:"STRING" },
-      diff_core:{ type:"STRING" },
-      diff_challenge:{ type:"STRING" },
-      expected_impact:{ type:"STRING" },
-      citations:{ type:"ARRAY", items:{ type:"OBJECT", required:["title","benefit"], properties:{
-        title:{ type:"STRING" }, benefit:{ type:"STRING" }
-      }}}
+      strategy_name:  { type: "STRING" },
+      bloom:          { type: "STRING" },
+      importance:     { type: "STRING" },
+      materials:      { type: "STRING" },
+      goals:          { type: "ARRAY",  items: { type: "STRING" }, minItems: 3 },
+      steps:          { type: "ARRAY",  items: { type: "STRING" }, minItems: 5 },
+      examples:       { type: "ARRAY",  items: { type: "STRING" }, minItems: 2 },
+      assessment:     { type: "STRING" },
+      diff_support:   { type: "STRING" },
+      diff_core:      { type: "STRING" },
+      diff_challenge: { type: "STRING" },
+      expected_impact:{ type: "STRING" },
+      citations:      { type: "ARRAY",  items: { type: "OBJECT", required:["title","benefit"],
+        properties: { title:{type:"STRING"}, benefit:{type:"STRING"} } } }
     }
   };
 
-  // ==== Helpers ====
-  const sleep = (ms)=> new Promise(r=>setTimeout(r, ms));
+  const MIN = { goals:3, steps:2, examples:2 }; // تحقّق مرن (لتفادي الانهيار)
 
-  // تحويل الأرقام العربية إلى لاتينية للّازم regex
-  function arabicDigitsToLatin(s=""){
-    return s.replace(/[٠-٩]/g, (d)=> "٠١٢٣٤٥٦٧٨٩".indexOf(d));
-  }
+  // أدوات مساعدة
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const isEmptyStr = (s) => !s || !String(s).trim();
 
-  // تنقية ومحاولة استخراج JSON حتى لو كان داخل ``` أو فيه فواصل زائدة
-  function tryParseJsonSmart(text=""){
-    let t = text.trim();
-
-    // إزالة code fences
-    t = t.replace(/^```json/i, "```").replace(/^```/, "").replace(/```$/, "").trim();
-
-    // محاولة استخراج أول كائن بين { ... } بتوازن بسيط للأقواس
-    const i = t.indexOf("{");
-    const j = t.lastIndexOf("}");
-    if (i !== -1 && j !== -1 && j > i) {
-      t = t.slice(i, j + 1);
-    }
-
-    // إصلاح فواصل زائدة " ,\n}" → " }"
-    t = t.replace(/,\s*([}\]])/g, "$1");
-    // توحيد علامات اقتباس غريبة
-    t = t.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
-
-    // استبدال أرقام عربية
-    t = arabicDigitsToLatin(t);
-
-    try { return JSON.parse(t); }
-    catch { return null; }
-  }
-
-  const MIN = { goals:3, steps:4, examples:2 };
-  const STEP_RE = /الدقيقة\s*[0-9]+\s*[-–]\s*[0-9]+/;
-
-  function isEmptyStr(s){ return !s || !String(s).trim(); }
-  function isComplete(d){
-    if (!d) return false;
-    const must = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
-    for (const k of must) if (isEmptyStr(d[k])) return false;
-    for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
-    if (d.goals.length   < MIN.goals) return false;
-    if (d.steps.length   < MIN.steps) return false;
-    if (d.examples.length< MIN.examples) return false;
-    for (const c of d.citations) if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false;
-    if (!d.steps.every(s => STEP_RE.test(arabicDigitsToLatin(String(s))))) return false;
+  // تحقّق مرن: يكفي اسم الاستراتيجية + وجود مصفوفات أساسية بطول معقول
+  function isSoftComplete(d){
+    if (!d || isEmptyStr(d.strategy_name)) return false;
+    if (!Array.isArray(d.steps)   || d.steps.length   < MIN.steps)   return false;
+    if (!Array.isArray(d.goals)   || d.goals.length   < MIN.goals)   return false;
+    if (!Array.isArray(d.examples)|| d.examples.length< MIN.examples) return false;
     return true;
   }
 
-  function makeReqBody(promptText){
-    return {
-      contents: [{ role: "user", parts: [{ text: promptText }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema,
-        candidateCount: 1,
-        maxOutputTokens: 1200,
-        temperature: 0.55,
-        topK: 32,
-        topP: 0.9
-      },
-      safetySettings: []
-    };
+  // تحقّق صارم (نستخدمه للحكم "مكتمل تمامًا")
+  function isStrictComplete(d){
+    if (!d) return false;
+    const mustStrings = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
+    for (const k of mustStrings) if (isEmptyStr(d[k])) return false;
+    for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
+    if ((d.goals||[]).length    < 3) return false;
+    if ((d.steps||[]).length    < 5) return false;
+    if ((d.examples||[]).length < 2) return false;
+    for (const c of (d.citations||[])) {
+      if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false;
+    }
+    return true;
   }
 
-  const urlFor = (m)=> `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${API_KEY}`;
-
-  async function callOnce(model, promptText){
+  // نادِي Gemini مرة واحدة (مع timeout)
+  async function callGeminiOnce(model, promptText){
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
+
     try {
-      const res = await fetch(urlFor(model), {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(makeReqBody(promptText)),
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: promptText }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema,
+            candidateCount: 1,
+            maxOutputTokens: 2048,
+            temperature: 0.55
+          }
+        }),
         signal: controller.signal
       });
-      const text = await res.text();
-      if (!res.ok) { const e = new Error(`HTTP ${res.status}`); e.status = res.status; e.body = text.slice(0,1500); throw e; }
 
-      // الطبقة 1: JSON خارجي
+      const txt = await res.text();
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status}`);
+        err.status = res.status; err.body = txt.slice(0, 800);
+        throw err;
+      }
+
       let outer;
-      try { outer = JSON.parse(text); }
-      catch { const e = new Error("Bad JSON from API"); e.status = 502; e.body = text.slice(0,1500); throw e; }
+      try { outer = JSON.parse(txt); }
+      catch {
+        const err = new Error("Bad JSON (outer) from API");
+        err.status = 502; err.body = txt.slice(0, 800);
+        throw err;
+      }
 
-      // الطبقة 2: المحتوى الداخلي
       const raw = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+      let data;
+      try { data = JSON.parse(raw); }
+      catch {
+        // النموذج أرسل نص غير JSON — نُرجعه كـ raw
+        return { ok:false, rawText: raw, data: null };
+      }
 
-      // جرّب parse مباشر
-      let data = null;
-      try { data = JSON.parse(raw); } catch { data = tryParseJsonSmart(raw); }
-
-      // لو فشل، رجّع مع “raw” ليستعمل في إصلاح ذاتي
-      return { data, raw };
-    } finally { clearTimeout(timer); }
-  }
-
-  function makeRepairPrompt(prevRaw){
-    const trimmed = (prevRaw || "").slice(0, 5000);
-    return `${BASE_PROMPT}
-
-الاستجابة السابقة كانت ناقصة/غير صالحة JSON. هذا ما أرسلتيه:
-<RAW>
-${trimmed}
-</RAW>
-
-رجاءً أرسلي الآن **JSON مكتمل وصحيح** يطابق الـschema، ويبدأ كل عنصر في steps بـ "الدقيقة X–Y".
-لا تضيفي أي نص خارج JSON.`;
-  }
-
-  // ==== Diagnostics (اختياري) ====
-  if (diag === true) {
-    try {
-      const model = FALLBACKS[0];
-      const test = await fetch(urlFor(model), {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(makeReqBody('{"ping":true}')),
-      }).then(r=>r.status);
-      return {
-        statusCode: 200,
-        headers: { "content-type":"application/json; charset=utf-8", "Access-Control-Allow-Origin":"*" },
-        body: JSON.stringify({ ok:true, model, status:test })
-      };
-    } catch (e) {
-      return {
-        statusCode: e.status || 500,
-        headers: { "Access-Control-Allow-Origin":"*" },
-        body: `DIAG ERROR: ${e.status || ""} :: ${e.body || e.message}`
-      };
+      return { ok:true, rawText: raw, data };
+    } finally {
+      clearTimeout(timer);
     }
   }
 
-  // ==== Main loop ====
-  for (const MODEL of FALLBACKS) {
-    let attempt = 0;
+  // إصلاح ذاتي: إعادة صياغة مع تضمين الاستجابة السابقة
+  function repairPrompt(prevRaw){
+    return `${BASE_PROMPT}
+
+الاستجابة السابقة كانت غير صالحة/ناقصة. هذا هو النص الذي أرسلتيه:
+<<<
+${prevRaw}
+<<<
+
+أعيدي الإرسال الآن كـ **JSON واحد مكتمل وصالح** يطابق الحقول المطلوبة أعلاه، بدون أي نص خارج JSON.`;
+  }
+
+  // حلقة التنفيذ عبر الموديلات + محاولات لكل موديل
+  let finalStrict = null;      // مكتمل تمامًا
+  let finalSoft   = null;      // مكتمل جزئيًا (يكفي للعرض)
+  let finalRaw    = "";        // للنص الخام لأقرب محاولة مفيدة
+  let usedModel   = "";
+
+  for (const model of MODELS) {
     let promptText = BASE_PROMPT;
-    let lastRaw = null;
-
-    while (attempt <= RETRIES + 1) { // +1 للإصلاح الذاتي
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const { data, raw } = await callOnce(MODEL, promptText);
-        lastRaw = raw;
+        const resp = await callGeminiOnce(model, promptText);
+        if (resp.ok && resp.data) {
+          const d = resp.data;
+          finalRaw = resp.rawText;
+          usedModel = model;
 
-        if (isComplete(data)) {
-          data._meta = { stage: stage||"", subject: subject||"", bloomType: bloomType||"", lesson: lesson||"", variant: variant||null, model: MODEL };
-          return {
-            statusCode: 200,
-            headers: { "content-type":"application/json; charset=utf-8", "Access-Control-Allow-Origin":"*" },
-            body: JSON.stringify(data)
-          };
-        }
+          if (isStrictComplete(d)) { finalStrict = d; break; }
+          if (isSoftComplete(d))   { finalSoft   = d; }
 
-        // محاولة إصلاح ذاتي مرّة واحدة فقط
-        if (attempt === 0) {
-          promptText = makeRepairPrompt(raw);
-          attempt++;
-          await sleep(BACKOFF_MS);
+          // غير مكتمل: حضّري محاولة إصلاح
+          promptText = repairPrompt(resp.rawText);
+          await sleep(BACKOFF_MS * (attempt + 1));
+          continue;
+        } else {
+          // raw نصّي؛ جرّبي إصلاح
+          finalRaw = resp.rawText;
+          promptText = repairPrompt(resp.rawText);
+          await sleep(BACKOFF_MS * (attempt + 1));
           continue;
         }
-
-        // غير مكتمل بعد الإصلاح → جرّبي موديل ثاني
-        break;
-
-      } catch (e) {
-        // لو 403 على pro أو rate-limit… ننتقل لفولباك التالي
-        if (![429,500,502,503,504,403].includes(e.status || 0)) {
-          // أخطاء أخرى: انتقلي للموديل التالي
+      } catch (err) {
+        const status = err.status || 0;
+        const isTimeout = /timeout|AbortError/i.test(String(err?.message));
+        const retriable = isTimeout || [429,500,502,503,504].includes(status);
+        if (retriable && attempt < MAX_RETRIES) {
+          await sleep(BACKOFF_MS * (attempt + 1));
+          continue;
         }
+        // خطأ غير قابل للاسترجاع داخل هذا الموديل — انتقل للذي يليه
         break;
       }
     }
+    if (finalStrict) break; // وجدنا مكتملًا — نخرج مبكرًا
   }
 
-  // فشل كل شيء
-  return {
-    statusCode: 502,
-    headers: { "content-type":"text/plain; charset=utf-8", "Access-Control-Allow-Origin":"*" },
-    body: "Model returned incomplete JSON after retries."
+  // تجهيز الاستجابات بحسب الحالة
+  const commonHeaders = {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store"
   };
+
+  // لو مكتمل تمامًا
+  if (finalStrict) {
+    finalStrict._meta = {
+      model: usedModel,
+      subject: subject || "",
+      stage: stage || "",
+      bloomType: bloomType || "",
+      lesson: lesson || "",
+      variant: variant || ""
+    };
+    return { statusCode: 200, headers: commonHeaders, body: JSON.stringify(finalStrict) };
+  }
+
+  // لو عندنا ناتج جزئي صالح للعرض — رجّعه مع debug
+  if (finalSoft) {
+    finalSoft._meta = {
+      model: usedModel,
+      subject: subject || "",
+      stage: stage || "",
+      bloomType: bloomType || "",
+      lesson: lesson || "",
+      variant: variant || ""
+    };
+    const debugPayload = {
+      debug: "incomplete",
+      parsed: finalSoft,
+      rawText: finalRaw || ""
+    };
+    return { statusCode: 200, headers: commonHeaders, body: JSON.stringify(debugPayload) };
+  }
+
+  // لا مكتمل ولا جزئي — رجّع رسالة واضحة (تلتقطها واجهتك وتعرض صندوق التشخيص)
+  const failMsg = "Model returned incomplete JSON after retries";
+  const debugFail = { debug: "incomplete", parsed: null, rawText: finalRaw || "", message: failMsg };
+  return { statusCode: 200, headers: commonHeaders, body: JSON.stringify(debugFail) };
 };
