@@ -1,19 +1,19 @@
 // netlify/functions/murtakaz.js
-// مرتكز — توليد مخطط درس مختصر (موضوع/نص) مع حماية كاملة + تتبّع
-// نسخة متوافقة مع mulham/strategy: CORS مرن + فواصل أمان + فfallbacks + إصلاح ذاتي
+// مرتكز — توليد مخطط درس مختصر (موضوع/نص) مع حماية + اشتراك + تتبّع
+// متوافق مع هيكلة mulham/strategy: Fallbacks + إصلاح + CORS مرن + Debug
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@supabase/supabase-js");
 const { requireUser } = require("./_auth.js");
 
-/* ====== CORS (مرن) ====== */
+/* ===== CORS ===== */
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-/* ====== Supabase ====== */
+/* ===== Supabase ===== */
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE,
@@ -30,25 +30,20 @@ async function isActiveMembership(user_sub, email) {
       .maybeSingle();
     if (!error && data) return !!data.active;
   } catch (_) {}
-
   try {
     let q = supabase
       .from("memberships")
       .select("end_at, expires_at")
       .order("end_at", { ascending: false })
       .limit(1);
-
     if (user_sub) q = q.eq("user_id", user_sub);
     else if (email) q = q.eq("email", (email || "").toLowerCase());
     else return false;
-
     const { data: rows } = await q;
     const row = rows?.[0];
     const exp = row?.end_at || row?.expires_at;
     return exp ? new Date(exp) > new Date() : false;
-  } catch (_) {
-    return false;
-  }
+  } catch (_) { return false; }
 }
 
 async function supaLogToolUsage(user, meta) {
@@ -64,70 +59,49 @@ async function supaLogToolUsage(user, meta) {
   } catch (_) {}
 }
 
-/* ====== أدوات عامة ====== */
-function safeJson(str, fallback = null) {
-  try { return JSON.parse(str || "null") ?? fallback; } catch { return fallback; }
-}
-const cut = (s, n) => (s || "").slice(0, n);
-const AGE_LABEL = { p1: "ابتدائي دُنيا", p2: "ابتدائي عُليا", m: "متوسط", h: "ثانوي" };
-const dhow = (v) => (v == null ? "—" : String(v));
-const stripFences = (s = "") =>
-  String(s).replace(/^\s*```json\b/i, "").replace(/^\s*```/i, "").replace(/```$/i, "").trim();
+/* ===== Helpers ===== */
+function safeJson(str, fallback = null){ try { return JSON.parse(str || "null") ?? fallback; } catch { return fallback; } }
+const cut = (s,n)=>(s||"").slice(0,n);
+const AGE_LABEL = { p1:"ابتدائي دُنيا", p2:"ابتدائي عُليا", m:"متوسط", h:"ثانوي" };
+const dhow = (v)=> (v==null ? "—" : String(v));
+const stripFences = (s="") => String(s).replace(/^\s*```json\b/i,"").replace(/^\s*```/i,"").replace(/```$/i,"").trim();
 
-/* ====== إعدادات Gemini / موديلات آمنة + محاولات ====== */
-const SAFE_MODELS = new Set([
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
-  "gemini-1.5-pro",
-]);
-
-function pickModelList() {
-  const primary = (process.env.GEMINI_MODEL || "gemini-1.5-flash").trim();
-  const fallbacks = (process.env.GEMINI_FALLBACKS || "gemini-1.5-pro,gemini-1.5-flash-8b")
-    .split(",").map(s => s.trim()).filter(Boolean);
-  const all = [primary, ...fallbacks].filter(m => SAFE_MODELS.has(m));
-  return all.length ? all : ["gemini-1.5-flash", "gemini-1.5-pro"];
-}
-const MODELS = pickModelList();
+/* ===== Gemini models (like strategy/mulham) ===== */
+const PRIMARY   = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const FALLBACKS = (process.env.GEMINI_FALLBACKS || "gemini-1.5-pro,gemini-1.5-flash-8b").split(",").map(s=>s.trim()).filter(Boolean);
+const MODELS    = [PRIMARY, ...FALLBACKS];
 
 const TIMEOUT_MS  = +(process.env.TIMEOUT_MS || 23000);
 const MAX_RETRIES = +(process.env.RETRIES || 2);
 const BACKOFF_MS  = +(process.env.BACKOFF_MS || 700);
+const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-/* ====== Call Gemini (مرة واحدة) ====== */
+/* ===== One-shot call with robust JSON parse ===== */
 async function callGeminiOnce(model, apiKey, promptText){
   const genAI = new GoogleGenerativeAI(apiKey);
   const m = genAI.getGenerativeModel({ model });
 
-  // مهلة منطقية
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
-
-  try {
+  const timer = setTimeout(()=>{/* soft guard */}, TIMEOUT_MS);
+  try{
     const res = await m.generateContent({
-      contents: [{ role: "user", parts: [{ text: promptText }] }],
+      contents: [{ role:"user", parts:[{ text: promptText }] }],
       generationConfig: {
         responseMimeType: "application/json",
         candidateCount: 1,
         maxOutputTokens: 2048,
-        temperature: 0.6,
-      },
+        temperature: 0.6
+      }
     });
 
     const raw =
       (typeof res?.response?.text === "function" ? res.response.text() : "") ||
-      res?.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "";
+      res?.response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     if (!raw) return { ok:false, rawText:"", data:null };
 
     const txt = stripFences(raw);
-    try {
-      const data = JSON.parse(txt);
-      return { ok:true, rawText: txt, data };
-    } catch {
+    try { return { ok:true, rawText: txt, data: JSON.parse(txt) }; }
+    catch {
       const m = txt.match(/\{[\s\S]*\}$/m) || txt.match(/\{[\s\S]*\}/m);
       if (m) {
         try { return { ok:true, rawText: m[0], data: JSON.parse(m[0]) }; }
@@ -135,20 +109,18 @@ async function callGeminiOnce(model, apiKey, promptText){
       }
       return { ok:false, rawText: txt, data:null };
     }
-  } finally {
-    clearTimeout(t);
-  }
+  } finally { clearTimeout(timer); }
 }
 
-/* ====== Prompt ====== */
+/* ===== Prompt builder ===== */
 function buildPrompt(S, pre, during, post, ageLabelStr){
   return `
 أنت مخطط دروس ذكي بالعربية لمدارس السعودية (مناهج 2025+).
 - أخرج **JSON واحد فقط** (لا نص خارجه).
-- ناسِب الأهداف والأنشطة والتقويم مع Bloom الأساسي: "${dhow(S.bloomMain)}" (+ "${dhow(S.bloomSupport)}" إن وجد).
+- ناسِب الأهداف/الأنشطة/التقويم مع Bloom الأساسي: "${dhow(S.bloomMain)}" (+ "${dhow(S.bloomSupport)}" إن وجد).
 - الأنشطة عملية قابلة للتنفيذ خلال ${S.duration} دقيقة، منظمة "قبل/أثناء/بعد" بمدد: ${pre}/${during}/${post}.
 - المخرجات قصيرة وواضحة ومناسبة لعمر "${ageLabelStr}" وبيئة الصف السعودي.
-- إن وُضع mode="text" فاستخرج موضوعًا مناسبًا من النص ووافق الأهداف معه.
+- إن كان mode="text" فاستخرج Topic مناسبًا من النص ووافق الأهداف معه.
 - لو "variant" موجود نوّع جذريًا في العنوان والتنظيم.
 
 أجب بهذا القالب حصراً:
@@ -185,7 +157,7 @@ JSON فقط.
 `.trim();
 }
 
-/* ====== HANDLER ====== */
+/* ===== Handler ===== */
 exports.handler = async (event) => {
   try {
     if (event.httpMethod === "OPTIONS") {
@@ -197,9 +169,7 @@ exports.handler = async (event) => {
 
     // حماية JWT
     const gate = await requireUser(event);
-    if (!gate.ok) {
-      return { statusCode: gate.status, headers: CORS, body: gate.error };
-    }
+    if (!gate.ok) return { statusCode: gate.status, headers: CORS, body: gate.error };
 
     // اشتراك نشط
     const active = await isActiveMembership(gate.user?.sub, gate.user?.email);
@@ -233,6 +203,7 @@ exports.handler = async (event) => {
       variant: String(variant || Date.now())
     };
 
+    // توزيع الزمن
     const pre = Math.min(10, Math.max(3, Math.round(S.duration * 0.20)));
     const during = Math.max(15, Math.round(S.duration * 0.55));
     const post = Math.max(5, Math.round(S.duration * 0.25));
@@ -240,7 +211,7 @@ exports.handler = async (event) => {
 
     const prompt = buildPrompt(S, pre, during, post, ageLabelStr);
 
-    // حلقات: موديلات × محاولات (مع إصلاح ذاتي)
+    // موديلات × محاولات + إصلاح ذاتي
     let final = null, finalRaw = "", usedModel = "";
     for (const model of MODELS) {
       let p = prompt;
@@ -251,31 +222,25 @@ exports.handler = async (event) => {
 
           if (resp.ok && resp.data) { final = resp.data; usedModel = model; break; }
 
-          // إصلاح: أرسل النص السابق واطلب إعادة بصيغة JSON الصحيحة
+          // إصلاح: نعيد إرسال الرد السابق ونطلب JSON صالح
           p = `${prompt}
 
 الاستجابة السابقة غير صالحة/ناقصة. هذا نصّك:
 <<<
 ${(resp.rawText || "").slice(0, 4000)}
 <<<
-أعيدي الإرسال الآن كـ **JSON واحد صالح** يطابق القالب أعلاه فقط.`;
+أعيدي الآن **JSON واحدًا صالحًا** يطابق القالب أعلاه فقط.`;
           await sleep(BACKOFF_MS * (attempt + 1));
         } catch (e) {
-          const msg = String(e?.message || e);
-          const retriable = /timeout|429|500|502|503|504/i.test(msg);
-          if (retriable && attempt < MAX_RETRIES) {
-            await sleep(BACKOFF_MS * (attempt + 1));
-            continue;
-          }
-          // أخطاء غير قابلة للاسترجاع (مثل 401/403/404 لموديل خاطئ) — انتقل لموديل آخر
-          break;
+          // جرّب محاولة أخرى/موديل آخر عند أخطاء الشبكة/الزمن
+          await sleep(BACKOFF_MS * (attempt + 1));
         }
       }
       if (final) break;
     }
 
+    // إن فشل التوليد بالكامل: نُرجع debug كي تعرضه الواجهة (بدون 5xx)
     if (!final) {
-      // نُرجع debug ودّيًا (الواجهة تعرضه كتحذير)
       return {
         statusCode: 200,
         headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
@@ -288,7 +253,7 @@ ${(resp.rawText || "").slice(0, 4000)}
     }
 
     // تهيئة المخرجات للواجهة
-    const sa = (a) => Array.isArray(a) ? a.filter(Boolean) : [];
+    const sa = (a)=> Array.isArray(a) ? a.filter(Boolean) : [];
     const body = {
       meta: final.meta || {
         topic: S.topic || "—",
@@ -322,12 +287,7 @@ ${(resp.rawText || "").slice(0, 4000)}
     };
 
   } catch (err) {
-    console.error("murtakaz error:", err);
-    const msg = (err && err.message) ? err.message : String(err);
-    return {
-      statusCode: 500,
-      headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
-      body: `Server error: ${msg}`
-    };
+    const msg = err?.stack || err?.message || String(err);
+    return { statusCode: 500, headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" }, body: `Server error: ${msg}` };
   }
 };
