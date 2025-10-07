@@ -1,6 +1,6 @@
 // netlify/functions/murtakaz.js
 // مرتكز — توليد مخطط درس مختصر (موضوع/نص) مع حماية كاملة + تتبّع
-// نسخة متوافقة مع هيكلة mulham/strategy: Fallbacks + إصلاح + CORS مرن
+// نسخة متوافقة مع mulham/strategy: CORS مرن + فواصل أمان + فfallbacks + إصلاح ذاتي
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@supabase/supabase-js");
@@ -64,7 +64,7 @@ async function supaLogToolUsage(user, meta) {
   } catch (_) {}
 }
 
-/* ====== أدوات ====== */
+/* ====== أدوات عامة ====== */
 function safeJson(str, fallback = null) {
   try { return JSON.parse(str || "null") ?? fallback; } catch { return fallback; }
 }
@@ -74,10 +74,21 @@ const dhow = (v) => (v == null ? "—" : String(v));
 const stripFences = (s = "") =>
   String(s).replace(/^\s*```json\b/i, "").replace(/^\s*```/i, "").replace(/```$/i, "").trim();
 
-/* ====== إعدادات Gemini / محاولات ====== */
-const PRIMARY   = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-const FALLBACKS = (process.env.GEMINI_FALLBACKS || "gemini-1.5-pro,gemini-1.5-flash-8b").split(",").map(s=>s.trim()).filter(Boolean);
-const MODELS    = [PRIMARY, ...FALLBACKS];
+/* ====== إعدادات Gemini / موديلات آمنة + محاولات ====== */
+const SAFE_MODELS = new Set([
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-1.5-pro",
+]);
+
+function pickModelList() {
+  const primary = (process.env.GEMINI_MODEL || "gemini-1.5-flash").trim();
+  const fallbacks = (process.env.GEMINI_FALLBACKS || "gemini-1.5-pro,gemini-1.5-flash-8b")
+    .split(",").map(s => s.trim()).filter(Boolean);
+  const all = [primary, ...fallbacks].filter(m => SAFE_MODELS.has(m));
+  return all.length ? all : ["gemini-1.5-flash", "gemini-1.5-pro"];
+}
+const MODELS = pickModelList();
 
 const TIMEOUT_MS  = +(process.env.TIMEOUT_MS || 23000);
 const MAX_RETRIES = +(process.env.RETRIES || 2);
@@ -90,6 +101,7 @@ async function callGeminiOnce(model, apiKey, promptText){
   const genAI = new GoogleGenerativeAI(apiKey);
   const m = genAI.getGenerativeModel({ model });
 
+  // مهلة منطقية
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(new Error("timeout")), TIMEOUT_MS);
 
@@ -100,9 +112,8 @@ async function callGeminiOnce(model, apiKey, promptText){
         responseMimeType: "application/json",
         candidateCount: 1,
         maxOutputTokens: 2048,
-        temperature: 0.6
+        temperature: 0.6,
       },
-      // signal غير مدعوم رسميًا في SDK، لكننا نحافظ على مهلة منطقية عبر abort أعلاه
     });
 
     const raw =
@@ -112,13 +123,11 @@ async function callGeminiOnce(model, apiKey, promptText){
 
     if (!raw) return { ok:false, rawText:"", data:null };
 
-    // حاول JSON مباشر، ثم إزالة الأسوار
     const txt = stripFences(raw);
     try {
       const data = JSON.parse(txt);
       return { ok:true, rawText: txt, data };
     } catch {
-      // محاولة أخيرة لالتقاط أول كتلة JSON
       const m = txt.match(/\{[\s\S]*\}$/m) || txt.match(/\{[\s\S]*\}/m);
       if (m) {
         try { return { ok:true, rawText: m[0], data: JSON.parse(m[0]) }; }
@@ -236,30 +245,45 @@ exports.handler = async (event) => {
     for (const model of MODELS) {
       let p = prompt;
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-        const resp = await callGeminiOnce(model, API_KEY, p);
-        finalRaw = resp.rawText || finalRaw;
+        try {
+          const resp = await callGeminiOnce(model, API_KEY, p);
+          finalRaw = resp.rawText || finalRaw;
 
-        if (resp.ok && resp.data) { final = resp.data; usedModel = model; break; }
+          if (resp.ok && resp.data) { final = resp.data; usedModel = model; break; }
 
-        // إصلاح: أرسل النص السابق واطلب إعادة بصيغة JSON الصحيحة
-        p = `${prompt}
+          // إصلاح: أرسل النص السابق واطلب إعادة بصيغة JSON الصحيحة
+          p = `${prompt}
 
 الاستجابة السابقة غير صالحة/ناقصة. هذا نصّك:
 <<<
 ${(resp.rawText || "").slice(0, 4000)}
 <<<
 أعيدي الإرسال الآن كـ **JSON واحد صالح** يطابق القالب أعلاه فقط.`;
-        await sleep(BACKOFF_MS * (attempt + 1));
+          await sleep(BACKOFF_MS * (attempt + 1));
+        } catch (e) {
+          const msg = String(e?.message || e);
+          const retriable = /timeout|429|500|502|503|504/i.test(msg);
+          if (retriable && attempt < MAX_RETRIES) {
+            await sleep(BACKOFF_MS * (attempt + 1));
+            continue;
+          }
+          // أخطاء غير قابلة للاسترجاع (مثل 401/403/404 لموديل خاطئ) — انتقل لموديل آخر
+          break;
+        }
       }
       if (final) break;
     }
 
     if (!final) {
-      // لو تحبين، نرجّع debug بدلاً من خطأ قاسٍ
+      // نُرجع debug ودّيًا (الواجهة تعرضه كتحذير)
       return {
         statusCode: 200,
         headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
-        body: JSON.stringify({ debug: "incomplete", rawText: finalRaw || "", message: "Model returned incomplete JSON after retries" })
+        body: JSON.stringify({
+          debug: "incomplete",
+          rawText: finalRaw || "",
+          message: "Model returned incomplete JSON after retries"
+        })
       };
     }
 
@@ -300,6 +324,10 @@ ${(resp.rawText || "").slice(0, 4000)}
   } catch (err) {
     console.error("murtakaz error:", err);
     const msg = (err && err.message) ? err.message : String(err);
-    return { statusCode: 500, headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" }, body: `Server error: ${msg}` };
+    return {
+      statusCode: 500,
+      headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
+      body: `Server error: ${msg}`
+    };
   }
 };
