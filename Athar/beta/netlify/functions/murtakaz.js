@@ -1,4 +1,4 @@
-// netlify/functions/murtakaz.js
+ // netlify/functions/murtakaz.js
 // مرتكز — توليد مخطط درس مختصر (موضوع/نص) مع حماية + اشتراك + تتبّع
 // متوافق مع هيكلة mulham/strategy: Fallbacks + إصلاح + CORS مرن + Debug
 
