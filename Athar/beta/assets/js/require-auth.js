@@ -4,10 +4,10 @@
 // (CALLBACK ثابت + منع الكاش + حفظ مسار الرجوع + لودر SDK متعدد + دعم appState.returnTo)
 // =============================================
 (function AtharGuard(){
-  // ---- إعدادات أساسية ----
+  // ---- إعدادات أساسية (استبدلي AUDIENCE لو كان لديك معرف آخر في Auth0 > APIs) ----
   const AUTH0_DOMAIN  = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
   const AUTH0_CLIENT  = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-  const API_AUDIENCE  = "https://api.n-athar";
+  const API_AUDIENCE  = "https://api.n-athar.co"; // ← مهم: يطابق API Identifier في Auth0
 
   // ✅ Callback ثابت (أضيفيه في Auth0 Allowed Callback URLs)
   const CALLBACK = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
@@ -24,7 +24,12 @@
   const warn = (...a)=>{ if (DEBUG) console.warn("[AtharGuard]", ...a); };
   const err  = (...a)=>{ console.error("[AtharGuard]", ...a); };
 
-  // نشر الإعدادات
+  // نشر الإعدادات عالميًا لاستخدامها من سكربتات أخرى (مثل getAuthToken في صفحات الأدوات)
+  window.AUTH0_DOMAIN   = AUTH0_DOMAIN;
+  window.AUTH0_CLIENTID = AUTH0_CLIENT;
+  window.AUTH0_AUDIENCE = API_AUDIENCE;
+
+  // نشر أيضًا في __CFG إن كنتِ تعتمدين عليه بمكان آخر
   window.__CFG = Object.assign({}, window.__CFG || {}, {
     auth0_domain: AUTH0_DOMAIN,
     auth0_clientId: AUTH0_CLIENT,
@@ -49,7 +54,7 @@
   // خرائط الصفحات
   const PUBLIC      = new Set(["index","pricing","programs","privacy","terms","refund-policy","whatsapp"]);
   const LOGIN_ONLY  = new Set(["profile"]);
-  const TOOLS       = new Set(["athar","darsi","masar","miyad","ethraa","mulham","mueen"]);
+  const TOOLS       = new Set(["athar","darsi","masar","miyad","ethraa","mulham","mueen","murtakaz"]);
   const ADMIN       = "admin";
 
   const toPricing = (msg) => {
@@ -164,10 +169,13 @@
     return false;
   }
 
-  // === جلب حالة الاشتراك من السيرفر ===
+  // === جلب حالة الاشتراك من السيرفر (يستخدم Access Token الصحيح للـAudience) ===
   async function fetchUserStatus(client){
     try {
-      const token = await (client.getTokenSilently?.() || client.getTokenWithPopup?.());
+      const token = await client.getAccessTokenSilently({
+        authorizationParams: { audience: API_AUDIENCE, scope: "openid profile email" },
+        detailedResponse: false
+      });
       if (!token) return { active:false, status:"none", expires_at:null };
 
       const res = await fetch("/.netlify/functions/user-status?ts=" + Date.now(), {
