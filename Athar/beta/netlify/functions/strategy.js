@@ -1,258 +1,323 @@
-// netlify/functions/strategy.js
-// يولّد استراتيجية تدريس مُحكمة بصيغة JSON واحدة (بدون أي حقول جديدة)
-// إضافة: دمج استراتيجية ممتعة مناسبة للعمر (فن/سبب-نتيجة/رؤوس مرقمة…)
-// الحماية/الاعتمادية: نفس منطق المهلة والمحاولات والفولباك
+// netlify/functions/murtakaz.js
+// مرتكز — توليد مخطط درس مختصر (موضوع/نص) مع حماية + اشتراك + تتبّع
+// متوافق مع هيكلة mulham/strategy: Fallbacks + إصلاح + CORS مرن + Debug
 
+const { createClient } = require("@supabase/supabase-js");
+const { requireUser } = require("./_auth.js");
+
+/* ===== CORS ===== */
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+/* ===== Supabase ===== */
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE,
+  { auth: { persistSession: false } }
+);
+
+async function isActiveMembership(user_sub, email) {
+  try {
+    const { data, error } = await supabase
+      .from("v_user_status")
+      .select("active")
+      .or(`user_sub.eq.${user_sub},email.eq.${(email || "").toLowerCase()}`)
+      .limit(1)
+      .maybeSingle();
+    if (!error && data) return !!data.active;
+  } catch (_) {}
+  try {
+    let q = supabase
+      .from("memberships")
+      .select("end_at, expires_at")
+      .order("end_at", { ascending: false })
+      .limit(1);
+    if (user_sub) q = q.eq("user_id", user_sub);
+    else if (email) q = q.eq("email", (email || "").toLowerCase());
+    else return false;
+    const { data: rows } = await q;
+    const row = rows?.[0];
+    const exp = row?.end_at || row?.expires_at;
+    return exp ? new Date(exp) > new Date() : false;
+  } catch (_) { return false; }
+}
+
+async function supaLogToolUsage(user, meta) {
+  try {
+    await supabase.from("tool_usage").insert({
+      user_sub: user?.sub || null,
+      tool_name: "murtakaz",
+      path: meta?.path || null,
+      meta,
+      user_agent: meta?.ua || null,
+      ip: meta?.ip || null,
+    });
+  } catch (_) {}
+}
+
+/* ===== Helpers ===== */
+function safeJson(str, fallback = null){ try { return JSON.parse(str || "null") ?? fallback; } catch { return fallback; } }
+const cut = (s,n)=>(s||"").slice(0,n);
+const AGE_LABEL = { p1:"ابتدائي دُنيا", p2:"ابتدائي عُليا", m:"متوسط", h:"ثانوي" };
+const dhow = (v)=> (v==null ? "—" : String(v));
+const stripFences = (s="") => String(s).replace(/^\s*```json\b/i,"").replace(/^\s*```/i,"").replace(/```$/i,"").trim();
+
+/* ===== Gemini models (like strategy/mulham) ===== */
+const PRIMARY   = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const FALLBACKS = (process.env.GEMINI_FALLBACKS || "gemini-1.5-pro,gemini-1.5-flash-8b").split(",").map(s=>s.trim()).filter(Boolean);
+const MODELS    = [PRIMARY, ...FALLBACKS];
+
+const TIMEOUT_MS  = +(process.env.TIMEOUT_MS || 23000);
+const MAX_RETRIES = +(process.env.RETRIES || 2);
+const BACKOFF_MS  = +(process.env.BACKOFF_MS || 700);
+const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
+
+/* ===== One-shot call with robust JSON parse - UPDATED ===== */
+async function callGeminiOnce(model, apiKey, promptText){
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(new Error("timeout")), TIMEOUT_MS);
+  
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: promptText }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          candidateCount: 1,
+          maxOutputTokens: 2048,
+          temperature: 0.6
+        }
+      }),
+      signal: controller.signal
+    });
+    
+    const txt = await res.text();
+    if (!res.ok) {
+      const err = new Error(`HTTP ${res.status}`);
+      err.status = res.status; 
+      err.body = txt.slice(0, 800);
+      throw err;
+    }
+    
+    let outer;
+    try { 
+      outer = JSON.parse(txt); 
+    } catch {
+      const err = new Error("Bad JSON (outer) from API");
+      err.status = 502; 
+      err.body = txt.slice(0, 800);
+      throw err;
+    }
+    
+    const raw = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+    
+    if (!raw) return { ok:false, rawText:"", data:null };
+
+    const txtClean = stripFences(raw);
+    try { 
+      return { ok:true, rawText: txtClean, data: JSON.parse(txtClean) }; 
+    } catch {
+      const m = txtClean.match(/\{[\s\S]*\}$/m) || txtClean.match(/\{[\s\S]*\}/m);
+      if (m) {
+        try { 
+          return { ok:true, rawText: m[0], data: JSON.parse(m[0]) }; 
+        } catch { 
+          /* ignore */ 
+        }
+      }
+      return { ok:false, rawText: txtClean, data:null };
+    }
+  } finally { 
+    clearTimeout(timer); 
+  }
+}
+
+/* ===== Prompt builder ===== */
+function buildPrompt(S, pre, during, post, ageLabelStr){
+  return `
+أنت مخطط دروس ذكي بالعربية لمدارس السعودية (مناهج 2025+).
+- أخرج **JSON واحد فقط** (لا نص خارجه).
+- ناسِب الأهداف/الأنشطة/التقويم مع Bloom الأساسي: "${dhow(S.bloomMain)}" (+ "${dhow(S.bloomSupport)}" إن وجد).
+- الأنشطة عملية قابلة للتنفيذ خلال ${S.duration} دقيقة، منظمة "قبل/أثناء/بعد" بمدد: ${pre}/${during}/${post}.
+- المخرجات قصيرة وواضحة ومناسبة لعمر "${ageLabelStr}" وبيئة الصف السعودي.
+- إن كان mode="text" فاستخرج Topic مناسبًا من النص ووافق الأهداف معه.
+- لو "variant" موجود نوّع جذريًا في العنوان والتنظيم.
+
+أجب بهذا القالب حصراً:
+{
+  "meta": {
+    "topic": "عنوان مختصر مبتكر ومحدد",
+    "age": "${dhow(S.age)}",
+    "ageLabel": "${ageLabelStr}",
+    "mainBloomLabel": "${dhow(S.bloomMain)}",
+    "supportBloomLabel": "${dhow(S.bloomSupport)}"
+  },
+  "goals": [ ${Array.from({length: S.goalCount}).map(()=>'"__"').join(", ")} ],
+  "success": "__",
+  "structure": ["قبل (تهيئة ${pre}د): __", "أثناء (${during}د): __", "بعد (${post}د): __"],
+  "activities": ["تمهيد محسوس ملائم للعمر", "نشاط تعاوني موجّه", "تطبيق فردي قصير", "منتج نهائي/عرض وجيز"],
+  "assessment": ["س١ مباشر مرتبط بالموضوع: __", "س٢ أعلى قليلاً في بلوم: __", "س٣ تذكرة خروج قابلة للقياس: __"],
+  "diff": ["دعم: __", "إثراء: __", "مرونة العرض: __"],
+  "oneMin": "نص الدقيقة الواحدة الملائم"
+}
+
+المعطيات:
+- mode: ${dhow(S.mode)} (topic/text)
+- المادة: ${dhow(S.subject)}
+- الموضوع: ${dhow(S.topic)}
+- النص للتحليل: ${S.sourceText || "—"}
+- ملاحظات المعلم: ${dhow(S.notes)}
+- مستوى الصف: ${dhow(S.level)}
+- تعلم تكيفي: ${S.adapt ? "نعم" : "لا"}
+- Bloom: ${dhow(S.bloomMain)} / ${dhow(S.bloomSupport)}
+- الزمن: ${S.duration} دقيقة
+- variant: ${S.variant}
+
+JSON فقط.
+`.trim();
+}
+
+/* ===== Handler ===== */
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
-  }
-
-  let payload = {};
-  try { payload = JSON.parse(event.body || "{}"); }
-  catch { return { statusCode: 400, body: "Bad JSON body" }; }
-
-  const { stage, subject, bloomType, lesson, variant, preferred } = payload;
-
-  const API_KEY   = process.env.GEMINI_API_KEY;
-  const PRIMARY   = process.env.GEMINI_MODEL || "gemini-1.5-flash";
-  const FALLBACKS = (process.env.GEMINI_FALLBACKS || "gemini-1.5-flash-8b,gemini-1.5-flash-latest,gemini-1.5-pro")
-                      .split(",").map(s=>s.trim()).filter(Boolean);
-  const MODELS    = [PRIMARY, ...FALLBACKS];
-
-  const TIMEOUT_MS  = +(process.env.TIMEOUT_MS || 30000);
-  const MAX_RETRIES = +(process.env.RETRIES   || 3);
-  const BACKOFF_MS  = +(process.env.BACKOFF_MS|| 800);
-
-  if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
-
-  /* ===== بنك الاستراتيجيات حسب المرحلة ===== */
-  const STRATS_BY_STAGE = {
-    "primary-lower": [
-      "مخطط فن (نسختان دائريتان بسيطتان)",
-      "السبب والنتيجة (سهم كبير + مربعات)",
-      "الرؤوس المرقمة (أرقام 1–4 لكل مجموعة)",
-      "فكر-زاوج-شارك (نسخة مبسطة)",
-      "البطاقات المصوّرة/الصور-كلمات",
-      "الخط الزمني المصغّر (3 خانات)"
-    ],
-    "primary-upper": [
-      "مخطط فن",
-      "السبب والنتيجة",
-      "الرؤوس المرقمة",
-      "فكر-زاوج-شارك",
-      "القبعات الست المبسّطة (قبعتان فقط)",
-      "تدوير المحطات (محطتان فقط)"
-    ],
-    "middle": [
-      "رؤوس مرقمة (Numbered Heads Together)",
-      "مخطط فن/تداخل ثلاثي عند الحاجة",
-      "السبب والنتيجة + دليل من النص",
-      "التفكير بصوت عالٍ + زميل المراجعة",
-      "دوائر التعلم/محطات",
-      "مثلث الادّعاء-الدليل-التفسير"
-    ],
-    "secondary": [
-      "رؤوس مرقمة (بأدوار محددة)",
-      "الادّعاء-الدليل-التفسير (CER)",
-      "مخطط فن متقدم/مقارنة معيارية",
-      "خريطة السبب-الأثر متعددة المستويات",
-      "الندوة السقراطية المصغّرة",
-      "فكر-اكتب-شارك (نسخة زمنية مضبوطة)"
-    ]
-  };
-
-  const STAGE_HINT = {
-    "primary-lower": "ابتدائي دنيا (6–9): لغة بسيطة جدًا، مهام قصيرة محسوسة.",
-    "primary-upper": "ابتدائي عليا (10–12): أمثلة ملموسة وتمثيل بصري.",
-    "middle":        "متوسط (13–15): تعاون منظم وتدرّج نحو التجريد.",
-    "secondary":     "ثانوي (16–18): تفكير ناقد وتطبيقات واقعية."
-  };
-
-  const stageList = STRATS_BY_STAGE[stage] || STRATS_BY_STAGE["secondary"];
-  const preferredClean = (preferred || "").trim();
-
-  const tPart = (bloomType && bloomType !== "الكل") ? ` (تصنيف بلوم: ${bloomType})` : "";
-  const lPart = lesson ? ` ومناسبة لدرس بعنوان: "${lesson}"` : "";
-  const sPart = stage ? `\nالجمهور: ${STAGE_HINT[stage] || STAGE_HINT["secondary"]}.` : "";
-
-  /* ===== برومبت مضبوط — بدون تغيير لشكل الإخراج ===== */
-  const BASE_PROMPT =
-`أنت خبيرة مناهج. أنشئي استراتيجية تدريس لمادة "${subject}"${tPart}${lPart}.
-أعيدي **كائن JSON واحد فقط** بالمفاتيح نفسها أدناه، بلا أي نص خارج JSON ولا مفاتيح إضافية.
-
-المتطلبات (بدون تغيير شكل الإخراج):
-- "strategy_name": اذكري اسم الاستراتيجية المختارة صراحةً.
-- "bloom": صرّحي بالمستوى/المستويات.
-- "importance": لماذا هذه الاستراتيجية مناسبة للدرس والمرحلة.
-- "materials": مواد/أدوات قابلة للتجهيز (أوراق/ملصقات/أرقام للمجموعات… عند الحاجة).
-- "goals": 3–6 أهداف سلوكية قابلة للقياس.
-- "steps": 5–8 خطوات عملية مرتبة زمنيًا. صيغي التنفيذ الدقيق للاستراتيجية المختارة (أدوار/أرقام/قالب فن…).
-- "examples": 2–4 أمثلة تطبيقية قصيرة مرتبطة بالاستراتيجية.
-- "assessment": أدوات تقويم/تذكرة خروج وكيفية الحكم.
-- "diff_support": دعم المتعثرين مرتبط بالاستراتيجية.
-- "diff_core": المستوى الأساسي.
-- "diff_challenge": تحديات المتقدمين.
-- "expected_impact": أثر متوقع.
-- "citations": على الأقل مرجعان [{"title":"…","benefit":"…"}].
-
-اختاري **استراتيجية واحدة فقط** من القائمة الآتية المناسبة للعمر (إلا إذا تم تفضيل اسم محدّد):
-${preferredClean ? `الاستراتيجية المفضّلة (إلزامية): "${preferredClean}".` :
-`استراتيجيات مقترحة حسب المرحلة: ${stageList.map(s=>`"${s}"`).join(", ")}.`}
-
-قواعد:
-- اذكري اسم الاستراتيجية المختارة صراحةً داخل "strategy_name".
-- دمّجيها واقعيًا داخل "steps" و"materials" و"examples" و"assessment" (مثل: مخطط فن، السبب والنتيجة، رؤوس مرقّمة…).
-- جُمَل قصيرة واضحة ومناسبة للعمر؛ لا تكرار للعناوين داخل المتن.
-${sPart}
-`;
-
-  /* ===== مخطط الاستجابة (كما هو) ===== */
-  const responseSchema = {
-    type: "OBJECT",
-    required: [
-      "strategy_name","bloom","importance","materials","goals","steps",
-      "examples","assessment","diff_support","diff_core","diff_challenge",
-      "expected_impact","citations"
-    ],
-    properties: {
-      strategy_name:  { type: "STRING" },
-      bloom:          { type: "STRING" },
-      importance:     { type: "STRING" },
-      materials:      { type: "STRING" },
-      goals:          { type: "ARRAY",  items: { type: "STRING" }, minItems: 3 },
-      steps:          { type: "ARRAY",  items: { type: "STRING" }, minItems: 5 },
-      examples:       { type: "ARRAY",  items: { type: "STRING" }, minItems: 2 },
-      assessment:     { type: "STRING" },
-      diff_support:   { type: "STRING" },
-      diff_core:      { type: "STRING" },
-      diff_challenge: { type: "STRING" },
-      expected_impact:{ type: "STRING" },
-      citations:      { type: "ARRAY",  items: { type: "OBJECT", required:["title","benefit"],
-        properties: { title:{type:"STRING"}, benefit:{type:"STRING"} } } }
+  try {
+    if (event.httpMethod === "OPTIONS") {
+      return { statusCode: 204, headers: CORS, body: "" };
     }
-  };
-
-  const MIN = { goals:3, steps:2, examples:2 };
-
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const isEmptyStr = (s) => !s || !String(s).trim();
-
-  function isSoftComplete(d){
-    if (!d || isEmptyStr(d.strategy_name)) return false;
-    if (!Array.isArray(d.steps)   || d.steps.length   < MIN.steps)    return false;
-    if (!Array.isArray(d.goals)   || d.goals.length   < MIN.goals)    return false;
-    if (!Array.isArray(d.examples)|| d.examples.length< MIN.examples) return false;
-    return true;
-  }
-  function isStrictComplete(d){
-    if (!d) return false;
-    const mustStrings = ["strategy_name","bloom","importance","materials","assessment","diff_support","diff_core","diff_challenge","expected_impact"];
-    for (const k of mustStrings) if (isEmptyStr(d[k])) return false;
-    for (const k of ["goals","steps","examples","citations"]) if (!Array.isArray(d[k])) return false;
-    if ((d.goals||[]).length    < 3) return false;
-    if ((d.steps||[]).length    < 5) return false;
-    if ((d.examples||[]).length < 2) return false;
-    for (const c of (d.citations||[])) {
-      if (!c || isEmptyStr(c.title) || isEmptyStr(c.benefit)) return false;
+    if (event.httpMethod !== "POST") {
+      return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
     }
-    return true;
-  }
 
-  async function callGeminiOnce(model, promptText){
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
-    const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(new Error("timeout")), TIMEOUT_MS);
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: promptText }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema,
-            candidateCount: 1,
-            maxOutputTokens: 2048,
-            temperature: 0.55
-          }
-        }),
-        signal: controller.signal
-      });
-      const txt = await res.text();
-      if (!res.ok) {
-        const err = new Error(`HTTP ${res.status}`);
-        err.status = res.status; err.body = txt.slice(0, 800);
-        throw err;
-      }
-      let outer; try { outer = JSON.parse(txt); }
-      catch {
-        const err = new Error("Bad JSON (outer) from API");
-        err.status = 502; err.body = txt.slice(0, 800);
-        throw err;
-      }
-      const raw = outer?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-      let data;
-      try { data = JSON.parse(raw); }
-      catch { return { ok:false, rawText: raw, data: null }; }
-      return { ok:true, rawText: raw, data };
-    } finally { clearTimeout(timer); }
-  }
+    // حماية JWT
+    const gate = await requireUser(event);
+    if (!gate.ok) return { statusCode: gate.status, headers: CORS, body: gate.error };
 
-  function repairPrompt(prevRaw){
-    return `${BASE_PROMPT}
+    // اشتراك نشط
+    const active = await isActiveMembership(gate.user?.sub, gate.user?.email);
+    if (!active) {
+      return { statusCode: 402, headers: CORS, body: "Membership is not active (trial expired or not activated)." };
+    }
+
+    // مفاتيح البيئة
+    const API_KEY = process.env.GEMINI_API_KEY;
+    if (!API_KEY) return { statusCode: 500, headers: CORS, body: "Missing GEMINI_API_KEY" };
+
+    // المدخلات
+    const {
+      mode, subject, topic, sourceText, age, duration,
+      bloomMain, bloomSupport, goalCount, notes, level, adapt, variant
+    } = safeJson(event.body, {}) || {};
+
+    const S = {
+      mode: (mode || "topic"),
+      subject: cut(subject || "—", 100),
+      topic: cut(topic || "—", 140),
+      sourceText: cut(sourceText || "", +(process.env.MAX_TEXT_CHARS || 1200)),
+      age: (age || "p2"),
+      duration: Math.max(15, Math.min(90, +duration || 45)),
+      bloomMain: (bloomMain || "understand"),
+      bloomSupport: (bloomSupport || ""),
+      goalCount: Math.max(1, Math.min(5, +goalCount || 2)),
+      notes: cut(notes || "", 240),
+      level: (level || "mixed"),
+      adapt: !!adapt,
+      variant: String(variant || Date.now())
+    };
+
+    // توزيع الزمن
+    const pre = Math.min(10, Math.max(3, Math.round(S.duration * 0.20)));
+    const during = Math.max(15, Math.round(S.duration * 0.55));
+    const post = Math.max(5, Math.round(S.duration * 0.25));
+    const ageLabelStr = AGE_LABEL[S.age] || S.age || "—";
+
+    const prompt = buildPrompt(S, pre, during, post, ageLabelStr);
+
+    // موديلات × محاولات + إصلاح ذاتي
+    let final = null, finalRaw = "", usedModel = "";
+    for (const model of MODELS) {
+      let p = prompt;
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const resp = await callGeminiOnce(model, API_KEY, p);
+          finalRaw = resp.rawText || finalRaw;
+
+          if (resp.ok && resp.data) { final = resp.data; usedModel = model; break; }
+
+          // إصلاح: نعيد إرسال الرد السابق ونطلب JSON صالح
+          p = `${prompt}
 
 الاستجابة السابقة غير صالحة/ناقصة. هذا نصّك:
 <<<
-${prevRaw}
+${(resp.rawText || "").slice(0, 4000)}
 <<<
-أعيدي الآن **JSON واحدًا صالحًا مكتملًا** بالمفاتيح نفسها دون أي إضافة أو نص خارجي.`;
-  }
-
-  let finalStrict=null, finalSoft=null, finalRaw="", usedModel="";
-  for (const model of MODELS) {
-    let promptText = BASE_PROMPT;
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        const resp = await callGeminiOnce(model, promptText);
-        if (resp.ok && resp.data) {
-          const d = resp.data; finalRaw = resp.rawText; usedModel = model;
-          if (isStrictComplete(d)) { finalStrict = d; break; }
-          if (isSoftComplete(d))   { finalSoft   = d; }
-          promptText = repairPrompt(resp.rawText);
+أعيدي الآن **JSON واحدًا صالحًا** يطابق القالب أعلاه فقط.`;
           await sleep(BACKOFF_MS * (attempt + 1));
-          continue;
-        } else {
-          finalRaw = resp.rawText;
-          promptText = repairPrompt(resp.rawText);
+        } catch (e) {
+          // جرّب محاولة أخرى/موديل آخر عند أخطاء الشبكة/الزمن
           await sleep(BACKOFF_MS * (attempt + 1));
-          continue;
         }
-      } catch (err) {
-        const status = err.status || 0;
-        const isTimeout = /timeout|AbortError/i.test(String(err?.message));
-        const retriable = isTimeout || [429,500,502,503,504].includes(status);
-        if (retriable && attempt < MAX_RETRIES) {
-          await sleep(BACKOFF_MS * (attempt + 1));
-          continue;
-        }
-        break;
       }
+      if (final) break;
     }
-    if (finalStrict) break;
-  }
 
-  const headers = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
+    // إن فشل التوليد بالكامل: نُرجع debug كي تعرضه الواجهة (بدون 5xx)
+    if (!final) {
+      return {
+        statusCode: 200,
+        headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({
+          debug: "incomplete",
+          rawText: finalRaw || "",
+          message: "Model returned incomplete JSON after retries"
+        })
+      };
+    }
 
-  if (finalStrict) {
-    finalStrict._meta = { model: usedModel, subject: subject||"", stage: stage||"", bloomType: bloomType||"", lesson: lesson||"", variant: variant||"", preferred: preferredClean||"" };
-    return { statusCode: 200, headers, body: JSON.stringify(finalStrict) };
-  }
-  if (finalSoft) {
-    finalSoft._meta = { model: usedModel, subject: subject||"", stage: stage||"", bloomType: bloomType||"", lesson: lesson||"", variant: variant||"", preferred: preferredClean||"" };
-    return { statusCode: 200, headers, body: JSON.stringify({ debug:"incomplete", parsed: finalSoft, rawText: finalRaw||"" }) };
-  }
+    // تهيئة المخرجات للواجهة
+    const sa = (a)=> Array.isArray(a) ? a.filter(Boolean) : [];
+    const body = {
+      meta: final.meta || {
+        topic: S.topic || "—",
+        age: S.age || "",
+        ageLabel: ageLabelStr,
+        mainBloomLabel: S.bloomMain || "",
+        supportBloomLabel: S.bloomSupport || ""
+      },
+      goals: sa(final.goals),
+      success: final.success || "",
+      structure: sa(final.structure),
+      activities: sa(final.activities),
+      assessment: sa(final.assessment),
+      diff: sa(final.diff),
+      oneMin: final.oneMin || "",
+      _meta: { model: usedModel }
+    };
 
-  const failMsg = "Model returned incomplete JSON after retries";
-  return { statusCode: 200, headers, body: JSON.stringify({ debug:"incomplete", parsed:null, rawText: finalRaw||"", message: failMsg }) };
+    // تتبّع
+    const ua = event.headers["user-agent"] || null;
+    const ref = event.headers["referer"] || event.headers["referrer"] || null;
+    const ip =
+      event.headers["x-nf-client-connection-ip"] ||
+      (event.headers["x-forwarded-for"]?.split(",")[0] || null);
+    supaLogToolUsage(gate.user, { ...S, model: usedModel, ua, ip, path: ref }).catch(()=>{});
+
+    return {
+      statusCode: 200,
+      headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(body)
+    };
+
+  } catch (err) {
+    const msg = err?.stack || err?.message || String(err);
+    return { statusCode: 500, headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" }, body: `Server error: ${msg}` };
+  }
 };
+
+// مرتكز — تم التصحيح مع الحفاظ على كل المنطق الأصلي
+// الإصلاح: استخدام fetch مباشرة بدلاً من @google/generative-ai SDK
+// ✅ الحماية، ✅ الاشتراك، ✅ التتبّع، ✅ الإصلاح الذاتي للـJSON
