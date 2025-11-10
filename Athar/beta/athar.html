@@ -327,9 +327,25 @@
 
     // ========= الاتصال بالخادم =========
     async function callStrategy(payload){
+      let token = null;
+      try {
+        if (window.auth?.getTokenSilently) {
+          token = await window.auth.getTokenSilently();
+        }
+      } catch (e) {
+        console.warn('Failed to get token:', e);
+      }
+
+      if (!token) {
+        throw new Error('يرجى تسجيل الدخول أولاً');
+      }
+
       const res = await fetch('/.netlify/functions/strategy', {
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
       const text = await res.text();
