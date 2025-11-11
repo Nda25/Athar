@@ -106,6 +106,39 @@ async function supaAddMiyadEvent(eventData = {}) {
   }
 }
 
+
+/** -------------------------------------------
+ * حفظ إعدادات التذكير (save-reminder-settings)
+ * يمرّر: الـ payload كاملًا (user_id, email, settings)
+ * السيرفر سيتولى عملية الـ upsert
+ * ------------------------------------------ */
+async function supaSaveReminderSettings(settingsPayload = {}) {
+  // الـ payload اللي جاي من index.html فيه كل حاجة (user_id, email)
+  // فمش محتاجين نجيب اليوزر هنا تاني
+  if (!settingsPayload.user_id) {
+    console.warn('supaSaveReminderSettings: No user_id in payload.');
+    return { ok: false, error: 'No user_id provided' };
+  }
+
+  try {
+    // هننده الـ Function الجديدة (اللي هنعملها في الخطوة 3)
+    const res = await fetch('/.netlify/functions/save-reminder-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settingsPayload) // ابعت الـ payload زي ما هو
+    });
+
+    if (!res.ok) {
+      return { ok: false, error: await res.text() };
+    }
+    
+    // رجع 'ok' عشان الدالة الأصلية تكمل شغلها (تعرض "تم الحفظ")
+    return { ok: true, data: await res.json() };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
   /** -------------------------------------------
    * تسجيل استخدام أداة (log-tool-usage)
    * يمرّر: tool_name + meta (+ نحاول تمرير email وsub للمطابقة)
@@ -153,4 +186,5 @@ async function supaAddMiyadEvent(eventData = {}) {
   window.supaLogToolUsage     = window.supaLogToolUsage     || supaLogToolUsage;
   window.supaGetUserByEmail   = window.supaGetUserByEmail   || supaGetUserByEmail;
   window.supaAddMiyadEvent   = window.supaAddMiyadEvent   || supaAddMiyadEvent;
+  window.supaSaveReminderSettings = window.supaSaveReminderSettings || supaSaveReminderSettings;
 })();

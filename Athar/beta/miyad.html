@@ -1,487 +1,724 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ميعاد</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css" />
-<meta name="color-scheme" content="dark light">
-<style>
-/* حقول عامة */
-.field{ margin:8px 0 }
-.field label{ display:block; font-weight:700; margin:4px 0; line-height:1.6 }
-.field input,.field select{
-  width:100%; padding:10px; border-radius:10px; box-sizing:border-box;
-  border:1px solid rgba(59,130,246,.35);
-}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ميعاد</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="color-scheme" content="dark light" />
+    <style>
+      /* حقول عامة */
+      .field {
+        margin: 8px 0;
+      }
+      .field label {
+        display: block;
+        font-weight: 700;
+        margin: 4px 0;
+        line-height: 1.6;
+      }
+      .field input,
+      .field select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 10px;
+        box-sizing: border-box;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+      }
 
-/* شبكة الحقول */
-.grid2{ display:grid; gap:12px; grid-template-columns:1fr }
-@media (min-width:900px){ .grid2{ grid-template-columns:1fr 1fr } }
+      /* شبكة الحقول */
+      .grid2 {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 900px) {
+        .grid2 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
 
-/* مسافات مريحة بين الكروت */
-.card{ margin-bottom:18px; position:relative }
+      /* مسافات مريحة بين الكروت */
+      .card {
+        margin-bottom: 18px;
+        position: relative;
+      }
 
-/* شريط الأزرار */
-.actions-row{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px }
+      /* شريط الأزرار */
+      .actions-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
 
-/* “التذكير” بعد “التحكمات” */
-.controls + #reminder-card{ margin-top:22px }
+      /* “التذكير” بعد “التحكمات” */
+      .controls + #reminder-card {
+        margin-top: 22px;
+      }
 
-/* تنسيق أساسي لقسم التذكير */
-/* ===== Reminder Card – polished mobile-first ===== */
-#reminder-card.card { padding:16px 18px; }
+      /* تنسيق أساسي لقسم التذكير */
+      /* ===== Reminder Card – polished mobile-first ===== */
+      #reminder-card.card {
+        padding: 16px 18px;
+      }
 
-#reminder-card .title{
-  font-size:1.15rem;
-  margin:0 0 6px;
-  text-align:center;
-}
+      #reminder-card .title {
+        font-size: 1.15rem;
+        margin: 0 0 6px;
+        text-align: center;
+      }
 
-/* سطر الوصف تحت العنوان */
-#reminder-card .hint{
-  margin:0 auto 12px;
-  opacity:.85;
-  font-size:.92rem;
-  text-align:center;
-  max-width:34rem;
-}
+      /* سطر الوصف تحت العنوان */
+      #reminder-card .hint {
+        margin: 0 auto 12px;
+        opacity: 0.85;
+        font-size: 0.92rem;
+        text-align: center;
+        max-width: 34rem;
+      }
 
-/* صفوف الخيارات */
-#reminder-card .row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  flex-wrap:wrap;
-  padding:8px 0;
-  direction:rtl; /* محاذاة RTL جميلة */
-}
+      /* صفوف الخيارات */
+      #reminder-card .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 8px 0;
+        direction: rtl; /* محاذاة RTL جميلة */
+      }
 
-/* عنوان صغير لكل صف */
-#reminder-card .row .label{
-  font-weight:700;
-  white-space:nowrap;
-}
+      /* عنوان صغير لكل صف */
+      #reminder-card .row .label {
+        font-weight: 700;
+        white-space: nowrap;
+      }
 
-/* قائمة الأيام */
-#reminder-card select{
-  min-width: 9rem;
-  max-width: 12rem;
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid rgba(59,130,246,.35);
-  background:var(--card);
-}
+      /* قائمة الأيام */
+      #reminder-card select {
+        min-width: 9rem;
+        max-width: 12rem;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        background: var(--card);
+      }
 
-/* زر الحفظ وحالة الحفظ */
-#reminder-card .actions-row{
-  margin-top:10px;
-  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-}
-#reminder-card #rem-status{ opacity:.8 }
+      /* زر الحفظ وحالة الحفظ */
+      #reminder-card .actions-row {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      #reminder-card #rem-status {
+        opacity: 0.8;
+      }
 
-/* ===== شكل سويتش أنيق للتمكين ===== */
-.switch{
-  position:relative; display:inline-block;
-  width:46px; height:26px; vertical-align:middle;
-}
-.switch input{ display:none; }
-.switch .slider{
-  position:absolute; inset:0; cursor:pointer;
-  background:#cbd5e1; border-radius:100px;
-  transition:.25s;
-}
-.switch .slider::before{
-  content:""; position:absolute; height:20px; width:20px;
-  right:3px; top:3px; border-radius:50%;
-  background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.15);
-  transition:.25s;
-}
-.switch input:checked + .slider{ background:#3b82f6; }
-.switch input:checked + .slider::before{ transform:translateX(-20px); }
-/* قائمة المواعيد */
-.events{ margin-top:12px }
-.ev{
-  background:var(--card);
-  border:1px solid rgba(59,130,246,.22);
-  border-radius:12px; padding:10px;
-  display:flex; align-items:center; justify-content:space-between;
-  gap:8px; margin-bottom:8px;
-}
-.ev .meta{ display:flex; gap:8px; flex-wrap:wrap; font-size:.9rem; opacity:.9 }
-.color{ width:14px; height:14px; border-radius:4px; border:1px solid rgba(0,0,0,.1) }
+      /* ===== شكل سويتش أنيق للتمكين ===== */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 46px;
+        height: 26px;
+        vertical-align: middle;
+      }
+      .switch input {
+        display: none;
+      }
+      .switch .slider {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        background: #cbd5e1;
+        border-radius: 100px;
+        transition: 0.25s;
+      }
+      .switch .slider::before {
+        content: "";
+        position: absolute;
+        height: 20px;
+        width: 20px;
+        right: 3px;
+        top: 3px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        transition: 0.25s;
+      }
+      .switch input:checked + .slider {
+        background: #3b82f6;
+      }
+      .switch input:checked + .slider::before {
+        transform: translateX(-20px);
+      }
+      /* قائمة المواعيد */
+      .events {
+        margin-top: 12px;
+      }
+      .ev {
+        background: var(--card);
+        border: 1px solid rgba(59, 130, 246, 0.22);
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .ev .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+      .color {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
 
-/* تلميحات */
-.legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:.9rem }
-.legend .pill{ padding:.18rem .5rem; border-radius:999px; border:1px solid rgba(59,130,246,.25) }
+      /* تلميحات */
+      .legend {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+        font-size: 0.9rem;
+      }
+      .legend .pill {
+        padding: 0.18rem 0.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(59, 130, 246, 0.25);
+      }
 
-.print-note{ text-align:center; margin-top:8px; opacity:.8 }
+      .print-note {
+        text-align: center;
+        margin-top: 8px;
+        opacity: 0.8;
+      }
 
-/* طباعة */
-@media print{
-  .topbar,.actions-row,.controls,.btn,.toast{ display:none !important }
-  .ev{ page-break-inside:avoid }
-}
-</style>
-</head>
-<body>
+      /* طباعة */
+      @media print {
+        .topbar,
+        .actions-row,
+        .controls,
+        .btn,
+        .toast {
+          display: none !important;
+        }
+        .ev {
+          page-break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
     <div class="global-bg"></div>
- 
 
-  <div class="topbar">
-    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
-    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
-    <div class="user"><a class="btn" href="programs.html">مساحة إبداعي</a></div>
-  </div>
-
-  <header>
-    <div class="hero">
-      <h1 class="logo">مـِـيعـاد</h1>
-      <div class="tag"><span class="dot"></span>ميعادك مرآة حرصك والتزامك..</div>
+    <div class="topbar">
+      <div class="left-actions">
+        <a class="btn" href="index.html">الرئيسية</a>
+      </div>
+      <div class="actions">
+        <button class="btn" id="themeToggle">🌓</button>
+      </div>
+      <div class="user">
+        <a class="btn" href="programs.html">مساحة إبداعي</a>
+      </div>
     </div>
-  </header>
 
-  <main>
-    <div class="container">
-      <!-- بطاقة إدخال المواعيد -->
-      <section class="card controls">
-        <h2 class="title">أضِف موعدًا إلى تقويم الفصل الدراسي</h2>
-        <form id="miyad-form">
-          <div class="grid2">
-            <div class="field"><label>المادة</label><input id="m-subj" placeholder="مثال: علوم"></div>
-            <div class="field"><label>الفصل</label><input id="m-class" placeholder="مثال: 6/ب"></div>
+    <header>
+      <div class="hero">
+        <h1 class="logo">مـِـيعـاد</h1>
+        <div class="tag">
+          <span class="dot"></span>ميعادك مرآة حرصك والتزامك..
+        </div>
+      </div>
+    </header>
 
-            <div class="field">
-              <label>اليوم</label>
-              <select id="m-day">
-                <option>الأحد</option><option>الإثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option>
-              </select>
+    <main>
+      <div class="container">
+        <!-- بطاقة إدخال المواعيد -->
+        <section class="card controls">
+          <h2 class="title">أضِف موعدًا إلى تقويم الفصل الدراسي</h2>
+          <form id="miyad-form">
+            <div class="grid2">
+              <div class="field">
+                <label>المادة</label
+                ><input id="m-subj" placeholder="مثال: علوم" />
+              </div>
+              <div class="field">
+                <label>الفصل</label
+                ><input id="m-class" placeholder="مثال: 6/ب" />
+              </div>
+
+              <div class="field">
+                <label>اليوم</label>
+                <select id="m-day">
+                  <option>الأحد</option>
+                  <option>الإثنين</option>
+                  <option>الثلاثاء</option>
+                  <option>الأربعاء</option>
+                  <option>الخميس</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>الحصة رقم</label>
+                <input id="m-slot" type="number" min="1" max="8" value="1" />
+              </div>
+
+              <div class="field">
+                <label>التاريخ (مهم للتذكيرات)</label>
+                <input id="m-date" type="text" placeholder="اختر التاريخ" />
+              </div>
+
+              <div class="field">
+                <label>لون</label>
+                <select id="m-color">
+                  <option value="#60a5fa">أزرق</option>
+                  <option value="#22c55e">أخضر</option>
+                  <option value="#f59e0b">برتقالي</option>
+                  <option value="#ef4444">أحمر</option>
+                  <option value="#a78bfa">بنفسجي</option>
+                </select>
+              </div>
             </div>
+          </form>
 
-        <div class="field"><label>الحصة رقم</label>
-  <input id="m-slot" type="number" min="1" max="8" value="1">
-</div>
-
-<div class="field"><label>التاريخ (مهم للتذكيرات)</label>
-  <input id="m-date" type="text" placeholder="اختر التاريخ">
-</div>
-
-<div class="field">
-  <label>لون</label>
-  <select id="m-color">
-    <option value="#60a5fa">أزرق</option>
-    <option value="#22c55e">أخضر</option>
-    <option value="#f59e0b">برتقالي</option>
-    <option value="#ef4444">أحمر</option>
-    <option value="#a78bfa">بنفسجي</option>
-  </select>
-</div>
+          <div class="actions-row">
+            <button class="btn primary" id="add">إضافة موعد</button>
+            <button class="btn" id="export">نسخ قائمة المواعيد</button>
+            <button class="btn" id="print">طباعة</button>
+            <button class="btn ghost" id="clear">حذف الكل</button>
           </div>
-        </form>
+        </section>
 
-        <div class="actions-row">
-          <button class="btn primary" id="add">إضافة موعد</button>
-          <button class="btn" id="export">نسخ قائمة المواعيد</button>
-          <button class="btn" id="print">طباعة</button>
-          <button class="btn ghost" id="clear">حذف الكل</button>
-        </div>
-      </section>
+        <!-- قائمة المواعيد -->
+        <section class="card">
+          <h2 class="title">مواعيد الفصل الدراسي ⏰</h2>
+          <div class="legend">
+            <span class="pill">رتّب حسب اليوم والحصة</span>
+            <span class="pill">كل موعد يظهر معه اللون + المادة + الفصل</span>
+          </div>
+          <div class="events" id="list"></div>
+          <p class="print-note">هذا اليوم سيمضي… وسيبقى منه الأثـر 🌿</p>
+        </section>
 
-      <!-- قائمة المواعيد -->
-      <section class="card">
-        <h2 class="title">مواعيد الفصل الدراسي ⏰</h2>
-        <div class="legend">
-          <span class="pill">رتّب حسب اليوم والحصة</span>
-          <span class="pill">كل موعد يظهر معه اللون + المادة + الفصل</span>
-        </div>
-        <div class="events" id="list"></div>
-        <p class="print-note">هذا اليوم سيمضي… وسيبقى منه الأثـر 🌿</p>
-      </section>
+        <!-- بطاقة إعدادات التذكير عبر الإيميل -->
+        <section class="card" id="reminder-card">
+          <h2 class="title">التذكير عبر البريد الإلكتروني 📩</h2>
+          <p class="hint">تأكد من تفعيل إشعارات البريد الإلكتروني.</p>
 
-      <!-- بطاقة إعدادات التذكير عبر الإيميل -->
-      <section class="card" id="reminder-card">
-        <h2 class="title">التذكير عبر البريد الإلكتروني 📩</h2>
-        <p class="hint">تأكد من تفعيل إشعارات البريد الإلكتروني.</p>
+          <div class="row">
+            <div class="label">تفعيل التذكير عبر البريد الإلكتروني</div>
+            <label class="switch" aria-label="تفعيل التذكير عبر البريد">
+              <input type="checkbox" id="rem-enable" />
+              <span class="slider"></span>
+            </label>
+          </div>
 
-        <div class="row">
-          <div class="label">تفعيل التذكير عبر البريد الإلكتروني</div>
-          <label class="switch" aria-label="تفعيل التذكير عبر البريد">
-            <input type="checkbox" id="rem-enable">
-            <span class="slider"></span>
-          </label>
-        </div>
+          <div class="row">
+            <div class="label">قبل الموعد بـ</div>
+            <select id="rem-days" aria-label="قبل الموعد بـ">
+              <option value="1">يوم واحد</option>
+              <option value="2" selected>يومين</option>
+              <option value="3">3 أيام</option>
+              <option value="4">4 أيام</option>
+              <option value="5">5 أيام</option>
+              <option value="6">6 أيام</option>
+              <option value="7">7 أيام</option>
+            </select>
+          </div>
 
-        <div class="row">
-          <div class="label">قبل الموعد بـ</div>
-          <select id="rem-days" aria-label="قبل الموعد بـ">
-            <option value="1">يوم واحد</option>
-            <option value="2" selected>يومين</option>
-            <option value="3">3 أيام</option>
-            <option value="4">4 أيام</option>
-            <option value="5">5 أيام</option>
-            <option value="6">6 أيام</option>
-            <option value="7">7 أيام</option>
-          </select>
-        </div>
+          <div class="actions-row">
+            <button class="btn" id="rem-save">حفظ إعدادات التذكير</button>
+            <span id="rem-status" class="muted"></span>
+          </div>
+        </section>
+      </div>
+      <!-- هنا إغلاق الـ container -->
+    </main>
 
-        <div class="actions-row">
-          <button class="btn" id="rem-save">حفظ إعدادات التذكير</button>
-          <span id="rem-status" class="muted"></span>
-        </div>
-      </section>
-    </div> <!-- هنا إغلاق الـ container -->
-  </main>
+    <footer>
+      <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+      <p class="foot-name">ندى المجيرش</p>
 
-<footer>
-  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-  <p class="foot-name">ندى المجيرش</p>
+      <nav class="foot-links">
+        <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+        <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+        <a href="refund-policy.html">سياسة الاسترجاع</a
+        ><span class="sep">|</span> <a href="whatsapp.html">تواصل واتساب</a
+        ><span class="sep">|</span>
+        <a href="complaints.html">الشكاوى والاقتراحات</a>
+      </nav>
 
-  <nav class="foot-links">
-    <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-    <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-    <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-    <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-    <a href="complaints.html">الشكاوى والاقتراحات</a>
-  </nav>
+      <div class="foot-copy">
+        © <span id="year"></span> أثــر — كل الحقوق محفوظة.
+      </div>
+    </footer>
 
-  <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-</footer>
+    <script>
+      // سنة تلقائية في الفوتر
+      (function () {
+        var y = document.getElementById("year");
+        if (y) y.textContent = new Date().getFullYear();
+      })();
+    </script>
 
-<script>
-  // سنة تلقائية في الفوتر
-  (function(){
-    var y=document.getElementById('year');
-    if(y) y.textContent=new Date().getFullYear();
-  })();
-</script>
+    <div class="toast" id="toast"></div>
 
-  <div class="toast" id="toast"></div>
+    <!-- ========== سكربت الصفحة: منطق ميعاد + التحليلات + إعدادات التذكير ========== -->
+    <script>
+      /* ====== أدوات بسيطة ====== */
+      const KEY = "mi3ad:events";
+      function toast(m) {
+        const t = document.getElementById("toast");
+        if (!t) return;
+        t.textContent = m;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 1200);
+      }
+      function load() {
+        try {
+          return JSON.parse(localStorage.getItem(KEY) || "[]");
+        } catch (_) {
+          return [];
+        }
+      }
+      function save(list) {
+        localStorage.setItem(KEY, JSON.stringify(list));
+      }
+      <!-- — اربطي حساب Auth0 مع جدول users (upsert) بعد تحميل كل السكربتات -->
+      window.addEventListener("load", () => {
+        if (typeof supaEnsureUserProfile === "function") {
+          try {
+            supaEnsureUserProfile();
+          } catch (_) {}
+        }
+      });
 
-  <!-- ========== سكربت الصفحة: منطق ميعاد + التحليلات + إعدادات التذكير ========== -->
-  <script>
-    /* ====== أدوات بسيطة ====== */
-    const KEY='mi3ad:events';
-    function toast(m){ const t=document.getElementById('toast'); if(!t) return; t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200); }
-    function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(_){ return [] } }
-    function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
-<!-- — اربطي حساب Auth0 مع جدول users (upsert) بعد تحميل كل السكربتات -->
-window.addEventListener('load', () => {
-  if (typeof supaEnsureUserProfile === 'function') {
-    try { supaEnsureUserProfile(); } catch(_) {}
-  }
-});
+      /* — ميتا خفيفة عن آخر إدخال (للتتبّع) */
+      function miyadMetaSnapshot() {
+        const subj =
+          (document.getElementById("m-subj")?.value || "").trim() || null;
+        const cls =
+          (document.getElementById("m-class")?.value || "").trim() || null;
+        const day = document.getElementById("m-day")?.value || null;
+        const slot =
+          Number(document.getElementById("m-slot")?.value || 0) || null;
+        const date =
+          (document.getElementById("m-date")?.value || "").trim() || null;
+        const color = document.getElementById("m-color")?.value || null;
+        return { subj, cls, day, slot, date, color };
+      }
 
-/* — ميتا خفيفة عن آخر إدخال (للتتبّع) */
-function miyadMetaSnapshot(){
-  const subj = (document.getElementById('m-subj')?.value||'').trim() || null;
-  const cls  = (document.getElementById('m-class')?.value||'').trim() || null;
-  const day  = document.getElementById('m-day')?.value || null;
-  const slot = Number(document.getElementById('m-slot')?.value || 0) || null;
-  const date = (document.getElementById('m-date')?.value||'').trim() || null;
-  const color= document.getElementById('m-color')?.value || null;
-  return { subj, cls, day, slot, date, color };
-}
-
-    /* رندر القائمة */
-    function render(){
-      const box=document.getElementById('list'); box.innerHTML='';
-      const daysOrder={'الأحد':1,'الإثنين':2,'الثلاثاء':3,'الأربعاء':4,'الخميس':5};
-      const items=load().sort((a,b)=> (daysOrder[a.day]-daysOrder[b.day]) || (a.slot-b.slot));
-      if(!items.length){ box.innerHTML='<p class="muted">لا توجد مواعيد بعد.</p>'; return; }
-      items.forEach((e,i)=>{
-        const d=document.createElement('div'); d.className='ev';
-        d.innerHTML=`
+      /* رندر القائمة */
+      function render() {
+        const box = document.getElementById("list");
+        box.innerHTML = "";
+        const daysOrder = {
+          الأحد: 1,
+          الإثنين: 2,
+          الثلاثاء: 3,
+          الأربعاء: 4,
+          الخميس: 5,
+        };
+        const items = load().sort(
+          (a, b) => daysOrder[a.day] - daysOrder[b.day] || a.slot - b.slot
+        );
+        if (!items.length) {
+          box.innerHTML = '<p class="muted">لا توجد مواعيد بعد.</p>';
+          return;
+        }
+        items.forEach((e, i) => {
+          const d = document.createElement("div");
+          d.className = "ev";
+          d.innerHTML = `
           <div class="meta">
             <span class="color" style="background:${e.color}"></span>
             <strong>${e.subj}</strong>
             <span>— فصل ${e.cls}</span>
             <span>— ${e.day} (حصة ${e.slot})</span>
-            ${e.date?`<span>— ${e.date}</span>`:''}
+            ${e.date ? `<span>— ${e.date}</span>` : ""}
           </div>
           <a href="#" data-i="${i}" class="btn ghost" style="padding:6px 10px">حذف</a>`;
-        box.appendChild(d);
-      });
-    }
-
-    /* ====== تحليلات الاستخدام (اختياري) ====== */
-    function logUse(tag){
-      try { if (typeof supaLogToolUsage === 'function') supaLogToolUsage(tag); } catch(_) {}
-    }
-
-    /* أحداث الأزرار الأساسية */
-    document.addEventListener('DOMContentLoaded', ()=>{
-      if (typeof bindAutoSave === 'function') bindAutoSave('miyad', '#miyad-form');
-      render();
-      logUse('miyad:view');
-document.getElementById('add').addEventListener('click', async ()=>{
-  const subj = document.getElementById('m-subj').value.trim();
-  const cls  = document.getElementById('m-class').value.trim();
-  const day  = document.getElementById('m-day').value;
-  const slot = +document.getElementById('m-slot').value || 1;
-  const date = document.getElementById('m-date').value;
-  const color= document.getElementById('m-color').value;
-
-  if(!subj || !cls){ toast('أدخل المادة والفصل'); return; }
-
-  const list = load(); list.push({subj,cls,day,slot,date,color}); save(list);
-  render(); toast('تمت الإضــافة ✅');
-
-
-// حفظ الموعد في Supabase (عبر Netlify Function)
-try {
-  // هنتأكد إن الدالة الجديدة موجودة (هنضيفها في الخطوة 2)
-  if (typeof supaAddMiyadEvent === 'function') {
-    
-    // هنبعت بيانات الموعد للدالة وهي هتتصرف
-    await supaAddMiyadEvent({
-      subj, class: cls, day, slot, date: date || null, color
-    });
-    
-  }
-} catch(e) {
-  // لو حصل خطأ، هو هيظهر في الكونسول بس مش هيوقف التطبيق
-  // لأن الموعد كده كده اتحفظ في الـ localStorage
-  console.warn('Failed to sync event to Supabase', e);
-}
-
-
-  // تتبّع: إضافة موعد
-  if (typeof supaLogToolUsage === 'function') {
-    try { await supaLogToolUsage('miyad_add', { subj, cls, day, slot, date: date||null, color }); } catch(_) {}
-  }
-  // (الإبقاء على التتبّع البسيط القديم اختياري)
-  logUse('miyad:add_event');
-});
-
-      document.getElementById('list').addEventListener('click', (e)=>{
-        const a=e.target.closest('a[data-i]'); if(!a) return; e.preventDefault();
-        const i=+a.getAttribute('data-i'); const list=load(); list.splice(i,1); save(list); render();
-        logUse('miyad:delete_event');
-      });
-
-      document.getElementById('export').addEventListener('click', ()=>{
-        const txt=load().map(e=>`${e.day} | حصة ${e.slot} | ${e.subj} — فصل ${e.cls}${e.date?(' — '+e.date):''}`).join('\n');
-        navigator.clipboard.writeText(txt||'').then(()=>{ toast('تم النسخ ✅'); logUse('miyad:export'); });
-      });
-
-      document.getElementById('print').addEventListener('click', ()=>{ window.print(); logUse('miyad:print'); });
-
-      document.getElementById('clear').addEventListener('click', ()=>{
-        if(confirm('حذف جميع مواعيد الفصل الدراسي؟')){ localStorage.removeItem(KEY); render(); logUse('miyad:clear_all'); }
-      });
-    });
-
-    /* ====== إعدادات التذكير (Supabase + Auth0) ====== */
-    // نضمن أننا نرجع "client" فيه .from — وليس مكتبة supabase نفسها
-    function pickSupaClient(){
-      if (window.supa && typeof window.supa.from === 'function') return window.supa;
-      if (window.supabaseClient && typeof window.supabaseClient.from === 'function') return window.supabaseClient;
-      return null; // لا ترجّع window.supabase لأنها مجرد مكتبة createClient
-    }
-    async function waitForSupa(max=40){ // ~4 ثواني
-      for (let i=0;i<max;i++){
-        const c = pickSupaClient();
-        if (c) return c;
-        await new Promise(r=>setTimeout(r,100));
+          box.appendChild(d);
+        });
       }
-      return null;
-    }
-    async function getAuthUser(){
-      try { return await window.auth?.getUser(); } catch(_) { return null; }
-    }
 
-    // تحميل الإعدادات
-    async function loadReminderSettings() {
-      const sb   = await waitForSupa();
-      const user = await getAuthUser();
-      if (!sb || !user) return;
+      /* ====== تحليلات الاستخدام (اختياري) ====== */
+      function logUse(tag) {
+        try {
+          if (typeof supaLogToolUsage === "function") supaLogToolUsage(tag);
+        } catch (_) {}
+      }
 
-      const { data, error } = await sb
-        .from('miyad_settings')
-        .select('reminders_enabled, remind_days_before')
-        .eq('user_id', user.sub)
-        .maybeSingle();
+      /* أحداث الأزرار الأساسية */
+      document.addEventListener("DOMContentLoaded", () => {
+        if (typeof bindAutoSave === "function")
+          bindAutoSave("miyad", "#miyad-form");
+        render();
+        logUse("miyad:view");
+        document.getElementById("add").addEventListener("click", async () => {
+          const subj = document.getElementById("m-subj").value.trim();
+          const cls = document.getElementById("m-class").value.trim();
+          const day = document.getElementById("m-day").value;
+          const slot = +document.getElementById("m-slot").value || 1;
+          const date = document.getElementById("m-date").value;
+          const color = document.getElementById("m-color").value;
 
-      if (error) { console.warn('loadReminderSettings error:', error); return; }
+          if (!subj || !cls) {
+            toast("أدخل المادة والفصل");
+            return;
+          }
 
-      const enable = data?.reminders_enabled ?? false;
-      const days   = data?.remind_days_before ?? 2;
+          const list = load();
+          list.push({ subj, cls, day, slot, date, color });
+          save(list);
+          render();
+          toast("تمت الإضــافة ✅");
 
-      const cb  = document.getElementById('rem-enable');
-      const sel = document.getElementById('rem-days');
-      if (cb)  cb.checked = !!enable;
-      if (sel) sel.value  = String(days);
-    }
+          // حفظ الموعد في Supabase (عبر Netlify Function)
+          try {
+            // هنتأكد إن الدالة الجديدة موجودة (هنضيفها في الخطوة 2)
+            if (typeof supaAddMiyadEvent === "function") {
+              // هنبعت بيانات الموعد للدالة وهي هتتصرف
+              await supaAddMiyadEvent({
+                subj,
+                class: cls,
+                day,
+                slot,
+                date: date || null,
+                color,
+              });
+            }
+          } catch (e) {
+            // لو حصل خطأ، هو هيظهر في الكونسول بس مش هيوقف التطبيق
+            // لأن الموعد كده كده اتحفظ في الـ localStorage
+            console.warn("Failed to sync event to Supabase", e);
+          }
 
-    // حفظ الإعدادات
-async function saveReminderSettings() {
-  const sb   = await waitForSupa();
-  const user = await getAuthUser();
-  if (!sb || !user) { (window.toast? toast('سجّلي دخولك أولًا') : alert('سجّلي دخولك أولًا')); return; }
+          // تتبّع: إضافة موعد
+          if (typeof supaLogToolUsage === "function") {
+            try {
+              await supaLogToolUsage("miyad_add", {
+                subj,
+                cls,
+                day,
+                slot,
+                date: date || null,
+                color,
+              });
+            } catch (_) {}
+          }
+          // (الإبقاء على التتبّع البسيط القديم اختياري)
+          logUse("miyad:add_event");
+        });
 
-  const cb   = document.getElementById('rem-enable');
-  const sel  = document.getElementById('rem-days');
-  const stat = document.getElementById('rem-status');
+        document.getElementById("list").addEventListener("click", (e) => {
+          const a = e.target.closest("a[data-i]");
+          if (!a) return;
+          e.preventDefault();
+          const i = +a.getAttribute("data-i");
+          const list = load();
+          list.splice(i, 1);
+          save(list);
+          render();
+          logUse("miyad:delete_event");
+        });
 
-  const enabled = !!cb.checked;
-  const days_before = Number(sel.value || 2);
+        document.getElementById("export").addEventListener("click", () => {
+          const txt = load()
+            .map(
+              (e) =>
+                `${e.day} | حصة ${e.slot} | ${e.subj} — فصل ${e.cls}${
+                  e.date ? " — " + e.date : ""
+                }`
+            )
+            .join("\n");
+          navigator.clipboard.writeText(txt || "").then(() => {
+            toast("تم النسخ ✅");
+            logUse("miyad:export");
+          });
+        });
 
-  const payload = {
-    user_id: user.sub,
-    email:   user.email || null,
-    reminders_enabled: enabled,
-    remind_days_before: days_before
-  };
+        document.getElementById("print").addEventListener("click", () => {
+          window.print();
+          logUse("miyad:print");
+        });
 
-  stat.textContent = 'جارٍ الحفظ…';
-  const { error } = await sb.from('miyad_settings').upsert(payload, { onConflict: 'user_id' });
-  if (error) { console.error('saveReminderSettings error:', error); stat.textContent='تعذّر الحفظ'; toast('تعذّر الحفظ'); return; }
+        document.getElementById("clear").addEventListener("click", () => {
+          if (confirm("حذف جميع مواعيد الفصل الدراسي؟")) {
+            localStorage.removeItem(KEY);
+            render();
+            logUse("miyad:clear_all");
+          }
+        });
+      });
 
-  stat.textContent = 'تم الحفظ ✓';
-  toast('تم حفظ إعدادات التذكير ✓');
+      /* ====== إعدادات التذكير (Supabase + Auth0) ====== */
+      // نضمن أننا نرجع "client" فيه .from — وليس مكتبة supabase نفسها
+      function pickSupaClient() {
+        if (window.supa && typeof window.supa.from === "function")
+          return window.supa;
+        if (
+          window.supabaseClient &&
+          typeof window.supabaseClient.from === "function"
+        )
+          return window.supabaseClient;
+        return null; // لا ترجّع window.supabase لأنها مجرد مكتبة createClient
+      }
+      async function waitForSupa(max = 40) {
+        // ~4 ثواني
+        for (let i = 0; i < max; i++) {
+          const c = pickSupaClient();
+          if (c) return c;
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        return null;
+      }
+      async function getAuthUser() {
+        try {
+          return await window.auth?.getUser();
+        } catch (_) {
+          return null;
+        }
+      }
 
-  // تتبّع: إعداد التذكير
-  if (typeof supaLogToolUsage === 'function') {
-    try { await supaLogToolUsage('miyad_reminder_save', { enabled, days_before }); } catch(_) {}
-  }
-}
+      // تحميل الإعدادات
+      async function loadReminderSettings() {
+        const sb = await waitForSupa();
+        const user = await getAuthUser();
+        if (!sb || !user) return;
 
-    // ربط أزرار إعدادات التذكير + تحميل عند الجاهزية
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('rem-save')?.addEventListener('click', saveReminderSettings);
-      window.addEventListener('auth0:ready', loadReminderSettings);
-      setTimeout(loadReminderSettings, 1500); // احتياط
-    });
-  </script>
+        const { data, error } = await sb
+          .from("miyad_settings")
+          .select("reminders_enabled, remind_days_before")
+          .eq("user_id", user.sub)
+          .maybeSingle();
 
-  <!-- ========== المكتبات بالترتيب الصحيح ========== -->
-  <!-- Supabase -->
-  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="assets/js/supabase-client.js"></script>
+        if (error) {
+          console.warn("loadReminderSettings error:", error);
+          return;
+        }
 
-  <!-- Auth0 SDK (بدون defer لضمان الجاهزية قبل require-auth) -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
+        const enable = data?.reminders_enabled ?? false;
+        const days = data?.remind_days_before ?? 2;
 
-  <!-- حماية الصفحة -->
-  <script defer src="assets/js/require-auth.js"></script>
+        const cb = document.getElementById("rem-enable");
+        const sel = document.getElementById("rem-days");
+        if (cb) cb.checked = !!enable;
+        if (sel) sel.value = String(days);
+      }
 
-  <!-- سكربتات المشروع -->
-  <script defer src="assets/js/storage.js"></script>
-  <script defer src="app.js"></script>
-  <!-- Flatpickr -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    flatpickr("#m-date", {
-      locale: "ar",
-      dateFormat: "Y-m-d"
-    });
-  });
-</script>
-</body>
+      // حفظ الإعدادات
+      async function saveReminderSettings() {
+        const sb = await waitForSupa();
+        const user = await getAuthUser();
+        if (!sb || !user) {
+          window.toast
+            ? toast("سجّلي دخولك أولًا")
+            : alert("سجّلي دخولك أولًا");
+          return;
+        }
+
+        const cb = document.getElementById("rem-enable");
+        const sel = document.getElementById("rem-days");
+        const stat = document.getElementById("rem-status");
+
+        const enabled = !!cb.checked;
+        const days_before = Number(sel.value || 2);
+
+        const payload = {
+          user_id: user.sub,
+          email: user.email || null,
+          reminders_enabled: enabled,
+          remind_days_before: days_before,
+        };
+
+        stat.textContent = "جارٍ الحفظ…";
+        if (typeof supaSaveReminderSettings !== "function") {
+          stat.textContent = "خطأ: الدالة غير معرفة";
+          toast("خطأ برمجي: الدالة غير موجودة");
+          return;
+        }
+
+        // هنبعت الـ payload جاهز للدالة الجديدة
+        const { ok, error } = await supaSaveReminderSettings(payload);
+
+        if (error || !ok) {
+          console.error("saveReminderSettings error:", error);
+          stat.textContent = "تعذّر الحفظ";
+          toast("تعذّر الحفظ");
+          return;
+        }
+
+        stat.textContent = "تم الحفظ ✓";
+        toast("تم حفظ إعدادات التذكير ✓");
+
+        // تتبّع: إعداد التذكير
+        if (typeof supaLogToolUsage === "function") {
+          try {
+            await supaLogToolUsage("miyad_reminder_save", {
+              enabled,
+              days_before,
+            });
+          } catch (_) {}
+        }
+      }
+
+      // ربط أزرار إعدادات التذكير + تحميل عند الجاهزية
+      document.addEventListener("DOMContentLoaded", () => {
+        document
+          .getElementById("rem-save")
+          ?.addEventListener("click", saveReminderSettings);
+        window.addEventListener("auth0:ready", loadReminderSettings);
+        setTimeout(loadReminderSettings, 1500); // احتياط
+      });
+    </script>
+
+    <!-- ========== المكتبات بالترتيب الصحيح ========== -->
+    <!-- Supabase -->
+    <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script defer src="assets/js/supabase-client.js"></script>
+
+    <!-- Auth0 SDK (بدون defer لضمان الجاهزية قبل require-auth) -->
+    <script
+      src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+      onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"
+    ></script>
+
+    <!-- حماية الصفحة -->
+    <script defer src="assets/js/require-auth.js"></script>
+
+    <!-- سكربتات المشروع -->
+    <script defer src="assets/js/storage.js"></script>
+    <script defer src="app.js"></script>
+    <!-- Flatpickr -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        flatpickr("#m-date", {
+          locale: "ar",
+          dateFormat: "Y-m-d",
+        });
+      });
+    </script>
+  </body>
 </html>
