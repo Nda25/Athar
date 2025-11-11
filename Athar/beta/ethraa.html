@@ -182,17 +182,13 @@ async function fetchEthraa(subject, stage, focus){
   try {
     // 1. اتأكد إن (window.auth) موجود
     if (typeof window.auth === 'undefined' || !window.auth) {
-       console.error('Auth0 client (window.auth) not initialized.');
-       toast('خطأ: المصادقة غير جاهزة');
-       throw new Error('Auth0 client not ready');
+      toast('خطأ: المصادقة غير جاهزة');
+      throw new Error('Auth0 client not ready');
     }
     
     // 2. اطلب التوكن من (window.auth)
     accessToken = await window.auth.getTokenSilently();
 
-    // ==== 🕵️‍♂️ اطبع التوكن هنا ====
-    console.log("MY_ACCESS_TOKEN:", accessToken); 
-    // ===============================
 
   } catch (e) {
     console.error('Error getting access token', e);
@@ -201,7 +197,6 @@ async function fetchEthraa(subject, stage, focus){
     throw new Error('Token error');
   }
 
-  // === ❌ الجزء ده كان ناقص عندك ===
   // 3. ابعت الطلب ومعاه التوكن في الهيدر
   const res = await fetch('/.netlify/functions/gemini-ethraa', { // <--- لازم تكلم السيرفر
     method:'POST',
