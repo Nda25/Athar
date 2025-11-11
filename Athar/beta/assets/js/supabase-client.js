@@ -139,6 +139,37 @@ async function supaSaveReminderSettings(settingsPayload = {}) {
   }
 }
 
+/** -------------------------------------------
+ * جلب إعدادات التذكير (get-reminder-settings)
+ * يكلم الـ Function عشان تجيب إعدادات المستخدم ده
+ * ------------------------------------------ */
+async function supaGetReminderSettings() {
+  const u = await auth0SafeGetUser(); // بنجيب اليوزر
+  if (!u || !u.sub) {
+    return { ok: false, data: null, error: 'No authenticated user' };
+  }
+
+  try {
+    // هننده الـ Function الجديدة (اللي هنعملها في الخطوة 3)
+    // هنستخدم POST عشان نبعت الـ user_sub في الـ body زي الباقي
+    const res = await fetch('/.netlify/functions/get-reminder-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_sub: u.sub })
+    });
+
+    if (!res.ok) {
+      return { ok: false, data: null, error: await res.text() };
+    }
+    
+    // هترجع الداتا (أو null لو مفيش إعدادات)
+    const data = await res.json();
+    return { ok: true, data: data, error: null };
+  } catch (e) {
+    return { ok: false, data: null, error: e.message };
+  }
+}
+
   /** -------------------------------------------
    * تسجيل استخدام أداة (log-tool-usage)
    * يمرّر: tool_name + meta (+ نحاول تمرير email وsub للمطابقة)
@@ -187,4 +218,5 @@ async function supaSaveReminderSettings(settingsPayload = {}) {
   window.supaGetUserByEmail   = window.supaGetUserByEmail   || supaGetUserByEmail;
   window.supaAddMiyadEvent   = window.supaAddMiyadEvent   || supaAddMiyadEvent;
   window.supaSaveReminderSettings = window.supaSaveReminderSettings || supaSaveReminderSettings;
+  window.supaGetReminderSettings = window.supaGetReminderSettings || supaGetReminderSettings;
 })();

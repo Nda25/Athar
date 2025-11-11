@@ -598,15 +598,16 @@
 
       // تحميل الإعدادات
       async function loadReminderSettings() {
-        const sb = await waitForSupa();
+        // const sb = await waitForSupa();
         const user = await getAuthUser();
-        if (!sb || !user) return;
+        if (!user) return;
 
-        const { data, error } = await sb
-          .from("miyad_settings")
-          .select("reminders_enabled, remind_days_before")
-          .eq("user_id", user.sub)
-          .maybeSingle();
+        if (typeof supaGetReminderSettings !== "function") {
+          console.warn("supaGetReminderSettings function is not defined");
+          return;
+        }
+
+        const { data, error } = await supaGetReminderSettings();
 
         if (error) {
           console.warn("loadReminderSettings error:", error);
