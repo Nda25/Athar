@@ -472,43 +472,6 @@
     <!-- سكربت عام المشروع -->
     <script defer src="app.js"></script>
 
-    <!-- ===== Auth0 helpers (جديد) ===== -->
-    <script>
-      // ملاحظة: يُفترض أن require-auth.js يُنشئ window.auth0Client بعد تسجيل الدخول.
-      // هذه الدوال تضمن وجود العميل وتستخرج توكنًا صالحًا لإرساله مع الطلبات المحمية.
-      async function ensureAuth0Client() {
-        if (window.auth0Client) return window.auth0Client;
-        if (!window.createAuth0Client) throw new Error("Auth0 SDK not loaded");
-        window.auth0Client = await window.createAuth0Client({
-          domain: window.AUTH0_DOMAIN || "<YOUR_DOMAIN>.auth0.com",
-          clientId: window.AUTH0_CLIENTID || "<YOUR_CLIENT_ID>",
-          audience: window.AUTH0_AUDIENCE || undefined,
-          cacheLocation: "localstorage",
-          useRefreshTokens: true,
-        });
-        return window.auth0Client;
-      }
-      async function getAuthToken() {
-        const client = await ensureAuth0Client();
-        // حاول Access Token أولاً
-        try {
-          const at = await client.getAccessTokenSilently({
-            detailedResponse: false,
-            authorizationParams: window.AUTH0_AUDIENCE
-              ? { audience: window.AUTH0_AUDIENCE }
-              : {},
-          });
-          if (at) return at;
-        } catch (_) {}
-        // وإلا خذ Id Token
-        try {
-          const claims = await client.getIdTokenClaims();
-          if (claims && claims.__raw) return claims.__raw;
-        } catch (_) {}
-        throw new Error("Missing token");
-      }
-    </script>
-
     <script>
       /* ===== قواميس ومعينات محلية (للاستدلال وشوية وظائف مساعدة) ===== */
       const BLOOM_VERBS = {
@@ -727,13 +690,17 @@
         btnGen.textContent = "نولّد خطة ذكية… ✨";
 
         try {
-          // الحصول على التوكن
-          let token = null;
+          let token;
           try {
-            token = await getAuthToken();
+            if (typeof window.auth === "undefined" || !window.auth) {
+              console.error("Auth0 client (window.auth) not initialized.");
+              toastMsg("خطأ: المصادقة غير جاهزة");
+              throw new Error("Auth0 client not ready");
+            }
+            token = await window.auth.getTokenSilently();
           } catch (e) {
-            console.error(e);
-            toastMsg("يجب تسجيل الدخول أولًا");
+            console.error("Error getting access token", e);
+            toastMsg("خطأ في جلب التوكن، حاول تسجيل الدخول مرة أخرى");
             btnGen.disabled = false;
             btnGen.textContent = btnGen.dataset._label || "ولّد لي الخطة ✨";
             return;
