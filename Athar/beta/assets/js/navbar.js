@@ -54,13 +54,15 @@
     }
 
     if (!auth) {
-      console.warn("Auth0 not initialized yet");
-      btn.disabled = false;
+      console.warn("Auth0 not initialized yet, will retry...");
+      // Retry in 500ms if auth not ready
+      setTimeout(bindAuthCTA, 500);
       return;
     }
 
     // Login/Register button
     btn.disabled = false;
+    btn.onclick = null; // Clear any previous onclick
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       auth.loginWithRedirect({
@@ -73,6 +75,7 @@
 
     // Logout button
     if (logoutBtn) {
+      logoutBtn.onclick = null; // Clear any previous onclick
       logoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
         auth.logout({ logoutParams: { returnTo: window.location.origin } });
@@ -117,12 +120,16 @@
 
     if (authCta && themeToggle) {
       // Navbar components are in DOM
+      console.log("✓ Navbar components found in DOM, initializing...");
       callback();
     } else if (attempts < 50) {
       // Keep trying for up to 5 seconds (50 * 100ms)
+      if (attempts === 0) {
+        console.log("⏳ Waiting for navbar components to load...");
+      }
       setTimeout(() => waitForNavbar(callback, attempts + 1), 100);
     } else {
-      console.error("Navbar components failed to load after timeout");
+      console.error("✗ Navbar components failed to load after timeout");
     }
   }
 
