@@ -69,6 +69,44 @@
   }
 
   /** -------------------------------------------
+ * إضافة موعد (miyad-add-event)
+ * يمرّر: بيانات الموعد + (نحاول تمرير user_sub للمطابقة)
+ * السيرفر سيحوّلها إلى user_id ويُدخلها في الجدول.
+ * ------------------------------------------ */
+async function supaAddMiyadEvent(eventData = {}) {
+  try {
+    const u = await auth0SafeGetUser(); // بنجيب اليوزر زي كل مرة
+
+    // لو مفيش مستخدم مسجل دخول، هنوقف بهدوء
+    // (الموعد اتحفظ محلياً وده كفاية مؤقتاً)
+    if (!u || !u.sub) {
+      console.debug('No auth user, skipping Supabase event sync.');
+      return { ok: true, data: null };
+    }
+
+    const payload = {
+      user_sub: u.sub, // الـ Function محتاجة تعرف مين اليوزر
+      event_data: eventData // كل بيانات الموعد (المادة، الفصل.. الخ)
+    };
+
+    // هننده الـ Function الجديدة (اللي هنعملها في الخطوة 3)
+    const res = await fetch('/.netlify/functions/add-miyad-event', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    // تعامل مع الأخطاء
+    if (!res.ok && res.status !== 204) {
+      return { ok:false, error: await res.text() };
+    }
+    return { ok:true, data: res.status===204 ? null : await res.json() };
+  } catch (e) {
+    return { ok:false, error: e.message };
+  }
+}
+
+  /** -------------------------------------------
    * تسجيل استخدام أداة (log-tool-usage)
    * يمرّر: tool_name + meta (+ نحاول تمرير email وsub للمطابقة)
    * السيرفر سيحوّلها إلى user_sub ويُدخلها في الجدول.
@@ -114,4 +152,5 @@
   window.supaEnsureUserProfile = window.supaEnsureUserProfile || supaEnsureUserProfile;
   window.supaLogToolUsage     = window.supaLogToolUsage     || supaLogToolUsage;
   window.supaGetUserByEmail   = window.supaGetUserByEmail   || supaGetUserByEmail;
+  window.supaAddMiyadEvent   = window.supaAddMiyadEvent   || supaAddMiyadEvent;
 })();
