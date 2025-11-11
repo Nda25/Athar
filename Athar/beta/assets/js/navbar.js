@@ -94,13 +94,16 @@
     }
 
     try {
-      auth.isAuthenticated().then((ok) => {
-        console.log("✓ Auth check completed:", ok);
-        updateAuthButtons(ok);
-      }).catch((err) => {
-        console.error("Error checking authentication:", err);
-        updateAuthButtons(false);
-      });
+      auth
+        .isAuthenticated()
+        .then((ok) => {
+          console.log("✓ Auth check completed:", ok);
+          updateAuthButtons(ok);
+        })
+        .catch((err) => {
+          console.error("Error checking authentication:", err);
+          updateAuthButtons(false);
+        });
     } catch (error) {
       console.error("Error checking authentication:", error);
       updateAuthButtons(false);
@@ -114,7 +117,7 @@
     };
 
     console.log("📊 Updating auth UI - User authenticated:", isAuthed);
-    
+
     showEl(document.getElementById("authCta"), !isAuthed); // Login/Register button
     showEl(document.getElementById("logout"), isAuthed); // Logout button
     showEl(document.getElementById("nav-profile"), isAuthed); // Profile link
