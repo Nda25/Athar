@@ -67,7 +67,7 @@ body {
   inset: 0;
   z-index: -2; /* تحت المحتوى وفوق المتدرّج */
   pointer-events: none; /* ما تمنع الضغط على العناصر */
-  background: url("assets/img/bg.jpg") center/cover no-repeat;
+  background: url("assets/bg/bg.webp") center/cover no-repeat;
   opacity: 0.25; /*  بين .25 – .6 */
 }
 

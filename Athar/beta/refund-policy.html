@@ -1,112 +1,225 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>أثر – سياسة الاسترجاع والاستبدال</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet" />
-  <style>
-    :root{
-      --bg1:#0f172a; --bg2:#1e293b; --card:#0b1220cc;
-      --text:#e5e7eb; --muted:#cbd5e1; --accent:#93c5fd; --primary:#2563eb;
-      --radius:18px; --max:900px;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;height:100%}
-    body{
-      font-family:"Cairo",system-ui,Segoe UI,Roboto,Arial;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 800px at 50% -10%, rgba(59,130,246,.25), transparent 60%),
-        radial-gradient(1000px 700px at 100% 20%, rgba(147,197,253,.18), transparent 60%),
-        linear-gradient(180deg,var(--bg1),var(--bg2));
-      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-      padding:32px 16px;
-    }
-    .wrap{max-width:var(--max);margin:0 auto}
-    header{text-align:center;margin-bottom:22px}
-    .logo{width:64px;height:64px;border-radius:18px;display:block;margin:0 auto 10px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
-    h1{margin:0 0 6px;font-weight:800;font-size:clamp(24px,4.2vw,36px)}
-    .subtitle{margin:0;color:var(--muted);font-size:clamp(14px,2.2vw,18px)}
-    .card{
-      background:var(--card); border:1px solid rgba(148,163,184,.25);
-      border-radius:var(--radius); box-shadow:0 18px 40px rgba(0,0,0,.35), 0 6px 14px rgba(2,6,23,.4);
-      padding:22px; line-height:1.9;
-    }
-    h2{margin:26px 0 10px;font-size:22px}
-    h3{margin:18px 0 8px;font-size:18px}
-    p{margin:10px 0}
-    ul{margin:8px 20px}
-    a{color:var(--accent);text-decoration:underline}
-    .muted{color:var(--muted)}
-    .note{background:#0b122033;border:1px dashed rgba(148,163,184,.35);padding:10px 12px;border-radius:12px}
-    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-    .btn{background:#0b1220;border:1px solid rgba(148,163,184,.35);color:#fff;padding:10px 16px;border-radius:999px;text-decoration:none}
-    .btn.primary{background:var(--primary);border-color:var(--primary)}
-    footer{margin-top:22px;text-align:center;color:#a8b4c7;font-size:12px}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <header>
-      <img class="logo" src="assets/icon.png" alt="أثر">
-      <h1>سياسة الاسترجاع والاستبدال</h1>
-      <p class="subtitle">سياسة واضحة ومكتوبة لراحة العميل.</p>
-    </header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>أثر – سياسة الاسترجاع والاستبدال</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg1: #0f172a;
+        --bg2: #1e293b;
+        --card: #0b1220cc;
+        --text: #e5e7eb;
+        --muted: #cbd5e1;
+        --accent: #93c5fd;
+        --primary: #2563eb;
+        --radius: 18px;
+        --max: 900px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        font-family: "Cairo", system-ui, Segoe UI, Roboto, Arial;
+        color: var(--text);
+        background: radial-gradient(
+            1200px 800px at 50% -10%,
+            rgba(59, 130, 246, 0.25),
+            transparent 60%
+          ),
+          radial-gradient(
+            1000px 700px at 100% 20%,
+            rgba(147, 197, 253, 0.18),
+            transparent 60%
+          ),
+          linear-gradient(180deg, var(--bg1), var(--bg2));
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        padding: 32px 16px;
+      }
+      .wrap {
+        max-width: var(--max);
+        margin: 0 auto;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 22px;
+      }
+      .logo {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        display: block;
+        margin: 0 auto 10px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-weight: 800;
+        font-size: clamp(24px, 4.2vw, 36px);
+      }
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: clamp(14px, 2.2vw, 18px);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: var(--radius);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35),
+          0 6px 14px rgba(2, 6, 23, 0.4);
+        padding: 22px;
+        line-height: 1.9;
+      }
+      h2 {
+        margin: 26px 0 10px;
+        font-size: 22px;
+      }
+      h3 {
+        margin: 18px 0 8px;
+        font-size: 18px;
+      }
+      p {
+        margin: 10px 0;
+      }
+      ul {
+        margin: 8px 20px;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .note {
+        background: #0b122033;
+        border: 1px dashed rgba(148, 163, 184, 0.35);
+        padding: 10px 12px;
+        border-radius: 12px;
+      }
+      .btns {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+      .btn {
+        background: #0b1220;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 999px;
+        text-decoration: none;
+      }
+      .btn.primary {
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+      footer {
+        margin-top: 22px;
+        text-align: center;
+        color: #a8b4c7;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <img class="logo" src="assets/icons/favicon.ico" alt="أثر" />
+        <h1>سياسة الاسترجاع والاستبدال</h1>
+        <p class="subtitle">سياسة واضحة ومكتوبة لراحة العميل.</p>
+      </header>
 
-    <article class="card">
-      <p class="muted">آخر تحديث: 2025-09-21</p>
+      <article class="card">
+        <p class="muted">آخر تحديث: 2025-09-21</p>
 
-      <h2>نطاق السياسة</h2>
-      <p>نظرًا لطبيعة خدماتنا الرقمية في منصة <strong>أثــر</strong>، يتم تفعيل الاشتراكات فور إتمام عملية الدفع.</p>
+        <h2>نطاق السياسة</h2>
+        <p>
+          نظرًا لطبيعة خدماتنا الرقمية في منصة <strong>أثــر</strong>، يتم تفعيل
+          الاشتراكات فور إتمام عملية الدفع.
+        </p>
 
-      <h3>أحكام الاسترجاع</h3>
-      <ul>
-        <li>لا يحق استرجاع المبلغ بعد تفعيل الاشتراك بنجاح.</li>
-        <li>يحق للعميل استرداد المبلغ كاملًا إذا لم يتم <strong>تفعيل</strong> الاشتراك خلال <strong>7 أيام</strong> من تاريخ الدفع.</li>
-        <li>في حال وجود خطأ تقني يمنع الوصول للخدمة، نلتزم بإرجاع المبلغ كاملًا بعد التحقق.</li>
-      </ul>
-
-      <div class="note">
-        <strong>ملاحظات إضافية:</strong>
-        <ul style="margin-top:6px">
-          <li>الاشتراك يخص حسابًا واحدًا ولا يجوز نقله إلى حساب آخر بعد التفعيل.</li>
-          <li>إن وُجد عرض أو رمز ترويجي، تُحتسب الاستفادة حسب شروط العرض وقت الشراء.</li>
+        <h3>أحكام الاسترجاع</h3>
+        <ul>
+          <li>لا يحق استرجاع المبلغ بعد تفعيل الاشتراك بنجاح.</li>
+          <li>
+            يحق للعميل استرداد المبلغ كاملًا إذا لم يتم
+            <strong>تفعيل</strong> الاشتراك خلال <strong>7 أيام</strong> من
+            تاريخ الدفع.
+          </li>
+          <li>
+            في حال وجود خطأ تقني يمنع الوصول للخدمة، نلتزم بإرجاع المبلغ كاملًا
+            بعد التحقق.
+          </li>
         </ul>
-      </div>
 
-      <h2>قنوات التواصل ورفع الشكاوى</h2>
-      <p>
-        لأي استفسار أو طلب استرجاع، تواصلي معنا عبر:
-        <br>📧 البريد: <a href="mailto:team@n-athar.co">team@n-athar.co</a>
-        <br>💬 واتساب: <a href="https://wa.me/966556795993" target="_blank" rel="noopener">اضغط هنا</a>
-        <br>📝 نموذج الشكاوى والاقتراحات: <a href="complaints.html">من هنا</a>
-      </p>
+        <div class="note">
+          <strong>ملاحظات إضافية:</strong>
+          <ul style="margin-top: 6px">
+            <li>
+              الاشتراك يخص حسابًا واحدًا ولا يجوز نقله إلى حساب آخر بعد التفعيل.
+            </li>
+            <li>
+              إن وُجد عرض أو رمز ترويجي، تُحتسب الاستفادة حسب شروط العرض وقت
+              الشراء.
+            </li>
+          </ul>
+        </div>
 
-      <div class="btns">
-        <a href="/" class="btn">العودة للصفحة الرئيسية</a>
-        <a href="complaints.html" class="btn primary">الشكاوى والاقتراحات</a>
-      </div>
-    </article>
+        <h2>قنوات التواصل ورفع الشكاوى</h2>
+        <p>
+          لأي استفسار أو طلب استرجاع، تواصلي معنا عبر:
+          <br />📧 البريد: <a href="mailto:team@n-athar.co">team@n-athar.co</a>
+          <br />💬 واتساب:
+          <a href="https://wa.me/966556795993" target="_blank" rel="noopener"
+            >اضغط هنا</a
+          >
+          <br />📝 نموذج الشكاوى والاقتراحات:
+          <a href="complaints.html">من هنا</a>
+        </p>
 
-    <footer>
-      <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-      <p class="foot-name">ندى المجيرش</p>
+        <div class="btns">
+          <a href="/" class="btn">العودة للصفحة الرئيسية</a>
+          <a href="complaints.html" class="btn primary">الشكاوى والاقتراحات</a>
+        </div>
+      </article>
 
-      <nav class="foot-links">
-        <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-        <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-        <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-        <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-        <a href="complaints.html">الشكاوى والاقتراحات</a>
-      </nav>
+      <footer>
+        <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+        <p class="foot-name">ندى المجيرش</p>
 
-      <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-    </footer>
-  </div>
+        <nav class="foot-links">
+          <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+          <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+          <a href="refund-policy.html">سياسة الاسترجاع</a
+          ><span class="sep">|</span> <a href="whatsapp.html">تواصل واتساب</a
+          ><span class="sep">|</span>
+          <a href="complaints.html">الشكاوى والاقتراحات</a>
+        </nav>
 
-  <script>
-    (function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();
-  </script>
-</body>
+        <div class="foot-copy">
+          © <span id="year"></span> أثــر — كل الحقوق محفوظة.
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        var y = document.getElementById("year");
+        if (y) y.textContent = new Date().getFullYear();
+      })();
+    </script>
+  </body>
 </html>
