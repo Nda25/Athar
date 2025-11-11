@@ -42,7 +42,7 @@ exports.handler = async (event, context) => {
         slot: slot,
         date: date || null, // لو التاريخ فاضي، ابعته null
         color: color
-      });
+      }).select('id');
 
     // لو حصل خطأ من Supabase نفسها
     if (error) {

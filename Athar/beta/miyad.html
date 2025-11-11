@@ -483,31 +483,31 @@
             return;
           }
 
-          const list = load();
-          list.push({ subj, cls, day, slot, date, color });
-          save(list);
-          render();
-          toast("تمت الإضــافة ✅");
+          const newEvent = { subj, cls, day, slot, date, color };
 
-          // حفظ الموعد في Supabase (عبر Netlify Function)
+          // 2. ابعته للسيرفر (واستقبل الـ ID اللي راجع)
           try {
-            // هنتأكد إن الدالة الجديدة موجودة (هنضيفها في الخطوة 2)
             if (typeof supaAddMiyadEvent === "function") {
-              // هنبعت بيانات الموعد للدالة وهي هتتصرف
-              await supaAddMiyadEvent({
-                subj,
-                class: cls,
-                day,
-                slot,
-                date: date || null,
-                color,
-              });
+              // استقبل الداتا اللي راجعة (اللي فيها الـ ID)
+              const { data, error } = await supaAddMiyadEvent(newEvent);
+
+              // لو رجع ID، ضيفه على الموعد
+              if (data && data.length > 0) {
+                newEvent.id = data[0].id; // <-- أهم سطر في الخطوة دي
+              }
             }
           } catch (e) {
-            // لو حصل خطأ، هو هيظهر في الكونسول بس مش هيوقف التطبيق
-            // لأن الموعد كده كده اتحفظ في الـ localStorage
             console.warn("Failed to sync event to Supabase", e);
           }
+
+          // 3. احفظ الموعد (بالـ ID لو موجود) في localStorage
+          const list = load();
+          list.push(newEvent);
+          save(list);
+          // -->> (نهاية التعديل) <<--
+
+          render();
+          toast("تمت الإضــافة ✅");
 
           // تتبّع: إضافة موعد
           if (typeof supaLogToolUsage === "function") {
@@ -532,9 +532,18 @@
           e.preventDefault();
           const i = +a.getAttribute("data-i");
           const list = load();
+          const eventToDelete = list[i];
           list.splice(i, 1);
           save(list);
           render();
+          if (
+            eventToDelete &&
+            eventToDelete.id &&
+            typeof supaDeleteMiyadEvent === "function"
+          ) {
+            // ابعت الـ ID بس للدالة الجديدة (اللي هنعملها في الخطوة 4)
+            supaDeleteMiyadEvent(eventToDelete.id);
+          }
           logUse("miyad:delete_event");
         });
 

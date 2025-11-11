@@ -170,6 +170,37 @@ async function supaGetReminderSettings() {
   }
 }
 
+/** -------------------------------------------
+ * حذف موعد (delete-miyad-event)
+ * يبعت الـ ID للـ Function عشان تمسحه
+ * ------------------------------------------ */
+async function supaDeleteMiyadEvent(eventId) {
+  const u = await auth0SafeGetUser(); // بنجيب اليوزر عشان الأمان
+  if (!u || !u.sub) {
+    console.debug('No auth user, skipping Supabase event delete.');
+    return { ok: true, data: null };
+  }
+
+  try {
+    const payload = {
+      user_sub: u.sub, // عشان نتأكد إنه بيمسح حاجته هو بس
+      event_id: eventId
+    };
+
+    // هننده الـ Function الجديدة (اللي هنعملها في الخطوة 5)
+    const res = await fetch('/.netlify/functions/delete-miyad-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) { return { ok: false, error: await res.text() }; }
+    return { ok: true, data: await res.json() };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
   /** -------------------------------------------
    * تسجيل استخدام أداة (log-tool-usage)
    * يمرّر: tool_name + meta (+ نحاول تمرير email وsub للمطابقة)
@@ -219,4 +250,5 @@ async function supaGetReminderSettings() {
   window.supaAddMiyadEvent   = window.supaAddMiyadEvent   || supaAddMiyadEvent;
   window.supaSaveReminderSettings = window.supaSaveReminderSettings || supaSaveReminderSettings;
   window.supaGetReminderSettings = window.supaGetReminderSettings || supaGetReminderSettings;
+  window.supaDeleteMiyadEvent = window.supaDeleteMiyadEvent || supaDeleteMiyadEvent;
 })();
