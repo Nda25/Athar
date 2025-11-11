@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 100 100" style="display:none">
+  <defs>
+    <radialGradient id="athar-pattern-gradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#cfe8ff"/>
+      <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.60"/>
+    </radialGradient>
+    <pattern id="athar-flower-pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+      <g fill="url(#athar-pattern-gradient)">
+        <circle cx="50" cy="18" r="18"/>
+        <circle cx="18" cy="50" r="18"/>
+        <circle cx="82" cy="50" r="18"/>
+        <circle cx="50" cy="82" r="18"/>
+        <circle cx="50" cy="50" r="22"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="100" height="100" fill="url(#athar-flower-pattern)"/>
+</svg>

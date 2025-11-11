@@ -158,10 +158,10 @@ ${officialContext ? "اعتمد فقط على المصادر التالية:\n"+
     canon.vocab      = uniq(canon.vocab).slice(0,8);
 
     // days
-    const days = Array.isArray(j?.days) ? j.days : [];
+    const daysData = Array.isArray(j?.days) ? j.days : [];
     const safeDays = [];
     for (let i=0;i<5;i++){
-      const d = days[i] || {};
+      const d = daysData[i] || {};
       const goals = uniq(Array.isArray(d.goals)? d.goals : []).slice(0,2);
       // Subset vocab
       const sub  = uniq(Array.isArray(d.vocab)? d.vocab : []).filter(v => canon.vocab.includes(v)).slice(0,3);
