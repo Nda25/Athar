@@ -1,0 +1,221 @@
+:root {
+  --accent: #3b82f6;
+}
+.field {
+  margin: 10px 0;
+}
+.field label {
+  display: block;
+  font-weight: 700;
+  margin: 6px 0;
+}
+.field input,
+.field select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+.cols-3 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .cols-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+.cols-2 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+.field.inline label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.5;
+  white-space: normal;
+}
+.field.inline input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+  flex: 0 0 46px;
+  margin: 0;
+}
+.field.inline input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  inset-inline-start: 1px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: inset-inline-start 0.18s ease;
+}
+.field.inline input[type="checkbox"]:checked {
+  background: var(--sea-500);
+  border-color: var(--sea-500);
+}
+.field.inline input[type="checkbox"]:checked::after {
+  inset-inline-start: calc(100% - 23px);
+}
+.field.inline input[type="checkbox"]:focus-visible {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+.dark .field.inline input[type="checkbox"] {
+  background: #1f2937;
+  border-color: #334155;
+}
+.dark .field.inline input[type="checkbox"]:checked {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.actions-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.actions-row .btn {
+  min-width: 140px;
+}
+@media (max-width: 480px) {
+  .actions-row .btn {
+    min-width: 120px;
+  }
+}
+
+.card {
+  overflow: hidden;
+}
+.printable {
+  border: 1px solid color-mix(in oklab, var(--accent) 40%, #cbd5e1);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 8px;
+  background: var(--card);
+}
+.set-card {
+  border: 1px dashed rgba(59, 130, 246, 0.35);
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 12px;
+}
+.set-card h3 {
+  margin: 0 0 6px;
+}
+.muted {
+  color: var(--muted);
+}
+.list {
+  margin: 0;
+  padding-inline-start: 1.2rem;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.chip {
+  background: color-mix(in oklab, var(--accent) 14%, #fff);
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+.diff-box {
+  background: color-mix(in oklab, var(--accent) 10%, #fff);
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 8px;
+  font-size: 0.95rem;
+}
+.btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+  .cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .global-bg,
+  .backdrop,
+  .pattern,
+  .topbar,
+  header,
+  .actions-row,
+  form,
+  .toast {
+    display: none !important;
+  }
+  #out {
+    display: block !important;
+  }
+  .container {
+    width: auto;
+    margin: 0;
+    padding: 0;
+  }
+  .printable {
+    width: 180mm !important;
+    margin: 0 auto !important;
+    border-color: #999 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+}
+body.print-mode .global-bg,
+body.print-mode .backdrop,
+body.print-mode .pattern,
+body.print-mode .topbar,
+body.print-mode header,
+body.print-mode .actions-row,
+body.print-mode form,
+body.print-mode .toast {
+  display: none !important;
+}
+body.print-mode #out {
+  display: block !important;
+}
+body.print-mode .printable {
+  width: 180mm;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: none;
+}
