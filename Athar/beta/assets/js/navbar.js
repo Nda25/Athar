@@ -87,14 +87,23 @@
   function syncAuthButtons() {
     const auth = window.auth; // from require-auth.js
     if (!auth) {
-      console.warn("Auth0 not available for sync");
+      console.warn("⚠️ Auth0 not available for sync, will retry...");
+      // Retry in 500ms
+      setTimeout(syncAuthButtons, 500);
       return;
     }
 
     try {
-      auth.isAuthenticated().then((ok) => {
-        updateAuthButtons(ok);
-      });
+      auth
+        .isAuthenticated()
+        .then((ok) => {
+          console.log("✓ Auth check completed:", ok);
+          updateAuthButtons(ok);
+        })
+        .catch((err) => {
+          console.error("Error checking authentication:", err);
+          updateAuthButtons(false);
+        });
     } catch (error) {
       console.error("Error checking authentication:", error);
       updateAuthButtons(false);
@@ -106,6 +115,8 @@
       if (!el) return;
       el.style.display = show ? "inline-flex" : "none";
     };
+
+    console.log("📊 Updating auth UI - User authenticated:", isAuthed);
 
     showEl(document.getElementById("authCta"), !isAuthed); // Login/Register button
     showEl(document.getElementById("logout"), isAuthed); // Logout button

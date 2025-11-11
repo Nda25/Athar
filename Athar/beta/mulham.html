@@ -15,11 +15,17 @@
   <body>
     <div class="global-bg"></div>
 
-      <div id="navbar" data-component="components/navbar.html"></div>
-
+    <div id="navbar" data-component="components/navbar.html"></div>
 
     <!-- Header Component -->
-    <div id="header" data-component="components/header.html"></div>
+    <header>
+      <div class="hero">
+        <h1 class="logo">مـُلـهـم</h1>
+        <div class="tag">
+          <span class="dot"></span>كل دقيقة تحمل فكرة، وكل فكرة تُخلّد أثرًا
+        </div>
+      </div>
+    </header>
 
     <main>
       <div class="container">
@@ -202,7 +208,12 @@
 
     <script defer src="assets/js/storage.js"></script>
     <script defer src="app.js"></script>
-
+    <!-- Auth0 SDK -->
+    <script
+      defer
+      src="https://cdn.auth0.com/js/auth0-spa-js/2/auth0-spa-js.production.js"
+      onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"
+    ></script>
     <!-- Component loader + navbar behavior -->
     <script src="assets/js/component-loader.js"></script>
     <script src="assets/js/navbar.js"></script>
