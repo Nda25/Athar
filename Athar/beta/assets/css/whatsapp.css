@@ -1,0 +1,218 @@
+/* WhatsApp Contact Page Styles */
+
+/* Page-specific content styling */
+.wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 16px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 30px;
+  margin-top: 20px;
+}
+
+.logo {
+  width: 200px;
+  display: block;
+  margin: 0 auto 10px;
+}
+
+.dark .logo {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-weight: 800;
+  font-size: clamp(24px, 4.2vw, 36px);
+  color: var(--ink);
+}
+
+.dark h1 {
+  color: var(--ink);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(14px, 2.2vw, 18px);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid rgba(30, 64, 175, 0.15);
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+  line-height: 1.8;
+  margin-bottom: 40px;
+}
+
+.dark .card {
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+article p {
+  margin: 12px 0;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.dark article p {
+  color: var(--ink);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Button styling for contact links */
+.card .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--primary);
+  border: 2px solid var(--primary);
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-family: Cairo, system-ui, Tahoma, Arial;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 12px;
+  display: inline-block;
+}
+
+.dark .card .btn {
+  background: #60a5fa;
+  border-color: #60a5fa;
+  color: var(--card);
+}
+
+.card .btn:hover {
+  background: var(--sea-500);
+  border-color: var(--sea-500);
+  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.35);
+  transform: translateY(-2px);
+}
+
+.dark .card .btn:hover {
+  background: #93c5fd;
+  border-color: #93c5fd;
+  color: var(--card);
+  box-shadow: 0 6px 20px rgba(96, 165, 250, 0.4);
+}
+
+.card .btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.2);
+}
+
+/* Contact information styling */
+.card p strong {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.dark .card p strong {
+  color: #60a5fa;
+}
+
+/* Phone number styling */
+.phone-number {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-top: 16px;
+}
+
+.dark .phone-number {
+  color: #60a5fa;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .wrap {
+    padding: 24px 16px;
+  }
+
+  .card {
+    padding: 24px;
+  }
+
+  header {
+    margin-top: 16px;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+  }
+
+  .card p {
+    font-size: 15px;
+  }
+
+  .card .btn {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    padding: 16px 12px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  header {
+    margin-top: 12px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .card p {
+    font-size: 14px;
+    margin: 10px 0;
+  }
+
+  .card .btn {
+    padding: 10px 16px;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  .muted {
+    font-size: 13px;
+  }
+}
