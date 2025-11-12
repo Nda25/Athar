@@ -456,10 +456,17 @@ async function loadUsers() {
     if (q) qs.set("q", q);
     if (act) qs.set("active", act);
 
-    const j = await apiFetch(
-      "/.netlify/functions/admin-users-list?" + qs.toString()
-    );
-    const rows = j.rows || [];
+    let j;
+    try {
+      j = await apiFetch(
+        "/.netlify/functions/admin-users-list?" + qs.toString()
+      );
+    } catch (err) {
+      console.error("❌ Failed to fetch users:", err);
+      alert("خطأ: فشل تحميل المستخدمين. تحقق من الخادم.");
+      return;
+    }
+    const rows = j && j.rows ? j.rows : [];
 
     const tbody = document.getElementById("u-rows");
     if (!tbody) return;
@@ -624,21 +631,18 @@ async function startAdmin() {
     console.log("✓ Admin panel loaded");
     showTab("t-users"); // افتحي المشتركين الجدد افتراضيًا
 
-    try {
-      await fetchAnnouncements();
-    } catch (e) {
-      console.warn("⚠️ Failed to fetch announcements:", e);
-    }
-    try {
-      await loadComplaints();
-    } catch (e) {
-      console.warn("⚠️ Failed to load complaints:", e);
-    }
-    try {
-      await loadUsers();
-    } catch (e) {
-      console.warn("⚠️ Failed to load users:", e);
-    }
+    // Load all data in parallel instead of sequentially
+    await Promise.allSettled([
+      fetchAnnouncements().catch((e) => {
+        console.warn("⚠️ Failed to fetch announcements:", e);
+      }),
+      loadComplaints().catch((e) => {
+        console.warn("⚠️ Failed to load complaints:", e);
+      }),
+      loadUsers().catch((e) => {
+        console.warn("⚠️ Failed to load users:", e);
+      }),
+    ]);
   } catch (err) {
     console.error("❌ startAdmin error:", err);
     const deny = document.getElementById("denyCard");

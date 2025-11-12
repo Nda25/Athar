@@ -1,22 +1,3 @@
-# netlify.toml (في جذر الريبو)
+# This file is deprecated - use the one in the parent directory
+# Keeping for reference only
 
-[build]
-  base      = "Athar/beta"      # هذا يقول لنتلايفي اشتغل داخل Athar/beta
-  publish   = "."               # يَنشر ملفات Athar/beta نفسها (HTML/CSS/JS)
-  command   = ""                # ما عندك خطوة build
-
-[build.environment]
-  NODE_VERSION = "18"
-
-[functions]
-  directory = "netlify/functions"        # نسبةً إلى Athar/beta
-  node_bundler = "esbuild"
-  # تأكّد إنها موجودة في package.json
-  external_node_modules = [
-    "@supabase/supabase-js",
-    "jwks-rsa",
-    "jsonwebtoken",
-    "nodemailer",
-    "@google/generative-ai"
-  ]
-  included_files = ["netlify/functions/**"]
