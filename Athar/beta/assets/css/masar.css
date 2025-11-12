@@ -1,0 +1,256 @@
+/* ============= إعدادات المتغيرات ============= */
+:root {
+  --table-accent: #3b82f6;
+  --table-mix: 28%;
+  --table-border-mix: 45%;
+  --table-mix-print: 38%;
+  --table-border-mix-print: 60%;
+}
+
+/* ============= تحسينات النماذج والشبكات ============= */
+.controls .field {
+  margin: 8px 0;
+}
+.controls .field label {
+  display: block;
+  font-weight: 700;
+  margin: 6px 0;
+}
+
+/* دمج خصائص حقول الإدخال والقوائم */
+.controls .field input,
+.controls .field select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: #fff;
+  color: #0f172a;
+}
+
+/* تحسين الوضع الداكن للحقول */
+.dark .controls .field input,
+.dark .controls .field select,
+.dark .cell input {
+  background: #0f172a;
+  color: #f1f5f9;
+  border-color: #3b82f6;
+}
+
+/* تجميع قواعد الشبكة المشتركة */
+.grid-4,
+.grid-3 {
+  display: grid;
+  gap: 12px;
+}
+.grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 900px) {
+  .grid-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .grid-4,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============= هيكل الجدول ============= */
+.table-wrap {
+  position: relative;
+  isolation: isolate;
+  overflow: auto;
+}
+.table-wrap > * {
+  position: relative;
+  z-index: 1;
+}
+
+table.schedule {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* دمج الخصائص المشتركة للخلايا */
+.schedule th,
+.schedule td {
+  border: 1px solid
+    color-mix(in oklab, var(--table-accent) var(--table-border-mix), #cbd5e1);
+  padding: 8px;
+  vertical-align: top;
+  background: var(--card);
+}
+
+.schedule th {
+  background: color-mix(in oklab, var(--table-accent) var(--table-mix), white);
+  color: #0c4a6e;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.dark .schedule th {
+  background: color-mix(
+    in oklab,
+    var(--table-accent) calc(var(--table-mix) + 10%),
+    black
+  );
+  color: #c7d2fe;
+}
+
+/* دمج تنسيقات الأعمدة الثابتة */
+.time-col,
+.day-col {
+  text-align: center;
+  font-weight: 700;
+}
+.time-col {
+  width: 140px;
+  white-space: nowrap;
+}
+.day-col {
+  width: 120px;
+}
+
+/* ============= تنسيق الخلايا الداخلية ============= */
+.cell {
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px;
+  background: color-mix(in oklab, var(--table-accent) 10%, transparent);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.cell input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  background: #fff;
+  color: #0f172a;
+}
+
+.cell .mini {
+  display: flex;
+  gap: 6px;
+}
+.cell .mini input {
+  flex: 1;
+}
+
+/* ============= عناصر إضافية (Actions & Legend) ============= */
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+  background: var(--sea-300);
+}
+
+/* ============= تنسيقات الطباعة المحسنة ============= */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 4mm 8mm 8mm;
+  }
+
+  /* إخفاء العناصر غير الضرورية دفعة واحدة */
+  .topbar,
+  .controls,
+  .row-actions,
+  .legend,
+  .pattern,
+  .backdrop,
+  footer {
+    display: none !important;
+  }
+
+  /* تصفير الحاويات */
+  main,
+  .container,
+  .card {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* ضبط تموضع الجدول والهيدر */
+  header {
+    margin: -10mm 0 2.5mm !important;
+    padding: 0 !important;
+  }
+  #tableWrap {
+    margin-top: 4mm !important;
+    width: 100% !important;
+  }
+
+  /* ضمان جودة الألوان والملء */
+  table.schedule {
+    width: 100% !important;
+    min-width: auto !important;
+    font-size: 14px;
+  }
+
+  body,
+  .schedule,
+  .schedule th,
+  .schedule td,
+  .cell {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* منع تقطيع الصفوف */
+  table.schedule,
+  thead,
+  tbody,
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cell.empty {
+    opacity: 0;
+  }
+
+  /* الطباعة المضغوطة */
+  body.print-compact table.schedule {
+    font-size: 12px;
+  }
+  body.print-compact .schedule th,
+  body.print-compact .schedule td {
+    padding: 6px;
+  }
+}

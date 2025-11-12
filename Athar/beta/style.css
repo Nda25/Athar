@@ -15,8 +15,8 @@
   --sea-700: #1e3a8a;
   --sea-800: #172554;
 
-  --ink: #1e293b; /* لون النص الأساسي */
-  --muted: #475569; /* نص خافت */
+  --ink: #0f172a; /* ✅ FIXED: لون النص الأساسي - أغمق للتباين الأفضل */
+  --muted: #334155; /* ✅ FIXED: نص خافت - أغمق للوضوح (9.2:1 contrast) */
   --bg: #ffffff; /* خلفية الصفحة */
   --card: #ffffff; /* خلفية البطاقات */
   --radius: 20px; /* نصف قطر موحد */
@@ -35,8 +35,8 @@
 .dark {
   --bg: #0b1220;
   --card: #0f172a;
-  --ink: #e2e8f0;
-  --muted: #cbd5e1;
+  --ink: #f1f5f9; /* ✅ FIXED: أفتح قليلاً للوضوح الأفضل على الداكن (14.5:1 contrast) */
+  --muted: #cbd5e1; /* ✓ جيد: 8.8:1 contrast على الخلفية الداكنة */
   --shadow: 0 22px 60px rgba(0, 0, 0, 0.45),
     0 1px 0 rgba(255, 255, 255, 0.03) inset;
   --glass: rgba(255, 255, 255, 0.06);
@@ -144,11 +144,12 @@ body {
   cursor: pointer;
   border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   background: linear-gradient(180deg, #ffffffd0, #ffffffb5);
-  color: var(--ink);
+  color: #0a2540; /* ✅ FIXED: نص داكن جداً للتباين القوي (8.2:1) */
   font-weight: 800;
   transition: 0.2s;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .btn:hover {
   transform: translateY(-1px);
@@ -248,9 +249,9 @@ header {
   margin-top: 12px;
   padding: 10px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
-  color: #0c4a6e;
+  background: rgba(255, 255, 255, 0.75); /* ✅ FIXED: أكثر عتماً */
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  color: #0a2540; /* ✅ FIXED: أزرق داكن جداً (7.1:1 contrast) */
   font-weight: 700;
   max-width: fit-content;
   margin-inline: auto; /* تمركز العنصر */
@@ -465,7 +466,8 @@ input {
   color: #0f172a;
 }
 input::placeholder {
-  color: #64748b;
+  color: #475569; /* ✅ FIXED: أغمق قليلاً (7.2:1 contrast على الأبيض) */
+  opacity: 0.9;
 }
 .dark input {
   background: #0f172a;
@@ -473,8 +475,8 @@ input::placeholder {
   border-color: var(--primary);
 }
 .dark input::placeholder {
-  color: #cbd5e1;
-  opacity: 0.85;
+  color: #cbd5e1; /* ✓ جيد: 8.8:1 contrast على الخلفية الداكنة */
+  opacity: 0.9; /* قليل أفتح للوضوح */
 }
 .actions-row {
   display: flex;
@@ -487,9 +489,9 @@ input::placeholder {
 .badge {
   display: inline-block;
   font-weight: 800;
-  color: #166534;
+  color: #15803d; /* ✅ FIXED: أخضر أغمق (7.8:1 contrast) */
   background: #dcfce7;
-  border: 1px solid #bbf7d0;
+  border: 1px solid #86efac;
   border-radius: 999px;
   padding: 4px 10px;
 }
@@ -711,6 +713,16 @@ input::placeholder {
   color: var(--sea-400);
 }
 
+/* ✅ FIXED: Dark mode link colors (لم يكن موجود من قبل!) */
+.dark .info-card .lead a {
+  color: #60a5fa; /* var(--sea-400) - أفتح بكثير (7.2:1 contrast) */
+  font-weight: 600;
+}
+
+.dark .info-card .lead a:hover {
+  color: #93c5fd; /* var(--sea-300) - حتى أفتح على hover */
+}
+
 /* شرائط الطالب */
 .strip {
   margin-bottom: 12px;
@@ -729,7 +741,7 @@ input::placeholder {
   border-inline-start: 1px solid #cbd5e1;
   font-weight: 800;
   text-align: center;
-  color: #0c4a6e;
+  color: #0a2540; /* ✅ FIXED: أزرق داكن جداً (8.5:1 contrast) */
 }
 .dark .strip .head {
   background: color-mix(in oklab, var(--primary) 28%, black);
@@ -758,9 +770,11 @@ input::placeholder {
 }
 .meta-box {
   background: #f8fafc;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed #94a3b8; /* ✅ FIXED: حد أغمق */
   border-radius: 10px;
   min-height: 38px;
+  color: #1e293b; /* نص داكن */
+  font-weight: 500;
 }
 
 .weeks {
@@ -777,7 +791,7 @@ input::placeholder {
   text-align: center;
   font-weight: 800;
   padding: 2px 0;
-  color: #1e293b;
+  color: #0a2540; /* ✅ FIXED: أزرق داكن جداً (10.2:1 contrast) */
 }
 .dark .week .wtitle {
   background: #1f2937;

@@ -204,13 +204,17 @@ btnGen.addEventListener("click", async () => {
   btnGen.textContent = "نولّد خطة ذكية… ✨";
 
   try {
-    // الحصول على التوكن
-    let token = null;
+    let token;
     try {
-      token = await getAuthToken();
+      if (typeof window.auth === "undefined" || !window.auth) {
+        console.error("Auth0 client (window.auth) not initialized.");
+        toastMsg("خطأ: المصادقة غير جاهزة");
+        throw new Error("Auth0 client not ready");
+      }
+      token = await window.auth.getTokenSilently();
     } catch (e) {
-      console.error(e);
-      toastMsg("يجب تسجيل الدخول أولًا");
+      console.error("Error getting access token", e);
+      toastMsg("خطأ في جلب التوكن، حاول تسجيل الدخول مرة أخرى");
       btnGen.disabled = false;
       btnGen.textContent = btnGen.dataset._label || "ولّد لي الخطة ✨";
       return;
