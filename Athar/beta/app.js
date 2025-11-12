@@ -1,338 +1,244 @@
 /* ============================
- * Athar - app.js (final clean)
- * يعتمد على:
- *  - require-auth.js (ينشئ window.auth ويطلق auth0:ready)
- *  - assets/js/supabase-client.js (فيه supaEnsureUser / supaEnsureUserProfile / supaLogToolUsage)
- *  - ui.js / theme.js / storage.js (اختياري)
+ * Athar - app.js (Optimized)
  * ============================ */
 
-/* ====== Hard Reset (مرة واحدة فقط بعد ترقية) ====== */
-(function hardResetOnce() {
-  try {
-    const FLAG = "ATHAR_V2_READY";
-    if (!localStorage.getItem(FLAG)) {
-      localStorage.clear();
-      sessionStorage.clear();
+// === Constants & Configuration ===
+const FLAG_RESET = "ATHAR_V2_READY";
+const NS_MAIN = "https://n-athar.co/";
+const NS_ALT = "https://athar.co/";
 
-      if ("indexedDB" in window && indexedDB.databases) {
-        indexedDB.databases().then((dbs) => {
-          dbs.forEach((db) => {
-            if (db && db.name) indexedDB.deleteDatabase(db.name);
-          });
-        });
-      }
-      localStorage.setItem(FLAG, "1");
-      console.log("[Athar] One-time storage reset done.");
-    }
-  } catch (_) {}
-})();
+// Determine Environment
+const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname);
+const CALLBACK = isLocal
+  ? "http://localhost:8888/profile.html"
+  : "https://n-athar.co/profile.html";
+const RETURN_TO = isLocal ? "http://localhost:8888" : "https://n-athar.co";
 
-/* ====== إعدادات Auth0 (تُقرأ إن وُجدت) ====== */
-if (typeof window.AUTH0_DOMAIN === "undefined") {
-  window.AUTH0_DOMAIN = "dev-2f0fmbtj6u8o7en4.us.auth0.com";
-}
-if (typeof window.AUTH0_CLIENT === "undefined") {
-  window.AUTH0_CLIENT = "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
-}
-const AUTH0_DOMAIN = window.AUTH0_DOMAIN;
-const AUTH0_CLIENT = window.AUTH0_CLIENT;
+// Auth0 Defaults
+window.AUTH0_DOMAIN ??= "dev-2f0fmbtj6u8o7en4.us.auth0.com";
+window.AUTH0_CLIENT ??= "rXaNXLwIkIOALVTWbRDA8SwJnERnI1NU";
 
-/* ====== Callback ثابت للدخول/التسجيل + وجهة الخروج ====== */
-const CALLBACK =
-  location.hostname === "localhost" || location.hostname === "127.0.0.1"
-    ? "http://localhost:8888/profile.html" // أثناء التطوير المحلي
-    : "https://n-athar.co/profile.html"; // على الإنتاج
+console.log(`[Auth] redirect: ${CALLBACK} | return: ${RETURN_TO}`);
 
-const RETURN_TO = CALLBACK.startsWith("http://localhost:8888")
-  ? "http://localhost:8888"
-  : "https://n-athar.co";
-
-console.log("[Auth] redirect_uri =", CALLBACK);
-console.log("[Auth] returnTo     =", RETURN_TO);
-
-/* ====== أدوات صغيرة ====== */
+// === Utilities ===
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-/* ============================== Theme ============================== */
-(function unifyDarkClass() {
-  const root = document.documentElement,
-    body = document.body;
-  if (body && body.classList.contains("dark")) {
-    body.classList.remove("dark");
-    root.classList.add("dark");
-  }
-})();
-(function initTheme() {
-  const root = document.documentElement;
-  let saved = null;
+// === Hard Reset (Self-executing) ===
+(function hardResetOnce() {
   try {
-    saved = localStorage.getItem("theme");
+    if (!localStorage.getItem(FLAG_RESET)) {
+      localStorage.clear();
+      sessionStorage.clear();
+      if (window.indexedDB?.databases) {
+        indexedDB
+          .databases()
+          .then((dbs) =>
+            dbs.forEach((db) => indexedDB.deleteDatabase(db.name))
+          );
+      }
+      localStorage.setItem(FLAG_RESET, "1");
+      console.log("[Athar] Storage reset done.");
+    }
   } catch (_) {}
-  if (saved === "dark") root.classList.add("dark");
-  else root.classList.remove("dark");
 })();
+
+// === UI: Theme Management ===
+const root = document.documentElement;
+// Consolidate theme initialization
+(() => {
+  // Move dark class from body to root if present, or check storage
+  const isDark =
+    document.body.classList.contains("dark") ||
+    localStorage.getItem("theme") === "dark";
+  document.body.classList.remove("dark");
+  root.classList.toggle("dark", isDark);
+})();
+
 function bindThemeToggle() {
-  const root = document.documentElement;
   const btn = document.getElementById("themeToggle");
   if (!btn) return;
+
   btn.addEventListener("click", (e) => {
     e.preventDefault();
-    const dark = root.classList.toggle("dark");
-    try {
-      localStorage.setItem("theme", dark ? "dark" : "light");
-    } catch (_) {}
-    if (typeof window.toast === "function") {
-      toast(dark ? "تم تفعيل الوضع الداكن" : "تم تفعيل الوضع الفاتح");
-    }
+    const isDark = root.classList.toggle("dark");
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+    if (window.toast)
+      toast(isDark ? "تم تفعيل الوضع الداكن" : "تم تفعيل الوضع الفاتح");
   });
 }
 
-/* ============================== Toast ============================== */
-if (!window.toast) {
-  window.toast = function (msg) {
-    let t = document.querySelector(".toast");
-    if (!t) {
-      t = document.createElement("div");
-      t.className = "toast";
-      document.body.appendChild(t);
-    }
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1800);
-  };
-}
+// === UI: Toast ===
+window.toast ??= (msg) => {
+  let t = $(".toast");
+  if (!t) {
+    t = document.createElement("div");
+    t.className = "toast";
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+};
 
-/* ============================== Modals ============================== */
-if (!window.openModal)
-  window.openModal = (id) => {
-    const n = $(id);
-    if (n) n.classList.add("show");
-  };
-if (!window.closeModal)
-  window.closeModal = (id) => {
-    const n = $(id);
-    if (n) n.classList.remove("show");
-  };
-$$(".modal [data-close]").forEach((btn) =>
-  btn.addEventListener("click", (e) => {
+// === UI: Modals ===
+window.openModal ??= (id) => $(id)?.classList.add("show");
+window.closeModal ??= (id) => $(id)?.classList.remove("show");
+
+// Event Delegation for modal closing (Optimization: 1 listener instead of N)
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".modal [data-close]")) {
     e.preventDefault();
-    const m = btn.closest(".modal");
-    if (m) m.classList.remove("show");
-  })
-);
+    e.target.closest(".modal").classList.remove("show");
+  }
+});
 
-/* ========================= Supabase Helpers ========================= */
-/** يحفظ/يحدّث المستخدم في Supabase اعتماداً على بيانات Auth0 */
+// === Logic: Auth & Supabase ===
+
+/** Unified method to perform login or register */
+const performAuthAction = (hint, extra = {}) => {
+  const params = {
+    authorizationParams: {
+      screen_hint: hint,
+      redirect_uri: CALLBACK,
+      ...extra,
+    },
+  };
+  // Support both SDK versions/methods seamlessly
+  (window.auth?.loginWithRedirect || window.auth?.login)?.call(
+    window.auth,
+    params
+  );
+};
+
+/** Sync Auth0 user to Supabase */
 async function supaEnsureUserFromAuth0() {
   try {
     const u = await window.auth?.getUser();
-    if (!u || !u.email) return;
+    if (!u?.email) return;
 
-    if (typeof window.supaEnsureUser === "function") {
+    const payload = {
+      email: u.email.toLowerCase(),
+      name: u.name || u.nickname || null,
+    };
+
+    if (window.supaEnsureUser)
       await window.supaEnsureUser({
-        email: String(u.email).toLowerCase(),
-        full_name: u.name || u.nickname || null,
+        email: payload.email,
+        full_name: payload.name,
       });
-    } else if (typeof window.supaEnsureUserProfile === "function") {
+    else if (window.supaEnsureUserProfile)
       await window.supaEnsureUserProfile({
+        ...payload,
         sub: u.sub,
-        email: String(u.email).toLowerCase(),
-        name: u.name || u.nickname || null,
         picture: u.picture || null,
       });
-    }
   } catch (_) {}
 }
 
-/* =============== زر لوحة التحكم (أدمن) =============== */
-/** إظهار/إخفاء زر لوحة التحكم حسب الـ claims (بعد تأكد تسجيل الدخول) */
+/** Check Admin Status */
 async function toggleAdminButton() {
   const adminBtn = document.getElementById("adminBtn");
   if (!adminBtn) return;
 
   try {
-    // لا تواصلي لو مافي جلسة دخول مؤكدة
-    if (!window.auth?.isAuthenticated) {
-      adminBtn.style.display = "none";
-      return;
-    }
-    const authed = await window.auth.isAuthenticated();
-    if (!authed) {
+    if (!(await window.auth?.isAuthenticated?.())) {
       adminBtn.style.display = "none";
       return;
     }
 
-    // بعدها فقط استرجعي الـ claims واحسبي isAdmin
     const claims = await window.auth.getIdTokenClaims();
-
-    const NS = "https://n-athar.co/";
-    const ALT = "https://athar.co/";
-
-    console.log("[admin] claims:", claims);
-    console.log(
-      "[admin] roles:",
-      claims?.[NS + "roles"] || claims?.[ALT + "roles"]
-    );
-    console.log(
-      "[admin] admin flag:",
-      claims?.[NS + "admin"] ?? claims?.[ALT + "admin"]
-    );
-
-    const roles = claims?.[NS + "roles"] || claims?.[ALT + "roles"] || [];
+    // Check roles in both namespaces or direct admin flag
+    const roles =
+      claims?.[NS_MAIN + "roles"] || claims?.[NS_ALT + "roles"] || [];
     const isAdmin =
-      (Array.isArray(roles) && roles.includes("admin")) ||
-      claims?.[NS + "admin"] === true ||
-      claims?.[ALT + "admin"] === true;
+      roles.includes("admin") ||
+      claims?.[NS_MAIN + "admin"] === true ||
+      claims?.[NS_ALT + "admin"] === true;
 
     adminBtn.style.display = isAdmin ? "inline-flex" : "none";
   } catch (err) {
-    console.error("Error checking admin role:", err);
+    console.error("Admin Check Error:", err);
     adminBtn.style.display = "none";
   }
 }
 
-/* =============== أزرار الدخول/التسجيل/الخروج =============== */
+/** Manage Auth Buttons State */
 function bindAuthButtons() {
   const loginBtn = document.getElementById("loginBtn");
   const registerBtn = document.getElementById("registerBtn");
   const logoutBtn = document.getElementById("logout");
+  const profileLink = document.getElementById("nav-profile");
+  const inviteCode = new URLSearchParams(location.search).get("code");
 
-  function setButtons(isAuth) {
+  const setButtons = (isAuth) => {
     if (loginBtn) loginBtn.style.display = isAuth ? "none" : "";
     if (registerBtn) registerBtn.style.display = isAuth ? "none" : "";
     if (logoutBtn) logoutBtn.style.display = isAuth ? "" : "none";
-
-    const profileLink = document.getElementById("nav-profile");
     if (profileLink) profileLink.style.display = isAuth ? "" : "none";
-  }
+  };
+
+  // Expose for external use if needed
   window.__setAuthButtons = setButtons;
   setButtons(false);
 
-  const inviteCode =
-    new URLSearchParams(location.search).get("code") || undefined;
-
-  // === زر الدخول ===
-  if (loginBtn) {
-    loginBtn.onclick = () =>
-      window.auth?.loginWithRedirect
-        ? window.auth.loginWithRedirect({
-            authorizationParams: {
-              screen_hint: "login",
-              redirect_uri: CALLBACK,
-            },
-          })
-        : window.auth?.login?.({
-            authorizationParams: {
-              screen_hint: "login",
-              redirect_uri: CALLBACK,
-            },
-          });
-  }
-
-  // === زر التسجيل ===
-  if (registerBtn) {
+  if (loginBtn) loginBtn.onclick = () => performAuthAction("login");
+  if (registerBtn)
     registerBtn.onclick = () =>
-      window.auth?.loginWithRedirect
-        ? window.auth.loginWithRedirect({
-            authorizationParams: {
-              screen_hint: "signup",
-              redirect_uri: CALLBACK,
-              ...(inviteCode ? { code: inviteCode } : {}),
-            },
-          })
-        : window.auth?.login?.({
-            authorizationParams: {
-              screen_hint: "signup",
-              redirect_uri: CALLBACK,
-              ...(inviteCode ? { code: inviteCode } : {}),
-            },
-          });
-  }
+      performAuthAction("signup", inviteCode ? { code: inviteCode } : {});
 
-  // === زر الخروج ===
   if (logoutBtn) {
     logoutBtn.onclick = () => {
       if (window.auth?.logout) return window.auth.logout();
-      if (window.auth0Client?.logout) {
-        return window.auth0Client.logout({
-          logoutParams: { returnTo: RETURN_TO },
-        });
-      }
+      window.auth0Client?.logout?.({ logoutParams: { returnTo: RETURN_TO } });
     };
   }
 
-  window.addEventListener(
-    "auth0:ready",
-    async () => {
-      try {
-        const ok = await (window.auth?.isAuthenticated
-          ? window.auth.isAuthenticated()
-          : window.auth0Client?.isAuthenticated());
-        setButtons(!!ok);
-      } catch {
-        setButtons(false);
-      }
-    },
-    { once: true }
-  );
-
-  (async () => {
+  // Check auth state helper
+  const checkAuth = async () => {
     try {
-      if (window.auth?.isAuthenticated) {
-        const ok = await window.auth.isAuthenticated();
-        setButtons(!!ok);
-      }
+      const ok = await (window.auth?.isAuthenticated?.() ??
+        window.auth0Client?.isAuthenticated?.());
+      setButtons(!!ok);
     } catch {
       setButtons(false);
     }
-  })();
+  };
+
+  // Listen or check immediately
+  window.addEventListener("auth0:ready", checkAuth, { once: true });
+  if (window.auth?.isAuthenticated) checkAuth();
 }
 
-/* =============== تسجيل استخدام الأدوات (view) =============== */
+/** Log Tool Usage based on URL */
 async function logToolViewIfAny() {
   try {
-    const file = (location.pathname.split("/").pop() || "").toLowerCase();
-    const base = file.replace(".html", "");
+    const file = (location.pathname.split("/").pop() || "")
+      .replace(".html", "")
+      .toLowerCase();
+    // Aliases map
+    const alias = { athar: "muntalaq", darsi: "murtakaz" };
+    const tool = alias[file] || file;
 
-    const aliases = {
-      athar: "muntalaq", // مُنطلق
-      darsi: "murtakaz", // مُرتكز
-      // البقية نفس الاسم: miyad, masar, ethraa, mulham
-    };
+    // List of valid tools to log (derived from original code comments)
+    const validTools = [
+      "muntalaq",
+      "murtakaz",
+      "miyad",
+      "masar",
+      "ethraa",
+      "mulham",
+    ];
 
-    const tool = aliases[base] || base;
-    if (!tool) return;
-
-    if (typeof window.supaLogToolUsage === "function") {
+    if (validTools.includes(tool) && window.supaLogToolUsage) {
       await window.supaLogToolUsage(`${tool}:view`);
     }
   } catch (_) {}
 }
 
-/* ============================== Entry ============================== */
-document.addEventListener("DOMContentLoaded", async () => {
-  bindThemeToggle();
-  bindAuthButtons();
+// === Banners ===
 
-  window.addEventListener(
-    "auth0:ready",
-    async () => {
-      await supaEnsureUserFromAuth0(); // حفظ/تحديث المستخدم في Supabase
-      await toggleAdminButton(); // إظهار زر الأدمن إن وُجدت الصلاحية
-      await logToolViewIfAny(); // سجل مشاهدة الأداة (إن وُجدت)
-    },
-    { once: true }
-  );
-
-  if (window.auth) {
-    // في حال كان جاهز قبل الحدث
-    await toggleAdminButton();
-  }
-});
-
-/* ======================= إعلان أعلى الموقع ======================= */
-// إعلان أعلى الموقع — يظهر إذا كان هناك إعلان فعّال الآن
+/** Announcement Banner */
 async function mountAnnouncementBar() {
   try {
     const res = await fetch("/.netlify/functions/admin-announcement?latest=1", {
@@ -340,73 +246,79 @@ async function mountAnnouncementBar() {
     });
     if (!res.ok) return;
     const ann = await res.json();
-    if (!ann?.active || !ann?.text) return;
 
-    const bar = document.createElement("div");
-    bar.dir = "rtl";
-    bar.style.cssText =
-      "background:#1f2937;color:#fff;padding:10px 14px;text-align:center;font-weight:800";
-    bar.textContent = ann.text;
-    document.body.prepend(bar);
+    if (ann?.active && ann?.text) {
+      const bar = document.createElement("div");
+      bar.dir = "rtl";
+      bar.style.cssText =
+        "background:#1f2937;color:#fff;padding:10px 14px;text-align:center;font-weight:800";
+      bar.textContent = ann.text;
+      document.body.prepend(bar);
+    }
   } catch (_) {}
 }
-document.addEventListener("DOMContentLoaded", mountAnnouncementBar);
 
-/* ======================= شريط تجربة 3 أيام (اختياري) ======================= */
-// يظهر فقط إذا كانت حالة المستخدم "trial" ويوجد claim باسم trial_expires
+/** Trial Banner */
 async function mountTrialBanner() {
   try {
-    if (!window.auth?.isAuthenticated) return;
-    const ok = await window.auth.isAuthenticated();
-    if (!ok) return;
+    if (!(await window.auth?.isAuthenticated?.())) return;
 
     const claims = await window.auth.getIdTokenClaims();
-    const NS = "https://n-athar.co/";
-    const ALT = "https://athar.co/";
-    const status = claims?.[NS + "status"] ?? claims?.[ALT + "status"];
-    if (status !== "trial") return;
-
+    const status = claims?.[NS_MAIN + "status"] ?? claims?.[NS_ALT + "status"];
     const expStr =
-      claims?.[NS + "trial_expires"] ?? claims?.[ALT + "trial_expires"];
-    if (!expStr) return; // لو ما وصل claim للتاريخ ما نعرض عداد
+      claims?.[NS_MAIN + "trial_expires"] ?? claims?.[NS_ALT + "trial_expires"];
+
+    if (status !== "trial" || !expStr) return;
 
     const exp = new Date(expStr);
-    if (isNaN(+exp)) return;
+    if (isNaN(exp)) return;
 
-    function daysLeft() {
-      const ms = exp.getTime() - Date.now();
-      return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
-    }
-
-    const dLeft = daysLeft();
+    const getDaysLeft = () =>
+      Math.max(0, Math.ceil((exp - Date.now()) / 864e5)); // 864e5 = 1 day in ms
+    const dLeft = getDaysLeft();
     if (dLeft <= 0) return;
 
     const bar = document.createElement("div");
-    bar.dir = "rtl";
-    bar.id = "trial-banner";
+    Object.assign(bar, { dir: "rtl", id: "trial-banner" });
     bar.style.cssText =
       "background:#fde68a;color:#1f2937;padding:10px 14px;text-align:center;font-weight:700";
-    bar.textContent = `أنتِ على الخطة التجريبية — تبقّى ${dLeft} يوم`;
 
-    // لو فيه شريط إعلان، ضعي التجربة تحته مباشرة
+    const updateText = (n) =>
+      (bar.textContent = `أنتِ على الخطة التجريبية — تبقّى ${n} يوم`);
+    updateText(dLeft);
+
+    // Insert after existing top banner or at top
     const first = document.body.firstElementChild;
-    if (first) {
-      first.insertAdjacentElement("afterend", bar);
-    } else {
-      document.body.prepend(bar);
-    }
+    first
+      ? first.insertAdjacentElement("afterend", bar)
+      : document.body.prepend(bar);
 
-    // تحديث نص العدّاد يوميًا تقريبًا
     const timer = setInterval(() => {
-      const n = daysLeft();
+      const n = getDaysLeft();
       if (n <= 0) {
         clearInterval(timer);
         bar.remove();
-        return;
-      }
-      bar.textContent = `أنتِ على الخطة التجريبية — تبقّى ${n} يوم`;
-    }, 60 * 60 * 1000); // تحديث كل ساعة
+      } else updateText(n);
+    }, 3600000); // Update every hour
   } catch (_) {}
 }
-// نفّذي شريط التجربة بعد جاهزية Auth0 (لو claims متاحة)
-window.addEventListener("auth0:ready", mountTrialBanner, { once: true });
+
+// === Initialization ===
+document.addEventListener("DOMContentLoaded", () => {
+  bindThemeToggle();
+  bindAuthButtons();
+  mountAnnouncementBar();
+
+  const onAuthReady = async () => {
+    await Promise.allSettled([
+      supaEnsureUserFromAuth0(),
+      toggleAdminButton(),
+      logToolViewIfAny(),
+      mountTrialBanner(),
+    ]);
+  };
+
+  window.addEventListener("auth0:ready", onAuthReady, { once: true });
+  // If Auth0 loaded before DOM
+  if (window.auth) onAuthReady();
+});

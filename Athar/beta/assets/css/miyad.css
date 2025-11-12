@@ -1,0 +1,209 @@
+/* حقول عامة */
+.field {
+  margin: 8px 0;
+}
+.field label {
+  display: block;
+  font-weight: 700;
+  margin: 4px 0;
+  line-height: 1.6;
+}
+.field input,
+.field select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  box-sizing: border-box;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+/* شبكة الحقول */
+.grid2 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .grid2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* مسافات مريحة بين الكروت */
+.card {
+  margin-bottom: 18px;
+  position: relative;
+}
+
+/* شريط الأزرار */
+.actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* “التذكير” بعد “التحكمات” */
+.controls + #reminder-card {
+  margin-top: 22px;
+}
+
+/* تنسيق أساسي لقسم التذكير */
+/* ===== Reminder Card – polished mobile-first ===== */
+#reminder-card.card {
+  padding: 16px 18px;
+}
+
+#reminder-card .title {
+  font-size: 1.15rem;
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+/* سطر الوصف تحت العنوان */
+#reminder-card .hint {
+  margin: 0 auto 12px;
+  opacity: 0.85;
+  font-size: 0.92rem;
+  text-align: center;
+  max-width: 34rem;
+}
+
+/* صفوف الخيارات */
+#reminder-card .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  direction: rtl; /* محاذاة RTL جميلة */
+}
+
+/* عنوان صغير لكل صف */
+#reminder-card .row .label {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* قائمة الأيام */
+#reminder-card select {
+  min-width: 9rem;
+  max-width: 12rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: var(--card);
+}
+
+/* زر الحفظ وحالة الحفظ */
+#reminder-card .actions-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+#reminder-card #rem-status {
+  opacity: 0.8;
+}
+
+/* ===== شكل سويتش أنيق للتمكين ===== */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 26px;
+  vertical-align: middle;
+}
+.switch input {
+  display: none;
+}
+.switch .slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background: #cbd5e1;
+  border-radius: 100px;
+  transition: 0.25s;
+}
+.switch .slider::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  right: 3px;
+  top: 3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: 0.25s;
+}
+.switch input:checked + .slider {
+  background: #3b82f6;
+}
+.switch input:checked + .slider::before {
+  transform: translateX(-20px);
+}
+/* قائمة المواعيد */
+.events {
+  margin-top: 12px;
+}
+.ev {
+  background: var(--card);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ev .meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+.color {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* تلميحات */
+.legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+.legend .pill {
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.print-note {
+  text-align: center;
+  margin-top: 8px;
+  opacity: 0.8;
+}
+
+/* طباعة */
+@media print {
+  .topbar,
+  .actions-row,
+  .controls,
+  .btn,
+  .toast {
+    display: none !important;
+  }
+  .ev {
+    page-break-inside: avoid;
+  }
+}

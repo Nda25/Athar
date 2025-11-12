@@ -1,6 +1,6 @@
 /* =========================
-   نمط "أثـَــر" — ملف CSS كامل
-   ========================= */
+ * نمط "أثـَــر" — ملف CSS محسن
+ * ========================= */
 
 /* لوحة ألوان أثر (Sea) والمتغيرات العامة */
 :root {
@@ -14,20 +14,17 @@
   --sea-600: #1e40af;
   --sea-700: #1e3a8a;
   --sea-800: #172554;
-
-  --ink: #0f172a; /* ✅ FIXED: لون النص الأساسي - أغمق للتباين الأفضل */
-  --muted: #334155; /* ✅ FIXED: نص خافت - أغمق للوضوح (9.2:1 contrast) */
-  --bg: #ffffff; /* خلفية الصفحة */
-  --card: #ffffff; /* خلفية البطاقات */
-  --radius: 20px; /* نصف قطر موحد */
+  --ink: #0f172a;
+  --muted: #334155;
+  --bg: #ffffff;
+  --card: #ffffff;
+  --radius: 20px;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
   --gold: #c8a84e;
   --glass: rgba(255, 255, 255, 0.12);
-
-  /* ↓↓↓ إضافات التخصيص بدون كسر القائم ↓↓↓ */
-  --primary: var(--sea-600); /* اللون الأساسي القابل للتخصيص */
+  --primary: var(--sea-600);
   --primary-2: var(--sea-500);
-  --brand: var(--primary); /* إبقاء التوافق مع الأكواد القديمة */
+  --brand: var(--primary);
   --brand-2: var(--primary-2);
 }
 
@@ -35,8 +32,8 @@
 .dark {
   --bg: #0b1220;
   --card: #0f172a;
-  --ink: #f1f5f9; /* ✅ FIXED: أفتح قليلاً للوضوح الأفضل على الداكن (14.5:1 contrast) */
-  --muted: #cbd5e1; /* ✓ جيد: 8.8:1 contrast على الخلفية الداكنة */
+  --ink: #f1f5f9;
+  --muted: #cbd5e1;
   --shadow: 0 22px 60px rgba(0, 0, 0, 0.45),
     0 1px 0 rgba(255, 255, 255, 0.03) inset;
   --glass: rgba(255, 255, 255, 0.06);
@@ -46,17 +43,20 @@
 * {
   box-sizing: border-box;
 }
+
+/* تحسين: دمج خصائص html, body من أماكن متفرقة */
 html,
 body {
   height: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
-/* body بدون خلفية صلبة عشان الصورة تبين */
+
 body {
   margin: 0;
   font-family: "Cairo", system-ui, Tahoma, Arial;
   color: var(--ink);
-  background: var(--bg); /* ✅ استخدمي المتغيّر */
-  overflow-x: hidden;
+  background: var(--bg);
   line-height: 1.9;
   font-size: 17px;
 }
@@ -65,10 +65,10 @@ body {
 .global-bg {
   position: fixed;
   inset: 0;
-  z-index: -2; /* تحت المحتوى وفوق المتدرّج */
-  pointer-events: none; /* ما تمنع الضغط على العناصر */
+  z-index: -2;
+  pointer-events: none;
   background: url("assets/bg/bg.webp") center/cover no-repeat;
-  opacity: 0.25; /*  بين .25 – .6 */
+  opacity: 0.25;
 }
 
 /* المتدرّج تحت الصورة */
@@ -83,53 +83,84 @@ body {
   background: linear-gradient(160deg, #0b1220 0%, #111827 50%, #1e293b 100%);
 }
 
-/* الزخرفة فوق الصورة (يتم تحميلها من ملف خارجي لتحسين الأداء) */
+/* الزخرفة فوق الصورة */
 .pattern {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
   opacity: 0.14;
-  background-repeat: repeat;
-  background-size: 220px 220px;
-  background-image: url("assets/img/pattern.svg");
-  background-attachment: fixed;
+  background: url("assets/img/pattern.svg") repeat 220px 220px fixed;
   will-change: opacity;
   mix-blend-mode: soft-light;
 }
 .dark .pattern {
   opacity: 0.1;
-} /* أخفت في الداكن */
+}
 
-/* ===== الشريط العلوي (Topbar) — النسخة الأولى (مرنة) ===== */
+/* ===== الشريط العلوي (Topbar) — النسخة النهائية (Grid) ===== */
+/* تحسين: إزالة تعريف .topbar القديم (flex) المكرر */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 50;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* يسار | وسط | يمين */
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   padding: 12px 18px;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  background: rgba(255, 255, 255, 0.85);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.15);
-  gap: 10px;
-  flex-wrap: nowrap;
-  will-change: transform;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  will-change: transform; /* موجودة بالأساس - جيدة للأداء */
 }
 .dark .topbar {
-  background: rgba(17, 24, 39, 0.8);
-  border-color: rgba(59, 130, 246, 0.2);
+  background: rgba(17, 24, 39, 0.6);
 }
 
-.topbar .left-actions,
-.topbar .actions,
-.topbar .user {
-  display: flex;
-  align-items: center;
+/* يسار: دخول/تسجيل فوق بعض */
+.tb-left {
+  justify-self: start;
+  display: grid;
+  gap: 6px;
+}
+
+/* الوسط: زر 🌓 وبجانبه مساحة إبداعي */
+.tb-center {
+  justify-self: center;
+  display: inline-flex;
   gap: 10px;
-  flex-wrap: nowrap;
+  align-items: center;
+}
+
+/* يمين: زر الخطط لوحده */
+.tb-right {
+  justify-self: end;
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* تحسين: إزالة الميديا المكررة لـ topbar */
+@media (max-width: 640px) {
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .tb-left,
+  .tb-right,
+  .tb-center {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  /* تحسين: دمج media query للأزرار هنا */
+  .btn {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
 }
 
 /* أزرار عامة */
@@ -144,7 +175,7 @@ body {
   cursor: pointer;
   border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   background: linear-gradient(180deg, #ffffffd0, #ffffffb5);
-  color: #0a2540; /* ✅ FIXED: نص داكن جداً للتباين القوي (8.2:1) */
+  color: #0a2540;
   font-weight: 800;
   transition: 0.2s;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
@@ -157,7 +188,6 @@ body {
 .btn:active {
   transform: translateY(0) scale(0.98);
 }
-
 .btn.primary {
   background: var(--primary-2);
   color: #fff;
@@ -171,46 +201,14 @@ body {
   background: transparent;
 }
 
-/* تحسين نص الأزرار في الوضع الداكن ليكون أسود  */
+/* تحسين نص الأزرار في الوضع الداكن ليكون أسود */
 .dark .topbar .btn,
 .dark .topbar .btn:hover,
-.dark .topbar .btn:active {
-  color: #000 !important;
-  text-shadow: none;
-}
+.dark .topbar .btn:active,
 .dark .topbar .btn.primary,
 .dark .topbar .btn.ghost {
   color: #000 !important;
-}
-
-/* لفّ وترتيب خاص للجوال */
-@media (max-width: 640px) {
-  .topbar {
-    padding: 10px 12px;
-    flex-wrap: wrap;
-  }
-  .topbar .left-actions {
-    order: 1;
-    flex: 1 1 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
-  }
-  .topbar .user {
-    order: 2;
-    flex: 1 1 auto;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-  .topbar .actions {
-    order: 3;
-    flex: 1 1 auto;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-  }
-  .btn {
-    padding: 8px 10px;
-    font-size: 13px;
-  }
+  text-shadow: none;
 }
 
 /* ===== الهيدر: الشعار + الوسم ===== */
@@ -225,7 +223,6 @@ header {
   position: relative;
 }
 
-/* الشعار — سطر مستقل بدون أيقونة */
 .logo {
   font-family: "Cairo", system-ui, Tahoma, Arial;
   font-weight: 700;
@@ -234,27 +231,25 @@ header {
   margin: 0;
   color: var(--primary);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
-  display: block; /* يأخذ سطر كامل */
-  text-align: center; /* بالوسط */
+  display: block;
+  text-align: center;
 }
 .dark .logo {
   color: #93c5fd;
   text-shadow: none;
 }
 
-/* الوسم (العبارة) تحت الشعار مباشرة */
 .tag {
-  display: block; /* سطر تحت الشعار */
+  display: block;
   text-align: center;
-  margin-top: 12px;
+  margin: 12px auto 0;
   padding: 10px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.75); /* ✅ FIXED: أكثر عتماً */
+  background: rgba(255, 255, 255, 0.75);
   border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
-  color: #0a2540; /* ✅ FIXED: أزرق داكن جداً (7.1:1 contrast) */
+  color: #0a2540;
   font-weight: 700;
   max-width: fit-content;
-  margin-inline: auto; /* تمركز العنصر */
 }
 .dark .tag {
   background: rgba(17, 24, 39, 0.55);
@@ -274,9 +269,17 @@ header {
 main {
   padding: 18px;
 }
+@media (max-width: 640px) {
+  main {
+    padding-inline: 12px;
+  }
+}
+
+/* تحسين: .container هذا يغطي التعريف السابق (980px) */
 .container {
-  max-width: 980px;
-  margin: 0 auto;
+  width: min(1100px, 92vw);
+  margin-inline: auto;
+  padding-inline: 16px;
 }
 
 /* بطاقات عامة */
@@ -286,6 +289,7 @@ main {
   border-radius: var(--radius);
   padding: 24px;
   box-shadow: var(--shadow);
+  overflow: hidden; /* تحسين: دمج من باتش التوافقية */
 }
 .dark .card {
   border-color: color-mix(in srgb, var(--primary) 32%, transparent);
@@ -387,18 +391,33 @@ main {
 }
 
 /* ===== الذيل ===== */
+/* تحسين: إزالة تعريف footer المكرر والقديم */
 footer {
   text-align: center;
-  padding: 34px 18px 46px;
-  color: var(--muted);
-}
-.foot-line {
-  margin: 0 0 6px;
-  font-size: 15px;
-}
-.foot-name {
-  margin: 0;
+  margin-top: 30px;
+  padding: 20px 10px;
+  color: #a8b4c7;
   font-size: 14px;
+}
+footer .foot-line {
+  margin: 0;
+  font-style: italic;
+}
+footer .foot-name {
+  margin: 5px 0 12px;
+  font-weight: 700;
+}
+footer .foot-links {
+  font-size: 12px;
+  color: #93c5fd;
+}
+footer .foot-links a {
+  color: #93c5fd;
+  text-decoration: underline;
+  margin: 0 4px;
+}
+footer .foot-links .sep {
+  color: #64748b;
 }
 
 /* ===== المودالات ===== */
@@ -428,6 +447,8 @@ footer {
 .dark .modal .sheet {
   border-color: color-mix(in srgb, var(--primary) 32%, transparent);
 }
+
+/* تحسين: إزالة @keyframes pop المكررة */
 @keyframes pop {
   from {
     transform: scale(0.98);
@@ -458,21 +479,22 @@ label {
   font-weight: 700;
   margin: 10px 0 6px;
   color: var(--ink);
-  font-family: Cairo, system-ui, Tahoma, Arial;
   font-size: 0.95rem;
 }
 
+/* تحسين: دمج input, select, textarea */
 input,
 select,
 textarea {
   width: 100%;
+  max-width: 100%; /* من باتش التوافقية */
   padding: 12px;
   border: 1px solid var(--sea-600);
   border-radius: 12px;
   background: var(--card);
   color: var(--ink);
   font-family: Cairo, system-ui, Tahoma, Arial;
-  font-size: 1rem;
+  font-size: 1rem; /* 16px لمنع تكبير iOS */
   transition: all 0.2s ease;
   outline: none;
 }
@@ -509,7 +531,6 @@ input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 input[type="number"] {
   appearance: textfield;
 }
@@ -522,37 +543,45 @@ input[type="number"] {
   color: var(--ink);
   border-color: var(--sea-600);
 }
-
 .dark input:hover,
 .dark select:hover,
 .dark textarea:hover {
   border-color: #60a5fa;
 }
-
 .dark input:focus,
 .dark select:focus,
 .dark textarea:focus {
   border-color: #60a5fa;
   box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
-
 .dark input::placeholder,
 .dark textarea::placeholder {
   color: var(--muted);
   opacity: 0.8;
 }
+
+/* تحسين: دمج flex-wrap من باتش التوافقية */
 .actions-row {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
   margin-top: 14px;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .actions-row {
+    justify-content: stretch;
+  }
+  .actions-row .btn {
+    width: 100%;
+  }
 }
 
 /* شارة صغيرة (عامّة) */
 .badge {
   display: inline-block;
   font-weight: 800;
-  color: #15803d; /* ✅ FIXED: أخضر أغمق (7.8:1 contrast) */
+  color: #15803d;
   background: #dcfce7;
   border: 1px solid #86efac;
   border-radius: 999px;
@@ -654,14 +683,14 @@ input[type="number"] {
   position: relative;
 }
 
+/* تحسين: دمج .sel مع input, select, textarea كان سيصبح معقداً، لذا إبقاؤه منفصلاً أفضل */
 .select-wrap .sel {
   width: 100%;
   background: var(--card);
   color: var(--ink);
   border: 1px solid var(--sea-600);
   border-radius: 12px;
-  padding: 0.9rem 1rem;
-  padding-inline-start: 2.2rem;
+  padding: 0.9rem 1rem 0.9rem 2.2rem;
   outline: none;
   appearance: none;
   -webkit-appearance: none;
@@ -671,38 +700,31 @@ input[type="number"] {
   cursor: pointer;
   transition: all 0.2s ease;
 }
-
 .select-wrap .sel:hover {
   border-color: var(--sea-500);
 }
-
 .select-wrap .sel:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
-
 .select-wrap .sel option {
   font-family: Cairo, system-ui, Tahoma, Arial;
   color: #0f172a;
   background: #ffffff;
   padding: 8px;
 }
-
 .dark .select-wrap .sel {
   background: var(--card);
   color: var(--ink);
   border-color: var(--sea-600);
 }
-
 .dark .select-wrap .sel:hover {
   border-color: #60a5fa;
 }
-
 .dark .select-wrap .sel:focus {
   border-color: #60a5fa;
   box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
-
 .dark .select-wrap .sel option {
   background: #1e293b;
   color: #f1f5f9;
@@ -720,23 +742,19 @@ input[type="number"] {
   color: var(--sea-500);
   transition: color 0.2s ease;
 }
-
 .select-wrap .sel-icon svg {
   width: 16px;
   height: 16px;
   display: block;
   fill: currentColor;
 }
-
 .select-wrap .sel:focus ~ .sel-icon,
 .select-wrap .sel:hover ~ .sel-icon {
   color: var(--primary);
 }
-
 .dark .select-wrap .sel-icon {
   color: #60a5fa;
 }
-
 .dark .select-wrap .sel:focus ~ .sel-icon,
 .dark .select-wrap .sel:hover ~ .sel-icon {
   color: #93c5fd;
@@ -747,102 +765,27 @@ input[type="number"] {
   color: var(--muted);
 }
 
-@keyframes pop {
-  from {
-    transform: scale(0.98);
-    opacity: 0.7;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* ===== Topbar (Grid) — ترتيب يسار/وسط/يمين (يأتي لاحقاً ليغطي السابق عند الحاجة) ===== */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr; /* يسار | وسط | يمين */
-  align-items: center;
-  gap: 12px;
-  padding: 12px 18px;
-  backdrop-filter: blur(8px);
-  background: rgba(255, 255, 255, 0.7);
-  border-bottom: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
-}
-.dark .topbar {
-  background: rgba(17, 24, 39, 0.6);
-}
-
-/* يسار: دخول/تسجيل فوق بعض */
-.tb-left {
-  justify-self: start;
-  display: grid;
-  gap: 6px;
-}
-
-/* الوسط: زر 🌓 وبجانبه مساحة إبداعي */
-.tb-center {
-  justify-self: center;
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-}
-
-/* يمين: زر الخطط لوحده */
-.tb-right {
-  justify-self: end;
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-}
-
-@media (max-width: 640px) {
-  .topbar {
-    display: flex; /* ← بدل grid إلى flex */
-    flex-wrap: wrap; /* ← يسمح ينزل للسطر لو ضاق */
-    justify-content: center; /* ← يخليهم بالوسط */
-    gap: 10px; /* ← مسافة واضحة بين الأزرار */
-  }
-  .tb-left,
-  .tb-right,
-  .tb-center {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-}
-
 /* ===== مرتكز: تكبير الحقول والبطاقات ===== */
-
-/* مسافة بين أقسام الصفحة التعريفية */
 .info-card {
-  margin-bottom: 24px; /* خلي المسافة أكبر شوي */
+  margin-bottom: 24px;
 }
-
 .info-card:last-child {
-  margin-bottom: 0; /* آخر عنصر ما يحتاج فراغ تحته */
+  margin-bottom: 0;
 }
 .info-card .lead a {
   color: var(--sea-600);
   text-decoration: underline;
   font-weight: 600;
 }
-
 .info-card .lead a:hover {
   color: var(--sea-400);
 }
-
-/* ✅ FIXED: Dark mode link colors (لم يكن موجود من قبل!) */
 .dark .info-card .lead a {
-  color: #60a5fa; /* var(--sea-400) - أفتح بكثير (7.2:1 contrast) */
+  color: #60a5fa;
   font-weight: 600;
 }
-
 .dark .info-card .lead a:hover {
-  color: #93c5fd; /* var(--sea-300) - حتى أفتح على hover */
+  color: #93c5fd;
 }
 
 /* شرائط الطالب */
@@ -863,13 +806,12 @@ input[type="number"] {
   border-inline-start: 1px solid #cbd5e1;
   font-weight: 800;
   text-align: center;
-  color: #0a2540; /* ✅ FIXED: أزرق داكن جداً (8.5:1 contrast) */
+  color: #0a2540;
 }
 .dark .strip .head {
   background: color-mix(in oklab, var(--primary) 28%, black);
   color: #c7d2fe;
 }
-
 .strip .row {
   display: grid;
   grid-template-columns: 180px 120px 120px 120px 1fr;
@@ -892,10 +834,10 @@ input[type="number"] {
 }
 .meta-box {
   background: #f8fafc;
-  border: 1px dashed #94a3b8; /* ✅ FIXED: حد أغمق */
+  border: 1px dashed #94a3b8;
   border-radius: 10px;
   min-height: 38px;
-  color: #1e293b; /* نص داكن */
+  color: #1e293b;
   font-weight: 500;
 }
 
@@ -913,7 +855,7 @@ input[type="number"] {
   text-align: center;
   font-weight: 800;
   padding: 2px 0;
-  color: #0a2540; /* ✅ FIXED: أزرق داكن جداً (10.2:1 contrast) */
+  color: #0a2540;
 }
 .dark .week .wtitle {
   background: #1f2937;
@@ -952,25 +894,17 @@ input[type="number"] {
   width: 10px;
   height: 10px;
   border: 1.6px solid #64748b;
-  border-radius: 999px /* للدوائر */;
+  border-radius: 999px;
 }
 .d5 .sq {
   border-radius: 3px;
-} /* مربعات */
+}
 .d5 .mk {
   font-weight: 800;
   line-height: 1;
 }
 
-/* ====== Athar — Global Responsive Patch (ضعها في نهاية style.css) ====== */
-
-/* لا تمرير أفقي + إصلاح تكبير iOS */
-html,
-body {
-  height: 100%;
-  overflow-x: hidden;
-  -webkit-text-size-adjust: 100%;
-}
+/* ====== Athar — Global Responsive Patch ====== */
 
 /* وسائط وصور مرنة */
 img,
@@ -981,27 +915,6 @@ iframe {
   max-width: 100%;
   height: auto;
   display: block;
-}
-
-/* حاوية عامة موحّدة لكل الصفحات */
-.container {
-  width: min(1100px, 92vw);
-  margin-inline: auto;
-  padding-inline: 16px;
-}
-
-/* بطاقات: امنعي خروج العناصر */
-.card {
-  overflow: hidden;
-}
-
-/* حقول النماذج: عرض كامل + منع تكبير iOS */
-input,
-select,
-textarea {
-  max-width: 100%;
-  width: 100%;
-  font-size: 16px;
 }
 
 /* لفّ الاختيارات الطويلة (checkbox/radio) بأناقة */
@@ -1019,37 +932,14 @@ textarea {
   flex: 0 0 auto;
 }
 
-/* صف الأزرار يصبح مريح على الشاشات الصغيرة */
-.actions-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-@media (max-width: 640px) {
-  .actions-row {
-    justify-content: stretch;
-  }
-  .actions-row .btn {
-    width: 100%;
-  }
-  main {
-    padding-inline: 12px;
-  } /* حواف داخلية للجوال */
-}
-
-/* شبكات جاهزة للاستعمال العام (سمّي بلوكاتك بها وخلاص) */
+/* شبكات جاهزة للاستعمال العام */
 .grid-2,
 .grid-3 {
   display: grid;
   gap: 16px;
+  grid-template-columns: 1fr; /* تحسين: دمج التعريف الافتراضي */
 }
-.grid-2 {
-  grid-template-columns: 1fr;
-}
-.grid-3 {
-  grid-template-columns: 1fr;
-}
+
 @media (min-width: 900px) {
   .grid-2 {
     grid-template-columns: 1fr 1fr;
@@ -1059,7 +949,7 @@ textarea {
   }
 }
 
-/* جداول: تمرير أفقي لطيف عند الضيق بدون كسر الصفحة */
+/* جداول: تمرير أفقي لطيف */
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -1067,19 +957,6 @@ textarea {
 .table-wrap table {
   width: 100%;
   border-collapse: collapse;
-}
-
-/* شريط علوي: ضمان عدم اللخبطة على الموبايل */
-@media (max-width: 640px) {
-  .topbar {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-  }
-  .topbar > * {
-    flex-wrap: wrap;
-  }
 }
 
 /* هوامش آمنة لحافة أجهزة iPhone */
@@ -1095,46 +972,13 @@ h2,
 h3 {
   line-height: 1.25;
 }
-button,
-.btn {
+
+/* تحسين: إضافة white-space لـ button ليتطابق مع .btn */
+button {
   white-space: nowrap;
 }
 
-/* ===== Footer (موحّد لكل الصفحات) ===== */
-footer {
-  text-align: center;
-  margin-top: 30px;
-  padding: 20px 10px;
-  color: #a8b4c7;
-  font-size: 14px;
-}
-
-footer .foot-line {
-  margin: 0;
-  font-style: italic;
-}
-footer .foot-name {
-  margin: 5px 0 12px;
-  font-weight: 700;
-}
-
-footer .foot-links {
-  font-size: 12px;
-  color: #93c5fd;
-}
-
-footer .foot-links a {
-  color: #93c5fd;
-  text-decoration: underline;
-  margin: 0 4px;
-}
-
-footer .foot-links .sep {
-  color: #64748b;
-}
-
 /* ===== (إضافات جديدة للملف الشخصي) ===== */
-/* شارات الحالة التفصيلية */
 .badge.active {
   color: #166534;
   background: #dcfce7;
@@ -1176,7 +1020,7 @@ footer .foot-links .sep {
   border-color: #7f1d1d;
 }
 
-/* Theme picker (تخصيص اللون) — إصلاح تداخل ستايل .btn + تمييز النشط */
+/* Theme picker (تخصيص اللون) */
 .theme-picker {
   display: flex;
   gap: 10px;
@@ -1184,7 +1028,7 @@ footer .foot-links .sep {
   align-items: center;
 }
 .theme-picker button {
-  all: unset; /* إزالة ستايل الزر الافتراضي وأي .btn */
+  all: unset;
   display: inline-block;
   width: 28px;
   height: 28px;
@@ -1195,7 +1039,7 @@ footer .foot-links .sep {
 }
 .theme-picker button[data-reset] {
   background: #111827;
-} /* زر اللون الافتراضي */
+}
 .theme-picker button.is-active {
   outline: 3px solid color-mix(in oklab, var(--primary) 65%, white);
   outline-offset: 2px;
