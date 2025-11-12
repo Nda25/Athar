@@ -1,0 +1,226 @@
+:root {
+  /* الألوان القياسية - أزرق وأبيض وأسود */
+  --primary: #1e40af; /* أزرق */
+  --primary-hover: #1e3a8a;
+  --text-main: #111827; /* أسود */
+  --text-muted: #6b7280; /* رمادي */
+  --bg-body: #f9fafb; /* خلفية الصفحة رمادي فاتح جداً */
+  --bg-card: #ffffff; /* خلفية الكروت أبيض */
+  --border: #e5e7eb; /* لون الحدود */
+}
+
+body {
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  font-family: "Cairo", system-ui, sans-serif;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* الشريط العلوي */
+.topbar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-main);
+  transition: all 0.2s;
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: transparent;
+}
+.btn.primary:hover {
+  background: var(--primary-hover);
+}
+
+/* الهيدر */
+header {
+  padding: 40px 20px;
+  text-align: center;
+}
+.logo {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 900;
+  font-size: 3rem;
+}
+.tag {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 14px;
+  border-radius: 50px;
+  background: #e0e7ff;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* الشبكة والكروت */
+.page-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+}
+.grid-2 {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 768px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.box.card,
+.profile-header {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* تفاصيل البروفايل */
+.profile-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .profile-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+  .ph-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.ph-avatar {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+.ph-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.ph-edit {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid white;
+  font-size: 14px;
+}
+
+.ph-name {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.ph-meta {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Badges & Pills */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge.trial {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* الجداول */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th {
+  text-align: right;
+  color: var(--text-muted);
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.table td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  color: var(--text-main);
+}
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.sub {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 16px;
+  margin-top: 0;
+}
+h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 800;
+}

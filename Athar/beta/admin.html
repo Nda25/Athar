@@ -1,732 +1,450 @@
 <!-- admin.html -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>لوحة الإدارة — أثر</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css" />
-<meta name="color-scheme" content="dark light" />
-<style>
-  .card{ margin:16px 0 }
-  .grid{ display:grid; gap:12px; grid-template-columns:1fr }
-  @media(min-width:1100px){ .grid-2{ grid-template-columns:1fr 1fr } .grid-3{ grid-template-columns: 1fr 1fr 1fr } }
-  .field{ margin:10px 0 }
-  .field label{ display:block; font-weight:700; margin:6px 0 }
-  .field input,.field select, .field textarea{
-    width:100%; padding:12px; border-radius:12px; border:1px solid rgba(59,130,246,.35)
-  }
-  .muted{ opacity:.8 }
-  .actions-row{ margin-top:8px; display:flex; gap:10px; flex-wrap:wrap }
-  .pill{ background:rgba(59,130,246,.12); padding:2px 8px; border-radius:999px; }
-  .table{ width:100%; border-collapse:collapse; }
-  .table th,.table td{ padding:10px; border-bottom:1px solid #e5e7eb33; vertical-align:top }
-  .table th{ text-align:right; font-weight:700 }
-  .status-new{background:#fef9c3; color:#713f12}
-  .status-in_progress{background:#e0f2fe; color:#0c4a6e}
-  .status-resolved{background:#dcfce7; color:#14532d}
-  .status-rejected{background:#fee2e2; color:#7f1d1d}
-  .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
-  .hidden{display:none}
-  .mini-actions{ display:flex; gap:6px; flex-wrap:wrap }
-  .btn.sm{ padding:6px 10px; font-size:12px }
-  .nowrap{ white-space:nowrap }
-</style>
-</head>
-<body>
-  <div class="topbar">
-    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
-    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>لوحة الإدارة — أثر</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="color-scheme" content="dark light" />
+    <style>
+      .card {
+        margin: 16px 0;
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 1100px) {
+        .grid-2 {
+          grid-template-columns: 1fr 1fr;
+        }
+        .grid-3 {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+      }
+      .field {
+        margin: 10px 0;
+      }
+      .field label {
+        display: block;
+        font-weight: 700;
+        margin: 6px 0;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+      }
+      .muted {
+        opacity: 0.8;
+      }
+      .actions-row {
+        margin-top: 8px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .pill {
+        background: rgba(59, 130, 246, 0.12);
+        padding: 2px 8px;
+        border-radius: 999px;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .table th,
+      .table td {
+        padding: 10px;
+        border-bottom: 1px solid #e5e7eb33;
+        vertical-align: top;
+      }
+      .table th {
+        text-align: right;
+        font-weight: 700;
+      }
+      .status-new {
+        background: #fef9c3;
+        color: #713f12;
+      }
+      .status-in_progress {
+        background: #e0f2fe;
+        color: #0c4a6e;
+      }
+      .status-resolved {
+        background: #dcfce7;
+        color: #14532d;
+      }
+      .status-rejected {
+        background: #fee2e2;
+        color: #7f1d1d;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .hidden {
+        display: none;
+      }
+      .mini-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .btn.sm {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      .nowrap {
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
     <div class="user"><span class="muted" id="whoami"></span></div>
-  </div>
 
-  <header>
-    <div class="hero">
-      <h1 class="logo">لوحة التحكم لأحلى ندو</h1>
-      <div class="tag"><span class="dot"></span>أحلى مصممة يرامج بالعالم ، ملكة أثر</div>
-    </div>
-  </header>
-
-  <main class="container">
-    <!-- الوصول مرفوض -->
-    <section class="card" id="denyCard" style="display:none">
-      <h2 class="title">الوصول مرفوض</h2>
-      <p>هذه الصفحة للمشرفين فقط.</p>
-    </section>
-
-    <!-- تبويبات -->
-    <section class="card" id="tabsCard" style="display:none">
-      <div class="actions-row" style="gap:6px">
-        <button class="btn" data-tab="t-activate">التفعيل اليدوي</button>
-        <button class="btn" data-tab="t-ann">الإعلانات</button>
-        <button class="btn" data-tab="t-complaints">الشكاوى والاقتراحات</button>
-        <button class="btn primary" data-tab="t-users">المشتركون الجدد</button>
+    <header>
+      <div class="hero">
+        <h1 class="logo">لوحة التحكم لأحلى ندو</h1>
+        <div class="tag">
+          <span class="dot"></span>أحلى مصممة يرامج بالعالم ، ملكة أثر
+        </div>
       </div>
-    </section>
+    </header>
 
-    <!-- التفعيل -->
-    <section class="card" id="t-activate" style="display:none">
-      <h2 class="title">التفعيل اليدوي للاشتراك</h2>
-      <div class="grid grid-3">
-        <div class="field">
-          <label>البريد الإلكتروني للمستخدم</label>
-          <input id="act-email" type="email" placeholder="example@email.com" />
+    <main class="container">
+      <!-- الوصول مرفوض -->
+      <section class="card" id="denyCard" style="display: none">
+        <h2 class="title">الوصول مرفوض</h2>
+        <p>هذه الصفحة للمشرفين فقط.</p>
+      </section>
+
+      <!-- تبويبات -->
+      <section class="card" id="tabsCard" style="display: none">
+        <div class="actions-row" style="gap: 6px">
+          <button class="btn" data-tab="t-activate">التفعيل اليدوي</button>
+          <button class="btn" data-tab="t-ann">الإعلانات</button>
+          <button class="btn" data-tab="t-complaints">
+            الشكاوى والاقتراحات
+          </button>
+          <button class="btn primary" data-tab="t-users">
+            المشتركون الجدد
+          </button>
         </div>
-        <div class="field">
-          <label>UID (اختياري)</label>
-          <input id="act-userid" type="text" placeholder="Auth0 sub إن كان متاحًا" />
-        </div>
-        <div class="field">
-          <label>المدّة</label>
-          <div style="display:flex; gap:8px; align-items:center">
-            <input id="act-amount" type="number" min="1" value="12" style="max-width:120px" />
-            <select id="act-unit" style="max-width:140px">
-              <option value="months" selected>شهر/أشهر</option>
-              <option value="days">يوم/أيام</option>
-              <option value="years">سنة/سنوات</option>
-            </select>
+      </section>
+
+      <!-- التفعيل -->
+      <section class="card" id="t-activate" style="display: none">
+        <h2 class="title">التفعيل اليدوي للاشتراك</h2>
+        <div class="grid grid-3">
+          <div class="field">
+            <label>البريد الإلكتروني للمستخدم</label>
+            <input
+              id="act-email"
+              type="email"
+              placeholder="example@email.com"
+            />
+          </div>
+          <div class="field">
+            <label>UID (اختياري)</label>
+            <input
+              id="act-userid"
+              type="text"
+              placeholder="Auth0 sub إن كان متاحًا"
+            />
+          </div>
+          <div class="field">
+            <label>المدّة</label>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input
+                id="act-amount"
+                type="number"
+                min="1"
+                value="12"
+                style="max-width: 120px"
+              />
+              <select id="act-unit" style="max-width: 140px">
+                <option value="months" selected>شهر/أشهر</option>
+                <option value="days">يوم/أيام</option>
+                <option value="years">سنة/سنوات</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="grid-column: 1/-1">
+            <label>ملاحظة (اختياري)</label>
+            <input id="act-note" type="text" placeholder="سبب/مرجع" />
           </div>
         </div>
-        <div class="field" style="grid-column:1/-1">
-          <label>ملاحظة (اختياري)</label>
-          <input id="act-note" type="text" placeholder="سبب/مرجع"/>
+        <div class="actions-row">
+          <button class="btn primary" id="btn-activate">تفعيل/تمديد</button>
+          <span id="act-status" class="muted"></span>
         </div>
-      </div>
-      <div class="actions-row">
-        <button class="btn primary" id="btn-activate">تفعيل/تمديد</button>
-        <span id="act-status" class="muted"></span>
-      </div>
-    </section>
+      </section>
 
-    <!-- الإعلانات -->
-    <section class="card" id="t-ann" style="display:none">
-      <h2 class="title">إعلان عام</h2>
-      <div class="field">
-        <label>نص الإعلان</label>
-        <textarea id="ann-text" rows="3" placeholder="سيظهر لمستخدمي الموقع"></textarea>
-      </div>
-
-      <div class="grid grid-3">
+      <!-- الإعلانات -->
+      <section class="card" id="t-ann" style="display: none">
+        <h2 class="title">إعلان عام</h2>
         <div class="field">
-          <label>الحالة</label>
-          <select id="ann-active">
-            <option value="true" selected>مُفعّل</option>
-            <option value="false">موقّف</option>
+          <label>نص الإعلان</label>
+          <textarea
+            id="ann-text"
+            rows="3"
+            placeholder="سيظهر لمستخدمي الموقع"
+          ></textarea>
+        </div>
+
+        <div class="grid grid-3">
+          <div class="field">
+            <label>الحالة</label>
+            <select id="ann-active">
+              <option value="true" selected>مُفعّل</option>
+              <option value="false">موقّف</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>تاريخ البدء (اختياري)</label>
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
+              <select id="ann-start-cal" style="max-width: 140px">
+                <option value="greg" selected>ميلادي</option>
+                <option value="hijri">هجري</option>
+              </select>
+              <input id="ann-start-g" type="date" />
+              <input
+                id="ann-start-h"
+                type="text"
+                inputmode="numeric"
+                placeholder="مثال: 1447-02-10"
+                style="display: none"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>تاريخ الانتهاء (اختياري)</label>
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
+              <select id="ann-end-cal" style="max-width: 140px">
+                <option value="greg" selected>ميلادي</option>
+                <option value="hijri">هجري</option>
+              </select>
+              <input id="ann-end-g" type="date" />
+              <input
+                id="ann-end-h"
+                type="text"
+                inputmode="numeric"
+                placeholder="مثال: 1447-02-15"
+                style="display: none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button class="btn" id="btn-publish">نشر/تحديث</button>
+          <span id="ann-status" class="muted"></span>
+        </div>
+
+        <div class="card" style="margin-top: 14px">
+          <h3 class="title" style="margin: 0 0 8px">الإعلانات</h3>
+          <div id="ann-current" class="muted" style="margin-bottom: 8px">—</div>
+          <div
+            id="ann-list"
+            class="grid"
+            style="grid-template-columns: 1fr"
+          ></div>
+        </div>
+      </section>
+
+      <!-- الشكاوى والاقتراحات -->
+      <section class="card" id="t-complaints" style="display: none">
+        <h2 class="title">الشكاوى والاقتراحات</h2>
+
+        <div class="toolbar">
+          <select id="c-type">
+            <option value="">الكل</option>
+            <option value="complaint">شكاوى</option>
+            <option value="suggestion">اقتراحات</option>
           </select>
+
+          <select id="c-status">
+            <option value="">كل الحالات</option>
+            <option value="new">جديدة</option>
+            <option value="in_progress">قيد المعالجة</option>
+            <option value="resolved">مغلقة</option>
+            <option value="rejected">مرفوضة</option>
+          </select>
+
+          <input
+            id="c-q"
+            type="search"
+            placeholder="بحث (عنوان/نص/إيميل)"
+            style="flex: 1; min-width: 200px"
+          />
+          <button class="btn" id="c-refresh">تحديث</button>
         </div>
 
-        <div class="field">
-          <label>تاريخ البدء (اختياري)</label>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-            <select id="ann-start-cal" style="max-width:140px">
-              <option value="greg" selected>ميلادي</option>
-              <option value="hijri">هجري</option>
-            </select>
-            <input id="ann-start-g" type="date" />
-            <input id="ann-start-h" type="text" inputmode="numeric" placeholder="مثال: 1447-02-10" style="display:none" />
+        <div class="grid grid-2" style="margin-top: 12px">
+          <div class="card">
+            <table class="table" id="c-table">
+              <thead>
+                <tr>
+                  <th>العنوان</th>
+                  <th>المرسل</th>
+                  <th>النوع</th>
+                  <th>الحالة</th>
+                  <th>التاريخ</th>
+                </tr>
+              </thead>
+              <tbody id="c-rows">
+                <tr>
+                  <td colspan="5" class="muted">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card" id="c-detail">
+            <h3 style="margin-top: 0">التفاصيل</h3>
+            <div id="c-empty" class="muted">اختر عنصرًا من القائمة…</div>
+
+            <div id="c-box" class="hidden">
+              <p><strong>العنوان:</strong> <span id="cd-subject">—</span></p>
+              <p><strong>المرسل:</strong> <span id="cd-user">—</span></p>
+              <p><strong>الطلب:</strong> <span id="cd-kind">—</span></p>
+              <p>
+                <strong>الحالة:</strong>
+                <span id="cd-status" class="pill">—</span>
+              </p>
+              <div class="field">
+                <label>سجل الرسائل</label>
+                <div
+                  id="cd-thread"
+                  style="
+                    border: 1px solid #e5e7eb33;
+                    border-radius: 10px;
+                    padding: 10px;
+                    max-height: 340px;
+                    overflow: auto;
+                  "
+                ></div>
+              </div>
+
+              <div class="grid">
+                <div class="field">
+                  <label>تغيير الحالة</label>
+                  <select id="cd-next">
+                    <option value="">لا تغيير</option>
+                    <option value="in_progress">قيد المعالجة</option>
+                    <option value="resolved">مغلقة</option>
+                    <option value="rejected">مرفوضة</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>الرد على المرسل</label>
+                <textarea
+                  id="cd-reply"
+                  rows="4"
+                  placeholder="اكتب الرد هنا…"
+                ></textarea>
+              </div>
+              <div class="actions-row">
+                <button class="btn primary" id="cd-send">إرسال الرد</button>
+                <span id="cd-statusmsg" class="muted"></span>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div class="field">
-          <label>تاريخ الانتهاء (اختياري)</label>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-            <select id="ann-end-cal" style="max-width:140px">
-              <option value="greg" selected>ميلادي</option>
-              <option value="hijri">هجري</option>
-            </select>
-            <input id="ann-end-g" type="date" />
-            <input id="ann-end-h" type="text" inputmode="numeric" placeholder="مثال: 1447-02-15" style="display:none" />
-          </div>
+      <!-- المشتركون الجدد -->
+      <section class="card" id="t-users" style="display: none">
+        <h2 class="title">المشتركون الجدد</h2>
+        <div class="toolbar">
+          <input
+            id="u-q"
+            type="search"
+            placeholder="بحث (اسم/إيميل)"
+            style="flex: 1; min-width: 200px"
+          />
+          <select id="u-active">
+            <option value="">الكل</option>
+            <option value="true">نشط</option>
+            <option value="false">غير نشط</option>
+          </select>
+          <button class="btn" id="u-refresh">تحديث</button>
         </div>
-      </div>
 
-      <div class="actions-row">
-        <button class="btn" id="btn-publish">نشر/تحديث</button>
-        <span id="ann-status" class="muted"></span>
-      </div>
-
-      <div class="card" style="margin-top:14px">
-        <h3 class="title" style="margin:0 0 8px">الإعلانات</h3>
-        <div id="ann-current" class="muted" style="margin-bottom:8px">—</div>
-        <div id="ann-list" class="grid" style="grid-template-columns:1fr"></div>
-      </div>
-    </section>
-
-    <!-- الشكاوى والاقتراحات -->
-    <section class="card" id="t-complaints" style="display:none">
-      <h2 class="title">الشكاوى والاقتراحات</h2>
-
-      <div class="toolbar">
-        <select id="c-type">
-          <option value="">الكل</option>
-          <option value="complaint">شكاوى</option>
-          <option value="suggestion">اقتراحات</option>
-        </select>
-
-        <select id="c-status">
-          <option value="">كل الحالات</option>
-          <option value="new">جديدة</option>
-          <option value="in_progress">قيد المعالجة</option>
-          <option value="resolved">مغلقة</option>
-          <option value="rejected">مرفوضة</option>
-        </select>
-
-        <input id="c-q" type="search" placeholder="بحث (عنوان/نص/إيميل)" style="flex:1;min-width:200px">
-        <button class="btn" id="c-refresh">تحديث</button>
-      </div>
-
-      <div class="grid grid-2" style="margin-top:12px">
-        <div class="card">
-          <table class="table" id="c-table">
+        <div class="card" style="margin-top: 10px">
+          <table class="table">
             <thead>
               <tr>
-                <th>العنوان</th>
-                <th>المرسل</th>
-                <th>النوع</th>
+                <th>المستخدم</th>
+                <th>الإيميل</th>
+                <th>انضمّ</th>
                 <th>الحالة</th>
-                <th>التاريخ</th>
+                <th>ينتهي</th>
+                <th class="nowrap">تفعيل سريع</th>
               </tr>
             </thead>
-            <tbody id="c-rows">
-              <tr><td colspan="5" class="muted">—</td></tr>
+            <tbody id="u-rows">
+              <tr>
+                <td colspan="6" class="muted">—</td>
+              </tr>
             </tbody>
           </table>
         </div>
+      </section>
+    </main>
 
-        <div class="card" id="c-detail">
-          <h3 style="margin-top:0">التفاصيل</h3>
-          <div id="c-empty" class="muted">اختر عنصرًا من القائمة…</div>
+    <div class="toast" id="toast"></div>
 
-          <div id="c-box" class="hidden">
-            <p><strong>العنوان:</strong> <span id="cd-subject">—</span></p>
-            <p><strong>المرسل:</strong> <span id="cd-user">—</span></p>
-            <p><strong>الطلب:</strong> <span id="cd-kind">—</span></p>
-            <p><strong>الحالة:</strong> <span id="cd-status" class="pill">—</span></p>
-            <div class="field">
-              <label>سجل الرسائل</label>
-              <div id="cd-thread" style="border:1px solid #e5e7eb33;border-radius:10px;padding:10px;max-height:340px;overflow:auto"></div>
-            </div>
+    <!-- Auth0 SDK -->
+    <script
+      src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+      onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"
+    ></script>
 
-            <div class="grid">
-              <div class="field">
-                <label>تغيير الحالة</label>
-                <select id="cd-next">
-                  <option value="">لا تغيير</option>
-                  <option value="in_progress">قيد المعالجة</option>
-                  <option value="resolved">مغلقة</option>
-                  <option value="rejected">مرفوضة</option>
-                </select>
-              </div>
-            </div>
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="assets/js/supabase-client.js"></script>
 
-            <div class="field">
-              <label>الرد على المرسل</label>
-              <textarea id="cd-reply" rows="4" placeholder="اكتب الرد هنا…"></textarea>
-            </div>
-            <div class="actions-row">
-              <button class="btn primary" id="cd-send">إرسال الرد</button>
-              <span id="cd-statusmsg" class="muted"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- الحارس العام -->
+    <script src="assets/js/require-auth.js"></script>
 
-    <!-- المشتركون الجدد -->
-    <section class="card" id="t-users" style="display:none">
-      <h2 class="title">المشتركون الجدد</h2>
-      <div class="toolbar">
-        <input id="u-q" type="search" placeholder="بحث (اسم/إيميل)" style="flex:1;min-width:200px">
-        <select id="u-active">
-          <option value="">الكل</option>
-          <option value="true">نشط</option>
-          <option value="false">غير نشط</option>
-        </select>
-        <button class="btn" id="u-refresh">تحديث</button>
-      </div>
+    <!-- moment + hijri -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment-hijri@2.3.1/moment-hijri.js"></script>
 
-      <div class="card" style="margin-top:10px">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>المستخدم</th>
-              <th>الإيميل</th>
-              <th>انضمّ</th>
-              <th>الحالة</th>
-              <th>ينتهي</th>
-              <th class="nowrap">تفعيل سريع</th>
-            </tr>
-          </thead>
-          <tbody id="u-rows">
-            <tr><td colspan="6" class="muted">—</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+    <!-- سكربت عام (ثيم/أزرار) -->
+    <script src="app.js"></script>
 
-  <div class="toast" id="toast"></div>
-
-  <!-- Auth0 SDK -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-
-  <!-- Supabase -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="assets/js/supabase-client.js"></script>
-
-  <!-- الحارس العام -->
-  <script src="assets/js/require-auth.js"></script>
-
-  <!-- moment + hijri -->
-  <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/moment-hijri@2.3.1/moment-hijri.js"></script>
-
-  <!-- سكربت عام (ثيم/أزرار) -->
-  <script src="app.js"></script>
-
-  <script>
-  const toast = (m)=>{ const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',1400); };
-
-  // ===== تبويبات
-  const tabs = ["t-activate","t-ann","t-complaints","t-users"];
-  function showTab(id){
-    tabs.forEach(x=> document.getElementById(x).style.display = (x===id)?'':'none');
-    document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('primary', b.dataset.tab===id));
-  }
-  document.addEventListener('click',(e)=>{
-    const b = e.target.closest('[data-tab]'); if(!b) return;
-    showTab(b.dataset.tab);
-    if (b.dataset.tab === 't-users') loadUsers();
-  });
-
-  // ===== صلاحيات الأدمن
-  const NS  = "https://n-athar.co/";
-  const ALT = "https://athar.co/";
-
-  async function isAdmin(){
-    try{
-      const u = await window.auth.getUser();
-      document.getElementById('whoami').textContent = u?.email || '';
-      if (!u) return false;
-
-      const claims = await window.auth.getIdTokenClaims();
-      const roles = claims?.[NS + "roles"] || claims?.[ALT + "roles"] || [];
-      const flag  = claims?.[NS + "admin"] === true || claims?.[ALT + "admin"] === true;
-
-      return (Array.isArray(roles) && roles.includes("admin")) || flag;
-    }catch(_){
-      return false;
-    }
-  }
-
-  // === Token + Fetch
-  const API_AUDIENCE = (window.__CFG?.api_audience) || "https://api.n-athar";
-  async function authToken(){
-    try {
-      return await window.auth.getTokenSilently({
-        authorizationParams: {
-          audience: API_AUDIENCE,
-          scope: "openid profile email offline_access"
-        }
-      });
-    } catch (err) {
-      await window.auth.loginWithRedirect({
-        authorizationParams: {
-          audience: API_AUDIENCE,
-          scope: "openid profile email offline_access",
-          prompt: "consent"
-        }
-      });
-      throw err;
-    }
-  }
-  async function apiFetch(url, opts = {}) {
-    const token = await authToken();
-    const res = await fetch(url, {
-      ...opts,
-      headers: {
-        ...(opts.headers || {}),
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": (opts.headers && opts.headers["Content-Type"]) || "application/json"
-      }
-    });
-    const ct = res.headers.get("content-type") || "";
-    const bodyText = await res.text();
-    if (!res.ok) throw new Error(bodyText || `HTTP ${res.status}`);
-    return ct.includes("application/json") ? JSON.parse(bodyText || "{}") : bodyText;
-  }
-
-  // ===== الإعلانات (كما هي)
-  function toIso(calSelId, gId, hId) {
-    const mode = document.getElementById(calSelId).value;
-    if (mode === 'greg') {
-      const v = document.getElementById(gId).value;
-      if (!v) return null;
-      return new Date(v + 'T00:00:00Z').toISOString();
-    } else {
-      const hasMoment = typeof window.moment === 'function';
-      const hasHijri = hasMoment && typeof moment.fn.iYear === 'function';
-      if (!hasHijri) { console.warn('moment-hijri غير محمّل'); return null; }
-      const v = document.getElementById(hId).value.trim();
-      if (!v) return null;
-      const m = moment(v, 'iYYYY-iMM-iDD', true);
-      if (!m.isValid()) return null;
-      return new Date(m.format('YYYY-MM-DD') + 'T00:00:00Z').toISOString();
-    }
-  }
-
-  async function fetchAnnouncements() {
-    try {
-      const latestRes = await apiFetch('/.netlify/functions/admin-announcement?latest=1');
-      const listRes   = await apiFetch('/.netlify/functions/admin-announcement?list=1');
-
-      const latest = latestRes?.latest || null;
-      const list = listRes?.items || [];
-
-      const curBox = document.getElementById('ann-current');
-      curBox.innerHTML = latest ? `المنشور الحالي: <span class="pill">${latest.text}</span>` : 'لا يوجد إعلان منشور حاليًا.';
-
-      const wrap = document.getElementById('ann-list');
-      wrap.innerHTML = '';
-      list.forEach(a=>{
-        const liveNow = a.active && (!a.start_at || new Date(a.start_at)<=new Date()) && (!a.expires_at || new Date(a.expires_at)>new Date());
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
-            <div>
-              <div><strong>${a.active ? '✅' : '⏸️'} ${a.text}</strong></div>
-              <div class="muted" style="font-size:.9em">
-                يبدأ: ${a.start_at ? new Date(a.start_at).toLocaleDateString('ar-SA') : 'فوري'}
-                • ينتهي: ${a.expires_at ? new Date(a.expires_at).toLocaleDateString('ar-SA') : '—'}
-                ${liveNow ? '<span class="pill" style="margin-inline-start:6px">منشور حاليًا</span>' : ''}
-              </div>
-            </div>
-            <div class="actions-row" style="margin:0">
-              <button class="btn" data-repub="${a.id}">إعادة نشر</button>
-              ${a.active ? '<button class="btn" data-stop="'+a.id+'">إيقاف</button>' : ''}
-              <button class="btn" data-del="${a.id}">حذف</button>
-            </div>
-          </div>
-        `;
-        wrap.appendChild(card);
-      });
-
-      wrap.querySelectorAll('[data-repub]').forEach(b=>{
-        b.onclick = async ()=>{
-          const id = b.getAttribute('data-repub');
-          await updateAnnouncement({ id, active:true, start:null });
-          await fetchAnnouncements();
-        };
-      });
-      wrap.querySelectorAll('[data-stop]').forEach(b=>{
-        b.onclick = async ()=>{
-          const id = b.getAttribute('data-stop');
-          await updateAnnouncement({ id, active:false });
-          await fetchAnnouncements();
-        };
-      });
-      wrap.querySelectorAll('[data-del]').forEach(b=>{
-        b.onclick = async ()=>{
-          const id = b.getAttribute('data-del');
-          if (!confirm('حذف الإعلان؟')) return;
-          await deleteAnnouncement(id);
-          await fetchAnnouncements();
-        };
-      });
-
-    } catch(e) { console.warn(e); }
-  }
-  async function updateAnnouncement(payload) {
-    return await apiFetch('/.netlify/functions/admin-announcement', {
-      method:'PUT',
-      body: JSON.stringify(payload)
-    });
-  }
-  async function deleteAnnouncement(id) {
-    return await apiFetch('/.netlify/functions/admin-announcement?id='+encodeURIComponent(id), {
-      method:'DELETE'
-    });
-  }
-  document.addEventListener('click', async (e)=>{
-    if(e.target.id !== 'btn-publish') return;
-    const text    = document.getElementById('ann-text').value.trim();
-    const active  = document.getElementById('ann-active').value === 'true';
-    const start   = toIso('ann-start-cal','ann-start-g','ann-start-h');
-    const expires = toIso('ann-end-cal','ann-end-g','ann-end-h');
-    const stat = document.getElementById('ann-status');
-    stat.textContent = 'جارٍ النشر…';
-    try{
-      await apiFetch('/.netlify/functions/admin-announcement', {
-        method:'POST',
-        body: JSON.stringify({ text, active, start, expires })
-      });
-      stat.textContent = 'نُشر ✓';
-      toast('تم نشر/تحديث الإعلان');
-      document.getElementById('ann-text').value = '';
-      await fetchAnnouncements();
-    }catch(err){
-      stat.textContent = 'تعذّر النشر';
-      toast('تعذّر النشر');
-    }
-  });
-
-  // ===== تفعيل/تمديد عضوية (القسم القديم)
-  document.addEventListener('click', async (e)=>{
-    if(e.target.id !== 'btn-activate') return;
-    const email   = document.getElementById('act-email').value.trim();
-    const user_id = document.getElementById('act-userid').value.trim();
-    const amount  = Math.max(1, Number(document.getElementById('act-amount').value||'1')|0);
-    const unit    = document.getElementById('act-unit').value;
-    const note    = document.getElementById('act-note').value.trim() || null;
-    const stat = document.getElementById('act-status');
-    stat.textContent = 'جارٍ التفعيل…';
-    try{
-      const j = await apiFetch('/.netlify/functions/admin-activate', {
-        method:'POST',
-        body: JSON.stringify({ email: email || null, user_id: user_id || null, amount, unit, note })
-      });
-      stat.textContent = `تم التفعيل ✓ ينتهي: ${j.expires_at || '—'}`;
-      toast('تم التفعيل');
-    }catch(err){
-      stat.textContent = 'تعذّر التفعيل';
-      toast('تعذّر التفعيل');
-    }
-  });
-
-  // ===== الشكاوى/الاقتراحات (كما هي)
-  let currentComplaintId = null;
-
-  async function loadComplaints(){
-    try{
-      const type = document.getElementById('c-type').value;
-      const status = document.getElementById('c-status').value;
-      const q = document.getElementById('c-q').value.trim();
-      const qs = new URLSearchParams();
-      if (type) qs.set('type', type);
-      if (status) qs.set('status', status);
-      if (q) qs.set('q', q);
-
-      const j = await apiFetch('/.netlify/functions/complaints-list?'+qs.toString());
-
-      const tbody = document.getElementById('c-rows');
-      tbody.innerHTML = '';
-      (j.rows || []).forEach(row=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><a href="#" data-open="${row.id}">${row.subject}</a></td>
-          <td>${row.user_name || '—'}<br><span class="muted">${row.user_email}</span></td>
-          <td>${row.type === 'complaint' ? 'شكوى' : 'اقتراح'}</td>
-          <td><span class="pill status-${row.status}">${row.status}</span></td>
-          <td>${new Date(row.created_at).toLocaleString('ar-SA')}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-      if ((j.rows || []).length === 0) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td colspan="5" class="muted">لا توجد نتائج</td>`;
-        tbody.appendChild(tr);
-      }
-    }catch(err){
-      console.warn('loadComplaints failed', err);
-    }
-  }
-
-  async function openComplaint(id){
-    try{
-      currentComplaintId = id;
-      const j = await apiFetch('/.netlify/functions/complaints-get?id='+encodeURIComponent(id));
-      const c = j.complaint;
-      const msgs = j.messages || [];
-
-      document.getElementById('c-empty').classList.add('hidden');
-      document.getElementById('c-box').classList.remove('hidden');
-
-      document.getElementById('cd-subject').textContent = c.subject;
-      document.getElementById('cd-user').textContent = (c.user_name? c.user_name+' — ' : '') + c.user_email;
-      document.getElementById('cd-kind').textContent = (c.type === 'complaint' ? 'شكوى' : 'اقتراح');
-      const st = document.getElementById('cd-status');
-      st.textContent = c.status;
-      st.className = 'pill status-'+c.status;
-
-      const thread = document.getElementById('cd-thread');
-      thread.innerHTML = '';
-      msgs.forEach(m=>{
-        const bubble = document.createElement('div');
-        bubble.style.margin = '8px 0';
-        bubble.innerHTML = `
-          <div class="pill" style="display:inline-block;${m.sender==='admin'?'background:#e2e8f0;color:#0f172a;':'background:#f1f5f9;color:#0f172a;'}">
-            ${m.sender==='admin'?'فريق أثر':'العميل'}
-          </div>
-          <div>${(m.body||'').replace(/\n/g,'<br>')}</div>
-          <div class="muted" style="font-size:.85em">${new Date(m.created_at).toLocaleString('ar-SA')}</div>
-        `;
-        thread.appendChild(bubble);
-      });
-
-      document.getElementById('cd-reply').value = '';
-      document.getElementById('cd-next').value = '';
-      document.getElementById('cd-statusmsg').textContent = '';
-    }catch(err){
-      console.warn('openComplaint failed', err);
-    }
-  }
-
-  document.getElementById('c-refresh').addEventListener('click', loadComplaints);
-  document.getElementById('c-type').addEventListener('change', loadComplaints);
-  document.getElementById('c-status').addEventListener('change', loadComplaints);
-  document.getElementById('c-q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') loadComplaints(); });
-  document.getElementById('c-rows').addEventListener('click', (e)=>{
-    const a = e.target.closest('[data-open]'); if(!a) return;
-    e.preventDefault();
-    openComplaint(a.getAttribute('data-open'));
-  });
-  document.getElementById('cd-send').addEventListener('click', async ()=>{
-    if (!currentComplaintId) return;
-    const msg  = document.getElementById('cd-reply').value.trim();
-    const next = document.getElementById('cd-next').value || null;
-    const stat = document.getElementById('cd-statusmsg');
-    if (!msg) { toast('أكتب الرد'); return; }
-    stat.textContent = 'جارٍ الإرسال…';
-    try{
-      await apiFetch('/.netlify/functions/complaints-reply', {
-        method:'POST',
-        body: JSON.stringify({ complaint_id: currentComplaintId, message: msg, next_status: next })
-      });
-      stat.textContent = 'تم الإرسال ✓';
-      toast('تم إرسال الرد');
-      await openComplaint(currentComplaintId);
-      await loadComplaints();
-    }catch(err){
-      stat.textContent = 'تعذّر الإرسال';
-      toast('تعذّر الإرسال');
-    }
-  });
-
-  // ===== المشتركون الجدد
-  async function loadUsers(){
-    try{
-      const q = document.getElementById('u-q').value.trim();
-      const act = document.getElementById('u-active').value;
-      const qs = new URLSearchParams();
-      if (q) qs.set('q', q);
-      if (act) qs.set('active', act);
-
-      const j = await apiFetch('/.netlify/functions/admin-users-list?'+qs.toString());
-      const rows = j.rows || [];
-
-      const tbody = document.getElementById('u-rows');
-      tbody.innerHTML = '';
-      rows.forEach(u=>{
-        const name = u.display_name || u.name || '—';
-        const email = u.email || '—';
-        const joined = u.created_at ? new Date(u.created_at).toLocaleDateString('ar-SA') : '—';
-        const active = u.active ? '✅ نشط' : '⏸️ غير نشط';
-        const exp = u.expires_at ? new Date(u.expires_at).toLocaleDateString('ar-SA') : '—';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${name}</td>
-          <td class="nowrap"><span class="muted">${email}</span></td>
-          <td>${joined}</td>
-          <td>${active}</td>
-          <td>${exp}</td>
-          <td>
-            <div class="mini-actions">
-              <button class="btn sm" data-quick="30d" data-email="${email}" data-sub="${u.user_sub||''}">+30 يوم</button>
-              <button class="btn sm" data-quick="3m"  data-email="${email}" data-sub="${u.user_sub||''}">+3 أشهر</button>
-              <button class="btn sm" data-quick="1y"  data-email="${email}" data-sub="${u.user_sub||''}">+سنة</button>
-              <span class="nowrap">
-                <input type="number" min="1" value="12" style="width:70px" data-amt>
-                <select data-unit style="width:92px">
-                  <option value="days">يوم</option>
-                  <option value="months" selected>شهر</option>
-                  <option value="years">سنة</option>
-                </select>
-                <button class="btn sm" data-custom data-email="${email}" data-sub="${u.user_sub||''}">تفعيل</button>
-              </span>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-      if (!rows.length) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td colspan="6" class="muted">لا يوجد مستخدمون</td>`;
-        tbody.appendChild(tr);
-      }
-    }catch(err){
-      console.warn('loadUsers failed', err);
-    }
-  }
-
-  // أزرار التفعيل السريع
-  document.getElementById('u-rows').addEventListener('click', async (e)=>{
-    const qbtn = e.target.closest('[data-quick]');
-    const cbtn = e.target.closest('[data-custom]');
-    if (!qbtn && !cbtn) return;
-
-    let email = (qbtn||cbtn).getAttribute('data-email') || '';
-    const user_id = (qbtn||cbtn).getAttribute('data-sub') || null;
-    if (!email) { toast('لا يوجد إيميل'); return; }
-
-    let amount, unit, note = 'admin-quick-activate';
-    if (qbtn) {
-      const k = qbtn.getAttribute('data-quick');
-      if (k === '30d') { amount=30; unit='days'; }
-      else if (k === '3m') { amount=3; unit='months'; }
-      else { amount=1; unit='years'; }
-    } else {
-      const row = cbtn.closest('tr');
-      const amtEl = row.querySelector('[data-amt]');
-      const unitEl = row.querySelector('[data-unit]');
-      amount = Math.max(1, Number(amtEl.value||'1')|0);
-      unit   = unitEl.value;
-      note   = 'admin-custom-activate';
-    }
-
-    try{
-      await apiFetch('/.netlify/functions/admin-activate', {
-        method:'POST',
-        body: JSON.stringify({ email, user_id, amount, unit, note })
-      });
-      toast('تم التفعيل ✓');
-      await loadUsers();
-    }catch(err){
-      toast('تعذّر التفعيل');
-    }
-  });
-
-  // أدوات تحكّم
-  document.getElementById('u-refresh').addEventListener('click', loadUsers);
-  document.getElementById('u-active').addEventListener('change', loadUsers);
-  document.getElementById('u-q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') loadUsers(); });
-
-  // ===== تشغيل الصفحة
-  async function startAdmin(){
-    try{
-      // انتظر window.auth
-      for (let i=0;i<50 && !window.auth;i++) { await new Promise(r=>setTimeout(r,100)); }
-
-      const authed = await window.auth.isAuthenticated?.();
-      if (!authed) { document.getElementById('denyCard').style.display=''; return; }
-
-      const ok = await isAdmin();
-      document.getElementById('tabsCard').style.display = ok ? '' : 'none';
-      document.getElementById('denyCard').style.display = ok ? 'none' : '';
-      if (!ok) return;
-
-      showTab('t-users'); // افتحي المشتركين الجدد افتراضيًا
-      try { await fetchAnnouncements(); } catch(_) {}
-      try { await loadComplaints(); } catch(_) {}
-      try { await loadUsers(); } catch(_) {}
-    }catch(err){
-      document.getElementById('denyCard').style.display='';
-    }
-  }
-  if (window.auth) startAdmin(); else window.addEventListener('auth0:ready', startAdmin, {once:true});
-  </script>
-</body>
+    <script src="assets/js/admin.js"></script>
+  </body>
 </html>

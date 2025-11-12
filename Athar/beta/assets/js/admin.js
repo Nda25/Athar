@@ -1,0 +1,660 @@
+const toast = (m) => {
+  const t = document.getElementById("toast");
+  t.textContent = m;
+  t.style.display = "block";
+  setTimeout(() => (t.style.display = "none"), 1400);
+};
+
+// ===== تبويبات
+const tabs = ["t-activate", "t-ann", "t-complaints", "t-users"];
+function showTab(id) {
+  tabs.forEach((x) => {
+    const el = document.getElementById(x);
+    if (el) el.style.display = x === id ? "" : "none";
+  });
+  document
+    .querySelectorAll("[data-tab]")
+    .forEach((b) => b.classList.toggle("primary", b.dataset.tab === id));
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-tab]");
+  if (!b) return;
+  try {
+    showTab(b.dataset.tab);
+    if (b.dataset.tab === "t-users")
+      loadUsers().catch((err) => console.error("❌ Load users error:", err));
+  } catch (err) {
+    console.error("❌ Tab click error:", err);
+  }
+});
+
+// ===== صلاحيات الأدمن
+const NS = "https://n-athar.co/";
+const ALT = "https://athar.co/";
+
+async function isAdmin() {
+  try {
+    const u = await window.auth.getUser();
+    document.getElementById("whoami").textContent = u?.email || "";
+    if (!u) return false;
+
+    const claims = await window.auth.getIdTokenClaims();
+    const roles = claims?.[NS + "roles"] || claims?.[ALT + "roles"] || [];
+    const flag =
+      claims?.[NS + "admin"] === true || claims?.[ALT + "admin"] === true;
+
+    return (Array.isArray(roles) && roles.includes("admin")) || flag;
+  } catch (_) {
+    return false;
+  }
+}
+
+// === Token + Fetch
+const API_AUDIENCE = window.__CFG?.api_audience || "https://api.n-athar";
+async function authToken() {
+  try {
+    if (!window.auth) {
+      console.warn("⚠️ Auth not ready yet");
+      throw new Error("Auth0 not initialized");
+    }
+    return await window.auth.getTokenSilently({
+      authorizationParams: {
+        audience: API_AUDIENCE,
+        scope: "openid profile email offline_access",
+      },
+    });
+  } catch (err) {
+    console.error("❌ Failed to get silent token:", err);
+    try {
+      if (window.auth?.loginWithRedirect) {
+        await window.auth.loginWithRedirect({
+          authorizationParams: {
+            audience: API_AUDIENCE,
+            scope: "openid profile email offline_access",
+            prompt: "consent",
+          },
+        });
+      }
+    } catch (redirectErr) {
+      console.error("❌ Redirect login failed:", redirectErr);
+    }
+    throw err;
+  }
+}
+async function apiFetch(url, opts = {}) {
+  try {
+    const token = await authToken();
+    const res = await fetch(url, {
+      ...opts,
+      headers: {
+        ...(opts.headers || {}),
+        Authorization: `Bearer ${token}`,
+        "Content-Type":
+          (opts.headers && opts.headers["Content-Type"]) || "application/json",
+      },
+    });
+    const ct = res.headers.get("content-type") || "";
+    const bodyText = await res.text();
+
+    if (!res.ok) {
+      const errMsg = bodyText || `HTTP ${res.status}`;
+      console.error(`❌ API Error [${res.status}]:`, errMsg);
+      throw new Error(errMsg);
+    }
+
+    return ct.includes("application/json")
+      ? JSON.parse(bodyText || "{}")
+      : bodyText;
+  } catch (err) {
+    console.error("❌ apiFetch error:", err);
+    throw err;
+  }
+}
+
+// ===== الإعلانات (كما هي)
+function toIso(calSelId, gId, hId) {
+  const mode = document.getElementById(calSelId).value;
+  if (mode === "greg") {
+    const v = document.getElementById(gId).value;
+    if (!v) return null;
+    return new Date(v + "T00:00:00Z").toISOString();
+  } else {
+    const hasMoment = typeof window.moment === "function";
+    const hasHijri = hasMoment && typeof moment.fn.iYear === "function";
+    if (!hasHijri) {
+      console.warn("moment-hijri غير محمّل");
+      return null;
+    }
+    const v = document.getElementById(hId).value.trim();
+    if (!v) return null;
+    const m = moment(v, "iYYYY-iMM-iDD", true);
+    if (!m.isValid()) return null;
+    return new Date(m.format("YYYY-MM-DD") + "T00:00:00Z").toISOString();
+  }
+}
+
+async function fetchAnnouncements() {
+  try {
+    const latestRes = await apiFetch(
+      "/.netlify/functions/admin-announcement?latest=1"
+    );
+    const listRes = await apiFetch(
+      "/.netlify/functions/admin-announcement?list=1"
+    );
+
+    const latest = latestRes?.latest || null;
+    const list = listRes?.items || [];
+
+    const curBox = document.getElementById("ann-current");
+    curBox.innerHTML = latest
+      ? `المنشور الحالي: <span class="pill">${latest.text}</span>`
+      : "لا يوجد إعلان منشور حاليًا.";
+
+    const wrap = document.getElementById("ann-list");
+    wrap.innerHTML = "";
+    list.forEach((a) => {
+      const liveNow =
+        a.active &&
+        (!a.start_at || new Date(a.start_at) <= new Date()) &&
+        (!a.expires_at || new Date(a.expires_at) > new Date());
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+            <div>
+              <div><strong>${a.active ? "✅" : "⏸️"} ${a.text}</strong></div>
+              <div class="muted" style="font-size:.9em">
+                يبدأ: ${
+                  a.start_at
+                    ? new Date(a.start_at).toLocaleDateString("ar-SA")
+                    : "فوري"
+                }
+                • ينتهي: ${
+                  a.expires_at
+                    ? new Date(a.expires_at).toLocaleDateString("ar-SA")
+                    : "—"
+                }
+                ${
+                  liveNow
+                    ? '<span class="pill" style="margin-inline-start:6px">منشور حاليًا</span>'
+                    : ""
+                }
+              </div>
+            </div>
+            <div class="actions-row" style="margin:0">
+              <button class="btn" data-repub="${a.id}">إعادة نشر</button>
+              ${
+                a.active
+                  ? '<button class="btn" data-stop="' +
+                    a.id +
+                    '">إيقاف</button>'
+                  : ""
+              }
+              <button class="btn" data-del="${a.id}">حذف</button>
+            </div>
+          </div>
+        `;
+      wrap.appendChild(card);
+    });
+
+    wrap.querySelectorAll("[data-repub]").forEach((b) => {
+      b.onclick = async () => {
+        const id = b.getAttribute("data-repub");
+        await updateAnnouncement({ id, active: true, start: null });
+        await fetchAnnouncements();
+      };
+    });
+    wrap.querySelectorAll("[data-stop]").forEach((b) => {
+      b.onclick = async () => {
+        const id = b.getAttribute("data-stop");
+        await updateAnnouncement({ id, active: false });
+        await fetchAnnouncements();
+      };
+    });
+    wrap.querySelectorAll("[data-del]").forEach((b) => {
+      b.onclick = async () => {
+        const id = b.getAttribute("data-del");
+        if (!confirm("حذف الإعلان؟")) return;
+        await deleteAnnouncement(id);
+        await fetchAnnouncements();
+      };
+    });
+  } catch (e) {
+    console.warn(e);
+  }
+}
+async function updateAnnouncement(payload) {
+  return await apiFetch("/.netlify/functions/admin-announcement", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+async function deleteAnnouncement(id) {
+  return await apiFetch(
+    "/.netlify/functions/admin-announcement?id=" + encodeURIComponent(id),
+    {
+      method: "DELETE",
+    }
+  );
+}
+document.addEventListener("click", async (e) => {
+  if (e.target.id !== "btn-publish") return;
+  const text = document.getElementById("ann-text").value.trim();
+  const active = document.getElementById("ann-active").value === "true";
+  const start = toIso("ann-start-cal", "ann-start-g", "ann-start-h");
+  const expires = toIso("ann-end-cal", "ann-end-g", "ann-end-h");
+  const stat = document.getElementById("ann-status");
+
+  if (!text) {
+    toast("أكتب نص الإعلان");
+    return;
+  }
+
+  stat.textContent = "جارٍ النشر…";
+  try {
+    await apiFetch("/.netlify/functions/admin-announcement", {
+      method: "POST",
+      body: JSON.stringify({ text, active, start, expires }),
+    });
+    stat.textContent = "نُشر ✓";
+    toast("✓ تم نشر/تحديث الإعلان");
+    document.getElementById("ann-text").value = "";
+    await fetchAnnouncements().catch((e) =>
+      console.warn("❌ Refresh announcements failed:", e)
+    );
+  } catch (err) {
+    console.error("❌ Publish error:", err);
+    stat.textContent = "✗ تعذّر النشر";
+    toast("✗ تعذّر النشر");
+  }
+});
+
+// ===== تفعيل/تمديد عضوية (القسم القديم)
+document.addEventListener("click", async (e) => {
+  if (e.target.id !== "btn-activate") return;
+  const email = document.getElementById("act-email").value.trim();
+  const user_id = document.getElementById("act-userid").value.trim();
+  const amount = Math.max(
+    1,
+    Number(document.getElementById("act-amount").value || "1") | 0
+  );
+  const unit = document.getElementById("act-unit").value;
+  const note = document.getElementById("act-note").value.trim() || null;
+  const stat = document.getElementById("act-status");
+
+  if (!email && !user_id) {
+    toast("أدخل بريد إلكتروني أو UID");
+    return;
+  }
+
+  stat.textContent = "جارٍ التفعيل…";
+  try {
+    const j = await apiFetch("/.netlify/functions/admin-activate", {
+      method: "POST",
+      body: JSON.stringify({
+        email: email || null,
+        user_id: user_id || null,
+        amount,
+        unit,
+        note,
+      }),
+    });
+    stat.textContent = `✓ تم التفعيل | ينتهي: ${j.expires_at || "—"}`;
+    toast("✓ تم التفعيل");
+  } catch (err) {
+    console.error("❌ Activation error:", err);
+    stat.textContent = "✗ تعذّر التفعيل";
+    toast("✗ تعذّر التفعيل");
+  }
+});
+
+// ===== الشكاوى/الاقتراحات (كما هي)
+let currentComplaintId = null;
+
+async function loadComplaints() {
+  try {
+    const type = document.getElementById("c-type")?.value || "";
+    const status = document.getElementById("c-status")?.value || "";
+    const q = document.getElementById("c-q")?.value.trim() || "";
+    const qs = new URLSearchParams();
+    if (type) qs.set("type", type);
+    if (status) qs.set("status", status);
+    if (q) qs.set("q", q);
+
+    const j = await apiFetch(
+      "/.netlify/functions/complaints-list?" + qs.toString()
+    );
+
+    const tbody = document.getElementById("c-rows");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+    (j.rows || []).forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+          <td><a href="#" data-open="${row.id}">${row.subject}</a></td>
+          <td>${row.user_name || "—"}<br><span class="muted">${
+        row.user_email
+      }</span></td>
+          <td>${row.type === "complaint" ? "شكوى" : "اقتراح"}</td>
+          <td><span class="pill status-${row.status}">${row.status}</span></td>
+          <td>${new Date(row.created_at).toLocaleString("ar-SA")}</td>
+        `;
+      tbody.appendChild(tr);
+    });
+    if ((j.rows || []).length === 0) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="5" class="muted">لا توجد نتائج</td>`;
+      tbody.appendChild(tr);
+    }
+  } catch (err) {
+    console.error("❌ loadComplaints failed:", err);
+    toast("خطأ: فشل تحميل الشكاوى");
+  }
+}
+
+async function openComplaint(id) {
+  try {
+    currentComplaintId = id;
+    const j = await apiFetch(
+      "/.netlify/functions/complaints-get?id=" + encodeURIComponent(id)
+    );
+    const c = j.complaint;
+    const msgs = j.messages || [];
+
+    document.getElementById("c-empty").classList.add("hidden");
+    document.getElementById("c-box").classList.remove("hidden");
+
+    document.getElementById("cd-subject").textContent = c.subject;
+    document.getElementById("cd-user").textContent =
+      (c.user_name ? c.user_name + " — " : "") + c.user_email;
+    document.getElementById("cd-kind").textContent =
+      c.type === "complaint" ? "شكوى" : "اقتراح";
+    const st = document.getElementById("cd-status");
+    st.textContent = c.status;
+    st.className = "pill status-" + c.status;
+
+    const thread = document.getElementById("cd-thread");
+    thread.innerHTML = "";
+    msgs.forEach((m) => {
+      const bubble = document.createElement("div");
+      bubble.style.margin = "8px 0";
+      bubble.innerHTML = `
+          <div class="pill" style="display:inline-block;${
+            m.sender === "admin"
+              ? "background:#e2e8f0;color:#0f172a;"
+              : "background:#f1f5f9;color:#0f172a;"
+          }">
+            ${m.sender === "admin" ? "فريق أثر" : "العميل"}
+          </div>
+          <div>${(m.body || "").replace(/\n/g, "<br>")}</div>
+          <div class="muted" style="font-size:.85em">${new Date(
+            m.created_at
+          ).toLocaleString("ar-SA")}</div>
+        `;
+      thread.appendChild(bubble);
+    });
+
+    document.getElementById("cd-reply").value = "";
+    document.getElementById("cd-next").value = "";
+    document.getElementById("cd-statusmsg").textContent = "";
+  } catch (err) {
+    console.warn("openComplaint failed", err);
+  }
+}
+
+document.getElementById("c-refresh")?.addEventListener("click", loadComplaints);
+document.getElementById("c-type")?.addEventListener("change", loadComplaints);
+document.getElementById("c-status")?.addEventListener("change", loadComplaints);
+document.getElementById("c-q")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter")
+    loadComplaints().catch((err) => console.error("❌ Load error:", err));
+});
+document.getElementById("c-rows")?.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-open]");
+  if (!a) return;
+  e.preventDefault();
+  openComplaint(a.getAttribute("data-open")).catch((err) =>
+    console.error("❌ Open complaint error:", err)
+  );
+});
+document.getElementById("cd-send")?.addEventListener("click", async () => {
+  if (!currentComplaintId) return;
+  const msg = document.getElementById("cd-reply").value.trim();
+  const next = document.getElementById("cd-next").value || null;
+  const stat = document.getElementById("cd-statusmsg");
+  if (!msg) {
+    toast("أكتب الرد");
+    return;
+  }
+  stat.textContent = "جارٍ الإرسال…";
+  try {
+    await apiFetch("/.netlify/functions/complaints-reply", {
+      method: "POST",
+      body: JSON.stringify({
+        complaint_id: currentComplaintId,
+        message: msg,
+        next_status: next,
+      }),
+    });
+    stat.textContent = "تم الإرسال ✓";
+    toast("تم إرسال الرد");
+    await openComplaint(currentComplaintId);
+    await loadComplaints();
+  } catch (err) {
+    stat.textContent = "تعذّر الإرسال";
+    toast("تعذّر الإرسال");
+  }
+});
+
+// ===== المشتركون الجدد
+async function loadUsers() {
+  try {
+    const q = document.getElementById("u-q")?.value.trim() || "";
+    const act = document.getElementById("u-active")?.value || "";
+    const qs = new URLSearchParams();
+    if (q) qs.set("q", q);
+    if (act) qs.set("active", act);
+
+    const j = await apiFetch(
+      "/.netlify/functions/admin-users-list?" + qs.toString()
+    );
+    const rows = j.rows || [];
+
+    const tbody = document.getElementById("u-rows");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+    rows.forEach((u) => {
+      const name = u.display_name || u.name || "—";
+      const email = u.email || "—";
+      const joined = u.created_at
+        ? new Date(u.created_at).toLocaleDateString("ar-SA")
+        : "—";
+      const active = u.active ? "✅ نشط" : "⏸️ غير نشط";
+      const exp = u.expires_at
+        ? new Date(u.expires_at).toLocaleDateString("ar-SA")
+        : "—";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+          <td>${name}</td>
+          <td class="nowrap"><span class="muted">${email}</span></td>
+          <td>${joined}</td>
+          <td>${active}</td>
+          <td>${exp}</td>
+          <td>
+            <div class="mini-actions">
+              <button class="btn sm" data-quick="30d" data-email="${email}" data-sub="${
+        u.user_sub || ""
+      }">+30 يوم</button>
+              <button class="btn sm" data-quick="3m"  data-email="${email}" data-sub="${
+        u.user_sub || ""
+      }">+3 أشهر</button>
+              <button class="btn sm" data-quick="1y"  data-email="${email}" data-sub="${
+        u.user_sub || ""
+      }">+سنة</button>
+              <span class="nowrap">
+                <input type="number" min="1" value="12" style="width:70px" data-amt>
+                <select data-unit style="width:92px">
+                  <option value="days">يوم</option>
+                  <option value="months" selected>شهر</option>
+                  <option value="years">سنة</option>
+                </select>
+                <button class="btn sm" data-custom data-email="${email}" data-sub="${
+        u.user_sub || ""
+      }">تفعيل</button>
+              </span>
+            </div>
+          </td>
+        `;
+      tbody.appendChild(tr);
+    });
+    if (!rows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="6" class="muted">لا يوجد مستخدمون</td>`;
+      tbody.appendChild(tr);
+    }
+  } catch (err) {
+    console.error("❌ loadUsers failed:", err);
+    toast("خطأ: فشل تحميل المستخدمين");
+  }
+}
+
+// أزرار التفعيل السريع
+document.getElementById("u-rows")?.addEventListener("click", async (e) => {
+  const qbtn = e.target.closest("[data-quick]");
+  const cbtn = e.target.closest("[data-custom]");
+  if (!qbtn && !cbtn) return;
+
+  let email = (qbtn || cbtn).getAttribute("data-email") || "";
+  const user_id = (qbtn || cbtn).getAttribute("data-sub") || null;
+  if (!email) {
+    toast("لا يوجد إيميل");
+    return;
+  }
+
+  let amount,
+    unit,
+    note = "admin-quick-activate";
+  if (qbtn) {
+    const k = qbtn.getAttribute("data-quick");
+    if (k === "30d") {
+      amount = 30;
+      unit = "days";
+    } else if (k === "3m") {
+      amount = 3;
+      unit = "months";
+    } else {
+      amount = 1;
+      unit = "years";
+    }
+  } else {
+    const row = cbtn.closest("tr");
+    const amtEl = row.querySelector("[data-amt]");
+    const unitEl = row.querySelector("[data-unit]");
+    amount = Math.max(1, Number(amtEl.value || "1") | 0);
+    unit = unitEl.value;
+    note = "admin-custom-activate";
+  }
+
+  try {
+    await apiFetch("/.netlify/functions/admin-activate", {
+      method: "POST",
+      body: JSON.stringify({ email, user_id, amount, unit, note }),
+    });
+    toast("✓ تم التفعيل");
+    await loadUsers().catch((err) =>
+      console.error("❌ Reload users error:", err)
+    );
+  } catch (err) {
+    console.error("❌ Activation error:", err);
+    toast("✗ تعذّر التفعيل");
+  }
+});
+
+// أدوات تحكّم
+document.getElementById("u-refresh")?.addEventListener("click", () => {
+  loadUsers().catch((err) => console.error("❌ Load users error:", err));
+});
+document.getElementById("u-active")?.addEventListener("change", () => {
+  loadUsers().catch((err) => console.error("❌ Load users error:", err));
+});
+document.getElementById("u-q")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    loadUsers().catch((err) => console.error("❌ Load users error:", err));
+  }
+});
+
+// ===== تشغيل الصفحة
+async function startAdmin() {
+  try {
+    // انتظر window.auth (5 ثوان كحد أقصى)
+    for (let i = 0; i < 50 && !window.auth; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
+    if (!window.auth) {
+      console.error("❌ Auth0 failed to initialize after 5 seconds");
+      const deny = document.getElementById("denyCard");
+      if (deny) deny.style.display = "";
+      return;
+    }
+
+    const authed = await window.auth.isAuthenticated?.();
+    const denyCard = document.getElementById("denyCard");
+    const tabsCard = document.getElementById("tabsCard");
+
+    if (!authed) {
+      if (denyCard) denyCard.style.display = "";
+      if (tabsCard) tabsCard.style.display = "none";
+      console.log("ℹ️ User not authenticated");
+      return;
+    }
+
+    const ok = await isAdmin();
+    if (tabsCard) tabsCard.style.display = ok ? "" : "none";
+    if (denyCard) denyCard.style.display = ok ? "none" : "";
+
+    if (!ok) {
+      console.warn("⚠️ User is not admin");
+      return;
+    }
+
+    console.log("✓ Admin panel loaded");
+    showTab("t-users"); // افتحي المشتركين الجدد افتراضيًا
+
+    try {
+      await fetchAnnouncements();
+    } catch (e) {
+      console.warn("⚠️ Failed to fetch announcements:", e);
+    }
+    try {
+      await loadComplaints();
+    } catch (e) {
+      console.warn("⚠️ Failed to load complaints:", e);
+    }
+    try {
+      await loadUsers();
+    } catch (e) {
+      console.warn("⚠️ Failed to load users:", e);
+    }
+  } catch (err) {
+    console.error("❌ startAdmin error:", err);
+    const deny = document.getElementById("denyCard");
+    if (deny) deny.style.display = "";
+  }
+}
+
+// تشغيل عند الاستعداد
+if (window.auth) {
+  startAdmin().catch((e) => console.error("❌ Admin startup error:", e));
+} else {
+  window.addEventListener(
+    "auth0:ready",
+    () => {
+      startAdmin().catch((e) => console.error("❌ Admin startup error:", e));
+    },
+    { once: true }
+  );
+}
