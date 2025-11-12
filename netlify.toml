@@ -5,5 +5,12 @@
 [functions]
   directory    = "Athar/beta/netlify/functions"
   node_bundler = "esbuild"
+  external_node_modules = [
+    "@supabase/supabase-js",
+    "jwks-rsa",
+    "jsonwebtoken",
+    "nodemailer",
+    "@google/generative-ai"
+  ]
 [build.environment]
   NODE_VERSION = "18"
