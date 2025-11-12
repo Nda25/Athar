@@ -46,18 +46,18 @@ exports.handler = async (event) => {
   try {
     let q = supabase
 .from("invoices")
-.select("created_at,amount,amount_sar,currency,status,gateway,invoice_id,provider_event_id,email,user_sub")
+.select("created_at,amount,amount_sar,currency,status,gateway,invoice_id,provider_event_id,email,user_id")
       .order("created_at", { ascending: false })
       .limit(50);
 
     // فلترة بحسب الهوية المتوفرة
     if (email && sub) {
       // ملاحظة: Supabase .or تعمل كنص — نبقيها بسيطة بالقيم المباشرة
-      q = q.or(`email.eq.${email},user_sub.eq.${sub}`);
+      q = q.or(`email.eq."${email}",user_id.eq."${sub}"`);
     } else if (email) {
       q = q.eq("email", email);
     } else if (sub) {
-      q = q.eq("user_sub", sub);
+      q = q.eq("user_id", sub);
     }
 
     const { data, error } = await q;
