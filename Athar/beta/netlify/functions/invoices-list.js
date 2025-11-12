@@ -11,7 +11,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE,
   {
     auth: { persistSession: false },
-    global: { headers: { Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE}` } }
+    global: {
+      headers: { Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE}` },
+    },
   }
 );
 
@@ -32,23 +34,27 @@ exports.handler = async (event) => {
     return {
       statusCode: gate?.status || 401,
       headers: CORS,
-      body: JSON.stringify({ error: gate?.error || "Unauthorized" })
+      body: JSON.stringify({ error: gate?.error || "Unauthorized" }),
     };
   }
 
   const email = (userObj.email || userObj.user?.email || "").toLowerCase();
-  const sub   = userObj.sub || userObj.user?.sub || null;
-  console.log("Attempting to fetch invoices for:", { email, sub });
+  const sub = userObj.sub || userObj.user?.sub || null;
 
   if (!email && !sub) {
-    console.warn("No user identity found."); // إضافة
-    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "No user identity" }) };
+    return {
+      statusCode: 400,
+      headers: CORS,
+      body: JSON.stringify({ error: "No user identity" }),
+    };
   }
 
   try {
     let q = supabase
-.from("invoices")
-.select("created_at,amount,amount_sar,status,gateway,invoice_id,provider_event_id,email,user_sub")
+      .from("invoices")
+      .select(
+        "created_at,amount,amount_sar,status,gateway,invoice_id,provider_event_id,email,user_sub"
+      )
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -61,22 +67,26 @@ exports.handler = async (event) => {
     } else if (sub) {
       q = q.eq("user_sub", sub);
     }
-    console.log("Executing Supabase query...");
 
     const { data, error } = await q;
     if (error) {
-      console.error("!!! SUPABASE QUERY ERROR !!!", error);
-      return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: error.message }) };
+      return {
+        statusCode: 500,
+        headers: CORS,
+        body: JSON.stringify({ error: error.message }),
+      };
     }
-    console.log("Query successful, found rows:", data?.length || 0);
 
     return {
       statusCode: 200,
       headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({ ok: true, rows: data || [] })
+      body: JSON.stringify({ ok: true, rows: data || [] }),
     };
   } catch (e) {
-    console.error("!!! CRITICAL SERVER ERROR !!!", e);
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: e.message || "Server error" }) };
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: e.message || "Server error" }),
+    };
   }
 };
