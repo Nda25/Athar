@@ -1,336 +1,138 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>إثراء</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css" />
-<meta name="color-scheme" content="dark light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>إثراء</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="color-scheme" content="dark light" />
 
-<!-- تطبيق الثيم مبكرًا (مثل بقية الصفحات) -->
-<script>
-  (function(){
-    try{
-      var c = localStorage.getItem('athar:theme');
-      if (c) document.documentElement.style.setProperty('--primary', c);
-    }catch(_){}
-  })();
-</script>
+    <!-- تطبيق الثيم مبكرًا (مثل بقية الصفحات) -->
+    <script>
+      (function () {
+        try {
+          var c = localStorage.getItem("athar:theme");
+          if (c) document.documentElement.style.setProperty("--primary", c);
+        } catch (_) {}
+      })();
+    </script>
 
-<style>
-  .field{ margin:10px 0 }
-  .field label{ display:block; font-weight:700; margin:6px 0 }
-  .field input,.field select{ width:100%; padding:12px; border-radius:12px; border:1px solid rgba(59,130,246,.35) }
-  .cards{ display:grid; gap:14px; grid-template-columns:1fr }
-  @media(min-width:900px){ .cards{ grid-template-columns:1fr 1fr } }
-  .idea{ background:var(--card); border:1px solid rgba(59,130,246,.22); border-radius:16px; padding:16px; box-shadow:var(--shadow) }
-  .idea h4{ margin:0 0 8px; color:var(--sea-600) }
-  .idea p{ margin:.2rem 0 }
-  .idea ul{ margin:.3rem 0 0 0; padding-inline-start:1.2rem }
-  .tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
-  .tag{ font-size:.82rem; padding:.24rem .6rem; border-radius:999px; border:1px solid rgba(59,130,246,.25); background:var(--sea-100); color:#0c4a6e }
-  .dark .tag{ background:#0f172a; color:#e2e8f0; border-color:#3b82f6 }
-  .muted{opacity:.75}
-  .skeleton{border-radius:14px; height:110px; background:linear-gradient(90deg,#eee 0%,#f6f6f6 40%,#eee 80%); background-size:200% 100%; animation:sh 1.2s infinite}
-  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
-  @media print{ .topbar,.actions-row,.field,.btn{ display:none !important } }
-</style>
-</head>
-<body>
-  <div class="global-bg"></div>
+    <link rel="stylesheet" href="assets/css/ethraa.css" />
+  </head>
+  <body>
+    <div class="global-bg"></div>
 
+    <div id="navbar" data-component="components/navbar.html"></div>
 
-  <!-- الشريط -->
-  <div class="topbar">
-    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
-    <div class="actions"><button class="btn" id="themeToggle">🌓</button></div>
-    <div class="user"><a class="btn" href="programs.html">مساحة إبداعي</a></div>
-  </div>
-
-  <header>
-    <div class="hero">
-      <h1 class="logo">إثــراء</h1>
-      <div class="tag"><span class="dot"></span>أفكار مُلهمة… تُجدد الدرس وتُواكب الجديد.</div>
-    </div>
-  </header>
-
-  <main>
-    <div class="container">
-      <section class="card">
-        <h2 class="title">اختر المادة والمرحلة</h2>
-        <div class="field">
-          <label>المادة</label>
-          <input id="subj" placeholder="علوم / رياضيات / لغة عربية / اجتماعيات …">
+    <header>
+      <div class="hero">
+        <h1 class="logo">إثــراء</h1>
+        <div class="tag">
+          <span class="dot"></span>أفكار مُلهمة… تُجدد الدرس وتُواكب الجديد.
         </div>
-        <div class="field">
-          <label>المرحلة</label>
-          <select id="stage">
-            <option value="p1">ابتدائي دُنيا</option>
-            <option value="p2" selected>ابتدائي عُليا</option>
-            <option value="m">متوسط</option>
-            <option value="h">ثانوي</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>تركيز الإثراء</label>
-          <select id="focus">
-            <option value="auto" selected>تلقائي (أحدث أولاً ثم بدائل)</option>
-            <option value="latest">أحدث الأبحاث/الأخبار العلمية</option>
-            <option value="myth">خرافة شائعة + تصحيحها</option>
-            <option value="odd">معلومة غريبة/مدهشة</option>
-            <option value="ideas">أفكار نشاط/مشروع تطبيقي</option>
-          </select>
-        </div>
-        <div class="actions-row" style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn primary" id="gen">ولّدي البطاقات</button>
-          <button class="btn" id="copy" disabled>نسخ جميع البطاقات</button>
-          <button class="btn" id="print" disabled>طباعة</button>
-        </div>
-      </section>
+      </div>
+    </header>
 
-      <section class="card" id="out" style="display:none">
-        <h2 class="title">بطاقات الإثراء</h2>
+    <main>
+      <div class="container">
+        <section class="card">
+          <h2 class="title">اختر المادة والمرحلة</h2>
+          <div class="field">
+            <label>المادة</label>
+            <input
+              id="subj"
+              placeholder="علوم / رياضيات / لغة عربية / اجتماعيات …"
+            />
+          </div>
+          <div class="field">
+            <label>المرحلة</label>
+            <select id="stage">
+              <option value="p1">ابتدائي دُنيا</option>
+              <option value="p2" selected>ابتدائي عُليا</option>
+              <option value="m">متوسط</option>
+              <option value="h">ثانوي</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>تركيز الإثراء</label>
+            <select id="focus">
+              <option value="auto" selected>
+                تلقائي (أحدث أولاً ثم بدائل)
+              </option>
+              <option value="latest">أحدث الأبحاث/الأخبار العلمية</option>
+              <option value="myth">خرافة شائعة + تصحيحها</option>
+              <option value="odd">معلومة غريبة/مدهشة</option>
+              <option value="ideas">أفكار نشاط/مشروع تطبيقي</option>
+            </select>
+          </div>
+          <div
+            class="actions-row"
+            style="display: flex; gap: 10px; flex-wrap: wrap"
+          >
+            <button class="btn primary" id="gen">ولّدي البطاقات</button>
+            <button class="btn" id="copy" disabled>نسخ جميع البطاقات</button>
+            <button class="btn" id="print" disabled>طباعة</button>
+          </div>
+        </section>
 
-        <!-- بطاقات القسم الأساسي -->
-        <div class="cards" id="cards"></div>
+        <section class="card" id="out" style="display: none">
+          <h2 class="title">بطاقات الإثراء</h2>
 
-        <!-- يظهر فقط عندما تكون النتائج قديمة: قسم قريب من المجال -->
-        <div id="nearbyBox" style="display:none; margin-top:16px">
-          <h3 class="title" style="margin-bottom:10px">معلومات قريبة من المجال</h3>
-          <div class="cards" id="nearby"></div>
-        </div>
-      </section>
-    </div>
-  </main>
+          <!-- بطاقات القسم الأساسي -->
+          <div class="cards" id="cards"></div>
 
-  <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-    <p class="foot-name">ندى المجيرش</p>
+          <!-- يظهر فقط عندما تكون النتائج قديمة: قسم قريب من المجال -->
+          <div id="nearbyBox" style="display: none; margin-top: 16px">
+            <h3 class="title" style="margin-bottom: 10px">
+              معلومات قريبة من المجال
+            </h3>
+            <div class="cards" id="nearby"></div>
+          </div>
+        </section>
+      </div>
+    </main>
 
-    <nav class="foot-links">
-      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-      <a href="complaints.html">الشكاوى والاقتراحات</a>
-    </nav>
+    <div id="footer" data-component="components/footer.html"></div>
+    <script>
+      // سنة تلقائية + مزامنة لون الثيم مع تغييره من صفحة البروفايل
+      (function () {
+        var y = document.getElementById("year");
+        if (y) y.textContent = new Date().getFullYear();
+        window.addEventListener("athar:theme-color", function (e) {
+          try {
+            if (e && e.detail) {
+              document.documentElement.style.setProperty("--primary", e.detail);
+            }
+          } catch (_) {}
+        });
+      })();
+    </script>
 
-    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-  </footer>
+    <div class="toast" id="toast"></div>
 
-  <script>
-    // سنة تلقائية + مزامنة لون الثيم مع تغييره من صفحة البروفايل
-    (function(){
-      var y=document.getElementById('year');
-      if(y) y.textContent=new Date().getFullYear();
-      window.addEventListener('athar:theme-color', function(e){
-        try{ if(e && e.detail){ document.documentElement.style.setProperty('--primary', e.detail); } }catch(_){}
-      });
-    })();
-  </script>
+    <script src="assets/js/ethraa.js"></script>
 
-  <div class="toast" id="toast"></div>
+    <!-- Auth0 SDK (اختياري - يُفضّل إبقاؤه مع فولباك) -->
+    <script
+      defer
+      src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+      onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"
+    ></script>
 
-  <script>
-  const STAGES = { p1:'ابتدائي دُنيا', p2:'ابتدائي عُليا', m:'متوسط', h:'ثانوي' };
-  const cardsWrap = document.getElementById('cards');
-  const nearbyWrap = document.getElementById('nearby');
-  const nearbyBox = document.getElementById('nearbyBox');
-  const out = document.getElementById('out');
-  const copyBtn = document.getElementById('copy');
-  const printBtn = document.getElementById('print');
+    <!-- Supabase -->
+    <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script defer src="/assets/js/supabase-client.js"></script>
 
-  // ربط Auth0 مع Supabase users مرة واحدة
-  window.addEventListener('load', () => {
-    if (typeof supaEnsureUserProfile === 'function') {
-      try { supaEnsureUserProfile(); } catch(_) {}
-    }
-  });
+    <script src="assets/js/component-loader.js"></script>
+    <script src="assets/js/navbar.js"></script>
+    <!-- الحماية (يجب أن يسبق أي كود يعتمد على تسجيل الدخول) -->
+    <script defer src="/assets/js/require-auth.js"></script>
 
-  function ethraaMeta(){
-    return {
-      subject: (document.getElementById('subj')?.value || '').trim() || null,
-      stage: document.getElementById('stage')?.value || null,
-      focus: document.getElementById('focus')?.value || null
-    };
-  }
-
-  function clean(t){ return String(t||'').replace(/\*\*?|##+|^\s*-\s*/gm,'').trim(); }
-  function chip(t){ return `<span class="tag">${t}</span>`; }
-  function toast(m){
-    const t=document.getElementById('toast'); t.textContent=m;
-    t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1200);
-  }
-
-  function showSkeleton(n=4){
-    cardsWrap.innerHTML = '';
-    for(let i=0;i<n;i++){
-      const sk = document.createElement('div');
-      sk.className='skeleton';
-      cardsWrap.appendChild(sk);
-    }
-    nearbyBox.style.display = 'none';
-    nearbyWrap.innerHTML = '';
-  }
-
-// دي الدالة المعدلة في ملف الإثراء
-// ده الكود الكامل للدالة
-async function fetchEthraa(subject, stage, focus){
-  let accessToken;
-  try {
-    // 1. اتأكد إن (window.auth) موجود
-    if (typeof window.auth === 'undefined' || !window.auth) {
-      toast('خطأ: المصادقة غير جاهزة');
-      throw new Error('Auth0 client not ready');
-    }
-    
-    // 2. اطلب التوكن من (window.auth)
-    accessToken = await window.auth.getTokenSilently();
-
-
-  } catch (e) {
-    console.error('Error getting access token', e);
-    // لو فشل، اطلب منه يسجل دخول تاني
-    toast('خطأ في جلب التوكن، حاول تسجيل الدخول مرة أخرى');
-    throw new Error('Token error');
-  }
-
-  // 3. ابعت الطلب ومعاه التوكن في الهيدر
-  const res = await fetch('/.netlify/functions/gemini-ethraa', { // <--- لازم تكلم السيرفر
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'Authorization': `Bearer ${accessToken}` 
-    },
-    body: JSON.stringify({ subject, stage, focus })
-  });
-
-  if(!res.ok) {
-    if (res.status === 401) {
-      console.error('Server returned 401. Token might be bad or .env mismatch.');
-      toast('خطأ 401: التوكن غير صالح.');
-    }
-    throw new Error('fn_error');
-  }
-  
-  return res.json();
-  // === ---------------------- ===
-}
-
-  // عدم التكرار داخل الجلسة (بصمة)
-  const SEEN_KEY = 'ethraa_seen_v1';
-  const seen = new Set((() => {
-    try { return JSON.parse(sessionStorage.getItem(SEEN_KEY) || '[]'); } catch { return []; }
-  })());
-  function saveSeen(){
-    try { sessionStorage.setItem(SEEN_KEY, JSON.stringify(Array.from(seen))); } catch(_){}
-  }
-  function sigOf(card){
-    const s = ((card?.title||'') + '|' + (card?.idea||'')).toLowerCase();
-    let h=0; for (let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; }
-    return String(h);
-  }
-
-  function renderCards(container, cards, subject, stage){
-    container.innerHTML = '';
-    (cards || []).forEach(c=>{
-      const title = clean(c.title)||'— بطاقة —';
-      const brief = clean(c.brief)||'—';
-      const idea  = clean(c.idea)||'—';
-      const source = c.source ? `<div class="muted" style="font-size:.82rem;margin-top:6px">مصدر/مرجع: <a href="${c.source}" target="_blank" rel="noopener" style="text-decoration:underline">${c.source}</a></div>` : '';
-      const staleMark = (c.freshness === 'general') ? `<div class="muted" style="font-size:.82rem; margin-top:6px">عام</div>` : '';
-
-      const card = document.createElement('div');
-      card.className = 'idea';
-      card.innerHTML = `
-        <h4>• ${title}</h4>
-        <p class="muted"><strong>لماذا؟</strong> ${brief}</p>
-        <p><strong>اقتراح:</strong> ${idea}</p>
-        ${source}
-        ${staleMark}
-        <div class="tags">
-          ${chip(subject)} ${chip(STAGES[stage]||stage)} ${chip('إثراء')}
-        </div>`;
-      container.appendChild(card);
-    });
-  }
-
-  document.getElementById('gen').addEventListener('click', async ()=>{
-    const s  = (document.getElementById('subj').value||'').trim();
-    const st = document.getElementById('stage').value;
-    const fc = document.getElementById('focus').value;
-    if(!s){ toast('اكتبي المادة أولًا'); return; }
-
-    out.style.display='block';
-    showSkeleton(4);
-    copyBtn.disabled = true;
-    printBtn.disabled = true;
-
-    try{
-      const { ok, cards = [], nearby = undefined, _meta = {} } = await fetchEthraa(s, st, fc);
-
-      // فلترة التكرار داخل الجلسة
-      const uniq = [];
-      for (const c of cards) {
-        const sig = sigOf(c);
-        if (seen.has(sig)) continue;
-        seen.add(sig); uniq.push(c);
-      }
-      saveSeen();
-
-      renderCards(cardsWrap, uniq.length ? uniq : cards, s, st);
-
-      if (_meta.all_stale && Array.isArray(nearby) && nearby.length) {
-        renderCards(nearbyWrap, nearby, s, st);
-        nearbyBox.style.display = 'block';
-      } else {
-        nearbyBox.style.display = 'none';
-        nearbyWrap.innerHTML = '';
-      }
-
-      copyBtn.disabled = (cardsWrap.children.length === 0);
-      printBtn.disabled = (cardsWrap.children.length === 0);
-      toast(ok ? 'تم ✨' : 'عُرض بديل');
-
-      if (typeof supaLogToolUsage === 'function') {
-        try { await supaLogToolUsage('ethraa_generate', ethraaMeta()); } catch(_){}
-      }
-    }catch(e){
-      console.error(e);
-      cardsWrap.innerHTML = '<div class="muted">تعذّر جلب الإثراء الآن.</div>';
-    }
-  });
-
-  copyBtn.addEventListener('click', async ()=>{
-    const text=[...document.querySelectorAll('.idea')].map(d=>d.innerText).join('\n\n— — —\n\n');
-    await navigator.clipboard.writeText(text);
-    toast('تم النسخ ✅');
-    if (typeof supaLogToolUsage === 'function') {
-      try { await supaLogToolUsage('ethraa_copy', ethraaMeta()); } catch(_){}
-    }
-  });
-
-  printBtn.addEventListener('click', async ()=>{
-    window.print();
-    if (typeof supaLogToolUsage === 'function') {
-      try { await supaLogToolUsage('ethraa_print', ethraaMeta()); } catch(_){}
-    }
-  });
-  </script>
-
-  <!-- Auth0 SDK (اختياري - يُفضّل إبقاؤه مع فولباك) -->
-  <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-
-  <!-- Supabase -->
-  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="/assets/js/supabase-client.js"></script>
-
-  <!-- الحماية (يجب أن يسبق أي كود يعتمد على تسجيل الدخول) -->
-  <script defer src="/assets/js/require-auth.js"></script>
-
-  <!-- سكربتات مشروعك -->
-  <script defer src="/app.js"></script>
-</body>
+    <!-- سكربتات مشروعك -->
+    <script defer src="/app.js"></script>
+  </body>
 </html>

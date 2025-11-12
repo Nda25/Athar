@@ -1,272 +1,413 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>الشكاوى والاقتراحات — أثــر</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <meta name="color-scheme" content="dark light">
-  <style>
-    /* شارات الحالة مع احترام الثيم */
-    .badge{display:inline-block;padding:2px 10px;border-radius:999px;background:color-mix(in oklab, var(--sea-500) 8%, transparent);border:1px solid color-mix(in oklab, var(--sea-500) 18%, transparent)}
-    .status-active{background:#dcfce733;color:#166534;border-color:#bbf7d066}
-    .status-pending{background:#fef9c333;color:#713f12;border-color:#fde68a66}
-    .status-cancelled{background:#fee2e233;color:#7f1d1d;border-color:#fecaca66}
-    .muted{opacity:.85}
-    .hint{font-size:.92rem;opacity:.8}
-    .grid{display:grid;gap:12px}
-    @media(min-width:880px){ .grid{grid-template-columns:1fr 1fr} }
-    .actions-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
-    .btn[disabled]{opacity:.55;cursor:not-allowed}
-  </style>
-</head>
-<body>
-  <!-- خلفيات أثــر -->
-  <div class="global-bg"></div>
-
-
-  <!-- الشريط العلوي الموحد -->
-  <div class="topbar">
-    <div class="left-actions">
-      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-    </div>
-    <div class="actions">
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-    </div>
-    <div class="user">
-      <span id="nav-auth" style="display:none;gap:10px"></span>
-      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
-    </div>
-  </div>
-
-  <!-- الهيرو -->
-  <header>
-    <div class="hero">
-      <h1 class="logo">الشكاوى والاقتراحات</h1>
-      <div class="tag"><span class="dot"></span>حرصًا على رضاكم… صوتكم يهمّنا ✨</div>
-    </div>
-  </header>
-
-  <main>
-    <div class="container">
-      <!-- نموذج المراسلة -->
-      <section class="card">
-        <h2 class="title" style="margin-top:0">أرسل رسالة</h2>
-        <p id="account-info" class="muted" style="margin:-6px 0 12px"></p>
-
-        <form id="complaintForm" class="form" novalidate>
-          <div class="grid">
-            <div class="field">
-              <label>نوع المراسلة</label>
-              <select id="f-type" required>
-                <option value="complaint">شكوى</option>
-                <option value="suggestion">اقتراح</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>العنوان</label>
-              <input id="f-subject" type="text" placeholder="اكتب عنوانًا مختصرًا" required />
-            </div>
-            <div class="field">
-              <label>الاسم</label>
-              <input id="f-name" type="text" placeholder="اسمك" required />
-            </div>
-            <div class="field">
-              <label>البريد الإلكتروني</label>
-              <input id="f-email" type="email" placeholder="example@email.com" required />
-            </div>
-          </div>
-
-          <div class="field">
-            <label>الرسالة</label>
-            <textarea id="f-message" rows="6" placeholder="اكتب التفاصيل هنا…" required></textarea>
-            <div class="hint">لا تشارك بيانات حساسة. اذكر رقم الطلب إن كانت الشكوى متعلقة بعملية شراء.</div>
-          </div>
-
-          <div class="field">
-            <label>رقم الطلب (اختياري)</label>
-            <input id="f-order" type="text" placeholder="إن وجد" />
-          </div>
-
-          <div class="actions-row">
-            <button type="button" id="btn-login" class="btn">تسجيل الدخول</button>
-            <button type="submit" id="btn-send" class="btn primary">إرسال</button>
-            <span id="form-status" class="muted"></span>
-          </div>
-        </form>
-      </section>
-
-      <!-- طرق بديلة -->
-      <section class="card">
-        <h2 class="title" style="margin-top:0">طرق بديلة لتقديم الشكاوى</h2>
-        <p>📞 الهاتف: <strong>0556795993</strong></p>
-        <p>📧 البريد: <a class="link" href="mailto:team@n-athar.co">team@n-athar.co</a></p>
-        <p>💬 واتساب: <a class="link" href="https://wa.me/966556795993" target="_blank" rel="noopener">اضغط هنا</a></p>
-        <p>📱 X (تويتر): <a class="link" href="https://x.com/" target="_blank" rel="noopener">@n-athar</a></p>
-      </section>
-
-      <!-- المدد الزمنية المطلوبة -->
-      <section class="card">
-        <h2 class="title" style="margin-top:0">مواعيد الرد والمعالجة</h2>
-        <p>⏳ الرد خلال <strong>48 ساعة عمل</strong>.</p>
-        <p>⚖️ معالجة الشكوى خلال <strong>7 أيام عمل</strong>.</p>
-      </section>
-    </div>
-  </main>
-
-  <!-- فوتر أثــر الموحد -->
-  <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-    <p class="foot-name">ندى المجيرش</p>
-    <div class="foot-links">
-      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-      <a href="complaints.html">الشكاوى والاقتراحات</a>
-    </div>
-  </footer>
-
-  <div class="toast" id="toast"></div>
-
-  <!-- SDKs + سكربتات المشروع -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-  <script src="assets/js/supabase-client.js"></script>
-  <script src="app.js"></script>
-
-  <script>
-    // — تهيئة الثيم محليًا (احتياطيًا إن لم يسبق لـ app.js تنفيذها بسرعة)
-    (function(){
-      try{
-        const saved = localStorage.getItem('athar_theme'); // 'dark'|'light'
-        if(saved){ document.documentElement.classList.toggle('dark', saved==='dark'); }
-      }catch(_){}
-    })();
-  </script>
-
-  <script>
-    (function(){
-      const CLAIM_NS = "https://athar.co/";   // نفس النيم سبيس في JWT
-      const btnLogin = document.getElementById('btn-login');
-      const btnSend  = document.getElementById('btn-send');
-      const form     = document.getElementById('complaintForm');
-      const statusEl = document.getElementById('form-status');
-      const infoEl   = document.getElementById('account-info');
-
-      const typeEl = document.getElementById('f-type');
-      const subjEl = document.getElementById('f-subject');
-      const nameEl = document.getElementById('f-name');
-      const emailEl= document.getElementById('f-email');
-      const msgEl  = document.getElementById('f-message');
-      const orderEl= document.getElementById('f-order');
-
-      const wait = ms => new Promise(r => setTimeout(r, ms));
-      async function waitAuth(){ for(let i=0;i<80 && !window.auth;i++){ await wait(100); } }
-
-      function setStatus(t){ statusEl.textContent = t||''; }
-      function lock(v){ btnLogin.disabled=v; btnSend.disabled=v; }
-
-      // — الحصول على التوكِن بطريقة مرنة حسب بيئتك
-      async function getTokenFlexible(){
-        if (!window.auth) throw new Error('Auth not ready');
-        // 1) silent (المفضل)
-        try{
-          const t1 = await window.auth.getToken({ detailedResponse:false, audience:"https://api.athar" });
-          if (t1) return t1;
-        }catch(_){}
-        // 2) popup
-        try{
-          await window.auth.login({ authorizationParams:{ prompt:"login", screen_hint:"login" }});
-          const t2 = await window.auth.getToken({ audience:"https://api.athar" });
-          if (t2) return t2;
-        }catch(_){}
-        // 3) local fallback (لو لديك require-auth يضع التوكِن في localStorage)
-        try{
-          const t3 = localStorage.getItem('athar_id_token') || localStorage.getItem('athar_access_token');
-          if (t3) return t3;
-        }catch(_){}
-        throw new Error('no_token');
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>الشكاوى والاقتراحات — أثــر</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="color-scheme" content="dark light" />
+    <style>
+      /* شارات الحالة مع احترام الثيم */
+      .badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--sea-500) 8%, transparent);
+        border: 1px solid color-mix(in oklab, var(--sea-500) 18%, transparent);
       }
-
-      async function fillFromAuth(){
-        try{
-          const isAuth = await window.auth.isAuthenticated();
-          if(!isAuth){
-            infoEl.innerHTML = '<span class="badge">غير مسجل دخول</span> — سجّل الدخول لإرسال الشكوى.';
-            btnLogin.style.display='';
-            return;
-          }
-          btnLogin.style.display='none';
-
-          const u = await window.auth.getUser();
-          const claims = await window.auth.getIdTokenClaims().catch(()=> ({}));
-          const status = claims?.[CLAIM_NS+'status'] || '';
-          const badge =
-            status==='active'  ? '<span class="badge status-active">حسابك نشط</span>' :
-            status==='pending' ? '<span class="badge status-pending">حسابك معلّق</span>' :
-                                 '<span class="badge status-cancelled">غير نشط</span>';
-
-          infoEl.innerHTML = `${badge}${u?.email ? ' — '+u.email : ''}`;
-          if (u?.name && !nameEl.value)  nameEl.value  = u.name;
-          if (u?.email && !emailEl.value) emailEl.value = u.email;
-
-          // لا نمنع الإرسال هنا؛ المنع الحقيقي في الدالة (حسب REQUIRE_ACTIVE)
-          setStatus('');
-        }catch(_){}
+      .status-active {
+        background: #dcfce733;
+        color: #166534;
+        border-color: #bbf7d066;
       }
+      .status-pending {
+        background: #fef9c333;
+        color: #713f12;
+        border-color: #fde68a66;
+      }
+      .status-cancelled {
+        background: #fee2e233;
+        color: #7f1d1d;
+        border-color: #fecaca66;
+      }
+      .muted {
+        opacity: 0.85;
+      }
+      .hint {
+        font-size: 0.92rem;
+        opacity: 0.8;
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      @media (min-width: 880px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .actions-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .btn[disabled] {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- خلفيات أثــر -->
+    <div class="global-bg"></div>
 
-      btnLogin.addEventListener('click', ()=>{
-        window.auth?.login({ authorizationParams:{ screen_hint:'login', redirect_uri: window.location.href }});
-      });
+    <!-- الشريط العلوي الموحد -->
+    <div class="topbar">
+      <div class="left-actions">
+        <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
+      </div>
+      <div class="actions">
+        <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">
+          🌓
+        </button>
+      </div>
+      <div class="user">
+        <span id="nav-auth" style="display: none; gap: 10px"></span>
+        <a
+          id="nav-profile"
+          class="btn"
+          href="profile.html"
+          style="display: none"
+          >الملف الشخصي</a
+        >
+      </div>
+    </div>
 
-      form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        setStatus('');
-        const subject = (subjEl.value||'').trim();
-        const message = (msgEl.value||'').trim();
-        if (!subject || !message){ setStatus('الرجاء تعبئة العنوان والرسالة'); return; }
+    <!-- الهيرو -->
+    <header>
+      <div class="hero">
+        <h1 class="logo">الشكاوى والاقتراحات</h1>
+        <div class="tag">
+          <span class="dot"></span>حرصًا على رضاكم… صوتكم يهمّنا ✨
+        </div>
+      </div>
+    </header>
 
-        try{
-          lock(true); setStatus('جارٍ الإرسال…');
-          const token = await getTokenFlexible();
+    <main>
+      <div class="container">
+        <!-- نموذج المراسلة -->
+        <section class="card">
+          <h2 class="title" style="margin-top: 0">أرسل رسالة</h2>
+          <p id="account-info" class="muted" style="margin: -6px 0 12px"></p>
 
-          const payload = {
-            type: (typeEl.value||'complaint'),
-            subject,
-            name: (nameEl.value||'').trim(),
-            email:(emailEl.value||'').toLowerCase().trim(),
-            message,
-            order_number: (orderEl.value||'').trim() || null
-          };
+          <form id="complaintForm" class="form" novalidate>
+            <div class="grid">
+              <div class="field">
+                <label>نوع المراسلة</label>
+                <select id="f-type" required>
+                  <option value="complaint">شكوى</option>
+                  <option value="suggestion">اقتراح</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>العنوان</label>
+                <input
+                  id="f-subject"
+                  type="text"
+                  placeholder="اكتب عنوانًا مختصرًا"
+                  required
+                />
+              </div>
+              <div class="field">
+                <label>الاسم</label>
+                <input id="f-name" type="text" placeholder="اسمك" required />
+              </div>
+              <div class="field">
+                <label>البريد الإلكتروني</label>
+                <input
+                  id="f-email"
+                  type="email"
+                  placeholder="example@email.com"
+                  required
+                />
+              </div>
+            </div>
 
-          const res = await fetch('/.netlify/functions/complaints-create', {
-            method:'POST',
-            headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
-            body: JSON.stringify(payload)
-          });
+            <div class="field">
+              <label>الرسالة</label>
+              <textarea
+                id="f-message"
+                rows="6"
+                placeholder="اكتب التفاصيل هنا…"
+                required
+              ></textarea>
+              <div class="hint">
+                لا تشارك بيانات حساسة. اذكر رقم الطلب إن كانت الشكوى متعلقة
+                بعملية شراء.
+              </div>
+            </div>
 
-          const out = await res.json().catch(()=> ({}));
-          if (!res.ok){
-            if (res.status===401){ setStatus('يرجى تسجيل الدخول أولًا.'); btnLogin.style.display=''; }
-            else if (res.status===403){ setStatus('لا يمكن الإرسال: الحساب غير نشط.'); }
-            else { setStatus(out?.error || 'تعذّر الإرسال، حاول لاحقًا.'); }
-            return;
+            <div class="field">
+              <label>رقم الطلب (اختياري)</label>
+              <input id="f-order" type="text" placeholder="إن وجد" />
+            </div>
+
+            <div class="actions-row">
+              <button type="button" id="btn-login" class="btn">
+                تسجيل الدخول
+              </button>
+              <button type="submit" id="btn-send" class="btn primary">
+                إرسال
+              </button>
+              <span id="form-status" class="muted"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- طرق بديلة -->
+        <section class="card">
+          <h2 class="title" style="margin-top: 0">طرق بديلة لتقديم الشكاوى</h2>
+          <p>📞 الهاتف: <strong>0556795993</strong></p>
+          <p>
+            📧 البريد:
+            <a class="link" href="mailto:team@n-athar.co">team@n-athar.co</a>
+          </p>
+          <p>
+            💬 واتساب:
+            <a
+              class="link"
+              href="https://wa.me/966556795993"
+              target="_blank"
+              rel="noopener"
+              >اضغط هنا</a
+            >
+          </p>
+          <p>
+            📱 X (تويتر):
+            <a class="link" href="https://x.com/" target="_blank" rel="noopener"
+              >@n-athar</a
+            >
+          </p>
+        </section>
+
+        <!-- المدد الزمنية المطلوبة -->
+        <section class="card">
+          <h2 class="title" style="margin-top: 0">مواعيد الرد والمعالجة</h2>
+          <p>⏳ الرد خلال <strong>48 ساعة عمل</strong>.</p>
+          <p>⚖️ معالجة الشكوى خلال <strong>7 أيام عمل</strong>.</p>
+        </section>
+      </div>
+    </main>
+
+    <!-- فوتر أثــر الموحد -->
+    <footer>
+      <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+      <p class="foot-name">ندى المجيرش</p>
+      <div class="foot-links">
+        <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+        <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+        <a href="refund-policy.html">سياسة الاسترجاع</a
+        ><span class="sep">|</span> <a href="whatsapp.html">تواصل واتساب</a
+        ><span class="sep">|</span>
+        <a href="complaints.html">الشكاوى والاقتراحات</a>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- SDKs + سكربتات المشروع -->
+    <script
+      src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+      onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"
+    ></script>
+    <script src="assets/js/supabase-client.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+      // — تهيئة الثيم محليًا (احتياطيًا إن لم يسبق لـ app.js تنفيذها بسرعة)
+      (function () {
+        try {
+          const saved = localStorage.getItem("athar_theme"); // 'dark'|'light'
+          if (saved) {
+            document.documentElement.classList.toggle("dark", saved === "dark");
           }
-
-          setStatus('تم استلام الرسالة ✓');
-          form.reset();
-        }catch(err){
-          setStatus(err?.message==='no_token' ? 'لم نتمكن من المصادقة. سجّل الدخول ثم أعد المحاولة.' : 'تعذّر الإرسال، حاول لاحقًا.');
-        }finally{ lock(false); }
-      });
-
-      (async function run(){
-        await waitAuth();
-        await fillFromAuth();
+        } catch (_) {}
       })();
-    })();
-  </script>
-</body>
+    </script>
+
+    <script>
+      (function () {
+        const CLAIM_NS = "https://athar.co/"; // نفس النيم سبيس في JWT
+        const btnLogin = document.getElementById("btn-login");
+        const btnSend = document.getElementById("btn-send");
+        const form = document.getElementById("complaintForm");
+        const statusEl = document.getElementById("form-status");
+        const infoEl = document.getElementById("account-info");
+
+        const typeEl = document.getElementById("f-type");
+        const subjEl = document.getElementById("f-subject");
+        const nameEl = document.getElementById("f-name");
+        const emailEl = document.getElementById("f-email");
+        const msgEl = document.getElementById("f-message");
+        const orderEl = document.getElementById("f-order");
+
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        async function waitAuth() {
+          for (let i = 0; i < 80 && !window.auth; i++) {
+            await wait(100);
+          }
+        }
+
+        function setStatus(t) {
+          statusEl.textContent = t || "";
+        }
+        function lock(v) {
+          btnLogin.disabled = v;
+          btnSend.disabled = v;
+        }
+
+        // — الحصول على التوكِن بطريقة مرنة حسب بيئتك
+        async function getTokenFlexible() {
+          if (!window.auth) throw new Error("Auth not ready");
+          // 1) silent (المفضل)
+          try {
+            const t1 = await window.auth.getToken({
+              detailedResponse: false,
+              audience: "https://api.athar",
+            });
+            if (t1) return t1;
+          } catch (_) {}
+          // 2) popup
+          try {
+            await window.auth.login({
+              authorizationParams: { prompt: "login", screen_hint: "login" },
+            });
+            const t2 = await window.auth.getToken({
+              audience: "https://api.athar",
+            });
+            if (t2) return t2;
+          } catch (_) {}
+          // 3) local fallback (لو لديك require-auth يضع التوكِن في localStorage)
+          try {
+            const t3 =
+              localStorage.getItem("athar_id_token") ||
+              localStorage.getItem("athar_access_token");
+            if (t3) return t3;
+          } catch (_) {}
+          throw new Error("no_token");
+        }
+
+        async function fillFromAuth() {
+          try {
+            const isAuth = await window.auth.isAuthenticated();
+            if (!isAuth) {
+              infoEl.innerHTML =
+                '<span class="badge">غير مسجل دخول</span> — سجّل الدخول لإرسال الشكوى.';
+              btnLogin.style.display = "";
+              return;
+            }
+            btnLogin.style.display = "none";
+
+            const u = await window.auth.getUser();
+            const claims = await window.auth
+              .getIdTokenClaims()
+              .catch(() => ({}));
+            const status = claims?.[CLAIM_NS + "status"] || "";
+            const badge =
+              status === "active"
+                ? '<span class="badge status-active">حسابك نشط</span>'
+                : status === "pending"
+                ? '<span class="badge status-pending">حسابك معلّق</span>'
+                : '<span class="badge status-cancelled">غير نشط</span>';
+
+            infoEl.innerHTML = `${badge}${u?.email ? " — " + u.email : ""}`;
+            if (u?.name && !nameEl.value) nameEl.value = u.name;
+            if (u?.email && !emailEl.value) emailEl.value = u.email;
+
+            // لا نمنع الإرسال هنا؛ المنع الحقيقي في الدالة (حسب REQUIRE_ACTIVE)
+            setStatus("");
+          } catch (_) {}
+        }
+
+        btnLogin.addEventListener("click", () => {
+          window.auth?.login({
+            authorizationParams: {
+              screen_hint: "login",
+              redirect_uri: window.location.href,
+            },
+          });
+        });
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          setStatus("");
+          const subject = (subjEl.value || "").trim();
+          const message = (msgEl.value || "").trim();
+          if (!subject || !message) {
+            setStatus("الرجاء تعبئة العنوان والرسالة");
+            return;
+          }
+
+          try {
+            lock(true);
+            setStatus("جارٍ الإرسال…");
+            const token = await getTokenFlexible();
+
+            const payload = {
+              type: typeEl.value || "complaint",
+              subject,
+              name: (nameEl.value || "").trim(),
+              email: (emailEl.value || "").toLowerCase().trim(),
+              message,
+              order_number: (orderEl.value || "").trim() || null,
+            };
+
+            const res = await fetch("/.netlify/functions/complaints-create", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify(payload),
+            });
+
+            const out = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              if (res.status === 401) {
+                setStatus("يرجى تسجيل الدخول أولًا.");
+                btnLogin.style.display = "";
+              } else if (res.status === 403) {
+                setStatus("لا يمكن الإرسال: الحساب غير نشط.");
+              } else {
+                setStatus(out?.error || "تعذّر الإرسال، حاول لاحقًا.");
+              }
+              return;
+            }
+
+            setStatus("تم استلام الرسالة ✓");
+            form.reset();
+          } catch (err) {
+            setStatus(
+              err?.message === "no_token"
+                ? "لم نتمكن من المصادقة. سجّل الدخول ثم أعد المحاولة."
+                : "تعذّر الإرسال، حاول لاحقًا."
+            );
+          } finally {
+            lock(false);
+          }
+        });
+
+        (async function run() {
+          await waitAuth();
+          await fillFromAuth();
+        })();
+      })();
+    </script>
+  </body>
 </html>

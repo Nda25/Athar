@@ -1,312 +1,161 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>الدفع والاشتراك — أثــر</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css" />
-<meta name="color-scheme" content="dark light">
-</head>
-<body>
-  <div class="global-bg"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>الدفع والاشتراك — أثــر</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="color-scheme" content="dark light" />
+  </head>
+  <body>
+    <div class="global-bg"></div>
 
+    <div id="navbar" data-component="components/navbar.html"></div>
 
-  <div class="topbar">
-    <div class="left-actions">
-      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-    </div>
-    <div class="actions">
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-    </div>
-    <div class="user" style="gap:10px">
-      <button class="btn ghost" id="logout" style="display:none">تسجيل الخروج</button>
-    </div>
-  </div>
-
-  <header>
-    <div class="hero">
-      <div class="hero-plate"></div>
-      <h1 class="logo">أثـَــر</h1>
-      <div class="tag"><span class="dot"></span>اختر الخطة المناسبة ليكون لك أثــر</div>
-    </div>
-  </header>
-
-  <main>
-    <div class="container">
-      <section class="card" style="margin-top:-14px">
-        <h2 class="title">الاشتراكات</h2>
-        <p class="lead">كل الخطط تمنحك وصولًا كاملًا للأدوات والمزايا.</p>
-        <p id="whoami" class="muted" style="text-align:center; margin:8px 0 0; display:none"></p>
-
-        <div id="choose-plan" class="plans" style="margin-top:22px">
-          <div class="plan">
-            <h4>أسبوعي</h4><div class="price">12.99 ر.س</div>
-            <button class="btn primary" type="button" data-plan="weekly"     onclick="subscribe('weekly')">اشترك الآن</button>
-          </div>
-          <div class="plan">
-            <h4>شهري</h4><div class="price">29.99 ر.س</div>
-            <button class="btn primary" type="button" data-plan="monthly"    onclick="subscribe('monthly')">اشترك الآن</button>
-          </div>
-          <div class="plan">
-            <h4>نصف سنوي</h4><div class="price">169.99 ر.س</div>
-            <button class="btn primary" type="button" data-plan="semiannual" onclick="subscribe('semiannual')">اشترك الآن</button>
-          </div>
-          <div class="plan">
-            <h4>سنوي</h4><div class="price">339.99 ر.س</div>
-            <button class="btn primary" type="button" data-plan="annual"     onclick="subscribe('annual')">اشترك الآن</button>
-          </div>
+    <header>
+      <div class="hero">
+        <div class="hero-plate"></div>
+        <h1 class="logo">أثـَــر</h1>
+        <div class="tag">
+          <span class="dot"></span>اختر الخطة المناسبة ليكون لك أثــر
         </div>
+      </div>
+    </header>
 
-        <div class="box" style="margin-top:18px">
-          <h3>لديك رمز ترويجي؟</h3>
-          <div class="form-row">
-            <label for="promo">أدخل الرمز</label>
-            <input id="promo" name="promo" placeholder="مثال: ATHAR30" />
+    <main>
+      <div class="container">
+        <section class="card" style="margin-top: -14px">
+          <h2 class="title">الاشتراكات</h2>
+          <p class="lead">كل الخطط تمنحك وصولًا كاملًا للأدوات والمزايا.</p>
+          <p
+            id="whoami"
+            class="muted"
+            style="text-align: center; margin: 8px 0 0; display: none"
+          ></p>
+
+          <div id="choose-plan" class="plans" style="margin-top: 22px">
+            <div class="plan">
+              <h4>أسبوعي</h4>
+              <div class="price">12.99 ر.س</div>
+              <button
+                class="btn primary"
+                type="button"
+                data-plan="weekly"
+                onclick="subscribe('weekly')"
+              >
+                اشترك الآن
+              </button>
+            </div>
+            <div class="plan">
+              <h4>شهري</h4>
+              <div class="price">29.99 ر.س</div>
+              <button
+                class="btn primary"
+                type="button"
+                data-plan="monthly"
+                onclick="subscribe('monthly')"
+              >
+                اشترك الآن
+              </button>
+            </div>
+            <div class="plan">
+              <h4>نصف سنوي</h4>
+              <div class="price">169.99 ر.س</div>
+              <button
+                class="btn primary"
+                type="button"
+                data-plan="semiannual"
+                onclick="subscribe('semiannual')"
+              >
+                اشترك الآن
+              </button>
+            </div>
+            <div class="plan">
+              <h4>سنوي</h4>
+              <div class="price">339.99 ر.س</div>
+              <button
+                class="btn primary"
+                type="button"
+                data-plan="annual"
+                onclick="subscribe('annual')"
+              >
+                اشترك الآن
+              </button>
+            </div>
           </div>
-          <div class="actions-row" style="justify-content:flex-start;margin-top:10px">
-            <button id="redeem" class="btn">تفعيل الرمز</button>
-            <small class="muted" id="redeem-msg"></small>
+
+          <div class="box" style="margin-top: 18px">
+            <h3>لديك رمز ترويجي؟</h3>
+            <div class="form-row">
+              <label for="promo">أدخل الرمز</label>
+              <input id="promo" name="promo" placeholder="مثال: ATHAR30" />
+            </div>
+            <div
+              class="actions-row"
+              style="justify-content: flex-start; margin-top: 10px"
+            >
+              <button id="redeem" class="btn">تفعيل الرمز</button>
+              <small class="muted" id="redeem-msg"></small>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="grid">
-        <div class="box">
-          <h3>لماذا «أثــر»؟</h3>
-          <p>لأن وقتك أثمن من أن يُستهلك في التنسيق والبحث المتكرر. يجمع «أثــر» أدوات التحضير في مكان واحد لتختصر الوقت، وترفع جودة درسك، وتمنح نفسك فسحة أكبر للإبداع داخل الصف.</p>
-          <p>من الاستراتيجية إلى خطة الدرس، ومن الجدول إلى التذكير، ومن الأنشطة إلى الأفكار الحديثة— كل ما تحتاجه بين يديك.</p>
-        </div>
-        <div class="box">
-          <h3>خطوات سلسة</h3>
-          <p>بعد اختيار الخطة وتأكيد الحساب، يتم تفعيل الاشتراك وربط الأدوات بحسابك بشكل منظم، لتبدأ استخدام «أثــر» دون أي تعقيدات.</p>
-        </div>
-        <div class="box full">
-          <h3>لماذا الاشتراك مدفوع؟</h3>
-          <p>«أثر» مبادرة تعليمية تدعم المعلم وتطوّر الممارسات الصفية. المقابل الرمزي يغطي التشغيل (خوادم، صيانة، تطوير) ليبقى المشروع مستقرًا وموثوقًا 🌿.</p>
-        </div>
-      </section>
-    </div>
-  </main>
+        <section class="grid">
+          <div class="box">
+            <h3>لماذا «أثــر»؟</h3>
+            <p>
+              لأن وقتك أثمن من أن يُستهلك في التنسيق والبحث المتكرر. يجمع
+              «أثــر» أدوات التحضير في مكان واحد لتختصر الوقت، وترفع جودة درسك،
+              وتمنح نفسك فسحة أكبر للإبداع داخل الصف.
+            </p>
+            <p>
+              من الاستراتيجية إلى خطة الدرس، ومن الجدول إلى التذكير، ومن الأنشطة
+              إلى الأفكار الحديثة— كل ما تحتاجه بين يديك.
+            </p>
+          </div>
+          <div class="box">
+            <h3>خطوات سلسة</h3>
+            <p>
+              بعد اختيار الخطة وتأكيد الحساب، يتم تفعيل الاشتراك وربط الأدوات
+              بحسابك بشكل منظم، لتبدأ استخدام «أثــر» دون أي تعقيدات.
+            </p>
+          </div>
+          <div class="box full">
+            <h3>لماذا الاشتراك مدفوع؟</h3>
+            <p>
+              «أثر» مبادرة تعليمية تدعم المعلم وتطوّر الممارسات الصفية. المقابل
+              الرمزي يغطي التشغيل (خوادم، صيانة، تطوير) ليبقى المشروع مستقرًا
+              وموثوقًا 🌿.
+            </p>
+          </div>
+        </section>
+      </div>
+    </main>
 
-  <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-    <p class="foot-name">ندى المجيرش</p>
-    <nav class="foot-links">
-      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-      <a href="complaints.html">الشكاوى والاقتراحات</a>
-    </nav>
-    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-  </footer>
+    <script>
+      (function () {
+        var y = document.getElementById("year");
+        if (y) y.textContent = new Date().getFullYear();
+      })();
+    </script>
+    <div class="toast" id="toast"></div>
 
-  <script>(function(){var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();})();</script>
-  <div class="toast" id="toast"></div>
+    <div id="footer" data-component="components/footer.html"></div>
+    <!-- SDKs -->
+    <script src="assets/js/component-loader.js"></script>
+    <script src="assets/js/navbar.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="/assets/js/supabase-client.js"></script>
+    <script src="assets/js/storage.js"></script>
 
-  <!-- SDKs -->
+    <!-- Auth guard -->
+    <script src="assets/js/require-auth.js"></script>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="/assets/js/supabase-client.js"></script>
-  <script src="assets/js/storage.js"></script>
-
-  <!-- الحارس (يُنشئ window.auth ويضبط CALLBACK الثابت) -->
-  <script src="assets/js/require-auth.js"></script>
-
-  <!-- رسالة نجاح الدفع عند العودة بـ ?paid=1 -->
-  <script>
-    (function(){
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('paid') === '1') {
-        const msg = document.createElement('div');
-        msg.textContent = "🎉 تم الدفع بنجاح! شكرًا لاشتراكك في أثر.";
-        msg.style.position = "fixed";
-        msg.style.top = "20px";
-        msg.style.left = "50%";
-        msg.style.transform = "translateX(-50%)";
-        msg.style.background = "#16a34a";
-        msg.style.color = "white";
-        msg.style.padding = "14px 22px";
-        msg.style.borderRadius = "10px";
-        msg.style.fontSize = "16px";
-        msg.style.zIndex = "9999";
-        document.body.appendChild(msg);
-        setTimeout(() => msg.remove(), 5000);
-      }
-    })();
-  </script>
-
-  <!-- منطق الصفحة -->
-  <script>
-  const $ = (s)=>document.querySelector(s);
-  const toast = (m)=>{ const t=$('#toast'); if(!t){alert(m);return;} t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500); };
-
-  (function(){
-    const btn = document.getElementById('themeToggle');
-    if (!btn) return;
-    btn.addEventListener('click', (e)=>{
-      e.preventDefault();
-      const root = document.documentElement;
-      const dark = root.classList.toggle('dark');
-      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch(_){}
-      toast(dark ? 'تم تفعيل الوضع الداكن' : 'تم تفعيل الوضع الفاتح');
-    });
-    try { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark'); } catch(_){}
-  })();
-
-  async function isLogged(){
-    try { return await window.auth?.isAuthenticated?.(); } catch(_) { return false; }
-  }
-
-  async function refreshAuthUI(){
-    const logged = await isLogged();
-    const logoutBtn = $('#logout');
-    const whoami    = $('#whoami');
-
-    if (logged) {
-      let user=null;
-      try { user = await window.auth.getUser(); } catch(_){}
-      if (logoutBtn) logoutBtn.style.display = 'inline-flex';
-      if (whoami) { whoami.style.display='block'; whoami.textContent = user?.email ? ('مسجّل كـ ' + user.email) : 'حسابك نشِط'; }
-      document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(b=>b.textContent="إكمال الاشتراك");
-    } else {
-      if (logoutBtn) logoutBtn.style.display = 'none';
-      if (whoami) whoami.style.display='none';
-      document.querySelectorAll('#choose-plan .btn[data-plan]').forEach(b=>b.textContent="اشترك الآن");
-    }
-  }
-
-  // الخروج (الحارس يوجه للـ RETURN_TO)
-  $('#logout')?.addEventListener('click', () => {
-    window.auth?.logout?.();
-  });
-
-  // تفعيل الرمز (اختياري)
-  $('#redeem')?.addEventListener('click', async ()=>{
-    const code = ($('#promo')?.value || '').trim();
-    const msgEl = $('#redeem-msg'); msgEl.textContent = '';
-    if (!code){ msgEl.textContent = 'الرجاء إدخال الرمز'; return; }
-
-    try{
-      const token = await window.auth.getTokenSilently();
-      const res = await fetch('/.netlify/functions/promo-redeem', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ code })
-      });
-      const out = await res.text();
-      if (!res.ok) { msgEl.textContent = out || 'تعذّر تفعيل الرمز'; return; }
-      const j = JSON.parse(out);
-      msgEl.textContent = 'تم التفعيل ✓، تاريخ الانتهاء: ' + (new Date(j.expires_at)).toLocaleDateString('ar-SA');
-    }catch(e){
-      msgEl.textContent = 'تعذّر تفعيل الرمز';
-    }
-  });
-
-  <!-- سكربت الاشتراك المحدّث -->
-  </script>
-<script>
-  async function isLogged(){
-    try { return await window.auth?.isAuthenticated?.(); } catch(_) { return false; }
-  }
-  async function getToken() {
-    try { return await window.auth.getTokenSilently(); }
-    catch (e) {
-      console.warn('getTokenSilently failed, trying popup', e);
-      if (window.auth?.getTokenWithPopup) return await window.auth.getTokenWithPopup();
-      throw e;
-    }
-  }
-
-  // ⬇️ استبدل الدالة كلها بهذا الإصدار
-  async function subscribe(plan){
-    const btn = document.querySelector(`[data-plan="${plan}"]`);
-    if (!btn) return;
-
-    try { localStorage.setItem('intended_plan', plan); } catch(_){}
-
-    // تأكيد الدخول
-    if (!(await isLogged())){
-      try { localStorage.setItem('afterLogin', '/pricing.html'); } catch(_){}
-      return window.auth?.loginWithRedirect?.();
-    }
-
-    // منع التكرار
-    if (btn.dataset.loading === '1') return;
-    btn.dataset.loading = '1';
-    const old = btn.textContent;
-    btn.disabled = true; btn.textContent = "جارِ التوجيه…";
-
-    // اجلب البريد من جلسة Auth0
-    let email = "";
-    try {
-      const u = await window.auth.getUser();
-      email = (u?.email || "").toLowerCase();
-    } catch(_) {}
-
-    const promo = (document.getElementById('promo')?.value || '').trim() || null;
-
-    try{
-      const token = await getToken();
-      if (!token) throw new Error('no_token');
-
-      // نرسل email ضمن الـ payload
-      const res = await fetch('/.netlify/functions/payments-create-invoice?ts=' + Date.now(), {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ plan, promo, email })
-      });
-
-      const raw = await res.text();
-      let j = {}; try { j = JSON.parse(raw); } catch {}
-
-      if (!res.ok || !j?.url) {
-        console.error('create-invoice failed', { status: res.status, raw });
-        alert(j?.error || `تعذّر إنشاء الفاتورة (status ${res.status}).`);
-        btn.disabled=false; btn.textContent=old; btn.dataset.loading=''; return;
-      }
-
-      // افتح صفحة ميسّر
-      window.location.replace(j.url);
-
-    } catch(e){
-      console.error('subscribe error:', e);
-      alert('تعذّر إنشاء الفاتورة. جرّب تسجيل الخروج ثم الدخول مرة أخرى.');
-      btn.disabled=false; btn.textContent=old; btn.dataset.loading='';
-    }
-  }
-  window.subscribe = subscribe;
-
-    // تحديث الواجهة عند جاهزية Auth0 + تغيير نص الأزرار
-    window.addEventListener('auth0:ready', async ()=>{
-      await refreshAuthUI();
-      try {
-        if (await isLogged()) {
-          document.querySelectorAll('#choose-plan .btn[data-plan]')
-            .forEach(b=>b.textContent="إكمال الاشتراك");
-        }
-      } catch(_){}
-    });
-  </script>
-
-  <!-- شريط رسالة تحويل من require-auth.js (toPricing) -->
-  <script>
-  (function(){
-    try {
-      const msg = sessionStorage.getItem("athar:msg");
-      if (!msg) return;
-      sessionStorage.removeItem("athar:msg");
-
-      if (typeof window.toast === 'function') { toast(msg); return; }
-
-      const bar = document.createElement('div');
-      bar.dir = 'rtl';
-      bar.style.cssText = "background:#1f2937;color:#fff;padding:12px 16px;text-align:center;font:500 14px/1.6 system-ui;border-radius:10px;margin:12px auto;max-width:960px";
-      bar.textContent = msg;
-      document.body.prepend(bar);
-    } catch(_) {}
-  })();
-  </script>
-</body>
+    <!-- Pricing page logic -->
+    <script src="assets/js/pricing.js"></script>
+  </body>
 </html>

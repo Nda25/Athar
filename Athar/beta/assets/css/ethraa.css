@@ -1,0 +1,100 @@
+.field {
+  margin: 10px 0;
+}
+.field label {
+  display: block;
+  font-weight: 700;
+  margin: 6px 0;
+  color: var(--ink);
+  font-family: Cairo, system-ui, Tahoma, Arial;
+}
+.field input,
+.field select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--sea-600);
+  background: var(--card);
+  color: var(--ink);
+  font-family: Cairo, system-ui, Tahoma, Arial;
+  font-size: 1rem;
+}
+.cards {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) {
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.idea {
+  background: var(--card);
+  border: 1px solid var(--sea-600);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.idea h4 {
+  margin: 0 0 8px;
+  color: var(--sea-600);
+  font-family: Cairo, system-ui, Tahoma, Arial;
+}
+.idea p {
+  margin: 0.2rem 0;
+  color: var(--ink);
+  font-family: Cairo, system-ui, Tahoma, Arial;
+}
+.idea ul {
+  margin: 0.3rem 0 0 0;
+  padding-inline-start: 1.2rem;
+}
+.tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.tag {
+  font-size: 0.82rem;
+  padding: 0.24rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--sea-600);
+  background: rgba(30, 64, 175, 0.1);
+  color: var(--sea-600);
+  font-family: Cairo, system-ui, Tahoma, Arial;
+}
+.dark .tag {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: #3b82f6;
+}
+.muted {
+  opacity: 0.75;
+  color: var(--muted);
+  font-family: Cairo, system-ui, Tahoma, Arial;
+}
+.skeleton {
+  border-radius: 14px;
+  height: 110px;
+  background: linear-gradient(90deg, #eee 0%, #f6f6f6 40%, #eee 80%);
+  background-size: 200% 100%;
+  animation: sh 1.2s infinite;
+}
+@keyframes sh {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+@media print {
+  .topbar,
+  .actions-row,
+  .field,
+  .btn {
+    display: none !important;
+  }
+}

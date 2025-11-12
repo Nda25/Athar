@@ -452,31 +452,94 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+/* ✅ Enhanced input styling - modern, accessible, consistent */
 label {
   display: block;
   font-weight: 700;
   margin: 10px 0 6px;
+  color: var(--ink);
+  font-family: Cairo, system-ui, Tahoma, Arial;
+  font-size: 0.95rem;
 }
-input {
+
+input,
+select,
+textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  border: 1px solid var(--sea-600);
   border-radius: 12px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--card);
+  color: var(--ink);
+  font-family: Cairo, system-ui, Tahoma, Arial;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  outline: none;
 }
-input::placeholder {
-  color: #475569; /* ✅ FIXED: أغمق قليلاً (7.2:1 contrast على الأبيض) */
-  opacity: 0.9;
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--sea-500);
 }
-.dark input {
-  background: #0f172a;
-  color: #f1f5f9;
+
+input:focus,
+select:focus,
+textarea:focus {
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
-.dark input::placeholder {
-  color: #cbd5e1; /* ✓ جيد: 8.8:1 contrast على الخلفية الداكنة */
-  opacity: 0.9; /* قليل أفتح للوضوح */
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+/* Hide native select arrow and number spinners */
+select,
+input[type="number"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: textfield;
+}
+
+/* Dark mode */
+.dark input,
+.dark select,
+.dark textarea {
+  background: var(--card);
+  color: var(--ink);
+  border-color: var(--sea-600);
+}
+
+.dark input:hover,
+.dark select:hover,
+.dark textarea:hover {
+  border-color: #60a5fa;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
 }
 .actions-row {
   display: flex;
@@ -586,26 +649,66 @@ input::placeholder {
   border-color: var(--primary);
 }
 
-/* ===== عناصر تحكم الاختيار ===== */
+/* ===== Select Dropdown Styling ===== */
 .select-wrap {
   position: relative;
 }
+
 .select-wrap .sel {
   width: 100%;
-  background: #fff;
-  color: #0f172a;
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--sea-600);
   border-radius: 12px;
   padding: 0.9rem 1rem;
   padding-inline-start: 2.2rem;
   outline: none;
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  font-family: Cairo, system-ui, Tahoma, Arial;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-.dark .select-wrap .sel {
-  background: #0f172a;
-  color: #f1f5f9;
+
+.select-wrap .sel:hover {
+  border-color: var(--sea-500);
+}
+
+.select-wrap .sel:focus {
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
+
+.select-wrap .sel option {
+  font-family: Cairo, system-ui, Tahoma, Arial;
+  color: #0f172a;
+  background: #ffffff;
+  padding: 8px;
+}
+
+.dark .select-wrap .sel {
+  background: var(--card);
+  color: var(--ink);
+  border-color: var(--sea-600);
+}
+
+.dark .select-wrap .sel:hover {
+  border-color: #60a5fa;
+}
+
+.dark .select-wrap .sel:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.dark .select-wrap .sel option {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+/* Custom dropdown icon */
 .select-wrap .sel-icon {
   position: absolute;
   inset-inline-start: 0.7rem;
@@ -614,9 +717,28 @@ input::placeholder {
   width: 16px;
   height: 16px;
   pointer-events: none;
-  color: var(--primary-2);
+  color: var(--sea-500);
+  transition: color 0.2s ease;
 }
+
+.select-wrap .sel-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: currentColor;
+}
+
+.select-wrap .sel:focus ~ .sel-icon,
+.select-wrap .sel:hover ~ .sel-icon {
+  color: var(--primary);
+}
+
 .dark .select-wrap .sel-icon {
+  color: #60a5fa;
+}
+
+.dark .select-wrap .sel:focus ~ .sel-icon,
+.dark .select-wrap .sel:hover ~ .sel-icon {
   color: #93c5fd;
 }
 
