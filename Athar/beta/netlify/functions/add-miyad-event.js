@@ -25,13 +25,13 @@ exports.handler = async (event, context) => {
     }
     
     // بنجهز البيانات عشان نحفظها في الداتابيز
-    const { subj, class: cls, day, slot, date, color } = event_data;
+    const { subj, cls, day, slot, date, color } = event_data;
 
     if (!subj || !cls || !day) {
-       return { statusCode: 400, body: 'Missing required event fields (subj, class, day)' };
+      return { statusCode: 400, body: 'Missing required event fields (subj, class, day)' };
     }
 
-    // هنا الأمر السحري: بنضيف الموعد باستخدام صلاحيات الأدمن
+    // بنضيف الموعد باستخدام صلاحيات الأدمن
     const { data, error } = await supabaseAdmin
       .from('miyad_events')
       .insert({
