@@ -182,9 +182,9 @@
   </head>
 
   <body>
-    <div class="user">
-      <span class="muted" id="whoami"></span>
-    </div>
+    <div id="navbar" data-component="components/navbar.html"></div>
+
+    <div class="user"><span class="muted" id="whoami"></span></div>
 
     <header>
       <div class="hero">
@@ -527,6 +527,8 @@
       </section>
     </main>
 
+    <div id="footer" data-component="components/footer.html"></div>
+
     <div class="toast" id="toast"></div>
 
     <!-- Auth0 SDK -->
@@ -541,6 +543,9 @@
 
     <!-- الحارس العام -->
     <script src="assets/js/require-auth.js"></script>
+    <!-- Componnet Loader -->
+    <script src="assets/js/component-loader.js"></script>
+    <script src="assets/js/navbar.js"></script>
 
     <!-- moment + hijri -->
     <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>

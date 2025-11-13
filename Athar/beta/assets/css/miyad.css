@@ -1,20 +1,31 @@
 /* حقول عامة */
 .field {
-  margin: 8px 0;
+  margin: 12px 0;
 }
 .field label {
   display: block;
   font-weight: 700;
-  margin: 4px 0;
+  margin: 6px 0;
   line-height: 1.6;
+  color: var(--ink);
 }
 .field input,
 .field select {
   width: 100%;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
   box-sizing: border-box;
-  border: 1px solid rgba(59, 130, 246, 0.35);
+  border: 1px solid var(--sea-600);
+  background: var(--card);
+  color: var(--ink);
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+.field input:focus,
+.field select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  outline: none;
 }
 
 /* شبكة الحقول */
@@ -45,7 +56,27 @@
 
 /* “التذكير” بعد “التحكمات” */
 .controls + #reminder-card {
-  margin-top: 22px;
+  margin-top: 32px;
+}
+
+/* تحسين شكل العنوان */
+.title {
+  font-size: clamp(18px, 3vw, 22px);
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 16px;
+}
+
+/* تحسين الأزرار */
+.actions-row .btn {
+  font-weight: 600;
+  padding: 10px 16px;
+}
+
+/* تحسين المظهر العام للكارد */
+.card {
+  padding: 24px;
+  margin-bottom: 24px;
 }
 
 /* تنسيق أساسي لقسم التذكير */
@@ -147,45 +178,56 @@
 }
 /* قائمة المواعيد */
 .events {
-  margin-top: 12px;
+  margin-top: 16px;
 }
 .ev {
   background: var(--card);
-  border: 1px solid rgba(59, 130, 246, 0.22);
-  border-radius: 12px;
-  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  border-radius: 16px;
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+.ev:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 .ev .meta {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   opacity: 0.9;
+  align-items: center;
 }
 .color {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 6px;
   border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* تلميحات */
 .legend {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-top: 8px;
+  margin-top: 12px;
   font-size: 0.9rem;
 }
 .legend .pill {
-  padding: 0.18rem 0.5rem;
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  color: var(--ink);
+  font-weight: 500;
 }
 
 .print-note {
