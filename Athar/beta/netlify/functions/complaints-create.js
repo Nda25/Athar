@@ -60,7 +60,6 @@ exports.handler = async (event) => {
           order_number: orderNo,
           channel: "web",
           status: "new",
-          user_id: userSub || null,
         },
       ])
       .select()
