@@ -20,6 +20,11 @@ function showTab(id) {
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-tab]");
   if (!b) return;
+  
+  // Update active state for tab buttons
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+  b.classList.add("active");
+  
   showTab(b.dataset.tab);
   if (b.dataset.tab === "t-users") loadUsers();
 });
@@ -450,11 +455,10 @@ document.getElementById("cd-send")?.addEventListener("click", async () => {
 
 // ===== المشتركون الجدد
 async function loadUsers() {
-  const tbody = document.getElementById("u-rows");
-  if (!tbody) return;
+  const container = document.getElementById("users-container");
+  if (!container) return;
 
-  tbody.innerHTML =
-    '<tr><td colspan="6" class="muted">جاري التحميل...</td></tr>';
+  container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>جاري تحميل المستخدمين...</p></div>';
 
   try {
     const q = document.getElementById("u-q")?.value.trim() || "";
@@ -468,68 +472,65 @@ async function loadUsers() {
     );
     const allRows = j.rows || [];
 
-    tbody.innerHTML = "";
+    container.innerHTML = "";
 
     if (allRows.length === 0) {
-      tbody.innerHTML =
-        '<tr><td colspan="6" class="muted">لا يوجد مستخدمون</td></tr>';
+      container.innerHTML = '<div class="empty-state"><p>لا يوجد مستخدمون</p></div>';
       return;
     }
 
     allRows.forEach((u) => {
-      const name = u.display_name || u.name || "—";
+      const name = u.display_name || u.name || "مستخدم جديد";
       const email = u.email || "—";
       const joined = u.created_at
         ? new Date(u.created_at).toLocaleDateString("ar-SA")
         : "—";
-      const active = u.active ? "✅ نشط" : "⏸️ غير نشط";
       const exp = u.expires_at
         ? new Date(u.expires_at).toLocaleDateString("ar-SA")
         : "—";
 
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${name}</td>
-        <td class="nowrap"><span class="muted">${email}</span></td>
-        <td>${joined}</td>
-        <td>${active}</td>
-        <td>${exp}</td>
-        <td>
-          <div class="mini-actions">
-            <button class="btn sm" data-quick="30d" data-email="${email}" data-sub="${
-        u.user_sub || ""
-      }">+30 يوم</button>
-            <button class="btn sm" data-quick="3m"  data-email="${email}" data-sub="${
-        u.user_sub || ""
-      }">+3 أشهر</button>
-            <button class="btn sm" data-quick="1y"  data-email="${email}" data-sub="${
-        u.user_sub || ""
-      }">+سنة</button>
-            <span class="nowrap">
-              <input type="number" min="1" value="12" style="width:70px" data-amt>
-              <select data-unit style="width:92px">
-                <option value="days">يوم</option>
-                <option value="months" selected>شهر</option>
-                <option value="years">سنة</option>
-              </select>
-              <button class="btn sm" data-custom data-email="${email}" data-sub="${
-        u.user_sub || ""
-      }">تفعيل</button>
-            </span>
+      const card = document.createElement("div");
+      card.className = "user-card";
+      card.innerHTML = `
+        <div class="user-header">
+          <div class="user-info">
+            <h4>${name}</h4>
+            <p class="email">${email}</p>
           </div>
-        </td>
+          <div class="user-status ${u.active ? 'active' : ''}">
+            <div class="status-dot ${u.active ? 'active' : ''}"></div>
+            <span>${u.active ? 'نشط' : 'غير نشط'}</span>
+          </div>
+        </div>
+        
+        <div class="user-meta">
+          <div class="meta-item">
+            <span class="meta-label">تاريخ الانضمام</span>
+            <span class="meta-value">${joined}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">ينتهي في</span>
+            <span class="meta-value">${exp}</span>
+          </div>
+        </div>
+        
+        <div class="user-actions">
+          <button class="quick-btn" data-quick="30d" data-email="${email}" data-sub="${u.user_sub || ''}">+30 يوم</button>
+          <button class="quick-btn" data-quick="3m" data-email="${email}" data-sub="${u.user_sub || ''}">+3 أشهر</button>
+          <button class="quick-btn" data-quick="1y" data-email="${email}" data-sub="${u.user_sub || ''}">+سنة</button>
+        </div>
       `;
-      tbody.appendChild(tr);
+      container.appendChild(card);
     });
   } catch (err) {
     console.error("Failed to load users:", err);
     toast("خطأ: فشل تحميل المستخدمين");
-    tbody.innerHTML = `<tr><td colspan="6" class="muted" style="color:red">خطأ في التحميل</td></tr>`;
+    container.innerHTML = '<div class="empty-state" style="color: #ef4444;"><p>خطأ في تحميل البيانات</p></div>';
   }
 }
 
 // أزرار التفعيل السريع
-document.getElementById("u-rows")?.addEventListener("click", async (e) => {
+document.getElementById("users-container")?.addEventListener("click", async (e) => {
   const qbtn = e.target.closest("[data-quick]");
   const cbtn = e.target.closest("[data-custom]");
   if (!qbtn && !cbtn) return;

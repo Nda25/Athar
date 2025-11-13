@@ -323,6 +323,28 @@
           </div>
         </div>
       </section>
+
+      <!-- المشتركون الجدد -->
+      <section class="card" id="t-users" style="display: none">
+        <h2 class="title">المشتركون الجدد</h2>
+
+        <div class="toolbar">
+          <input id="u-q" type="search" placeholder="بحث (اسم/إيميل)" />
+          <select id="u-active">
+            <option value="">الكل</option>
+            <option value="true">نشط</option>
+            <option value="false">غير نشط</option>
+          </select>
+          <button class="btn" id="u-refresh">تحديث</button>
+        </div>
+
+        <div class="users-grid" id="users-container">
+          <div class="loading-state" id="users-loading">
+            <div class="spinner"></div>
+            <p>جاري تحميل المستخدمين...</p>
+          </div>
+        </div>
+      </section>
     </main>
 
     <div id="footer" data-component="components/footer.html"></div>
