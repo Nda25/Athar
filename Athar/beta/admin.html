@@ -13,106 +13,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="assets/css/admin.css" />
     <meta name="color-scheme" content="dark light" />
-    <style>
-      .card {
-        margin: 16px 0;
-      }
-      .grid {
-        display: grid;
-        gap: 12px;
-        grid-template-columns: 1fr;
-      }
-      @media (min-width: 1100px) {
-        .grid-2 {
-          grid-template-columns: 1fr 1fr;
-        }
-        .grid-3 {
-          grid-template-columns: 1fr 1fr 1fr;
-        }
-      }
-      .field {
-        margin: 10px 0;
-      }
-      .field label {
-        display: block;
-        font-weight: 700;
-        margin: 6px 0;
-      }
-      .field input,
-      .field select,
-      .field textarea {
-        width: 100%;
-        padding: 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(59, 130, 246, 0.35);
-      }
-      .muted {
-        opacity: 0.8;
-      }
-      .actions-row {
-        margin-top: 8px;
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-      .pill {
-        background: rgba(59, 130, 246, 0.12);
-        padding: 2px 8px;
-        border-radius: 999px;
-      }
-      .table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      .table th,
-      .table td {
-        padding: 10px;
-        border-bottom: 1px solid #e5e7eb33;
-        vertical-align: top;
-      }
-      .table th {
-        text-align: right;
-        font-weight: 700;
-      }
-      .status-new {
-        background: #fef9c3;
-        color: #713f12;
-      }
-      .status-in_progress {
-        background: #e0f2fe;
-        color: #0c4a6e;
-      }
-      .status-resolved {
-        background: #dcfce7;
-        color: #14532d;
-      }
-      .status-rejected {
-        background: #fee2e2;
-        color: #7f1d1d;
-      }
-      .toolbar {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-      .hidden {
-        display: none;
-      }
-      .mini-actions {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-      }
-      .btn.sm {
-        padding: 6px 10px;
-        font-size: 12px;
-      }
-      .nowrap {
-        white-space: nowrap;
-      }
-    </style>
+    <style></style>
   </head>
   <body>
     <div id="navbar" data-component="components/navbar.html"></div>
@@ -137,14 +40,22 @@
 
       <!-- تبويبات -->
       <section class="card" id="tabsCard" style="display: none">
-        <div class="actions-row" style="gap: 6px">
-          <button class="btn" data-tab="t-activate">التفعيل اليدوي</button>
-          <button class="btn" data-tab="t-ann">الإعلانات</button>
-          <button class="btn" data-tab="t-complaints">
-            الشكاوى والاقتراحات
+        <div class="tabs-nav">
+          <button class="tab-btn" data-tab="t-activate">
+            <span class="tab-icon">⚡</span>
+            <span>التفعيل اليدوي</span>
           </button>
-          <button class="btn primary" data-tab="t-users">
-            المشتركون الجدد
+          <button class="tab-btn" data-tab="t-ann">
+            <span class="tab-icon">📢</span>
+            <span>الإعلانات</span>
+          </button>
+          <button class="tab-btn" data-tab="t-complaints">
+            <span class="tab-icon">💬</span>
+            <span>الشكاوى والاقتراحات</span>
+          </button>
+          <button class="tab-btn active" data-tab="t-users">
+            <span class="tab-icon">👥</span>
+            <span>المشتركون الجدد</span>
           </button>
         </div>
       </section>

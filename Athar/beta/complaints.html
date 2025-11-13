@@ -70,27 +70,8 @@
     <!-- خلفيات أثــر -->
     <div class="global-bg"></div>
 
-    <!-- الشريط العلوي الموحد -->
-    <div class="topbar">
-      <div class="left-actions">
-        <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-      </div>
-      <div class="actions">
-        <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">
-          🌓
-        </button>
-      </div>
-      <div class="user">
-        <span id="nav-auth" style="display: none; gap: 10px"></span>
-        <a
-          id="nav-profile"
-          class="btn"
-          href="profile.html"
-          style="display: none"
-          >الملف الشخصي</a
-        >
-      </div>
-    </div>
+    <!-- Navbar -->
+    <div id="navbar" data-component="components/navbar.html"></div>
 
     <!-- الهيرو -->
     <header>
@@ -209,18 +190,8 @@
     </main>
 
     <!-- فوتر أثــر الموحد -->
-    <footer>
-      <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-      <p class="foot-name">ندى المجيرش</p>
-      <div class="foot-links">
-        <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-        <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-        <a href="refund-policy.html">سياسة الاسترجاع</a
-        ><span class="sep">|</span> <a href="whatsapp.html">تواصل واتساب</a
-        ><span class="sep">|</span>
-        <a href="complaints.html">الشكاوى والاقتراحات</a>
-      </div>
-    </footer>
+    <!-- Navbar -->
+    <div id="footer" data-component="components/footer.html"></div>
 
     <div class="toast" id="toast"></div>
 
@@ -228,8 +199,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+    <script src="assets/js/require-auth.js"></script>
     <script src="assets/js/supabase-client.js"></script>
     <script src="assets/js/ui.js"></script>
+
+    <script src="./assets/js/component-loader.js"></script>
+    <script src="./assets/js/navbar.js"></script>
 
     <script src="app.js"></script>
 
