@@ -34,16 +34,11 @@
 
 .wrap article.card h2 {
   color: var(--primary);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   margin: 24px 0 12px;
-}
-
-.wrap article.card h3 {
-  color: var(--sea-600);
-  font-size: 18px;
-  font-weight: 700;
-  margin: 20px 0 10px;
+  border-bottom: 2px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  padding-bottom: 8px;
 }
 
 .wrap article.card p {
@@ -61,29 +56,6 @@
   line-height: 1.8;
 }
 
-.wrap article.card .note {
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
-  border-radius: 12px;
-  padding: 16px;
-  margin: 20px 0;
-}
-
-.dark .wrap article.card .note {
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
-}
-
-.wrap article.card a {
-  color: var(--primary);
-  text-decoration: underline;
-  font-weight: 600;
-}
-
-.wrap article.card a:hover {
-  color: var(--sea-500);
-}
-
 .wrap .btns {
   display: flex;
   gap: 12px;
@@ -95,5 +67,9 @@
   .wrap {
     margin: 20px auto;
     padding: 0 16px;
+  }
+
+  .wrap .btns {
+    flex-direction: column;
   }
 }
