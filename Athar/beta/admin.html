@@ -1,4 +1,3 @@
-<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
   <head>
@@ -17,6 +16,7 @@
     <meta name="color-scheme" content="dark light" />
     <style></style>
   </head>
+
   <body>
     <div id="navbar" data-component="components/navbar.html"></div>
 
@@ -24,9 +24,9 @@
 
     <header>
       <div class="hero">
-        <h1 class="logo">لوحة التحكم لأحلى ندو</h1>
+        <h1 class="logo">لوحة التحكم لأحلى عموورة</h1>
         <div class="tag">
-          <span class="dot"></span>أحلى مصممة يرامج بالعالم ، ملكة أثر
+          <span class="dot"></span>أحلى مصممة برامج بالعالم ، ملكة أثر
         </div>
       </div>
     </header>
@@ -63,6 +63,7 @@
       <!-- التفعيل -->
       <section class="card" id="t-activate" style="display: none">
         <h2 class="title">التفعيل اليدوي للاشتراك</h2>
+
         <div class="grid grid-3">
           <div class="field">
             <label>البريد الإلكتروني للمستخدم</label>
@@ -72,6 +73,7 @@
               placeholder="example@email.com"
             />
           </div>
+
           <div class="field">
             <label>UID (اختياري)</label>
             <input
@@ -80,9 +82,10 @@
               placeholder="Auth0 sub إن كان متاحًا"
             />
           </div>
+
           <div class="field">
             <label>المدّة</label>
-            <div style="display: flex; gap: 8px; align-items: center">
+            <div style="display: flex; gap: 10px; align-items: center">
               <input
                 id="act-amount"
                 type="number"
@@ -97,11 +100,13 @@
               </select>
             </div>
           </div>
+
           <div class="field" style="grid-column: 1/-1">
             <label>ملاحظة (اختياري)</label>
             <input id="act-note" type="text" placeholder="سبب/مرجع" />
           </div>
         </div>
+
         <div class="actions-row">
           <button class="btn primary" id="btn-activate">تفعيل/تمديد</button>
           <span id="act-status" class="muted"></span>
@@ -111,6 +116,7 @@
       <!-- الإعلانات -->
       <section class="card" id="t-ann" style="display: none">
         <h2 class="title">إعلان عام</h2>
+
         <div class="field">
           <label>نص الإعلان</label>
           <textarea
@@ -134,7 +140,7 @@
             <div
               style="
                 display: flex;
-                gap: 8px;
+                gap: 10px;
                 align-items: center;
                 flex-wrap: wrap;
               "
@@ -159,7 +165,7 @@
             <div
               style="
                 display: flex;
-                gap: 8px;
+                gap: 10px;
                 align-items: center;
                 flex-wrap: wrap;
               "
@@ -185,9 +191,13 @@
           <span id="ann-status" class="muted"></span>
         </div>
 
-        <div class="card" style="margin-top: 14px">
-          <h3 class="title" style="margin: 0 0 8px">الإعلانات</h3>
-          <div id="ann-current" class="muted" style="margin-bottom: 8px">—</div>
+        <div class="card" style="margin-top: 20px">
+          <h3 class="title" style="font-size: 18px; margin: 0 0 12px">
+            الإعلانات
+          </h3>
+          <div id="ann-current" class="muted" style="margin-bottom: 12px">
+            —
+          </div>
           <div
             id="ann-list"
             class="grid"
@@ -224,62 +234,76 @@
           <button class="btn" id="c-refresh">تحديث</button>
         </div>
 
-        <div class="grid grid-2" style="margin-top: 12px">
+        <div class="grid grid-2">
           <div class="card">
-            <table class="table" id="c-table">
-              <thead>
-                <tr>
-                  <th>العنوان</th>
-                  <th>المرسل</th>
-                  <th>النوع</th>
-                  <th>الحالة</th>
-                  <th>التاريخ</th>
-                </tr>
-              </thead>
-              <tbody id="c-rows">
-                <tr>
-                  <td colspan="5" class="muted">—</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-wrapper">
+              <table class="table" id="c-table">
+                <thead>
+                  <tr>
+                    <th style="width: 250px">العنوان</th>
+                    <th style="width: 180px">المرسل</th>
+                    <th style="width: 80px">النوع</th>
+                    <th style="width: 120px">الحالة</th>
+                    <th style="width: 140px">التاريخ</th>
+                  </tr>
+                </thead>
+                <tbody id="c-rows">
+                  <tr>
+                    <td
+                      colspan="5"
+                      class="muted"
+                      style="text-align: center; padding: 30px"
+                    >
+                      —
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div class="card" id="c-detail">
-            <h3 style="margin-top: 0">التفاصيل</h3>
+            <h3 style="margin-top: 0; font-size: 18px">التفاصيل</h3>
             <div id="c-empty" class="muted">اختر عنصرًا من القائمة…</div>
 
             <div id="c-box" class="hidden">
-              <p><strong>العنوان:</strong> <span id="cd-subject">—</span></p>
-              <p><strong>المرسل:</strong> <span id="cd-user">—</span></p>
-              <p><strong>الطلب:</strong> <span id="cd-kind">—</span></p>
-              <p>
+              <p style="margin: 10px 0">
+                <strong>العنوان:</strong> <span id="cd-subject">—</span>
+              </p>
+              <p style="margin: 10px 0">
+                <strong>المرسل:</strong> <span id="cd-user">—</span>
+              </p>
+              <p style="margin: 10px 0">
+                <strong>الطلب:</strong> <span id="cd-kind">—</span>
+              </p>
+              <p style="margin: 10px 0">
                 <strong>الحالة:</strong>
                 <span id="cd-status" class="pill">—</span>
               </p>
+
               <div class="field">
                 <label>سجل الرسائل</label>
                 <div
                   id="cd-thread"
                   style="
-                    border: 1px solid #e5e7eb33;
-                    border-radius: 10px;
-                    padding: 10px;
+                    border: 1px solid rgba(229, 231, 235, 0.2);
+                    border-radius: 8px;
+                    padding: 16px;
                     max-height: 340px;
                     overflow: auto;
+                    background: rgba(0, 0, 0, 0.02);
                   "
                 ></div>
               </div>
 
-              <div class="grid">
-                <div class="field">
-                  <label>تغيير الحالة</label>
-                  <select id="cd-next">
-                    <option value="">لا تغيير</option>
-                    <option value="in_progress">قيد المعالجة</option>
-                    <option value="resolved">مغلقة</option>
-                    <option value="rejected">مرفوضة</option>
-                  </select>
-                </div>
+              <div class="field">
+                <label>تغيير الحالة</label>
+                <select id="cd-next">
+                  <option value="">لا تغيير</option>
+                  <option value="in_progress">قيد المعالجة</option>
+                  <option value="resolved">مغلقة</option>
+                  <option value="rejected">مرفوضة</option>
+                </select>
               </div>
 
               <div class="field">
@@ -290,51 +314,13 @@
                   placeholder="اكتب الرد هنا…"
                 ></textarea>
               </div>
+
               <div class="actions-row">
                 <button class="btn primary" id="cd-send">إرسال الرد</button>
                 <span id="cd-statusmsg" class="muted"></span>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- المشتركون الجدد -->
-      <section class="card" id="t-users" style="display: none">
-        <h2 class="title">المشتركون الجدد</h2>
-        <div class="toolbar">
-          <input
-            id="u-q"
-            type="search"
-            placeholder="بحث (اسم/إيميل)"
-            style="flex: 1; min-width: 200px"
-          />
-          <select id="u-active">
-            <option value="">الكل</option>
-            <option value="true">نشط</option>
-            <option value="false">غير نشط</option>
-          </select>
-          <button class="btn" id="u-refresh">تحديث</button>
-        </div>
-
-        <div class="card" style="margin-top: 10px">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>المستخدم</th>
-                <th>الإيميل</th>
-                <th>انضمّ</th>
-                <th>الحالة</th>
-                <th>ينتهي</th>
-                <th class="nowrap">تفعيل سريع</th>
-              </tr>
-            </thead>
-            <tbody id="u-rows">
-              <tr>
-                <td colspan="6" class="muted">—</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </section>
     </main>
@@ -365,7 +351,6 @@
 
     <!-- سكربت عام (ثيم/أزرار) -->
     <script src="app.js"></script>
-
     <script src="assets/js/admin.js"></script>
   </body>
 </html>
