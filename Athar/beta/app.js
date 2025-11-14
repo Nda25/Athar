@@ -241,21 +241,42 @@ async function logToolViewIfAny() {
 /** Announcement Banner */
 async function mountAnnouncementBar() {
   try {
+    console.log("[Announcement] Fetching...");
+
     const res = await fetch("/.netlify/functions/admin-announcement?latest=1", {
       cache: "no-store",
     });
-    if (!res.ok) return;
-    const ann = await res.json();
 
-    if (ann?.active && ann?.text) {
-      const bar = document.createElement("div");
-      bar.dir = "rtl";
-      bar.style.cssText =
-        "background:#1f2937;color:#fff;padding:10px 14px;text-align:center;font-weight:800";
-      bar.textContent = ann.text;
-      document.body.prepend(bar);
+    console.log("[Announcement] Response status:", res.status);
+
+    if (!res.ok) {
+      console.error("[Announcement] Response not OK");
+      return;
     }
-  } catch (_) {}
+
+    const data = await res.json();
+    console.log("[Announcement] Data received:", data);
+
+    const ann = data.latest; // هنا الفرق!
+
+    if (!ann || !ann.active || !ann.text) {
+      console.log("[Announcement] No active announcement:", ann);
+      return;
+    }
+
+    console.log("[Announcement] Creating banner...");
+
+    const bar = document.createElement("div");
+    bar.dir = "rtl";
+    bar.style.cssText =
+      "background:#1f2937;color:#fff;padding:10px 14px;text-align:center;font-weight:800;z-index:9999;position:relative;";
+    bar.textContent = ann.text;
+    document.body.prepend(bar);
+
+    console.log("[Announcement] Banner mounted!");
+  } catch (err) {
+    console.error("[Announcement] Error:", err);
+  }
 }
 
 /** Trial Banner */
