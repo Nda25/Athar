@@ -224,3 +224,69 @@ h3 {
   font-size: 18px;
   font-weight: 800;
 }
+
+/* Complaints List */
+.complaints-list {
+  margin-top: 16px;
+}
+
+.complaint-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.complaint-item:hover {
+  border-color: var(--primary);
+}
+
+.complaint-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.complaint-title {
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.complaint-status {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.complaint-status.new {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.complaint-status.in_progress {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.complaint-status.resolved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.complaint-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.complaint-preview {
+  font-size: 14px;
+  color: var(--text-main);
+  opacity: 0.8;
+  line-height: 1.5;
+}
