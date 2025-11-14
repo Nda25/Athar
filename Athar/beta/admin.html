@@ -20,7 +20,9 @@
   <body>
     <div id="navbar" data-component="components/navbar.html"></div>
 
-    <div class="user"><span class="muted" id="whoami"></span></div>
+    <div class="user">
+      <span class="muted" style="display: hidden" id="whoami"></span>
+    </div>
 
     <header>
       <div class="hero">
@@ -346,6 +348,62 @@
         </div>
       </section>
     </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>تأكيد التفعيل</h3>
+        </div>
+        <div class="modal-body">
+          <p>هل أنت متأكد من تفعيل هذا المستخدم؟</p>
+          <div class="confirm-details">
+            <div class="detail-item">
+              <span class="label">البريد الإلكتروني:</span>
+              <span id="confirm-email">—</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">المدة:</span>
+              <span id="confirm-duration">—</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">الملاحظة:</span>
+              <span id="confirm-note">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="modal-cancel">إلغاء</button>
+          <button class="btn primary" id="modal-confirm">تأكيد التفعيل</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Activation Modal -->
+    <div id="quickModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>تأكيد التفعيل السريع</h3>
+        </div>
+        <div class="modal-body">
+          <p>هل أنت متأكد من تفعيل هذا المستخدم؟</p>
+          <div class="confirm-details">
+            <div class="detail-item">
+              <span class="label">البريد الإلكتروني:</span>
+              <span id="quick-email">—</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">المدة:</span>
+              <span id="quick-duration">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="quick-cancel">إلغاء</button>
+          <button class="btn primary" id="quick-confirm">تأكيد التفعيل</button>
+        </div>
+      </div>
+    </div>
 
     <div id="footer" data-component="components/footer.html"></div>
 

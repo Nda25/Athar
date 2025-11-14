@@ -20,11 +20,13 @@ function showTab(id) {
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-tab]");
   if (!b) return;
-  
+
   // Update active state for tab buttons
-  document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+  document
+    .querySelectorAll(".tab-btn")
+    .forEach((btn) => btn.classList.remove("active"));
   b.classList.add("active");
-  
+
   showTab(b.dataset.tab);
   if (b.dataset.tab === "t-users") loadUsers();
 });
@@ -293,6 +295,28 @@ document.addEventListener("click", async (e) => {
     return;
   }
 
+  const unitText = unit === "days" ? "يوم" : unit === "months" ? "شهر" : "سنة";
+  
+  // Show confirmation modal
+  document.getElementById("confirm-email").textContent = email || "غير محدد";
+  document.getElementById("confirm-duration").textContent = `${amount} ${unitText}`;
+  document.getElementById("confirm-note").textContent = note || "لا توجد";
+  document.getElementById("confirmModal").style.display = "flex";
+  
+  // Wait for user confirmation
+  const confirmed = await new Promise((resolve) => {
+    document.getElementById("modal-confirm").onclick = () => {
+      document.getElementById("confirmModal").style.display = "none";
+      resolve(true);
+    };
+    document.getElementById("modal-cancel").onclick = () => {
+      document.getElementById("confirmModal").style.display = "none";
+      resolve(false);
+    };
+  });
+  
+  if (!confirmed) return;
+
   stat.textContent = "جارٍ التفعيل…";
   try {
     const j = await apiFetch("/.netlify/functions/admin-activate", {
@@ -458,7 +482,8 @@ async function loadUsers() {
   const container = document.getElementById("users-container");
   if (!container) return;
 
-  container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>جاري تحميل المستخدمين...</p></div>';
+  container.innerHTML =
+    '<div class="loading-state"><div class="spinner"></div><p>جاري تحميل المستخدمين...</p></div>';
 
   try {
     const q = document.getElementById("u-q")?.value.trim() || "";
@@ -475,7 +500,8 @@ async function loadUsers() {
     container.innerHTML = "";
 
     if (allRows.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>لا يوجد مستخدمون</p></div>';
+      container.innerHTML =
+        '<div class="empty-state"><p>لا يوجد مستخدمون</p></div>';
       return;
     }
 
@@ -497,9 +523,9 @@ async function loadUsers() {
             <h4>${name}</h4>
             <p class="email">${email}</p>
           </div>
-          <div class="user-status ${u.active ? 'active' : ''}">
-            <div class="status-dot ${u.active ? 'active' : ''}"></div>
-            <span>${u.active ? 'نشط' : 'غير نشط'}</span>
+          <div class="user-status ${u.active ? "active" : ""}">
+            <div class="status-dot ${u.active ? "active" : ""}"></div>
+            <span>${u.active ? "نشط" : "غير نشط"}</span>
           </div>
         </div>
         
@@ -515,9 +541,15 @@ async function loadUsers() {
         </div>
         
         <div class="user-actions">
-          <button class="quick-btn" data-quick="30d" data-email="${email}" data-sub="${u.user_sub || ''}">+30 يوم</button>
-          <button class="quick-btn" data-quick="3m" data-email="${email}" data-sub="${u.user_sub || ''}">+3 أشهر</button>
-          <button class="quick-btn" data-quick="1y" data-email="${email}" data-sub="${u.user_sub || ''}">+سنة</button>
+          <button class="quick-btn" data-quick="30d" data-email="${email}" data-sub="${
+        u.user_sub || ""
+      }">+30 يوم</button>
+          <button class="quick-btn" data-quick="3m" data-email="${email}" data-sub="${
+        u.user_sub || ""
+      }">+3 أشهر</button>
+          <button class="quick-btn" data-quick="1y" data-email="${email}" data-sub="${
+        u.user_sub || ""
+      }">+سنة</button>
         </div>
       `;
       container.appendChild(card);
@@ -525,29 +557,27 @@ async function loadUsers() {
   } catch (err) {
     console.error("Failed to load users:", err);
     toast("خطأ: فشل تحميل المستخدمين");
-    container.innerHTML = '<div class="empty-state" style="color: #ef4444;"><p>خطأ في تحميل البيانات</p></div>';
+    container.innerHTML =
+      '<div class="empty-state" style="color: #ef4444;"><p>خطأ في تحميل البيانات</p></div>';
   }
 }
 
 // أزرار التفعيل السريع
-document.getElementById("users-container")?.addEventListener("click", async (e) => {
-  const qbtn = e.target.closest("[data-quick]");
-  const cbtn = e.target.closest("[data-custom]");
-  if (!qbtn && !cbtn) return;
+document
+  .getElementById("users-container")
+  ?.addEventListener("click", async (e) => {
+    const qbtn = e.target.closest("[data-quick]");
+    if (!qbtn) return;
 
-  let email = (qbtn || cbtn).getAttribute("data-email") || "";
-  const user_id = (qbtn || cbtn).getAttribute("data-sub") || null;
+    const email = qbtn.getAttribute("data-email") || "";
+    const user_id = qbtn.getAttribute("data-sub") || null;
 
-  if (!email) {
-    toast("لا يوجد إيميل");
-    return;
-  }
+    if (!email) {
+      toast("لا يوجد إيميل");
+      return;
+    }
 
-  let amount,
-    unit,
-    note = "admin-quick-activate";
-
-  if (qbtn) {
+    let amount, unit;
     const k = qbtn.getAttribute("data-quick");
     if (k === "30d") {
       amount = 30;
@@ -559,26 +589,39 @@ document.getElementById("users-container")?.addEventListener("click", async (e) 
       amount = 1;
       unit = "years";
     }
-  } else {
-    const row = cbtn.closest("tr");
-    const amtEl = row.querySelector("[data-amt]");
-    const unitEl = row.querySelector("[data-unit]");
-    amount = Math.max(1, Number(amtEl.value || "1") | 0);
-    unit = unitEl.value;
-    note = "admin-custom-activate";
-  }
 
-  try {
-    await apiFetch("/.netlify/functions/admin-activate", {
-      method: "POST",
-      body: JSON.stringify({ email, user_id, amount, unit, note }),
+    const unitText = unit === "days" ? "يوم" : unit === "months" ? "شهر" : "سنة";
+    
+    // Show quick confirmation modal
+    document.getElementById("quick-email").textContent = email;
+    document.getElementById("quick-duration").textContent = `${amount} ${unitText}`;
+    document.getElementById("quickModal").style.display = "flex";
+    
+    // Wait for user confirmation
+    const confirmed = await new Promise((resolve) => {
+      document.getElementById("quick-confirm").onclick = () => {
+        document.getElementById("quickModal").style.display = "none";
+        resolve(true);
+      };
+      document.getElementById("quick-cancel").onclick = () => {
+        document.getElementById("quickModal").style.display = "none";
+        resolve(false);
+      };
     });
-    toast("✓ تم التفعيل");
-    await loadUsers();
-  } catch (err) {
-    toast("✗ تعذّر التفعيل");
-  }
-});
+    
+    if (!confirmed) return;
+
+    try {
+      await apiFetch("/.netlify/functions/admin-activate", {
+        method: "POST",
+        body: JSON.stringify({ email, user_id, amount, unit, note: "admin-quick-activate" }),
+      });
+      toast("✓ تم التفعيل");
+      await loadUsers();
+    } catch (err) {
+      toast("✗ تعذّر التفعيل");
+    }
+  });
 
 // أدوات تحكّم
 document.getElementById("u-refresh")?.addEventListener("click", loadUsers);
