@@ -19,10 +19,6 @@ header {
   margin: 0 auto 10px;
 }
 
-.dark .logo {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-}
-
 h1 {
   margin: 0 0 8px;
   font-weight: 800;
@@ -41,6 +37,10 @@ h1 {
 }
 
 .card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   background: var(--card);
   border: 1px solid rgba(30, 64, 175, 0.15);
   border-radius: 18px;
