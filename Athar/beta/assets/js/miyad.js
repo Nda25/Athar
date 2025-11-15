@@ -59,25 +59,42 @@ window.supaAddMiyadEvent = async function (evt) {
   const user = await getAuthUser();
 
   if (!sb || !user) {
-    console.warn("No DB connection or User not logged in");
+    console.error("No Supabase client or user authenticated");
     return { data: null, error: "Not logged in" };
   }
 
-  // إرسال الموعد (لاحظ تغيير cls إلى class)
-  return await sb
-    .from("miyad_events")
-    .insert([
-      {
-        user_id: user.sub,
-        subj: evt.subj,
-        class: evt.cls,
-        day: evt.day,
-        slot: evt.slot,
-        date: evt.date || null,
-        color: evt.color,
-      },
-    ])
-    .select();
+  console.log("Adding to DB:", evt, "User:", user.sub);
+
+  try {
+    // تأكد من وجود البروفايل أولاً
+    await window.supaEnsureUserProfile();
+
+    // ثم أضف الحدث
+    const result = await sb
+      .from("miyad_events")
+      .insert([
+        {
+          user_id: user.sub,
+          subj: evt.subj,
+          class: evt.cls,
+          day: evt.day,
+          slot: evt.slot,
+          date: evt.date || null,
+          color: evt.color,
+        },
+      ])
+      .select();
+
+    if (result.error) {
+      console.error("Supabase insert error:", result.error);
+      throw result.error;
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error adding miyad event:", error);
+    return { data: null, error: error.message };
+  }
 };
 
 /* --- 3. حذف موعد من الداتابيز --- */
@@ -145,14 +162,20 @@ function save(list) {
 window.addEventListener("load", async () => {
   // ننتظر قليلاً للتأكد من جاهزية Auth0
   setTimeout(async () => {
-    if (typeof window.supaEnsureUserProfile === "function") {
+    const user = await getAuthUser();
+    if (user && typeof window.supaEnsureUserProfile === "function") {
       try {
         await window.supaEnsureUserProfile();
+        console.log("User profile ensured for:", user.sub);
       } catch (e) {
-        console.error(e);
+        console.error("Error ensuring user profile:", e);
       }
+    } else {
+      console.log(
+        "User not authenticated or supaEnsureUserProfile not available"
+      );
     }
-  }, 1000);
+  }, 2000); // زيادة الوقت لضمان جاهزية Auth0
 });
 
 function render() {
@@ -225,16 +248,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const newEvent = { subj, cls, day, slot, date, color };
 
+      // التحقق من حالة المصادقة أولاً
+      const user = await getAuthUser();
+      if (!user) {
+        toast("يجب تسجيل الدخول أولاً");
+        return;
+      }
+
       // 1. إرسال للسيرفر (Supabase)
+      let serverSuccess = false;
       try {
         toast("جارِ الحفظ...");
-        const { data, error } = await window.supaAddMiyadEvent(newEvent);
+        const result = await window.supaAddMiyadEvent(newEvent);
 
-        if (data && data.length > 0) {
-          newEvent.id = data[0].id; // حفظ الـ ID القادم من السيرفر
+        if (result.error) {
+          console.error("Server error:", result.error);
+          toast("خطأ في الحفظ: " + result.error);
+        } else if (result.data && result.data.length > 0) {
+          newEvent.id = result.data[0].id;
+          serverSuccess = true;
         }
       } catch (e) {
-        console.warn("Offline or Error syncing:", e);
+        console.error("Error syncing to server:", e);
+        toast("تعذر الاتصال بالخادم - سيتم الحفظ محلياً");
       }
 
       // 2. حفظ محلي (LocalStorage)
@@ -243,7 +279,13 @@ document.addEventListener("DOMContentLoaded", () => {
       save(list);
 
       render();
-      toast("تمت الإضــافة ✅");
+
+      if (serverSuccess) {
+        toast("تمت الإضــافة ✅");
+      } else {
+        toast("تم الحفظ محلياً فقط");
+      }
+
       logUse("miyad:add_event");
     });
   }
