@@ -27,20 +27,44 @@ exports.handler = async (event) => {
 
   // === PUBLIC READ (GET) ===
   if (method === "GET") {
-    if (qs.latest) {
+    // ✅ NEW: Get all active announcements for rotation
+    if (qs.active) {
       const now = new Date();
-      // Optimized query: Use PostgREST logic for initial filtering
       const { data, error } = await supabase
         .from("site_announcements")
         .select("*")
         .eq("active", true)
-        .or(`start_at.is.null,start_at.lte.${now.toISOString()}`) // Allow null OR past dates
+        .or(`start_at.is.null,start_at.lte.${now.toISOString()}`)
+        .order("start_at", { ascending: false, nullsFirst: true })
+        .limit(10); // Max 10 announcements for rotation
+
+      if (error) return res(500, error.message);
+
+      // Filter expired announcements
+      const activeAnnouncements = (data || [])
+        .filter((a) => !a.expires_at || new Date(a.expires_at) > now)
+        .sort(
+          (a, b) =>
+            new Date(b.start_at || b.created_at) -
+            new Date(a.start_at || a.created_at)
+        );
+
+      return res(200, { announcements: activeAnnouncements });
+    }
+
+    // Original: Get single latest (for backwards compatibility)
+    if (qs.latest) {
+      const now = new Date();
+      const { data, error } = await supabase
+        .from("site_announcements")
+        .select("*")
+        .eq("active", true)
+        .or(`start_at.is.null,start_at.lte.${now.toISOString()}`)
         .order("start_at", { ascending: false, nullsFirst: true })
         .limit(50);
 
       if (error) return res(500, error.message);
 
-      // Filter expiration and sort by relevance (start_at or created_at) in memory
       const latest =
         (data || [])
           .filter((a) => !a.expires_at || new Date(a.expires_at) > now)
@@ -67,12 +91,10 @@ exports.handler = async (event) => {
   }
 
   // === ADMIN WRITE OPERATIONS ===
-  // Verify admin privileges
   const gate = await requireAdmin(event);
   if (!gate.ok) return res(gate.status, gate.error);
 
   try {
-    // Parse body only for write ops
     const body = method !== "DELETE" ? JSON.parse(rawBody || "{}") : {};
     let query = supabase.from("site_announcements");
     let result;
@@ -98,7 +120,6 @@ exports.handler = async (event) => {
       case "PUT": {
         if (!body.id) return res(400, "id required");
 
-        // Build patch object dynamically to avoid overwriting with null/undefined unless intended
         const patch = {};
         if (typeof body.active === "boolean") patch.active = body.active;
         if (typeof body.text === "string") patch.text = body.text.trim();
