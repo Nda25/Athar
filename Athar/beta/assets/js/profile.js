@@ -328,55 +328,71 @@ async function initApp() {
  * 4. جلب شكاوى المستخدم
  */
 async function loadUserComplaints() {
-  const container = document.getElementById('user-complaints');
+  const container = document.getElementById("user-complaints");
   if (!container) return;
 
   try {
     const user = await (window.auth0Client || window.auth).getUser();
     if (!user?.email) {
-      container.innerHTML = '<div class="empty-state"><p>يجب تسجيل الدخول لعرض الشكاوى</p></div>';
+      container.innerHTML =
+        '<div class="empty-state"><p>يجب تسجيل الدخول لعرض الشكاوى</p></div>';
       return;
     }
 
     const token = await (window.auth0Client || window.auth).getTokenSilently();
-    const response = await fetch('/.netlify/functions/complaints-list?user_email=' + encodeURIComponent(user.email), {
-      headers: {
-        'Authorization': `Bearer ${token}`
+    const response = await fetch(
+      "/.netlify/functions/complaints-list?user_email=" +
+        encodeURIComponent(user.email),
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-    });
+    );
     const data = await response.json();
     const complaints = data.rows || [];
 
-    container.innerHTML = '';
+    container.innerHTML = "";
 
     if (complaints.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>لا توجد شكاوى أو اقتراحات</p></div>';
+      container.innerHTML =
+        '<div class="empty-state"><p>لا توجد شكاوى أو اقتراحات</p></div>';
       return;
     }
 
-    complaints.forEach(complaint => {
-      const statusText = complaint.status === 'new' ? 'جديدة' : 
-                        complaint.status === 'in_progress' ? 'قيد المعالجة' : 
-                        complaint.status === 'resolved' ? 'مغلقة' : complaint.status;
-      
-      const typeText = complaint.type === 'complaint' ? 'شكوى' : 'اقتراح';
-      const date = new Date(complaint.created_at).toLocaleDateString('ar-SA');
-      
-      const item = document.createElement('div');
-      item.className = 'complaint-item';
+    complaints.forEach((complaint) => {
+      const statusText =
+        complaint.status === "new"
+          ? "جديدة"
+          : complaint.status === "in_progress"
+          ? "قيد المعالجة"
+          : complaint.status === "resolved"
+          ? "مغلقة"
+          : complaint.status;
+
+      const typeText = complaint.type === "complaint" ? "شكوى" : "اقتراح";
+      const date = new Date(complaint.created_at).toLocaleDateString("ar-SA");
+
+      const item = document.createElement("div");
+      item.className = "complaint-item";
       item.innerHTML = `
         <div class="complaint-header">
           <h4 class="complaint-title">${complaint.subject}</h4>
-          <span class="complaint-status ${complaint.status}">${statusText}</span>
+          <span class="complaint-status ${
+            complaint.status
+          }">${statusText}</span>
         </div>
         <div class="complaint-meta">${typeText} • ${date}</div>
-        <div class="complaint-preview">${complaint.message.substring(0, 100)}${complaint.message.length > 100 ? '...' : ''}</div>
+        <div class="complaint-preview">${complaint.message.substring(0, 100)}${
+        complaint.message.length > 100 ? "..." : ""
+      }</div>
       `;
       container.appendChild(item);
     });
   } catch (error) {
-    console.error('Error loading complaints:', error);
-    container.innerHTML = '<div class="empty-state" style="color: #ef4444;"><p>خطأ في تحميل الشكاوى</p></div>';
+    console.error("Error loading complaints:", error);
+    container.innerHTML =
+      '<div class="empty-state" style="color: #ef4444;"><p>خطأ في تحميل الشكاوى</p></div>';
   }
 }
 

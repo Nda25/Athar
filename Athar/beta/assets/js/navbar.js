@@ -50,13 +50,16 @@
       try {
         localStorage.setItem("theme", isDark ? "dark" : "light");
       } catch (_) {}
-      // تحديث نص الـ Toast ليكون ألطف
       toast(isDark ? "🌙 الوضع الليلي" : "☀️ الوضع النهاري");
     });
 
+    // Initialize theme from localStorage
     try {
-      if (localStorage.getItem("theme") === "dark") {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "dark") {
         document.documentElement.classList.add("dark");
+      } else if (savedTheme === "light") {
+        document.documentElement.classList.remove("dark");
       }
     } catch (_) {}
   }
@@ -95,35 +98,61 @@
   }
 
   // ============ Sync Auth UI (Existing) ============
-  function syncAuthButtons() {
+  // ============ Sync Auth UI (Updated) ============
+  async function syncAuthButtons() {
     const auth = window.auth;
     if (!auth) {
       setTimeout(syncAuthButtons, 500);
       return;
     }
 
-    auth
-      .isAuthenticated()
-      .then((ok) => updateAuthButtons(ok))
-      .catch(() => updateAuthButtons(false));
+    try {
+      const isAuthed = await auth.isAuthenticated();
+
+      if (isAuthed) {
+        // 1. نجلب بيانات المستخدم
+        const user = await auth.getUser();
+        // 2. نرسل البيانات لدالة التحديث
+        updateAuthButtons(true, user);
+      } else {
+        updateAuthButtons(false, null);
+      }
+    } catch (err) {
+      console.error("Auth check failed:", err);
+      updateAuthButtons(false, null);
+    }
   }
 
-  function updateAuthButtons(isAuthed) {
+  function updateAuthButtons(isAuthed, user) {
     const showEl = (el, show) => {
       if (!el) return;
-      // في التصميم الجديد نستخدم flex، لكن display: none يخفي العنصر تماماً
       if (show) {
-        el.style.removeProperty("display"); // Remove inline display none
-        el.style.display = "inline-flex"; // Ensure flex behavior
+        el.style.removeProperty("display");
+        el.style.display = "inline-flex";
       } else {
         el.style.display = "none";
       }
     };
 
-    showEl(document.getElementById("authCta"), !isAuthed);
-    showEl(document.getElementById("logout"), isAuthed);
-    showEl(document.getElementById("nav-profile"), isAuthed);
-    showEl(document.getElementById("adminBtn"), isAuthed);
+    // ============ Admin Check Logic ============
+    // ضع إيميلك (أو إيميلات الأدمن) هنا
+    const adminEmails = [
+      "hazemezz988@gmail.com",
+      "na.da25@icloud.com",
+      "unknown.00.brother@gmail.com",
+    ];
+
+    // نتحقق: هل المستخدم مسجل + هل إيميله موجود في قائمة الأدمن؟
+    const isAdmin =
+      isAuthed && user && user.email && adminEmails.includes(user.email);
+
+    // ============ Update UI ============
+    showEl(document.getElementById("authCta"), !isAuthed); // زر الدخول يظهر لغير المسجلين
+    showEl(document.getElementById("logout"), isAuthed); // زر الخروج للمسجلين
+    showEl(document.getElementById("nav-profile"), isAuthed); // الملف الشخصي للمسجلين
+
+    // زر الأدمن يظهر فقط للأدمن
+    showEl(document.getElementById("adminBtn"), isAdmin);
   }
 
   // ============ Init ============
