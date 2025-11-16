@@ -1,216 +1,314 @@
-// مُعين: تقسيم خطة أسبوعية (5 أيام) دون خلط دروس، وتقسيم أهداف الدرس على الأيام.
-// يعتمد Gemini للاستدلال. الحماية عبر Auth0 + تحقق عضوية Supabase كما في بقية المنظومة.
+// netlify/functions/mueen-plan.js
+// مُعين — تقسيم خطة أسبوعية (٥ أيام) من أهداف الدرس فقط
+// - حماية Auth0 (requireUser)
+// - تحقق عضوية Supabase
+// - استدعاء Gemini لتقدير أهداف الدرس من منهج السعودية (2025-2026) قدر الإمكان
+// - Post-processing صارم: ٥ أيام، ١–٢ هدف في اليوم، مفردات Subset، تغطية كل الأهداف
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@supabase/supabase-js");
 const { requireUser } = require("./_auth.js");
 
-// ===== Supabase (SR) =====
+// ===== Supabase (Service Role) =====
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE,
   { auth: { persistSession: false } }
 );
 
-// عضوية فعالة؟
 async function isActiveMembership(user_sub, email) {
   try {
     const { data } = await supabase
       .from("v_user_status")
       .select("active")
-      .or(`user_sub.eq.${user_sub},email.eq.${(email||"").toLowerCase()}`)
+      .or(`user_sub.eq.${user_sub},email.eq.${(email || "").toLowerCase()}`)
       .limit(1)
       .maybeSingle();
     if (data) return !!data.active;
   } catch (_) {}
+
   try {
-    let q = supabase.from("memberships").select("end_at,expires_at").order("end_at",{ascending:false}).limit(1);
+    let q = supabase
+      .from("memberships")
+      .select("end_at,expires_at")
+      .order("end_at", { ascending: false })
+      .limit(1);
     if (user_sub) q = q.eq("user_id", user_sub);
-    else if (email) q = q.eq("email", (email||"").toLowerCase());
+    else if (email) q = q.eq("email", (email || "").toLowerCase());
     else return false;
+
     const { data: rows } = await q;
-    const row = rows?.[0]; const exp = row?.end_at || row?.expires_at;
+    const row = rows?.[0];
+    const exp = row?.end_at || row?.expires_at;
     return exp ? new Date(exp) > new Date() : false;
-  } catch(_) { return false; }
+  } catch (_) {
+    return false;
+  }
 }
 
-// CORS خفيف
+// CORS بسيط
 const CORS = {
-  "Access-Control-Allow-Origin":"*",
-  "Access-Control-Allow-Methods":"POST,OPTIONS",
-  "Access-Control-Allow-Headers":"Content-Type, Authorization"
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// مساعدة: إزالة التكرار
+const uniq = (arr) =>
+  [...new Set((arr || []).map((s) => String(s || "").trim()))].filter(Boolean);
+
+async function logUsage(user, meta, ok) {
+  try {
+    const base =
+      process.env.SITE_BASE_URL || process.env.PUBLIC_BASE_URL || "";
+    if (!base) return;
+    await fetch(`${base}/.netlify/functions/log-tool-usage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        tool_name: "mueen",
+        user_email: user?.email || null,
+        meta: {
+          ...(meta || {}),
+          ok: !!ok,
+        },
+      }),
+    });
+  } catch (_) {}
+}
+
 exports.handler = async (event) => {
-  try{
-    if (event.httpMethod === "OPTIONS") return { statusCode:204, headers:CORS, body:"" };
-    if (event.httpMethod !== "POST") return { statusCode:405, headers:CORS, body:"Method Not Allowed" };
+  try {
+    if (event.httpMethod === "OPTIONS") {
+      return { statusCode: 204, headers: CORS, body: "" };
+    }
+    if (event.httpMethod !== "POST") {
+      return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
+    }
 
-    // حراسة
+    // حراسة Auth0
     const gate = await requireUser(event);
-    if (!gate.ok) return { statusCode: gate.status, headers:CORS, body: gate.error };
-    const active = await isActiveMembership(gate.user?.sub, gate.user?.email);
-    if (!active) return { statusCode:402, headers:CORS, body:"Membership is not active." };
+    if (!gate.ok) {
+      return {
+        statusCode: gate.status || 401,
+        headers: CORS,
+        body: gate.error || "Unauthorized",
+      };
+    }
 
-    // مفاتيح
+    const user = gate.user || {};
+    const active = await isActiveMembership(user.sub, user.email);
+    if (!active) {
+      return {
+        statusCode: 402,
+        headers: CORS,
+        body: "Membership is not active.",
+      };
+    }
+
+    // مفاتيح Gemini
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_API_KEY) return { statusCode:500, headers:CORS, body:"Missing GEMINI_API_KEY" };
+    if (!GEMINI_API_KEY) {
+      return {
+        statusCode: 500,
+        headers: CORS,
+        body: "Missing GEMINI_API_KEY",
+      };
+    }
+    const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     // المدخلات
     let p = {};
-    try { p = JSON.parse(event.body||"{}"); } catch { return { statusCode:400, headers:CORS, body:"Bad JSON" }; }
-    const subject = (p.subject||"").trim();
-    const grade   = (p.grade||"").trim();
-    const count   = Math.min(5, Math.max(1, Number(p.count)||1));
-    const mode    = p.mode || "manual";
-    const lessons = Array.isArray(p.lessons) ? p.lessons.filter(Boolean).slice(0,5) : [];
-
-    // تحضير Prompt صارم:
-    // المرحلة 1: استخراج "أهداف الدرس الأساسية" + "مفرداته" أولاً (Lesson Canon).
-    // المرحلة 2: توزيع هذه الأهداف على 5 أيام (Segment 1..5) دون إضافة مفردات خارج الـ Canon.
-    const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"];
-
-    // (اختياري للمستقبل) مصادر رسمية تُحقن هنا:
-    const officialContext = ""; // اتركيه فارغًا الآن. عند التوصيل بمصدر رسمي نملأه ونُلزم النموذج بعدم الخروج عنه.
-
-    // لو الوضع AI لاختيار الدروس: نطلب من النموذج اقتراح أسماء دروس للصف/المادة (لكن لن نخلط)
-    let lessonList = lessons;
-    if (mode === "ai" && lessonList.length === 0) {
-      lessonList = ["الدرس"]; // مكانية بسيطة؛ سيتم تخصيصه داخل البرومبت.
+    try {
+      p = JSON.parse(event.body || "{}");
+    } catch {
+      return { statusCode: 400, headers: CORS, body: "Bad JSON" };
     }
 
+    const subject = String(p.subject || "").trim();
+    const grade = String(p.grade || "").trim();
+    const count = Math.min(5, Math.max(1, Number(p.count) || 1));
+
+    if (!subject) {
+      return { statusCode: 400, headers: CORS, body: "Missing subject" };
+    }
+
+    const meta = { subject, grade, count };
+
+    // برومبت — لا نذكره للمعلّم لكنه يوجّه النموذج
     const prompt = `
-أنت مُخطِّط تعليمي سعودي يلتزم بآخر إصدار من مناهج السعودية. إياك إضافة مفردات أو أهداف من دروس أخرى.
-${officialContext ? "اعتمد فقط على المصادر التالية:\n"+officialContext+"\n" : ""}
+أنت مخطِّط تعليمي سعودي خبير في مناهج السعودية الحديثة (1447 هـ / 2025–2026 م).
+مهمتك مساعدة معلم على بناء خطة أسبوعية لدرس واحد فقط، مقسّم على ٥ أيام (الأحد–الخميس).
 
-المادة: "${subject}"
-الصف: "${grade}"
-عدد الدروس هذا الأسبوع: ${count}
-أسماء الدروس المقصودة (إن وُجدت): ${lessonList.join(" | ") || "غير مُحددة؛ استنتج درسًا واحدًا مناسبًا واستعمله للأسبوع كله"}
+المادة / موضوع الدرس: "${subject}"
+الصف / المرحلة: "${grade || "غير محدد"}"
+عدد الحصص / الدروس هذا الأسبوع: ${count}
 
-المطلوب على خطوتين:
+التعليمات:
 
-[الخطوة A — تحديد Canon للدرس]
-- استخرج أهداف الدرس الأساسية (من 2 إلى 6 أهداف قصيرة دقيقة).
-- استخرج مفرداته الجديدة الأساسية (من 3 إلى 8 كلمات كحد أقصى).
-- لا تضع مفردة من درس آخر.
-- الناتج: {"canon":{"lessonTitle":"...", "objectives":[...], "vocab":[...] }}
+1) لا تؤلف دروسًا أخرى خارج سياق الدرس. اعمل على "درس واحد" فقط، واعتبر أن الأسبوع مخصص لهذا الدرس (تمهيد، عرض، تطبيق، تقويم).
+2) استند قدر الإمكان إلى مناهج السعودية (2025–2026) في صياغة الأهداف والمفردات، لكن لو لم تكن واثقًا فصياغة أهداف عامة صحيحة ومناسبة للمادة والصف مقبولة.
+3) لا تخلط بين دروس متعددة في اليوم نفسه. كل الخطة مبنية على نفس الدرس.
+
+[الخطوة A — Canon الدرس]
+استخرج:
+- من 2 إلى 6 أهداف تعلمية أساسية للدرس (قصيرة، بصيغة سلوكية قدر الإمكان).
+- من 3 إلى 8 مفردات أساسية جديدة في هذا الدرس.
+- لا تضف مفردات من وحدات أخرى لا ترتبط بالدرس.
+
+الناتج لهذه الخطوة:
+"canon":{ "lessonTitle":"اسم مقترح مختصر للدرس", "objectives":[...], "vocab":[...] }
 
 [الخطوة B — خطة أسبوعية ٥ أيام]
-- وزّع أهداف الدرس الأساسية على أيام الأسبوع (Segment 1..5).
-- لا يجوز خلط درسين في اليوم نفسه. نعمل على درس واحد للأسبوع.
-- يجب أن تكون مفردات كل يوم Subset من canon.vocab فقط (بدون إضافة كلمات جديدة).
-- إذا كانت الأهداف أقل من ٥: خصص الأيام المتبقية للتثبيت/التطبيق/مختبر/تقويم، **بدون** إدخال مفردات جديدة.
-- لا تكرّر الهدف نفسه في أكثر من يوم إلا لو بصياغة تعزيز/تطبيق مختلفة.
-- لكل يوم:
-  { "goals":[... 1-2 أهداف كحد أقصى ...],
-    "vocab":[... subset of canon.vocab ... حد أقصى 1-3 كلمات],
-    "outcomes":"نتيجة متوقعة مختصرة متوافقة مع الأهداف",
-    "homework":"تكليف منزلي بسيط لدقيقة أو تمرين قصير" }
+- قسّم أهداف الدرس الأساسية (canon.objectives) على ٥ أيام (Segment 1..5).
+- يجب تغطية جميع الأهداف الأساسية عبر الأيام الخمسة، بلا تكرار ممل.
+- في كل يوم:
+  * 1–2 هدف كحد أقصى.
+  * المفردات (vocab) في هذا اليوم يجب أن تكون subset من canon.vocab فقط (بدون كلمات جديدة).
+- الأيام الزائدة (إن كانت الأهداف قليلة) استثمرها في:
+  * التثبيت والتطبيق العملي،
+  * المختبر أو التجارب (إن كان مناسبًا للمادة)،
+  * التقويم البنائي / الختامي،
+  مع المحافظة على عدم إدخال مفردات جديدة بعيدة عن الدرس.
 
-أعِد **فقط** JSON بالشكل:
+لكل يوم أرجع كائنًا بالشكل:
 {
-  "meta": { "subject":"...", "grade":"...", "count": ${count}, "lesson": "..." },
-  "canon": { "objectives":[...], "vocab":[...] },
+  "goals": ["هدف 1", "هدف 2"],
+  "vocab": ["مفردة 1", "مفردة 2"],
+  "outcomes": "نتيجة تعلم متوقعة مختصرة توافق الأهداف في هذا اليوم.",
+  "homework": "واجب منزلي بسيط أو مهمة قصيرة تدعم أهداف اليوم."
+}
+
+أرجع في النهاية **JSON واحد فقط** بالشكل التالي حرفيًا:
+{
+  "meta": { "subject": "...", "grade": "...", "count": ${count}, "lesson": "اسم الدرس المقترح" },
+  "canon": { "objectives": [...], "vocab": [...] },
   "days": [
-    { "goals":[...], "vocab":[...], "outcomes":"...", "homework":"..." },
-    { "goals":[...], "vocab":[...], "outcomes":"...", "homework":"..." },
-    { "goals":[...], "vocab":[...], "outcomes":"...", "homework":"..." },
-    { "goals":[...], "vocab":[...], "outcomes":"...", "homework":"..." },
-    { "goals":[...], "vocab":[...], "outcomes":"...", "homework":"..." }
+    { "goals": [...], "vocab": [...], "outcomes": "...", "homework": "..." },
+    { "goals": [...], "vocab": [...], "outcomes": "...", "homework": "..." },
+    { "goals": [...], "vocab": [...], "outcomes": "...", "homework": "..." },
+    { "goals": [...], "vocab": [...], "outcomes": "...", "homework": "..." },
+    { "goals": [...], "vocab": [...], "outcomes": "...", "homework": "..." }
   ]
 }
+
+- لا تضف أي نص خارج هذا الكائن JSON.
 `.trim();
 
+    // استدعاء Gemini
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model:"gemini-2.5-flash-flash-flash-flash" });
+    const model = genAI.getGenerativeModel({ model: MODEL });
+
     const req = {
-      contents:[{ role:"user", parts:[{ text: prompt }] }],
-      generationConfig:{
-        responseMimeType:"application/json",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
         maxOutputTokens: 2048,
         temperature: 0.6,
         topP: 0.9,
-        topK: 64
-      }
+        topK: 40,
+      },
     };
+
     const result = await model.generateContent(req);
-    const raw =
-      (typeof result?.response?.text === "function" ? result.response.text() : "") ||
-      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    if (!raw) return { statusCode:502, headers:CORS, body:"Empty response" };
+
+    let raw =
+      (typeof result?.response?.text === "function"
+        ? result.response.text()
+        : "") ||
+      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "";
+
+    if (!raw) {
+      await logUsage(user, meta, false);
+      return { statusCode: 502, headers: CORS, body: "Empty response" };
+    }
+
+    // إزالة أسوار ```json لو وجدت
+    raw = raw.replace(/```json|```/g, "").trim();
 
     let j;
-    try{ j = JSON.parse(raw); }
-    catch{
-      const cleaned = raw.replace(/```json|```/g,'').trim();
-      j = JSON.parse(cleaned);
+    try {
+      j = JSON.parse(raw);
+    } catch (e) {
+      await logUsage(user, meta, false);
+      return {
+        statusCode: 502,
+        headers: CORS,
+        body: "Bad JSON from model",
+      };
     }
 
-    // ==== Post-processing صارم لمنع المفردات/الأهداف الغلط/التكرار ====
+    // ==== Post-processing صارم ====
+
     const canon = {
-      objectives: Array.isArray(j?.canon?.objectives) ? j.canon.objectives.map(s=>String(s).trim()).filter(Boolean) : [],
-      vocab:      Array.isArray(j?.canon?.vocab)      ? j.canon.vocab.map(s=>String(s).trim()).filter(Boolean) : []
+      objectives: uniq(j?.canon?.objectives).slice(0, 6),
+      vocab: uniq(j?.canon?.vocab).slice(0, 8),
     };
-    // Dedup
-    const uniq = arr => [...new Set(arr.map(s=>s.trim()))].filter(Boolean);
-    canon.objectives = uniq(canon.objectives).slice(0,6);
-    canon.vocab      = uniq(canon.vocab).slice(0,8);
 
-    // days
-    const daysData = Array.isArray(j?.days) ? j.days : [];
-    const safeDays = [];
-    for (let i=0;i<5;i++){
-      const d = daysData[i] || {};
-      const goals = uniq(Array.isArray(d.goals)? d.goals : []).slice(0,2);
-      // Subset vocab
-      const sub  = uniq(Array.isArray(d.vocab)? d.vocab : []).filter(v => canon.vocab.includes(v)).slice(0,3);
-      const out  = String(d.outcomes||'').trim();
-      const hw   = String(d.homework||'').trim();
-      safeDays.push({ goals, vocab: sub, outcomes: out, homework: hw });
+    let days = Array.isArray(j?.days) ? j.days : [];
+    if (days.length < 5) {
+      // لو أقل من ٥، كمّل مصفوفة الأيام
+      while (days.length < 5) days.push({});
+    } else if (days.length > 5) {
+      days = days.slice(0, 5);
     }
 
-    // توزيع إضافي لضمان تغطية الأهداف الأساسية وعدم تكرارها بنفس اليوم:
-    // إذا لم تُغطَّ كل الأهداف، نحقن المتبقي بالتتابع في الأيام الفارغة (هدف واحد في اليوم).
-    const covered = new Set(safeDays.flatMap(d=>d.goals));
-    const remaining = canon.objectives.filter(o => !covered.has(o));
+    const safeDays = days.map((d) => {
+      const goals = uniq(Array.isArray(d.goals) ? d.goals : []).slice(0, 2);
+      const vocab = uniq(Array.isArray(d.vocab) ? d.vocab : []).filter((v) =>
+        canon.vocab.includes(v)
+      ).slice(0, 3);
+      const outcomes = String(d.outcomes || "").trim();
+      const homework = String(d.homework || "").trim();
+      return { goals, vocab, outcomes, homework };
+    });
+
+    // ضمان تغطية كل الأهداف الأساسية على الأقل مرة
+    const covered = new Set(safeDays.flatMap((d) => d.goals));
+    const remaining = canon.objectives.filter((o) => !covered.has(o));
     let cursor = 0;
-    for (let i=0;i<5 && cursor<remaining.length;i++){
-      if ((safeDays[i].goals||[]).length < 2){
+
+    for (let i = 0; i < safeDays.length && cursor < remaining.length; i++) {
+      if ((safeDays[i].goals || []).length < 2) {
         safeDays[i].goals.push(remaining[cursor++]);
       }
     }
-    // لو بقت أهداف، انثريها هدفًا واحدًا في الأيام التالية دون تكرار
-    for (; cursor<remaining.length; cursor++){
-      const idx = cursor % 5;
-      if (!safeDays[idx].goals.includes(remaining[cursor])){
-        if (safeDays[idx].goals.length<2) safeDays[idx].goals.push(remaining[cursor]);
+
+    // لا مفردات جديدة في يوم بلا أهداف (يوم تثبيت خفيف/تقويم عام)
+    for (let i = 0; i < safeDays.length; i++) {
+      if (!safeDays[i].goals.length) {
+        safeDays[i].vocab = [];
       }
-    }
-    // لا مفردات جديدة في أيام “التثبيت/التطبيق” الخالية من أهداف جديدة
-    for (let i=0;i<5;i++){
-      if (!safeDays[i].goals.length) safeDays[i].vocab = [];
     }
 
     const payload = {
       meta: {
-        subject: subject || j?.meta?.subject || "المادة",
-        grade:   grade   || j?.meta?.grade   || "الصف",
-        count,
-        lesson:  j?.meta?.lesson || (lessons[0]||"")
+        subject: j?.meta?.subject || subject,
+        grade: j?.meta?.grade || grade || "غير محدد",
+        count: Number(j?.meta?.count) || count,
+        lesson: j?.meta?.lesson || "",
       },
       canon,
-      days: safeDays
+      days: safeDays,
     };
+
+    await logUsage(user, payload.meta, true);
 
     return {
-      statusCode:200,
-      headers:{ ...CORS, "Content-Type":"application/json; charset=utf-8" },
-      body: JSON.stringify(payload)
+      statusCode: 200,
+      headers: {
+        ...CORS,
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify(payload),
     };
-
-  }catch(e){
+  } catch (e) {
     console.error("mueen-plan error:", e);
-    return { statusCode:500, headers:CORS, body: e.message || "Server error" };
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: e?.message || "Server error",
+    };
   }
 };
