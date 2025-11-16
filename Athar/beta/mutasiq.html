@@ -1,328 +1,552 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>مُتَّسِق – سجل المتابعة الذكي</title>
-  <meta name="color-scheme" content="dark light" />
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css" />
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>مُتَّسِق – سجل المتابعة الذكي</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico" />
+    <link rel="shortcut icon" href="assets/icons/favicon.ico" />
+    <link rel="apple-touch-icon" href="assets/icons/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
 
-  <style>
-    /* خصوصيات متَّسِق الخفيفة (تكمل style.css) */
-    .wizard { display:grid; gap:14px }
-    .tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px }
-    .tabs .btn{ padding:.55rem .9rem; border-radius:10px }
-    .tab { display:none } .tab.active{ display:block; animation:pop .16s ease }
-    .controls-grid{ display:grid; gap:14px; grid-template-columns:1fr } 
-    @media(min-width:860px){ .controls-grid{ grid-template-columns:1fr 1fr } }
+    <style>
+      /* خصوصيات متَّسِق الخفيفة (تكمل style.css) */
+      .wizard {
+        display: grid;
+        gap: 14px;
+      }
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .tabs .btn {
+        padding: 0.55rem 0.9rem;
+        border-radius: 10px;
+      }
+      .tab {
+        display: none;
+      }
+      .tab.active {
+        display: block;
+        animation: pop 0.16s ease;
+      }
+      .controls-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 860px) {
+        .controls-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
 
-    /* مُحرّر الأعمدة */
-    .cols { display:grid; gap:10px }
-    .col-item{
-      display:grid; grid-template-columns: 28px 1fr auto auto auto; align-items:center;
-      gap:8px; padding:10px; border:1px dashed rgba(59,130,246,.28); border-radius:12px; background:var(--card);
-    }
-    .drag{ cursor:grab; opacity:.8 } .col-title{ width:100% }
-    .swatch{ width:22px; height:22px; border-radius:6px; border:1px solid rgba(0,0,0,.08) }
-    .ghost{ opacity:.4 }
-    .muted-mini{ color:var(--muted); font-size:.9rem }
+      /* مُحرّر الأعمدة */
+      .cols {
+        display: grid;
+        gap: 10px;
+      }
+      .col-item {
+        display: grid;
+        grid-template-columns: 28px 1fr auto auto auto;
+        align-items: center;
+        gap: 8px;
+        padding: 10px;
+        border: 1px dashed rgba(59, 130, 246, 0.28);
+        border-radius: 12px;
+        background: var(--card);
+      }
+      .drag {
+        cursor: grab;
+        opacity: 0.8;
+      }
+      .col-title {
+        width: 100%;
+      }
+      .swatch {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+      }
+      .ghost {
+        opacity: 0.4;
+      }
+      .muted-mini {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
 
-    /* المعاينات وورق الطباعة */
-    .preview-note{ margin-top:4px; color:var(--muted); font-size:.92rem }
-    .a4{ width:210mm; min-height:297mm; background:#fff; color:#0f172a; margin:0 auto 10mm; padding:18mm 14mm;
-         border:1px solid rgba(0,0,0,.06); border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,.08) }
-    .a4.landscape{ width:297mm; min-height:210mm }
-    .page-title{ text-align:center; margin:0 0 8px; color:#1e40af; font-weight:800; font-size:24px }
-    .sep-title{ text-align:center; margin-top:40mm; font-size:28px; font-weight:800 }
-    .grid-3{ display:grid; gap:14px; grid-template-columns:1fr; }
-    @media(min-width:860px){ .grid-3{ grid-template-columns:1fr 1fr 1fr } }
-    .rem-box{ border-radius:16px; padding:16px; border:1px solid rgba(59,130,246,.22); background:linear-gradient(180deg,#ffffff,#f8fbff) }
-    .print-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
-    .print-table th,.print-table td{ border:1px solid #cbd5e1; padding:6px; text-align:center; font-size:12px; }
-    .name-col{ width:26% } .week-col{ background:#f8fafc }
-    .chip-note{ display:inline-block; padding:.25rem .6rem; border-radius:999px; background:var(--sea-100); border:1px solid rgba(59,130,246,.25); font-size:.78rem; color:#0c4a6e }
+      /* المعاينات وورق الطباعة */
+      .preview-note {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+      .a4 {
+        width: 210mm;
+        min-height: 297mm;
+        background: #fff;
+        color: #0f172a;
+        margin: 0 auto 10mm;
+        padding: 18mm 14mm;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 10px;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+      }
+      .a4.landscape {
+        width: 297mm;
+        min-height: 210mm;
+      }
+      .page-title {
+        text-align: center;
+        margin: 0 0 8px;
+        color: #1e40af;
+        font-weight: 800;
+        font-size: 24px;
+      }
+      .sep-title {
+        text-align: center;
+        margin-top: 40mm;
+        font-size: 28px;
+        font-weight: 800;
+      }
+      .grid-3 {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 860px) {
+        .grid-3 {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+      }
+      .rem-box {
+        border-radius: 16px;
+        padding: 16px;
+        border: 1px solid rgba(59, 130, 246, 0.22);
+        background: linear-gradient(180deg, #ffffff, #f8fbff);
+      }
+      .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+      .print-table th,
+      .print-table td {
+        border: 1px solid #cbd5e1;
+        padding: 6px;
+        text-align: center;
+        font-size: 12px;
+      }
+      .name-col {
+        width: 26%;
+      }
+      .week-col {
+        background: #f8fafc;
+      }
+      .chip-note {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: var(--sea-100);
+        border: 1px solid rgba(59, 130, 246, 0.25);
+        font-size: 0.78rem;
+        color: #0c4a6e;
+      }
 
-    /* أشكال الخلايا */
-    .cell-dot{ display:inline-block; width:9px; height:9px; border-radius:999px; border:1.6px solid #64748b }
-    .cell-square{ display:inline-block; width:9px; height:9px; border:1.6px solid #64748b; border-radius:3px }
-    .cell-mark{ font-weight:800 }
+      /* أشكال الخلايا */
+      .cell-dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        border: 1.6px solid #64748b;
+      }
+      .cell-square {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border: 1.6px solid #64748b;
+        border-radius: 3px;
+      }
+      .cell-mark {
+        font-weight: 800;
+      }
 
-    /* للطباعة */
-    @media print{
-      body{ background:#fff }
-      .topbar, .tabs, .no-print, footer{ display:none !important }
-      .a4{ box-shadow:none; border:none; margin:0; page-break-after:always }
-      @page{ size:A4; margin:12mm }
-      .a4.landscape{ page:landscape }
-      @page landscape{ size:A4 landscape; margin:12mm }
-    }
+      /* للطباعة */
+      @media print {
+        body {
+          background: #fff;
+        }
+        .topbar,
+        .tabs,
+        .no-print,
+        footer {
+          display: none !important;
+        }
+        .a4 {
+          box-shadow: none;
+          border: none;
+          margin: 0;
+          page-break-after: always;
+        }
+        @page {
+          size: A4;
+          margin: 12mm;
+        }
+        .a4.landscape {
+          page: landscape;
+        }
+        @page landscape {
+          size: A4 landscape;
+          margin: 12mm;
+        }
+      }
 
-    /* رابط داخل الشرح */
-    .btn-link{ color:var(--sea-600); text-decoration:underline; font-weight:700 }
-    .btn-link:hover{ color:var(--sea-400) }
-  </style>
-</head>
-<body>
-  <div class="global-bg"></div>
+      /* رابط داخل الشرح */
+      .btn-link {
+        color: var(--sea-600);
+        text-decoration: underline;
+        font-weight: 700;
+      }
+      .btn-link:hover {
+        color: var(--sea-400);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="global-bg"></div>
 
-  <!-- الباك دروب والباترن الحالية -->
-  <div class="backdrop"></div>
-  <div class="pattern"></div>
+    <!-- الباك دروب والباترن الحالية -->
 
-  <!-- شريط علوي بسيط -->
-  <div class="topbar">
-    <div class="left-actions">
-      <a class="btn" href="index.html">الرئيسية</a>
-      <a class="btn" href="programs.html">مساحة إبداعي</a>
+    <!-- شريط علوي بسيط -->
+    <div class="topbar">
+      <div class="left-actions">
+        <a class="btn" href="index.html">الرئيسية</a>
+        <a class="btn" href="programs.html">مساحة إبداعي</a>
+      </div>
+      <div class="actions">
+        <button class="btn" id="themeToggle">🌓</button>
+      </div>
+      <div class="user">
+        <a class="btn" href="pricing.html">الاشتراك</a>
+      </div>
     </div>
-    <div class="actions">
-      <button class="btn" id="themeToggle">🌓</button>
-    </div>
-    <div class="user">
-      <a class="btn" href="pricing.html">الاشتراك</a>
-    </div>
-  </div>
 
-  <header>
-    <div class="hero">
-      <h1 class="logo">مُتَّسِق</h1>
-      <div class="tag"><span class="dot"></span>سجل متابعة قابل للتشكيل.. يُرتِّب وقتك.</div>
-    </div>
-  </header>
-
-  <main class="container">
-    <section class="card wizard">
-      <div class="tabs no-print">
-        <button class="btn primary" data-tab="tab-setup">الإعدادات</button>
-        <button class="btn" data-tab="tab-classes">الفصول</button>
-        <button class="btn" data-tab="tab-cover">الغلاف</button>
-        <button class="btn" data-tab="tab-rem">التذكيرات</button>
-        <button class="btn" data-tab="tab-sep">فواصل الفصول</button>
-        <button class="btn" data-tab="tab-export">التصدير</button>
-      </div>
-
-      <!-- الإعدادات -->
-      <div id="tab-setup" class="tab active">
-        <div class="controls-grid">
-          <div class="field">
-            <label>اتجاه الورق</label>
-            <select id="orientation" class="sel">
-              <option value="portrait" selected>طولي (A4)</option>
-              <option value="landscape">عرضي (A4)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>شكل الخلية</label>
-            <select id="cellStyle" class="sel">
-              <option value="empty" selected>فارغة</option>
-              <option value="dots">دوائر</option>
-              <option value="squares">مربعات</option>
-              <option value="marks">رموز ✓ ✗</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>حدة زوايا صف الطالب</label>
-            <input type="range" id="rowRadius" min="0" max="14" value="6">
-            <div class="muted-mini">حرّكي الشريط لتغيير نعومة الإطار.</div>
-          </div>
-          <div class="field">
-            <label>عدد الأسابيع</label>
-            <input id="weeks" type="number" min="1" max="52" value="10">
-          </div>
-          <div class="field">
-            <label>وضع تسمية الأسابيع</label>
-            <select id="weekMode" class="sel">
-              <option value="range" selected>مدى تاريخي (من–إلى)</option>
-              <option value="label">أسبوع 1..N</option>
-              <option value="number">أرقام 1..N</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>تاريخ أول يوم</label>
-            <input id="startDate" type="date">
-            <div class="muted-mini">نستخدمه لبناء مدى التاريخ لكل أسبوع (خمسة أيام 默认).</div>
-          </div>
-        </div>
-
-        <hr style="opacity:.12">
-
-        <div class="field">
-          <label>بنود التقييم (اسحبي لإعادة الترتيب)</label>
-          <div id="cols" class="cols no-print"></div>
-
-          <div class="grid" style="grid-template-columns:1fr auto; gap:10px; margin-top:8px">
-            <input id="newCol" class="col-title" placeholder="أضِف عمود مخصص (مثال: اختبار شهري)">
-            <button id="addCol" class="btn">إضافة</button>
-          </div>
-          <div class="preview-note">
-            تلميح: يمكنك إخفاء أي عمود، تغيير لونه الخفيف، أو حذفه. الافتراضي: <span class="chip-note">حضور</span> <span class="chip-note">مشاركة</span> <span class="chip-note">واجبات</span>.
-          </div>
-        </div>
-
-        <div class="field">
-          <label>معاينة (طالبين فقط)</label>
-          <div id="miniPreview" class="printable"></div>
+    <header>
+      <div class="hero">
+        <h1 class="logo">مُتَّسِق</h1>
+        <div class="tag">
+          <span class="dot"></span>سجل متابعة قابل للتشكيل.. يُرتِّب وقتك.
         </div>
       </div>
+    </header>
 
-      <!-- الفصول -->
-      <div id="tab-classes" class="tab">
-        <div class="controls-grid">
-          <div class="field">
-            <label>عدد الفصول</label>
-            <select id="classCount" class="sel">
-              <option>1</option><option selected>2</option><option>3</option><option>4</option>
-              <option>5</option><option>6</option><option>7</option><option>8</option>
-            </select>
+    <main class="container">
+      <section class="card wizard">
+        <div class="tabs no-print">
+          <button class="btn primary" data-tab="tab-setup">الإعدادات</button>
+          <button class="btn" data-tab="tab-classes">الفصول</button>
+          <button class="btn" data-tab="tab-cover">الغلاف</button>
+          <button class="btn" data-tab="tab-rem">التذكيرات</button>
+          <button class="btn" data-tab="tab-sep">فواصل الفصول</button>
+          <button class="btn" data-tab="tab-export">التصدير</button>
+        </div>
+
+        <!-- الإعدادات -->
+        <div id="tab-setup" class="tab active">
+          <div class="controls-grid">
+            <div class="field">
+              <label>اتجاه الورق</label>
+              <select id="orientation" class="sel">
+                <option value="portrait" selected>طولي (A4)</option>
+                <option value="landscape">عرضي (A4)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>شكل الخلية</label>
+              <select id="cellStyle" class="sel">
+                <option value="empty" selected>فارغة</option>
+                <option value="dots">دوائر</option>
+                <option value="squares">مربعات</option>
+                <option value="marks">رموز ✓ ✗</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>حدة زوايا صف الطالب</label>
+              <input type="range" id="rowRadius" min="0" max="14" value="6" />
+              <div class="muted-mini">حرّكي الشريط لتغيير نعومة الإطار.</div>
+            </div>
+            <div class="field">
+              <label>عدد الأسابيع</label>
+              <input id="weeks" type="number" min="1" max="52" value="10" />
+            </div>
+            <div class="field">
+              <label>وضع تسمية الأسابيع</label>
+              <select id="weekMode" class="sel">
+                <option value="range" selected>مدى تاريخي (من–إلى)</option>
+                <option value="label">أسبوع 1..N</option>
+                <option value="number">أرقام 1..N</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>تاريخ أول يوم</label>
+              <input id="startDate" type="date" />
+              <div class="muted-mini">
+                نستخدمه لبناء مدى التاريخ لكل أسبوع (خمسة أيام 默认).
+              </div>
+            </div>
           </div>
+
+          <hr style="opacity: 0.12" />
+
           <div class="field">
-            <label>اسم المشروع (اختياري)</label>
-            <input id="projectTitle" placeholder="مثال: متسق – ثالث متوسط فصل أول">
+            <label>بنود التقييم (اسحبي لإعادة الترتيب)</label>
+            <div id="cols" class="cols no-print"></div>
+
+            <div
+              class="grid"
+              style="
+                grid-template-columns: 1fr auto;
+                gap: 10px;
+                margin-top: 8px;
+              "
+            >
+              <input
+                id="newCol"
+                class="col-title"
+                placeholder="أضِف عمود مخصص (مثال: اختبار شهري)"
+              />
+              <button id="addCol" class="btn">إضافة</button>
+            </div>
+            <div class="preview-note">
+              تلميح: يمكنك إخفاء أي عمود، تغيير لونه الخفيف، أو حذفه. الافتراضي:
+              <span class="chip-note">حضور</span>
+              <span class="chip-note">مشاركة</span>
+              <span class="chip-note">واجبات</span>.
+            </div>
+          </div>
+
+          <div class="field">
+            <label>معاينة (طالبين فقط)</label>
+            <div id="miniPreview" class="printable"></div>
           </div>
         </div>
-        <div id="classLists" class="grid" style="grid-template-columns:1fr 1fr; gap:14px; margin-top:10px"></div>
+
+        <!-- الفصول -->
+        <div id="tab-classes" class="tab">
+          <div class="controls-grid">
+            <div class="field">
+              <label>عدد الفصول</label>
+              <select id="classCount" class="sel">
+                <option>1</option>
+                <option selected>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>اسم المشروع (اختياري)</label>
+              <input
+                id="projectTitle"
+                placeholder="مثال: متسق – ثالث متوسط فصل أول"
+              />
+            </div>
+          </div>
+          <div
+            id="classLists"
+            class="grid"
+            style="grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px"
+          ></div>
+        </div>
+
+        <!-- الغلاف -->
+        <div id="tab-cover" class="tab">
+          <div class="controls-grid">
+            <div class="field">
+              <label>شعار المدرسة (اختياري)</label>
+              <input id="schoolLogo" type="file" accept="image/*" />
+              <select id="schoolLogoPos" class="sel" style="margin-top: 6px">
+                <option value="right">يمين</option>
+                <option value="center" selected>وسط</option>
+                <option value="left">يسار</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>شعار وزارة التعليم (اختياري)</label>
+              <input id="moeLogo" type="file" accept="image/*" />
+              <select id="moeLogoPos" class="sel" style="margin-top: 6px">
+                <option value="right">يمين</option>
+                <option value="center" selected>وسط</option>
+                <option value="left">يسار</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="controls-grid" style="margin-top: 6px">
+            <div class="field">
+              <label>عناوين (اختياري)</label>
+              <input id="teacherName" placeholder="اسم المعلم/ـة" />
+              <input id="schoolName" placeholder="اسم المدرسة" />
+              <input id="subjectName" placeholder="المادة" />
+              <input id="semesterName" placeholder="الفصل الدراسي" />
+              <input id="stageName" placeholder="المرحلة الدراسية" />
+            </div>
+            <div class="field">
+              <label>خلفية الغلاف</label>
+              <input id="coverBg" type="file" accept="image/*" />
+              <label style="margin-top: 8px">شفافية الخلفية</label>
+              <input
+                id="coverOpacity"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value="0.45"
+              />
+              <label style="margin-top: 8px">لون الصفحة</label>
+              <input id="coverColor" type="color" value="#f6f7fb" />
+            </div>
+          </div>
+        </div>
+
+        <!-- التذكيرات -->
+        <div id="tab-rem" class="tab">
+          <div class="controls-grid">
+            <div class="field">
+              <label>مربعات التذكير</label>
+              <input id="rem1Title" value="مواعيد مهمة" />
+              <textarea
+                id="rem1Body"
+                rows="4"
+                placeholder="اكتب مواعيدك…"
+              ></textarea>
+              <input id="rem1Color" type="color" value="#dbeafe" />
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <input id="rem2Title" value="تذكيرات" />
+              <textarea
+                id="rem2Body"
+                rows="4"
+                placeholder="اكتب تذكيراتك…"
+              ></textarea>
+              <input id="rem2Color" type="color" value="#e0f2fe" />
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <input id="rem3Title" value="مهام الطلاب" />
+              <textarea
+                id="rem3Body"
+                rows="4"
+                placeholder="مهام الطلاب…"
+              ></textarea>
+              <input id="rem3Color" type="color" value="#fce7f3" />
+            </div>
+          </div>
+          <div class="field" style="margin-top: 8px">
+            <label>عبارة التذييل</label>
+            <input
+              id="footerLine"
+              value="التعليم شرارة صغيرة… تُضيء عقولًا كبيرة."
+            />
+            <input
+              id="footerName"
+              value="ندى المجيرش"
+              style="margin-top: 6px"
+            />
+          </div>
+        </div>
+
+        <!-- فواصل الفصول -->
+        <div id="tab-sep" class="tab">
+          <div
+            id="seps"
+            class="grid"
+            style="grid-template-columns: 1fr 1fr; gap: 14px"
+          ></div>
+          <div class="field" style="margin-top: 8px">
+            <label>لون الفاصل الافتراضي</label>
+            <input id="sepColor" type="color" value="#f1f5f9" />
+          </div>
+        </div>
+
+        <!-- التصدير -->
+        <div id="tab-export" class="tab">
+          <div class="actions-row no-print" style="gap: 10px">
+            <button id="buildAll" class="btn">تجهيز الصفحات</button>
+            <button id="printPdf" class="btn primary">طباعة / PDF</button>
+            <button id="exportImgs" class="btn">حفظ كصور</button>
+            <button id="exportCsv" class="btn">حفظ CSV</button>
+            <!-- أمثلة ربط مستقبلية -->
+            <!-- TODO: send to Miyad / Ethraa -->
+          </div>
+          <div id="pages" style="margin-top: 12px"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
+      <p class="foot-name">ندى المجيرش</p>
+
+      <nav class="foot-links">
+        <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
+        <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
+        <a href="refund-policy.html">سياسة الاسترجاع</a
+        ><span class="sep">|</span> <a href="whatsapp.html">تواصل واتساب</a
+        ><span class="sep">|</span>
+        <a href="complaints.html">الشكاوى والاقتراحات</a>
+      </nav>
+
+      <div class="foot-copy">
+        © <span id="year"></span> أثــر — كل الحقوق محفوظة.
       </div>
+    </footer>
 
-      <!-- الغلاف -->
-      <div id="tab-cover" class="tab">
-        <div class="controls-grid">
-          <div class="field">
-            <label>شعار المدرسة (اختياري)</label>
-            <input id="schoolLogo" type="file" accept="image/*">
-            <select id="schoolLogoPos" class="sel" style="margin-top:6px">
-              <option value="right">يمين</option>
-              <option value="center" selected>وسط</option>
-              <option value="left">يسار</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>شعار وزارة التعليم (اختياري)</label>
-            <input id="moeLogo" type="file" accept="image/*">
-            <select id="moeLogoPos" class="sel" style="margin-top:6px">
-              <option value="right">يمين</option>
-              <option value="center" selected>وسط</option>
-              <option value="left">يسار</option>
-            </select>
-          </div>
-        </div>
+    <script>
+      // سنة تلقائية في الفوتر
+      (function () {
+        var y = document.getElementById("year");
+        if (y) y.textContent = new Date().getFullYear();
+      })();
+    </script>
+    <!-- Auth0 SDK -->
+    <script
+      src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+      onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"
+    ></script>
 
-        <div class="controls-grid" style="margin-top:6px">
-          <div class="field">
-            <label>عناوين (اختياري)</label>
-            <input id="teacherName" placeholder="اسم المعلم/ـة">
-            <input id="schoolName"  placeholder="اسم المدرسة">
-            <input id="subjectName" placeholder="المادة">
-            <input id="semesterName" placeholder="الفصل الدراسي">
-            <input id="stageName"    placeholder="المرحلة الدراسية">
-          </div>
-          <div class="field">
-            <label>خلفية الغلاف</label>
-            <input id="coverBg" type="file" accept="image/*">
-            <label style="margin-top:8px">شفافية الخلفية</label>
-            <input id="coverOpacity" type="range" min="0" max="1" step="0.05" value="0.45">
-            <label style="margin-top:8px">لون الصفحة</label>
-            <input id="coverColor" type="color" value="#f6f7fb">
-          </div>
-        </div>
-      </div>
+    <!-- حماية الصفحة -->
+    <script defer src="assets/js/require-auth.js" data-plan="paid"></script>
+    <!-- لو الصفحة مجانية اشيل data-plan -->
 
-      <!-- التذكيرات -->
-      <div id="tab-rem" class="tab">
-        <div class="controls-grid">
-          <div class="field">
-            <label>مربعات التذكير</label>
-            <input id="rem1Title" value="مواعيد مهمة">
-            <textarea id="rem1Body" rows="4" placeholder="اكتب مواعيدك…"></textarea>
-            <input id="rem1Color" type="color" value="#dbeafe">
-          </div>
-          <div class="field">
-            <label>&nbsp;</label>
-            <input id="rem2Title" value="تذكيرات">
-            <textarea id="rem2Body" rows="4" placeholder="اكتب تذكيراتك…"></textarea>
-            <input id="rem2Color" type="color" value="#e0f2fe">
-          </div>
-          <div class="field">
-            <label>&nbsp;</label>
-            <input id="rem3Title" value="مهام الطلاب">
-            <textarea id="rem3Body" rows="4" placeholder="مهام الطلاب…"></textarea>
-            <input id="rem3Color" type="color" value="#fce7f3">
-          </div>
-        </div>
-        <div class="field" style="margin-top:8px">
-          <label>عبارة التذييل</label>
-          <input id="footerLine" value="التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.">
-          <input id="footerName" value="ندى المجيرش" style="margin-top:6px">
-        </div>
-      </div>
+    <!-- Supabase -->
+    <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script defer src="assets/js/supabase-client.js"></script>
 
-      <!-- فواصل الفصول -->
-      <div id="tab-sep" class="tab">
-        <div id="seps" class="grid" style="grid-template-columns:1fr 1fr; gap:14px"></div>
-        <div class="field" style="margin-top:8px">
-          <label>لون الفاصل الافتراضي</label>
-          <input id="sepColor" type="color" value="#f1f5f9">
-        </div>
-      </div>
+    <!-- التخزين والأدوات العامة -->
+    <script defer src="assets/js/storage.js"></script>
 
-      <!-- التصدير -->
-      <div id="tab-export" class="tab">
-        <div class="actions-row no-print" style="gap:10px">
-          <button id="buildAll" class="btn">تجهيز الصفحات</button>
-          <button id="printPdf" class="btn primary">طباعة / PDF</button>
-          <button id="exportImgs" class="btn">حفظ كصور</button>
-          <button id="exportCsv" class="btn">حفظ CSV</button>
-          <!-- أمثلة ربط مستقبلية -->
-          <!-- TODO: send to Miyad / Ethraa -->
-        </div>
-        <div id="pages" style="margin-top:12px"></div>
-      </div>
-    </section>
-  </main>
+    <!-- أساس التطبيق -->
+    <script defer src="app.js"></script>
 
-<footer>
-  <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-  <p class="foot-name">ندى المجيرش</p>
-
-  <nav class="foot-links">
-    <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-    <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-    <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-    <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-    <a href="complaints.html">الشكاوى والاقتراحات</a>
-  </nav>
-
-  <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-</footer>
-
-<script>
-  // سنة تلقائية في الفوتر
-  (function(){
-    var y=document.getElementById('year');
-    if(y) y.textContent=new Date().getFullYear();
-  })();
-</script>
-  <!-- Auth0 SDK -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-
-  <!-- حماية الصفحة -->
-  <script defer src="assets/js/require-auth.js" data-plan="paid"></script>
-  <!-- لو الصفحة مجانية اشيل data-plan -->
-
-  <!-- Supabase -->
-  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="assets/js/supabase-client.js"></script>
-
-  <!-- التخزين والأدوات العامة -->
-  <script defer src="assets/js/storage.js"></script>
-
-  <!-- أساس التطبيق -->
-  <script defer src="app.js"></script>
-
-  <!-- سكربت الأداة نفسها -->
-  <script defer src="assets/js/mutasiq.js"></script>
-  <div id="toast" class="toast"></div>
-</body>
+    <!-- سكربت الأداة نفسها -->
+    <script defer src="assets/js/mutasiq.js"></script>
+    <div id="toast" class="toast"></div>
+  </body>
 </html>

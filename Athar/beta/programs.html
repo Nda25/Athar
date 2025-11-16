@@ -1,226 +1,259 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0b1324" id="metaTheme" />
-<title>مساحة ابداعـى — أثر</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0b1324" id="metaTheme" />
+    <title>مساحة ابداعـى — أثر</title>
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico" />
+    <link rel="shortcut icon" href="assets/icons/favicon.ico" />
+    <link rel="apple-touch-icon" href="assets/icons/logo.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
 
-<!-- تهيئة الثيم المبكرة (داكن/فاتح) -->
-<script>
-  (function(){
-    var root = document.documentElement;
-    var saved = null;
-    try { saved = localStorage.getItem('theme'); } catch(_) {}
-    if (saved === 'dark') root.classList.add('dark');
-    else {
-      root.classList.remove('dark');
-      try { localStorage.setItem('theme','light'); } catch(_) {}
-    }
-    function fixBodyDark(){
-      if (document.body && document.body.classList.contains('dark')) {
-        document.body.classList.remove('dark');
-        root.classList.add('dark');
-      }
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fixBodyDark);
-    } else {
-      fixBodyDark();
-    }
-  })();
-</script>
+    <!-- تهيئة الثيم المبكرة (داكن/فاتح) -->
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var saved = null;
+        try {
+          saved = localStorage.getItem("theme");
+        } catch (_) {}
+        if (saved === "dark") root.classList.add("dark");
+        else {
+          root.classList.remove("dark");
+          try {
+            localStorage.setItem("theme", "light");
+          } catch (_) {}
+        }
+        function fixBodyDark() {
+          if (document.body && document.body.classList.contains("dark")) {
+            document.body.classList.remove("dark");
+            root.classList.add("dark");
+          }
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", fixBodyDark);
+        } else {
+          fixBodyDark();
+        }
+      })();
+    </script>
 
-<!-- مُحرّك لون المظهر (accent) — يقرأ من التخزين المحلي ويطبّق فوريًا -->
-<script>
-  (function(){
-    var KEY = 'athar:themeColor';
+    <!-- مُحرّك لون المظهر (accent) — يقرأ من التخزين المحلي ويطبّق فوريًا -->
+    <script>
+      (function () {
+        var KEY = "athar:themeColor";
 
-    function hexToRgb(hex){
-      hex = (hex||'').replace('#','').trim();
-      if (hex.length===3) hex = hex.split('').map(c=>c+c).join('');
-      var num = parseInt(hex,16);
-      if (isNaN(num)) return null;
-      return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
-    }
+        function hexToRgb(hex) {
+          hex = (hex || "").replace("#", "").trim();
+          if (hex.length === 3)
+            hex = hex
+              .split("")
+              .map((c) => c + c)
+              .join("");
+          var num = parseInt(hex, 16);
+          if (isNaN(num)) return null;
+          return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+        }
 
-    function applyAccent(hex){
-      if(!hex) return;
-      var root = document.documentElement;
-      var rgb  = hexToRgb(hex);
+        function applyAccent(hex) {
+          if (!hex) return;
+          var root = document.documentElement;
+          var rgb = hexToRgb(hex);
 
-      // غطّي كل الأسماء المحتملة للّون الأساس المستخدمة في style.css
-      var vars = [
-        '--accent','--primary','--brand','--brand-500','--brand-600',
-        '--sea-400','--sea-500','--sea-600'
+          // غطّي كل الأسماء المحتملة للّون الأساس المستخدمة في style.css
+          var vars = [
+            "--accent",
+            "--primary",
+            "--brand",
+            "--brand-500",
+            "--brand-600",
+            "--sea-400",
+            "--sea-500",
+            "--sea-600",
+          ];
+          vars.forEach((v) => root.style.setProperty(v, hex));
+
+          // درجات مشتقة شائعة (لو احتاجها CSS)
+          if (rgb) {
+            root.style.setProperty("--accent-r", rgb.r);
+            root.style.setProperty("--accent-g", rgb.g);
+            root.style.setProperty("--accent-b", rgb.b);
+            // أمثلة على ظلال/شفافية
+            root.style.setProperty(
+              "--accent-20",
+              "color-mix(in oklab, " + hex + " 20%, transparent)"
+            );
+            root.style.setProperty(
+              "--accent-12",
+              "color-mix(in oklab, " + hex + " 12%, transparent)"
+            );
+            root.style.setProperty(
+              "--accent-08",
+              "color-mix(in oklab, " + hex + " 8%, transparent)"
+            );
+          }
+
+          // تحديث لون شريط المتصفح على الموبايل
+          var meta = document.getElementById("metaTheme");
+          if (meta && hex) meta.setAttribute("content", hex);
+        }
+
+        function getSaved() {
+          try {
+            var v = localStorage.getItem(KEY);
+            if (v && typeof v === "string" && v.trim()) return v.trim();
+          } catch (_) {}
+          return null;
+        }
+
+        // طبّقي اللون عند التحميل
+        applyAccent(getSaved());
+
+        // استمعي لأي تحديث لون من صفحات أخرى عبر storage
+        window.addEventListener("storage", function (e) {
+          if (e && e.key === KEY) applyAccent(e.newValue);
+        });
+
+        // دعم حدث مخصّص (لو تغيّر اللون داخل نفس الصفحة)
+        window.addEventListener("athar:theme-color", function (e) {
+          applyAccent(e && e.detail);
+          try {
+            localStorage.setItem(KEY, e.detail || "");
+          } catch (_) {}
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="global-bg"></div>
+
+    <!-- Load shared components -->
+    <div id="navbar" data-component="components/navbar.html"></div>
+
+    <div id="header" data-component="components/header.html"></div>
+
+    <main>
+      <div class="container">
+        <section class="grid" style="margin-top: 10px">
+          <a class="box" href="athar.html" style="text-decoration: none">
+            <h3>«مُنطـَـلق»</h3>
+            <p>
+              محرّك أفكار تربوي يولّد لك استراتيجيات وأنشطة وأسئلة تقويمية
+              متناسقة مع مستويات بلوم — منسّقة وجاهزة للتكييف.
+            </p>
+          </a>
+
+          <a class="box" href="darsi.html" style="text-decoration: none">
+            <h3>«مُـرتكــز»</h3>
+            <p>
+              مخطّط مُحكم لبناء الدرس: صياغة أهداف دقيقة، افتتاحية دقيقة واحدة،
+              ومصفوفة تقييم عملية قابلة للطباعة.
+            </p>
+          </a>
+
+          <a class="box" href="masar.html" style="text-decoration: none">
+            <h3>«مســار»</h3>
+            <p>
+              أنشئ جدول حصص مرنًا: اختر الأيام وعدد الحصص واتجاه العرض، لوّن
+              المواد، واحفظ الجدول كصورة/CSV أو اطبعه.
+            </p>
+          </a>
+
+          <a class="box" href="miyad.html" style="text-decoration: none">
+            <h3>«ميعــاد»</h3>
+            <p>
+              تقويم فصل دراسي قابل للتخصيص: أضف المواعيد بالألوان، رتّبها حسب
+              اليوم والحصة، وفعّل تذكير البريد قبل الموعد.
+            </p>
+          </a>
+
+          <a class="box" href="ethraa.html" style="text-decoration: none">
+            <h3>«إثــراء»</h3>
+            <p>
+              بطاقات ثرية وجاهزة: أحدث معلومة أو خرافة مُصحّحة أو فكرة نشاط عملي
+              مع مصدر مختصر، وفق مادّتك ومرحلتك.
+            </p>
+          </a>
+
+          <a class="box" href="mulham.html" style="text-decoration: none">
+            <h3>«مُلـهِم»</h3>
+            <p>
+              مولّد أنشطة صفية ذكي: يُنتج حِزمًا حركية وجماعية وفردية بناءً على
+              الوقت والمرحلة وبلوم، مع نسخ وطباعة فورية.
+            </p>
+          </a>
+        </section>
+
+        <section class="card" style="margin-top: 18px">
+          <h2 class="title">ومضـَة</h2>
+          <p class="lead" id="teacher-quote">
+            سيظهر هنا اقتباس تحفيزي عشوائي ✨
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <div id="footer" data-component="components/footer.html"></div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- SDKs -->
+    <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script
+      defer
+      src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"
+    ></script>
+
+    <!-- سكربتات مشروعك (مطابقة للـ index لضمان نفس سلوك الثيم) -->
+    <script defer src="assets/js/supabase-client.js"></script>
+    <script defer src="assets/js/ui.js"></script>
+    <script defer src="assets/js/theme.js"></script>
+    <script defer src="assets/js/storage.js"></script>
+    <script defer src="assets/js/require-auth.js"></script>
+    <script defer src="app.js"></script>
+
+    <!-- Component loader + navbar behavior -->
+    <script src="assets/js/component-loader.js"></script>
+    <script src="assets/js/navbar.js"></script>
+
+    <!-- Ensure footer year is set after components load -->
+    <script>
+      (function waitSetYear(attempts) {
+        attempts = attempts || 0;
+        var el = document.getElementById("year");
+        if (el) {
+          el.textContent = new Date().getFullYear();
+          return;
+        }
+        if (attempts < 50)
+          setTimeout(function () {
+            waitSetYear(attempts + 1);
+          }, 100);
+      })();
+    </script>
+    <script>
+      // اقتباس عشوائي
+      const quotes = [
+        "كل بذرة معرفة تُزرع اليوم، ستثمر غدًا أثرًا لا يزول 🌱",
+        "الدرس ليس محتوى يُقدَّم… بل شرارة تُشعل عقولًا ✨",
+        "أنت تبني في عقول طلابك ما لا يهدمه الزمن 🕊️",
+        "المعلم لا يُخرِج طلابًا… بل يطلق أجيالًا 🌍",
+        "كل سؤال تطرحه يفتح نافذة لعالمٍ جديد 🔑",
+        "قُم للمعلم وفِّه التبجيلا … كاد المعلم أن يكون رسولاً 📖",
+        "لو لم أكن ملكًا ، لكنت معلمًا. -فيصل آل سعود",
+        "العِلمُ يرفعُ بيتًا لا عِمادَ له … والجهلُ يهدمُ بيتَ العزِّ والشرفِ 🏛️",
       ];
-      vars.forEach(v=> root.style.setProperty(v, hex));
-
-      // درجات مشتقة شائعة (لو احتاجها CSS)
-      if (rgb){
-        root.style.setProperty('--accent-r', rgb.r);
-        root.style.setProperty('--accent-g', rgb.g);
-        root.style.setProperty('--accent-b', rgb.b);
-        // أمثلة على ظلال/شفافية
-        root.style.setProperty('--accent-20',  'color-mix(in oklab, '+hex+' 20%, transparent)');
-        root.style.setProperty('--accent-12',  'color-mix(in oklab, '+hex+' 12%, transparent)');
-        root.style.setProperty('--accent-08',  'color-mix(in oklab, '+hex+' 8%, transparent)');
-      }
-
-      // تحديث لون شريط المتصفح على الموبايل
-      var meta = document.getElementById('metaTheme');
-      if (meta && hex) meta.setAttribute('content', hex);
-    }
-
-    function getSaved(){
-      try {
-        var v = localStorage.getItem(KEY);
-        if (v && typeof v === 'string' && v.trim()) return v.trim();
-      } catch(_){}
-      return null;
-    }
-
-    // طبّقي اللون عند التحميل
-    applyAccent(getSaved());
-
-    // استمعي لأي تحديث لون من صفحات أخرى عبر storage
-    window.addEventListener('storage', function(e){
-      if (e && e.key === KEY) applyAccent(e.newValue);
-    });
-
-    // دعم حدث مخصّص (لو تغيّر اللون داخل نفس الصفحة)
-    window.addEventListener('athar:theme-color', function(e){
-      applyAccent(e && e.detail);
-      try { localStorage.setItem(KEY, e.detail || ''); } catch(_){}
-    });
-  })();
-</script>
-</head>
-<body>
-  <div class="global-bg"></div>
-  <div class="backdrop"></div>
-  <div class="pattern"></div>
-
-  <!-- الشريط العلوي (موحّد) -->
-  <div class="topbar">
-    <div class="left-actions">
-      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-    </div>
-    <div class="actions">
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-    </div>
-    <div class="user">
-      <span id="nav-auth" style="display:none; gap:10px"></span>
-      <a id="nav-profile" class="btn" href="profile.html" style="display:none">الملف الشخصي</a>
-    </div>
-  </div>
-
-  <!-- الهيرو -->
-  <header>
-    <div class="hero">
-      <h1 class="logo">مساحة إبداعي</h1>
-      <div class="tag"><span class="dot"></span>حين يلتقي الشغف بالمعرفة .. يُصنع الأثر</div>
-    </div>
-  </header>
-
-  <main>
-    <div class="container">
-      <section class="grid" style="margin-top:10px">
-
-        <a class="box" href="athar.html" style="text-decoration:none">
-          <h3>«مُنطـَـلق»</h3>
-          <p>محرّك أفكار تربوي يولّد لك استراتيجيات وأنشطة وأسئلة تقويمية متناسقة مع مستويات بلوم — منسّقة وجاهزة للتكييف.</p>
-        </a>
-
-        <a class="box" href="darsi.html" style="text-decoration:none">
-          <h3>«مُـرتكــز»</h3>
-          <p>مخطّط مُحكم لبناء الدرس: صياغة أهداف دقيقة، افتتاحية دقيقة واحدة، ومصفوفة تقييم عملية قابلة للطباعة.</p>
-        </a>
-
-        <a class="box" href="masar.html" style="text-decoration:none">
-          <h3>«مســار»</h3>
-          <p>أنشئ جدول حصص مرنًا: اختر الأيام وعدد الحصص واتجاه العرض، لوّن المواد، واحفظ الجدول كصورة/CSV أو اطبعه.</p>
-        </a>
-
-        <a class="box" href="miyad.html" style="text-decoration:none">
-          <h3>«ميعــاد»</h3>
-          <p>تقويم فصل دراسي قابل للتخصيص: أضف المواعيد بالألوان، رتّبها حسب اليوم والحصة، وفعّل تذكير البريد قبل الموعد.</p>
-        </a>
-
-        <a class="box" href="ethraa.html" style="text-decoration:none">
-          <h3>«إثــراء»</h3>
-          <p>بطاقات ثرية وجاهزة: أحدث معلومة أو خرافة مُصحّحة أو فكرة نشاط عملي مع مصدر مختصر، وفق مادّتك ومرحلتك.</p>
-        </a>
-
-        <a class="box" href="mulham.html" style="text-decoration:none">
-          <h3>«مُلـهِم»</h3>
-          <p>مولّد أنشطة صفية ذكي: يُنتج حِزمًا حركية وجماعية وفردية بناءً على الوقت والمرحلة وبلوم، مع نسخ وطباعة فورية.</p>
-        </a>
-
-      </section>
-
-      <section class="card" style="margin-top:18px">
-        <h2 class="title">ومضـَة </h2>
-        <p class="lead" id="teacher-quote">سيظهر هنا اقتباس تحفيزي عشوائي ✨</p>
-      </section>
-    </div>
-  </main>
-
-  <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-    <p class="foot-name">ندى المجيرش</p>
-
-    <nav class="foot-links">
-      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-      <a href="complaints.html">الشكاوى والاقتراحات</a>
-    </nav>
-
-    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-  </footer>
-
-  <script>
-    (function(){
-      var y=document.getElementById('year');
-      if(y) y.textContent=new Date().getFullYear();
-    })();
-  </script>
-
-  <div class="toast" id="toast"></div>
-
-  <!-- SDKs -->
-  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="https://unpkg.com/@auth0/auth0-spa-js@2.2.0/dist/auth0-spa-js.production.js"></script>
-
-  <!-- سكربتات مشروعك (مطابقة للـ index لضمان نفس سلوك الثيم) -->
-  <script defer src="assets/js/supabase-client.js"></script>
-  <script defer src="assets/js/ui.js"></script>
-  <script defer src="assets/js/theme.js"></script>
-  <script defer src="assets/js/storage.js"></script>
-  <script defer src="assets/js/require-auth.js"></script>
-  <script defer src="app.js"></script>
-
-  <script>
-    // اقتباس عشوائي
-    const quotes = [
-      "كل بذرة معرفة تُزرع اليوم، ستثمر غدًا أثرًا لا يزول 🌱",
-      "الدرس ليس محتوى يُقدَّم… بل شرارة تُشعل عقولًا ✨",
-      "أنت تبني في عقول طلابك ما لا يهدمه الزمن 🕊️",
-      "المعلم لا يُخرِج طلابًا… بل يطلق أجيالًا 🌍",
-      "كل سؤال تطرحه يفتح نافذة لعالمٍ جديد 🔑",
-      "قُم للمعلم وفِّه التبجيلا … كاد المعلم أن يكون رسولاً 📖",
-      "لو لم أكن ملكًا ، لكنت معلمًا. -فيصل آل سعود",
-      "العِلمُ يرفعُ بيتًا لا عِمادَ له … والجهلُ يهدمُ بيتَ العزِّ والشرفِ 🏛️"
-    ];
-    document.addEventListener("DOMContentLoaded", function() {
-      const el = document.getElementById("teacher-quote");
-      if(el) el.textContent = quotes[Math.floor(Math.random() * quotes.length)];
-    });
-  </script>
-</body>
+      document.addEventListener("DOMContentLoaded", function () {
+        const el = document.getElementById("teacher-quote");
+        if (el)
+          el.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+      });
+    </script>
+  </body>
 </html>

@@ -75,6 +75,7 @@ CREATE TABLE public.miyad_settings (
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT miyad_settings_pkey PRIMARY KEY (user_id)
 );
+
 CREATE TABLE public.payment_intents (
   id bigint NOT NULL DEFAULT nextval('payment_intents_id_seq'::regclass),
   user_sub text NOT NULL,

@@ -1,0 +1,75 @@
+.wrap {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.wrap header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.wrap header .logo {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+}
+
+.wrap header h1 {
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 0 12px;
+}
+
+.wrap header .subtitle {
+  color: var(--muted);
+  font-size: 16px;
+  margin: 0;
+}
+
+.wrap article.card {
+  margin-bottom: 40px;
+}
+
+.wrap article.card h2 {
+  color: var(--primary);
+  font-size: 20px;
+  font-weight: 800;
+  margin: 24px 0 12px;
+  border-bottom: 2px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  padding-bottom: 8px;
+}
+
+.wrap article.card p {
+  line-height: 1.8;
+  margin: 12px 0;
+}
+
+.wrap article.card ul {
+  margin: 12px 0;
+  padding-inline-start: 24px;
+}
+
+.wrap article.card ul li {
+  margin: 8px 0;
+  line-height: 1.8;
+}
+
+.wrap .btns {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    margin: 20px auto;
+    padding: 0 16px;
+  }
+
+  .wrap .btns {
+    flex-direction: column;
+  }
+}

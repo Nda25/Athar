@@ -1,734 +1,376 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ملفي الشخصي — أثــر</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ملفي الشخصي — أثــر</title>
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico" />
+    <link rel="shortcut icon" href="assets/icons/favicon.ico" />
+    <link rel="apple-touch-icon" href="assets/icons/logo.png" />
+    <!-- خطوط وهوية -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- ملف النمط الأساسي (لو موجود) -->
+    <link rel="stylesheet" href="style.css" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="assets/css/profile.css" />
+  </head>
 
-  <!-- خطوط وهوية -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
+  <body>
+    <!-- خلفيات (تظهر لو طبّقتِ style.css) -->
+    <div class="global-bg"></div>
 
-  <!-- ملف النمط الأساسي (لو موجود) -->
-  <link rel="stylesheet" href="style.css" />
+    <!-- navbar component -->
+    <div id="navbar" data-component="components/navbar.html"></div>
 
-  <meta name="color-scheme" content="dark light">
+    <!-- هيدر الصفحة -->
+    <header>
+      <div class="hero">
+        <div class="hero-plate"></div>
+        <h1 class="logo">أثــر</h1>
+        <div class="tag" style="color: #d4af37">الملف الشخصــــي</div>
+      </div>
+    </header>
 
-  <!-- تحسينات سريعة + fallback لو تعطل style.css -->
-  <style>
-    :root{
-      --sea-600:#1e40af;
-      --card:#ffffff;
-      --ink:#0f172a;
-      --primary:var(--sea-600);
-    }
-    @media (prefers-color-scheme: dark){
-      :root{ --card:#0f172a; --ink:#e5e7eb; }
-    }
-    body{ background:transparent; color:var(--ink); font-family:"Cairo",system-ui,Tahoma,Arial; margin:0; }
-    .container{ width:100%; max-width:980px; margin:0 auto; padding:0 16px; }
-    .page-grid{ display:grid; gap:16px; grid-template-columns:1fr; }
-    .card[data-ready="0"]{ opacity:0 }
-    .card[data-ready="1"]{ opacity:1; transition:opacity .18s ease }
-
-    /* خلفية عامة شفافة (تظهر صورة bg من style.css) */
-    .global-bg,.backdrop,.pattern{ position:fixed; inset:0; pointer-events:none; }
-    .global-bg{ z-index:-2 }
-    .backdrop{ z-index:-3 }
-    .pattern{ z-index:-1 }
-
-    /* هيدر علوي بسيط */
-    .topbar{ position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; gap:10px; padding:12px 18px;
-      backdrop-filter:blur(8px); background:rgba(255,255,255,.7); border-bottom:1px solid rgba(30,64,175,.18); }
-    @media (prefers-color-scheme: dark){ .topbar{ background:rgba(17,24,39,.6) } }
-    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; text-decoration:none; border:1px solid rgba(30,64,175,.25); background:#fff; color:var(--ink); font-weight:800; cursor:pointer }
-    .btn.primary{ background:var(--primary); color:#fff; border-color:transparent }
-
-    header{ padding:48px 18px 28px; text-align:center }
-    .logo{ margin:0; color:var(--primary); font-weight:800; font-size:clamp(44px, 6.2vw, 84px) }
-    .tag{ display:inline-block; margin-top:12px; padding:10px 16px; border-radius:999px; background:rgba(255,255,255,.6); border:1px solid rgba(30,64,175,.25); font-weight:700 }
-
-    .box.card{ border:1px solid #e5e7eb; border-radius:14px; background:var(--card,#fff); padding:16px }
-    .sub{ color:#6b7280; font-size:13px; margin:0 0 12px }
-
-    /* الهيدر الشخصي */
-    .profile-header{ display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; padding:18px; border:1px solid #e5e7eb; border-radius:14px; background:var(--card,#fff); }
-    .ph-avatar{ position:relative; width:96px; height:96px }
-    .ph-avatar img{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid #eef; background:#f5f7ff }
-    .ph-edit{ position:absolute; right:-6px; bottom:-6px; background:var(--primary); color:#fff; border-radius:16px; padding:4px 8px; font-size:12px; cursor:pointer; border:1px solid #fff }
-    .ph-name{ font-weight:800; font-size:22px; display:flex; align-items:center; gap:8px; flex-wrap:wrap }
-    .badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-weight:800; border:1px solid transparent }
-    .badge.active{ background:#dcfce7; color:#166534; border-color:#bbf7d0 }
-    .badge.trial{ background:#dbeafe; color:#1e3a8a; border-color:#bfdbfe }
-    .badge.inactive{ background:#fee2e2; color:#991b1b; border-color:#fecaca }
-
-    /* شبكة */
-    .grid-2{ display:grid; gap:16px; grid-template-columns:1fr 1fr }
-    @media (max-width:900px){ .grid-2{ grid-template-columns:1fr } .ph-actions{ justify-content:center } .profile-header{ grid-template-columns:1fr; text-align:center; justify-items:center } }
-
-    /* جدول فواتير */
-    .table{ width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:12px; border:1px solid #e5e7eb }
-    .table th, .table td{ padding:10px 12px; text-align:right }
-    .table thead th{ background:#f8fafc; font-weight:800; font-size:13px; border-bottom:1px solid #e5e7eb }
-    .table tbody tr+tr td{ border-top:1px solid #f1f5f9 }
-    .pill{ padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid #e5e7eb; background:#fff }
-    .pill.paid{ background:#dcfce7; color:#166534; border-color:#bbf7d0 }
-    .pill.refunded{ background:#f1f5f9; color:#0f172a }
-    .pill.canceled{ background:#fee2e2; color:#991b1b; border-color:#fecaca }
-    .pill.expired{ background:#fef9c3; color:#854d0e; border-color:#fde68a }
-
-    /* Theme picker */
-    .theme-picker{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
-    .theme-picker button{ all:unset; display:inline-block; width:28px; height:28px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #e5e7eb; cursor:pointer }
-    .theme-picker button.is-active{ outline:3px solid color-mix(in oklab, var(--primary) 65%, white); outline-offset:2px }
-    .theme-note{ font-size:12px; color:#6b7280; margin-top:6px }
-
-    /* محرر القص */
-    .modal{ position:fixed; inset:0; background:#0009; display:none; align-items:center; justify-content:center; z-index:2147483000 }
-    .modal.show{ display:flex }
-    .modal .panel{ width:min(96vw,760px); background:#0b1324; color:#e5e7eb; border-radius:14px; border:1px solid #1f2a44; box-shadow:0 20px 60px #0006; overflow:hidden }
-    .panel .head{ padding:10px 14px; border-bottom:1px solid #1f2a44; display:flex; align-items:center; justify-content:space-between }
-    .panel .body{ padding:14px; display:grid; gap:12px; grid-template-columns:1fr 260px }
-    .crop-stage{ position:relative; background:#0f172a; border:1px solid #1f2a44; border-radius:10px; height:440px; overflow:hidden }
-    .crop-canvas,.crop-overlay{ position:absolute; inset:0; width:100%; height:100% }
-    .ctrls{ display:grid; gap:10px; align-content:start }
-    .ctrls .row{ display:flex; align-items:center; gap:8px }
-    .ctrls label{ font-size:12px; opacity:.85 }
-    .ctrls select,.ctrls input[type="range"]{ width:100% }
-    .panel .foot{ padding:12px 14px; border-top:1px solid #1f2a44; display:flex; gap:10px; justify-content:flex-end }
-    .btn.small{ padding:8px 12px; font-size:14px }
-  </style>
-</head>
-
-<body>
-  <!-- خلفيات (تظهر لو طبّقتِ style.css) -->
-  <div class="global-bg"></div>
-  <div class="backdrop"></div>
-  <div class="pattern"></div>
-
-  <!-- الشريط العلوي -->
-  <div class="topbar">
-    <div class="left-actions"><a class="btn" href="index.html">الرئيسية</a></div>
-    <div class="actions">
-      <button class="btn" id="themeToggle">🌓</button>
-      <a class="btn primary" href="pricing.html">الدفع والإشتراك</a>
-    </div>
-  </div>
-
-  <!-- هيدر الصفحة -->
-  <header>
-    <div class="hero">
-      <div class="hero-plate"></div>
-      <h1 class="logo">أثــر</h1>
-<div class="tag" style="color:#d4af37"> الملف الشخصــــي </div>
-    </div>
-  </header>
-
-  <!-- المحتوى -->
-  <main>
-    <div class="container page-grid">
-      <!-- هيدر الحساب -->
-      <section class="profile-header card" id="cardHeader" data-ready="0">
-        <div class="ph-avatar">
-          <!-- صورة افتراضية inline — لا 404 -->
-          <img id="u-avatar" alt="صورة الحساب"
-               src="data:image/svg+xml;utf8,<?xml version='1.0' encoding='UTF-8'?><svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23e5f0ff'/><stop offset='100%' stop-color='%23cfe0ff'/></linearGradient></defs><rect width='96' height='96' rx='48' fill='url(%23g)'/><circle cx='48' cy='38' r='16' fill='%23b7c7ff'/><path d='M16 82c6-16 22-24 32-24s26 8 32 24' fill='%23d7e4ff'/></svg>">
-          <label class="ph-edit" title="تعديل الصورة">
-            ✎
-            <input id="avatarInput" type="file" accept="image/*" hidden>
-          </label>
-        </div>
-        <div class="ph-identity">
-          <div class="ph-name">
-            <span id="displayName" class="js-user-name">—</span>
-            <button id="editNameBtn" class="btn" style="padding:2px 8px">تعديل</button>
+    <!-- المحتوى -->
+    <main>
+      <div class="container page-grid">
+        <!-- هيدر الحساب -->
+        <section class="profile-header card" id="cardHeader" data-ready="0">
+          <div class="ph-avatar">
+            <!-- صورة افتراضية inline — لا 404 -->
+            <img
+              id="u-avatar"
+              alt="صورة الحساب"
+              src="data:image/svg+xml;utf8,<?xml version='1.0' encoding='UTF-8'?><svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23e5f0ff'/><stop offset='100%' stop-color='%23cfe0ff'/></linearGradient></defs><rect width='96' height='96' rx='48' fill='url(%23g)'/><circle cx='48' cy='38' r='16' fill='%23b7c7ff'/><path d='M16 82c6-16 22-24 32-24s26 8 32 24' fill='%23d7e4ff'/></svg>"
+            />
+            <label class="ph-edit" title="تعديل الصورة">
+              ✎
+              <input id="avatarInput" type="file" accept="image/*" hidden />
+            </label>
           </div>
-          <div class="ph-meta" style="color:#6b7280;font-size:13px">
-            <span><strong>البريد:</strong> <span id="u-email">—</span></span> ·
-            <span><strong>المعرّف:</strong> <span id="u-sub">—</span></span>
+          <div class="ph-identity">
+            <div class="ph-name">
+              <span id="displayName" class="js-user-name">—</span>
+              <button id="editNameBtn" class="btn" style="padding: 2px 8px">
+                تعديل
+              </button>
+            </div>
+            <div class="ph-meta" style="font-size: 13px">
+              <span><strong>البريد:</strong> <span id="u-email">—</span></span>
+              ·
+              <span><strong>المعرّف:</strong> <span id="u-sub">—</span></span>
+            </div>
+            <div id="acc-badge" class="badge inactive" data-membership-badge>
+              غير نشط
+            </div>
           </div>
-<div id="acc-badge" class="badge inactive" data-membership-badge>غير نشط</div>
-        </div>
-        <div class="ph-actions">
-          <a class="btn" href="pricing.html">إدارة الاشتراك</a>
-          <button id="logout" class="btn">تسجيل الخروج</button>
-        </div>
-      </section>
-
-      <!-- شبكة -->
-      <section class="grid-2">
-        <!-- تفاصيل الاشتراك -->
-        <div class="box card" id="cardSub" data-ready="0">
-          <h3>تفاصيل الاشتراك</h3>
-          <p class="sub">معلومات تساعدك على متابعة حالة حسابك.</p>
-          <div style="display:grid;grid-template-columns:160px 1fr;gap:8px">
-            <div class="muted">تاريخ التسجيل:</div><div id="u-joined">—</div>
-            <div class="muted">آخر ظهور:</div><div id="u-last">—</div>
-            <div class="muted">حالة الحساب:</div><div id="u-status-text">—</div>
-<div class="muted">الخطة الحالية:</div><div id="u-plan" data-membership-plan>—</div>
-<div class="muted">تاريخ تفعيل/انتهاء:</div><div id="u-activation" data-membership-exp>—</div>
+          <div class="ph-actions">
+            <a class="btn" href="pricing.html" >إدارة الاشتراك</a>
+            <a id="logout" class="btn">تسجيل الخروج</a>
           </div>
-        </div>
+        </section>
 
-        <!-- تخصيص الواجهة -->
-        <div class="box card">
-          <h3>تخصيص الواجهة</h3>
-          <p class="sub">اختر لونك المفضل—يُحفَظ تلقائيًا لحسابك.</p>
-          <div id="themePicker" class="theme-picker" data-v2="1" aria-label="لوحة ألوان">
-            <button data-color="#1f2937" title="أسود"></button>
-            <button data-color="#064e3b" title="زيتي"></button>
-            <button data-color="#16a34a" title="أخضر"></button>
-            <button data-color="#0ea5e9" title="سماوي"></button>
-            <button data-color="#6366f1" title="بنفسجي"></button>
-            <button data-color="#f59e0b" title="برتقالي"></button>
-            <button data-color="#facc15" title="أصفر"></button>
-            <button data-color="#be123c" title="خمري"></button>
-            <button data-reset title="الافتراضي"></button>
+        <!-- شبكة -->
+        <section class="grid-2">
+          <!-- تفاصيل الاشتراك -->
+          <div class="box card" id="cardSub" data-ready="0">
+            <h3>تفاصيل الاشتراك</h3>
+            <p class="sub">معلومات تساعدك على متابعة حالة حسابك.</p>
+            <div
+              style="display: grid; grid-template-columns: 160px 1fr; gap: 8px"
+            >
+              <div class="muted">تاريخ التسجيل:</div>
+              <div id="u-joined">—</div>
+              <div class="muted">آخر ظهور:</div>
+              <div id="u-last">—</div>
+              <div class="muted">حالة الحساب:</div>
+              <div id="u-status-text">—</div>
+              <div class="muted">الخطة الحالية:</div>
+              <div id="u-plan" data-membership-plan>—</div>
+              <div class="muted">تاريخ تفعيل/انتهاء:</div>
+              <div id="u-activation" data-membership-exp>—</div>
+            </div>
           </div>
-          <div class="theme-note">يمكنك العودة للّون الافتراضي في أي وقت.</div>
-        </div>
 
-        <!-- الفواتير -->
-        <div class="box card" id="cardInvoices" data-ready="0" style="grid-column:1/-1">
-          <h3>الفواتير</h3>
-          <p class="sub">تعرض عمليات الدفع بعد الإشتراك .</p>
-          <div id="invWrap">
-            <table class="table" id="invTable" style="display:none">
-              <thead><tr><th>التاريخ</th><th>المبلغ</th><th>البوابة</th><th>الحالة</th><th>المرجع</th></tr></thead>
-              <tbody id="invBody"></tbody>
-            </table>
-            <div id="invEmpty" class="muted">لا توجد فواتير حتى الآن.</div>
+          <!-- تخصيص الواجهة -->
+          <div class="box card">
+            <h3>تخصيص الواجهة</h3>
+            <p class="sub">اختر لونك المفضل—يُحفَظ تلقائيًا لحسابك.</p>
+            <div
+              id="themePicker"
+              class="theme-picker"
+              data-v2="1"
+              aria-label="لوحة ألوان"
+            >
+              <button data-color="#1f2937" title="أسود"></button>
+              <button data-color="#064e3b" title="زيتي"></button>
+              <button data-color="#16a34a" title="أخضر"></button>
+              <button data-color="#0ea5e9" title="سماوي"></button>
+              <button data-color="#6366f1" title="بنفسجي"></button>
+              <button data-color="#f59e0b" title="برتقالي"></button>
+              <button data-color="#facc15" title="أصفر"></button>
+              <button data-color="#be123c" title="خمري"></button>
+              <button data-reset title="الافتراضي"></button>
+            </div>
+            <div class="theme-note">
+              يمكنك العودة للّون الافتراضي في أي وقت.
+            </div>
           </div>
+
+          <!-- الفواتير -->
+          <div
+            class="box card"
+            id="cardInvoices"
+            data-ready="0"
+            style="grid-column: 1/-1"
+          >
+            <h3>الفواتير</h3>
+            <p class="sub">تعرض عمليات الدفع بعد الإشتراك .</p>
+            <div id="invWrap">
+              <table class="table" id="invTable" style="display: none">
+                <thead>
+                  <tr>
+                    <th>التاريخ</th>
+                    <th>المبلغ</th>
+                    <th>البوابة</th>
+                    <th>الحالة</th>
+                    <th>المرجع</th>
+                  </tr>
+                </thead>
+                <tbody id="invBody"></tbody>
+              </table>
+              <div id="invEmpty" class="muted">لا توجد فواتير حتى الآن.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- الشكاوى والاقتراحات -->
+        <section class="card" style="grid-column: 1/-1">
+          <h3>الشكاوى والاقتراحات</h3>
+          <p class="sub">تتبع حالة شكاويك واقتراحاتك المرسلة.</p>
+
+          <div class="grid grid-2">
+            <!-- قائمة الشكاوى -->
+            <div class="card">
+              <div id="user-complaints" class="complaints-list">
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <p>جاري تحميل الشكاوى...</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- تفاصيل الشكوى -->
+            <div class="card" id="complaint-detail">
+              <h3 style="margin-top: 0; font-size: 18px">التفاصيل</h3>
+              <div id="complaint-empty" class="muted">
+                اختر شكوى من القائمة…
+              </div>
+
+              <div id="complaint-box" class="hidden">
+                <p style="margin: 10px 0">
+                  <strong>العنوان:</strong> <span id="cd-subject">—</span>
+                </p>
+                <p style="margin: 10px 0">
+                  <strong>النوع:</strong> <span id="cd-kind">—</span>
+                </p>
+                <p style="margin: 10px 0">
+                  <strong>الحالة:</strong>
+                  <span id="cd-status" class="pill">—</span>
+                </p>
+
+                <div class="field">
+                  <label>سجل الرسائل</label>
+                  <div
+                    id="cd-thread"
+                    style="
+                      border: 1px solid rgba(229, 231, 235, 0.2);
+                      border-radius: 8px;
+                      padding: 16px;
+                      max-height: 340px;
+                      overflow: auto;
+                      background: rgba(0, 0, 0, 0.02);
+                    "
+                  ></div>
+                </div>
+
+                <div class="field">
+                  <label>الرد على الإدارة</label>
+                  <textarea
+                    id="cd-reply"
+                    rows="4"
+                    placeholder="اكتب ردك هنا…"
+                  ></textarea>
+                </div>
+
+                <div class="actions-row">
+                  <button class="btn primary" id="cd-send">إرسال الرد</button>
+                  <span id="cd-statusmsg" class="muted"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; text-align: center">
+            <a href="complaints.html" class="btn primary">إرسال شكوى جديدة</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Name Edit Modal -->
+    <div id="nameEditModal" class="modal" style="display: none">
+      <div class="modal-overlay" onclick="closeNameModal()"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>تعديل الاسم</h3>
+          <button class="modal-close" onclick="closeNameModal()">
+            &times;
+          </button>
         </div>
-      </section>
-    </div>
-  </main>
-
-  <!-- الذيل -->
-  <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-    <p class="foot-name">ندى المجيرش</p>
-    <nav class="foot-links">
-      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-      <a href="complaints.html">الشكاوى والاقتراحات</a>
-    </nav>
-    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-  </footer>
-
-  <script>(function(){ var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear(); })();</script>
-  <div class="toast" id="toast" style="position:fixed;bottom:18px;right:18px;background:#111827;color:#fff;padding:10px 14px;border-radius:10px;display:none"></div>
-
-  <!-- مودال القص -->
-  <div id="cropModal" class="modal" aria-hidden="true">
-    <div class="panel" role="dialog" aria-modal="true" aria-label="قصّ الصورة">
-      <div class="head"><strong>قصّ الصورة</strong><button class="btn small" data-close>إغلاق</button></div>
-      <div class="body">
-        <div class="crop-stage"><canvas id="cropCanvas" class="crop-canvas"></canvas><canvas id="cropOverlay" class="crop-overlay"></canvas></div>
-        <div class="ctrls">
-          <div class="row"><label>النسبة:</label><select id="cropAspect"><option value="1">1:1 (مربّع)</option><option value="1.3333333">4:3</option><option value="0.75">3:4</option></select></div>
-          <div class="row"><label>التقريب:</label><input id="cropZoom" type="range" min="0.5" max="3" step="0.01" value="1"></div>
-          <div class="row"><label>الجودة:</label><input id="cropQuality" type="range" min="0.6" max="0.95" step="0.01" value="0.82"></div>
-          <div class="row"><label>الحجم الأقصى(px):</label><input id="cropMax" type="number" min="256" max="2048" step="64" value="768"></div>
-          <div class="row" style="font-size:12px;color:#94a3b8">اسحبي الصورة داخل الإطار وغيّري التقريب.</div>
+        <div class="modal-body">
+          <label for="newNameInput">الاسم الجديد:</label>
+          <input
+            type="text"
+            id="newNameInput"
+            placeholder="أدخل الاسم الجديد"
+          />
+        </div>
+        <div class="modal-footer">
+          <button class="btn" onclick="closeNameModal()">إلغاء</button>
+          <button class="btn primary" onclick="saveNewName()">حفظ</button>
         </div>
       </div>
-      <div class="foot"><button id="cropCancel" class="btn">إلغاء</button><button id="cropConfirm" class="btn primary">حفظ ورفع</button></div>
     </div>
-  </div>
 
-  <!-- SDKs -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/supabase-client.js"></script>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+    <script>
+      (function () {
+        var y = document.getElementById("year");
+        if (y) y.textContent = new Date().getFullYear();
+      })();
+    </script>
+    <div
+      class="toast"
+      id="toast"
+      style="
+        position: fixed;
+        bottom: 18px;
+        right: 18px;
+        background: #111827;
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 10px;
+        display: none;
+      "
+    ></div>
 
-  <!-- تعريف آمن لـ $ (مرة واحدة فقط) -->
-  <script>
-    window.$ = window.$ || (sel => document.querySelector(sel));
-    function toast(msg){ const t=$('#toast'); if(!t){ alert(msg); return; } t.textContent=msg; t.style.display='block'; setTimeout(()=>{ t.style.display='none'; },1600); }
-  </script>
+    <!-- مودال القص -->
+    <div id="cropModal" class="modal" aria-hidden="true">
+      <div
+        class="panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="قصّ الصورة"
+      >
+        <div class="head">
+          <strong>قصّ الصورة</strong
+          ><button class="btn small" data-close>إغلاق</button>
+        </div>
+        <div class="body">
+          <div class="crop-stage">
+            <canvas id="cropCanvas" class="crop-canvas"></canvas
+            ><canvas id="cropOverlay" class="crop-overlay"></canvas>
+          </div>
+          <div class="ctrls">
+            <div class="row">
+              <label>النسبة:</label
+              ><select id="cropAspect">
+                <option value="1">1:1 (مربّع)</option>
+                <option value="1.3333333">4:3</option>
+                <option value="0.75">3:4</option>
+              </select>
+            </div>
+            <div class="row">
+              <label>التقريب:</label
+              ><input
+                id="cropZoom"
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.01"
+                value="1"
+              />
+            </div>
+            <div class="row">
+              <label>الجودة:</label
+              ><input
+                id="cropQuality"
+                type="range"
+                min="0.6"
+                max="0.95"
+                step="0.01"
+                value="0.82"
+              />
+            </div>
+            <div class="row">
+              <label>الحجم الأقصى(px):</label
+              ><input
+                id="cropMax"
+                type="number"
+                min="256"
+                max="2048"
+                step="64"
+                value="768"
+              />
+            </div>
+            <div class="row" style="font-size: 12px; color: #94a3b8">
+              اسحبي الصورة داخل الإطار وغيّري التقريب.
+            </div>
+          </div>
+        </div>
+        <div class="foot">
+          <button id="cropCancel" class="btn">إلغاء</button
+          ><button id="cropConfirm" class="btn primary">حفظ ورفع</button>
+        </div>
+      </div>
+    </div>
 
-  <!-- منطق الصفحة -->
-  <script>
-    function renderBadge(status){
-      const el = document.getElementById('acc-badge');
-      el.classList.remove('active','trial','inactive');
-      if (status === 'active') { el.classList.add('active'); el.textContent='مفعّل'; }
-      else if (status === 'trial') { el.classList.add('trial'); el.textContent='تجريبي'; }
-      else { el.classList.add('inactive'); el.textContent='غير نشط'; }
-    }
+    <!-- SDKs -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/supabase-client.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-    (function initThemePicker(){
-      const root = document.documentElement;
-      const picker = document.getElementById('themePicker');
-      if (!picker) return;
+    <!-- Component Loader -->
+    <script src="assets/js/component-loader.js"></script>
+    <script src="assets/js/navbar.js"></script>
 
-      [...picker.querySelectorAll('button')].forEach(b=>{
-        if (b.dataset.color) b.style.backgroundColor = b.dataset.color;
-        if (b.hasAttribute('data-reset')) b.style.background = '#111827';
-      });
-
-      const saved = localStorage.getItem('athar:theme');
-      if (saved) {
-        root.style.setProperty('--primary', saved);
-        const btn = [...picker.querySelectorAll('button')].find(b=>b.dataset.color === saved);
-        (btn || picker.querySelector('[data-reset]'))?.classList.add('is-active');
-      } else {
-        picker.querySelector('[data-reset]')?.classList.add('is-active');
-      }
-
-      picker.addEventListener('click', async (e)=>{
-        const btn = e.target.closest('button'); if (!btn) return;
-        const reset = btn.hasAttribute('data-reset');
-        let color = null;
-        if (reset){
-          localStorage.removeItem('athar:theme');
-          const def = getComputedStyle(root).getPropertyValue('--sea-600').trim() || '#1e40af';
-          root.style.setProperty('--primary', def);
-        }else{
-          color = btn.dataset.color; if (!color) return;
-          root.style.setProperty('--primary', color);
-          localStorage.setItem('athar:theme', color);
+    <!-- تعريف آمن لـ $ (مرة واحدة فقط) -->
+    <script>
+      window.$ = window.$ || ((sel) => document.querySelector(sel));
+      function toast(msg) {
+        const t = $("#toast");
+        if (!t) {
+          alert(msg);
+          return;
         }
-        [...picker.querySelectorAll('button')].forEach(b=>b.classList.remove('is-active'));
-        btn.classList.add('is-active');
-
-        try{
-          const u = await (window.auth0Client||window.auth)?.getUser?.();
-          if (window.supa && u?.sub) {
-            await window.supa.from('user_prefs').upsert(
-              { user_sub: u.sub, theme_color: color || null },
-              { onConflict: 'user_sub' }
-            );
-          }
-        }catch(_){}
-      });
-    })();
-
-    // محرّر القص (كما هو)
-    const cropper = (function(){
-      let modal, canvas, ctx, overlay, octx, img = null;
-      let state = { zoom:1, minZoom:1, ox:0, oy:0, aspect:1, quality:0.82, max:768 };
-
-      function getCropBox(W,H){
-        const stageRatio = W/H;
-        let cw=W, ch=H;
-        if (stageRatio > state.aspect) { cw = H * state.aspect; ch = H; }
-        else { cw = W; ch = W/state.aspect; }
-        const cx=(W-cw)/2, cy=(H-ch)/2;
-        return {cx,cy,cw,ch};
+        t.textContent = msg;
+        t.style.display = "block";
+        setTimeout(() => {
+          t.style.display = "none";
+        }, 1600);
       }
-      function clampPan(){
-        if (!img || !canvas) return;
-        const W=canvas.width, H=canvas.height;
-        const {cx,cy,cw,ch} = getCropBox(W,H);
-        const iw = img.width * state.zoom, ih = img.height * state.zoom;
-        const minX = cx + cw - iw, maxX = cx;
-        const minY = cy + ch - ih, maxY = cy;
-        state.ox = (iw<=cw) ? cx+(cw-iw)/2 : Math.max(minX, Math.min(maxX, state.ox));
-        state.oy = (ih<=ch) ? cy+(ch-ih)/2 : Math.max(minY, Math.min(maxY, state.oy));
-      }
-      function computeMinZoom(){
-        const W=canvas.width, H=canvas.height;
-        const {cw,ch} = getCropBox(W,H);
-        return Math.max(cw/img.width, ch/img.height);
-      }
-      function draw(){
-        if (!img) return;
-        const W=canvas.width, H=canvas.height;
-        ctx.clearRect(0,0,W,H); ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,W,H);
-        const {cx,cy,cw,ch} = getCropBox(W,H);
-        clampPan();
-        ctx.save(); ctx.beginPath(); ctx.rect(cx,cy,cw,ch); ctx.clip();
-        ctx.drawImage(img, state.ox, state.oy, img.width*state.zoom, img.height*state.zoom);
-        ctx.restore();
-        octx.clearRect(0,0,W,H); octx.fillStyle='#0008'; octx.fillRect(0,0,W,H);
-        octx.clearRect(cx,cy,cw,ch); octx.strokeStyle='#fff'; octx.lineWidth=2; octx.strokeRect(cx+1,cy+1,cw-2,ch-2);
-      }
-      function setCanvasSize(){
-        const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width=Math.max(320, Math.round(rect.width));
-        canvas.height=Math.max(240, Math.round(rect.height));
-        overlay.width=canvas.width; overlay.height=canvas.height;
-      }
-      function setZoom(nz, fx, fy){
-        const prev = state.zoom;
-        nz = Math.max(state.minZoom, Math.min(state.minZoom*3, nz));
-        if (!img || nz===prev){ state.zoom=nz; clampPan(); draw(); return; }
-        const W=canvas.width, H=canvas.height;
-        const {cx,cy,cw,ch} = getCropBox(W,H);
-        fx = (fx ?? (cx+cw/2)); fy=(fy ?? (cy+ch/2));
-        const imgXBefore = (fx - state.ox)/prev, imgYBefore=(fy - state.oy)/prev;
-        state.zoom=nz;
-        state.ox = fx - imgXBefore*nz; state.oy = fy - imgYBefore*nz;
-        clampPan(); draw();
-      }
-      function open(file){
-        return new Promise((resolve)=>{
-          modal = document.getElementById('cropModal');
-          const stage = modal.querySelector('.crop-stage');
-          canvas=document.getElementById('cropCanvas'); overlay=document.getElementById('cropOverlay');
-          ctx=canvas.getContext('2d'); octx=overlay.getContext('2d');
-          state.zoom=1; state.ox=0; state.oy=0;
+    </script>
 
-          modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
+    <!-- منطق الصفحة -->
+    <script src="assets/js/profile.js"></script>
+    <!-- حارس الوصول (لا يعرّف $) -->
+    <script src="assets/js/require-auth.js"></script>
 
-          const image=new Image();
-          image.onload=()=>{ img=image; setCanvasSize(); state.minZoom=computeMinZoom(); state.zoom=state.minZoom;
-            const {cx,cy,cw,ch}=getCropBox(canvas.width,canvas.height);
-            const iw=img.width*state.zoom, ih=img.height*state.zoom;
-            state.ox=cx+(cw-iw)/2; state.oy=cy+(ch-ih)/2;
-            const z=document.getElementById('cropZoom'); z.min=state.minZoom.toFixed(2); z.max=(state.minZoom*3).toFixed(2); z.value=state.minZoom.toFixed(2);
-            draw();
-          };
-          image.onerror=()=>{ toast('تعذر قراءة الصورة'); close(); resolve(null); };
-          image.src = file instanceof File ? URL.createObjectURL(file) : file;
-
-          function close(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); window.onmouseup=null; window.ontouchend=null; canvas.onwheel=null; }
-
-          function onDown(e){ e.preventDefault(); dragging=true; lastX=(e.touches?e.touches[0].clientX:e.clientX); lastY=(e.touches?e.touches[0].clientY:e.clientY); }
-          function onMove(e){ if(!dragging) return; const x=(e.touches?e.touches[0].clientX:e.clientX),y=(e.touches?e.touches[0].clientY:e.clientY);
-            state.ox+=(x-lastX); state.oy+=(y-lastY); lastX=x; lastY=y; clampPan(); draw(); }
-          function onUp(){ dragging=false; }
-          let dragging=false,lastX=0,lastY=0;
-
-          canvas.onmousedown=onDown; canvas.onmousemove=onMove; window.onmouseup=onUp;
-          canvas.ontouchstart=onDown; canvas.ontouchmove=onMove; window.ontouchend=onUp;
-          canvas.onwheel=(e)=>{ e.preventDefault(); const f=(e.deltaY<0?1.05:0.95); const r=canvas.getBoundingClientRect(); setZoom(state.zoom*f, e.clientX-r.left, e.clientY-r.top); };
-
-          document.getElementById('cropAspect').onchange=()=>{ state.aspect=parseFloat(document.getElementById('cropAspect').value)||1; state.minZoom=computeMinZoom();
-            state.zoom=Math.max(state.zoom,state.minZoom);
-            const z=document.getElementById('cropZoom'); z.min=state.minZoom.toFixed(2); z.max=(state.minZoom*3).toFixed(2); if(parseFloat(z.value)<state.minZoom) z.value=state.minZoom.toFixed(2);
-            const {cx,cy,cw,ch}=getCropBox(canvas.width,canvas.height); const iw=img.width*state.zoom, ih=img.height*state.zoom;
-            state.ox=cx+(cw-iw)/2; state.oy=cy+(ch-ih)/2; clampPan(); draw();
-          };
-          document.getElementById('cropZoom').oninput=()=> setZoom(parseFloat(document.getElementById('cropZoom').value)||state.minZoom);
-          document.getElementById('cropQuality').oninput=()=> state.quality=parseFloat(document.getElementById('cropQuality').value)||0.82;
-          document.getElementById('cropMax').onchange=()=> state.max=Math.max(256, Math.min(2048, parseInt(document.getElementById('cropMax').value||768,10)));
-
-          document.getElementById('cropCancel').onclick=()=>{ close(); resolve(null); };
-          modal.querySelector('[data-close]').onclick=()=>{ close(); resolve(null); };
-          document.getElementById('cropConfirm').onclick=()=>{
-            const W=canvas.width,H=canvas.height; const {cx,cy,cw,ch}=getCropBox(W,H);
-            let outW=state.max,outH=Math.round(outW/state.aspect); if(state.aspect<1){ outH=state.max; outW=Math.round(outH*state.aspect); }
-            const out=document.createElement('canvas'); out.width=outW; out.height=outH; const o2d=out.getContext('2d');
-            const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; const tctx=tmp.getContext('2d');
-            tctx.fillStyle='#0f172a'; tctx.fillRect(0,0,W,H);
-            tctx.save(); tctx.beginPath(); tctx.rect(cx,cy,cw,ch); tctx.clip();
-            tctx.drawImage(img,state.ox,state.oy,img.width*state.zoom,img.height*state.zoom); tctx.restore();
-            const cut=tctx.getImageData(cx,cy,cw,ch); const cutCanvas=document.createElement('canvas'); cutCanvas.width=cw; cutCanvas.height=ch; cutCanvas.getContext('2d').putImageData(cut,0,0);
-            o2d.drawImage(cutCanvas,0,0,outW,outH); out.toBlob((blob)=>{ close(); resolve(blob); }, 'image/jpeg', state.quality);
-          };
-
-          const onResize = ()=>{ setCanvasSize(); state.minZoom=computeMinZoom(); if(state.zoom<state.minZoom) state.zoom=state.minZoom; clampPan(); draw(); };
-          window.addEventListener('resize', onResize, { passive:true });
-          modal.addEventListener('transitionend', function cleanup(){ if(!modal.classList.contains('show')){ window.removeEventListener('resize', onResize); modal.removeEventListener('transitionend', cleanup); }});
-        });
-      }
-      return { open };
-    })();
-
-    // تحميل بيانات الحساب + الفواتير
-    async function initProfile(){
-      const client = window.auth0Client || window.auth;
-      if (!client || !client.isAuthenticated){ return; }
-      const logged = await client.isAuthenticated().catch(()=>false);
-      if (!logged){
-        await client.loginWithRedirect({ authorizationParams:{ redirect_uri: window.location.href } });
-        return;
-      }
-
-      let user=null, claims=null;
-      try { user = await client.getUser(); } catch(_){}
-      try { claims = await client.getIdTokenClaims(); } catch(_){}
-
-      const name = localStorage.getItem('athar:displayName') || user?.name || user?.nickname || '—';
-      document.getElementById('displayName').textContent = name;
-      document.getElementById('u-email').textContent = user?.email || '—';
-      document.getElementById('u-sub').textContent   = user?.sub || '—';
-      document.getElementById('cardHeader').setAttribute('data-ready', '1');
-      await fetchLiveMembership().catch(()=>{});
-
-const NS_NEW = "https://n-athar.co/";
-const NS_OLD = "https://athar.co/";
-
-// 1) اعرضي الحالة فورًا من الـclaims (فوري للمستخدم)
-const statusClaim =
-  (claims && (claims[NS_NEW + "status"] || claims[NS_OLD + "status"])) || "inactive";
-renderBadge(statusClaim);
-document.getElementById("u-status-text").textContent =
-  statusClaim === "active" ? "مفعّل" : statusClaim === "trial" ? "تجريبي" : "غير نشط";
-
-// 2) اعرضي الخطة فورًا من الـclaims
-const planClaim =
-  (claims && (claims[NS_NEW + "plan"] || claims[NS_OLD + "plan"])) || "—";
-document.getElementById("u-plan").textContent = planClaim;
-
-// 3) إن كانت تجربة (trial) اعرضي تواريخها من الـclaims
-if (statusClaim === "trial") {
-  const trialStarted = claims?.[NS_NEW + "trial_started"] ?? claims?.[NS_OLD + "trial_started"] ?? null;
-  const trialExpires = claims?.[NS_NEW + "trial_expires"] ?? claims?.[NS_OLD + "trial_expires"] ?? null;
-  if (trialStarted || trialExpires) {
-    const s = trialStarted ? new Date(trialStarted).toLocaleDateString("ar-SA") : "—";
-    const e = trialExpires ? new Date(trialExpires).toLocaleDateString("ar-SA") : "—";
-    document.getElementById("u-activation").textContent = `${s} → ${e}`;
-  }
-}
-
-// 4) بعد ما يطلع المحتوى للمستخدم مباشرة، خلّي قاعدة البيانات تحدّثها لو لقت جديد
-setTimeout(() => {
-  window.fetchLiveMembership && window.fetchLiveMembership();
-}, 0);
-
-// تاريخ التسجيل الحقيقي من Supabase.users (auth0_sub)
-let joinedDate = null;
-try {
-  if (window.supa && user?.sub) {
-    const { data: ju } = await window.supa
-      .from('users')
-      .select('created_at')
-      .eq('auth0_sub', user.sub)
-      .maybeSingle();
-    if (ju?.created_at) joinedDate = new Date(ju.created_at);
-  }
-} catch (_) {}
-
-document.getElementById('u-joined').textContent =
-  joinedDate ? joinedDate.toLocaleDateString('ar-SA')
-             : (user?.created_at ? new Date(user.created_at).toLocaleDateString('ar-SA')
-                                  : (user?.updated_at ? new Date(user.updated_at).toLocaleDateString('ar-SA') : '—'));
-      document.getElementById('u-last').textContent = new Date().toLocaleString('ar-SA');
-      try{
-        if (window.supa && user?.email){
-          const { data: m } = await window.supa
-            .from('memberships')
-            .select('start_at,end_at,status,plan')
-            .or(`user_id.eq.${user.sub},email.eq.${(user.email||'').toLowerCase()}`)
-            .order('end_at', { ascending:false })
-            .limit(1);
-          const row = (Array.isArray(m) && m[0]) || null;
-         if (row){
-  const s = row.start_at ? new Date(row.start_at).toLocaleDateString('ar-SA') : '—';
-  const e = row.end_at   ? new Date(row.end_at).toLocaleDateString('ar-SA')   : '—';
-
-  const actEl = document.getElementById('u-activation');
-  if (status !== 'trial' || actEl.textContent === '—') {
-    actEl.textContent = `${s} → ${e}`;
-  }
-
-  if (row.plan && plan==='—') {
-    document.getElementById('u-plan').textContent = row.plan;
-  }
-}
-        }
-      }catch(_){}
-      document.getElementById('cardSub').setAttribute('data-ready','1');
-
-      try{
-        if (window.supa && user?.sub){
-          const { data: pref } = await window.supa.from('user_prefs').select('display_name,avatar_url,theme_color').eq('user_sub', user.sub).maybeSingle();
-          if (pref?.display_name){ document.getElementById('displayName').textContent = pref.display_name; localStorage.setItem('athar:displayName', pref.display_name); }
-          if (pref?.avatar_url){ document.getElementById('u-avatar').src = pref.avatar_url; localStorage.setItem('athar:avatar', pref.avatar_url); }
-          else if (user?.picture){ document.getElementById('u-avatar').src = user.picture; }
-          if (pref?.theme_color) document.documentElement.style.setProperty('--primary', pref.theme_color);
-        } else if (user?.picture){
-          document.getElementById('u-avatar').src = user.picture;
-        }
-      }catch(_){}
-
-      document.getElementById('editNameBtn').onclick = async ()=>{
-        const cur = document.getElementById('displayName').textContent.trim();
-        const nn = prompt("أدخلي الاسم المعروض:", cur || '');
-        if (!nn || !nn.trim()) return;
-        const clean = nn.trim();
-        document.getElementById('displayName').textContent = clean;
-        localStorage.setItem('athar:displayName', clean);
-        try{
-          if (window.supa && user?.sub){
-            await window.supa.from('user_prefs').upsert({ user_sub:user.sub, display_name: clean }, { onConflict:'user_sub' });
-            toast("تم تحديث الاسم ✓");
-          }
-        }catch(e){ toast("تعذر حفظ الاسم"); }
-      };
-
-      document.getElementById('avatarInput').onchange = async (ev)=>{
-        const f = ev.target.files?.[0]; if (!f) return;
-        try{
-          const blob = await cropper.open(f);
-          if (!blob){ ev.target.value=''; return; }
-          const final = new File([blob], 'avatar.jpg', { type:'image/jpeg' });
-
-          if (!window.supa) throw new Error("Supabase غير متاح");
-          const safe = (user?.sub || 'u').replace(/[|]/g,'_');
-          const path = `${safe}/${Date.now()}_avatar.jpg`;
-
-          let up = await window.supa.storage.from('avatars').upload(path, final, { upsert:true, contentType:'image/jpeg' });
-          if (up.error && /Bucket not found/i.test(up.error.message||up.error)){
-            try { await fetch('/.netlify/functions/storage-ensure'); } catch(_){}
-            up = await window.supa.storage.from('avatars').upload(path, final, { upsert:true, contentType:'image/jpeg' });
-          }
-          if (up.error) throw up.error;
-
-          const { data } = window.supa.storage.from('avatars').getPublicUrl(path);
-          const url = data.publicUrl + `?v=${Date.now()}`;
-          document.getElementById('u-avatar').src = url;
-          localStorage.setItem('athar:avatar', url);
-          await window.supa.from('user_prefs').upsert({ user_sub:user.sub, avatar_url:url }, { onConflict:'user_sub' });
-          toast("تم تحديث الصورة ✓");
-        }catch(e){ console.error(e); toast("تعذر رفع الصورة"); }
-        finally{ ev.target.value=''; }
-      };
-
-      // الفواتير
-      try{
-        const token = await (window.auth0Client||window.auth).getToken({ audience: "https://api.n-athar" }).catch(()=>null)
-                    || await (window.auth0Client||window.auth).getTokenSilently?.().catch(()=>null);
-        const res = await fetch('/.netlify/functions/invoices-list', { headers: token ? { Authorization: 'Bearer '+token } : {} });
-        const out = await res.json().catch(()=>({}));
-        if (res.ok && Array.isArray(out.rows) && out.rows.length){
-          const tb = document.getElementById('invBody'); tb.innerHTML='';
-          out.rows.forEach(r=>{
-            const tr = document.createElement('tr');
-            const d = r.created_at ? new Date(r.created_at).toLocaleString('ar-SA') : '—';
-            const amount = r.amount ? (Number(r.amount)/100).toFixed(2)+' ر.س' : (r.amount_sar ? (Number(r.amount_sar).toFixed(2)+' ر.س') : '—');
-            const st = (r.status||'').toLowerCase();
-            tr.innerHTML = `
-              <td>${d}</td>
-              <td>${amount}</td>
-              <td>${r.gateway || 'moyasar'}</td>
-              <td><span class="pill ${st}">${st||'—'}</span></td>
-              <td>${r.invoice_id || r.provider_event_id || '—'}</td>`;
-            tb.appendChild(tr);
-          });
-          document.getElementById('invTable').style.display='table';
-          document.getElementById('invEmpty').style.display='none';
-        } else {
-          document.getElementById('invTable').style.display='none';
-          document.getElementById('invEmpty').style.display='';
-        }
-      }catch(_){}
-      document.getElementById('cardInvoices').setAttribute('data-ready','1');
-    }
-
-    // خروج
-    document.addEventListener('click', (e)=>{
-      if (e.target && e.target.id === 'logout') {
-        (window.auth0Client || window.auth)?.logout({ logoutParams:{ returnTo: window.location.origin } });
-      }
-    });
-
-    // شغّل عند جاهزية Auth0
-    window.addEventListener('auth0:ready', initProfile);
-    if (window.auth0Client || window.auth) initProfile();
-  </script>
-<script>
-  // 1) هوية المستخدم من Auth0
-  async function getAuthIdentity() {
-    try {
-      const cli = window.auth0Client || window.auth;
-      const u = await cli.getUser();
-      return {
-        email: (u?.email || '').toLowerCase(),
-        sub: u?.sub || u?.user_id || u?.user?.sub || null
-      };
-    } catch { return { email:'', sub:null }; }
-  }
-
-  // 2) تحديث الواجهة — يدعم end_at أو expires_at، ويحوّل manual/weekly/monthly… إلى paid
-  function setMembershipUI({ status, plan, start_at, end_at, expires_at }) {
-    const expiry = expires_at || end_at || null;
-    const isActive = status === 'active' && (!expiry || new Date(expiry) > new Date());
-    const planNorm = ['weekly','monthly','semi','annual','manual'].includes((plan||'').toLowerCase())
-      ? 'paid' : (plan || '—');
-
-    const badge = document.querySelector('[data-membership-badge]');
-    const planEl = document.querySelector('[data-membership-plan]');
-    const expEl  = document.querySelector('[data-membership-exp]');
-    const stTxt  = document.getElementById('u-status-text');
-
-    if (badge){
-      badge.textContent = isActive ? 'مفعّل' : (status==='trial'?'تجريبي':'غير نشط');
-      badge.classList.remove('active','inactive','trial');
-      badge.classList.add(status==='trial' ? 'trial' : (isActive ? 'active' : 'inactive'));
-    }
-    if (planEl) planEl.textContent = planNorm;
-    if (expEl)  expEl.textContent  = expiry ? new Date(expiry).toLocaleDateString('ar-SA') : '—';
-    if (stTxt)  stTxt.textContent  = isActive ? 'مفعّل' : (status==='trial'?'تجريبي':'غير نشط');
-
-    // سطر لطيف: لو عندنا start/end اعرض المدى
-    const act = document.getElementById('u-activation');
-    if (act) {
-      const s = start_at ? new Date(start_at).toLocaleDateString('ar-SA') : '—';
-      const e = expiry   ? new Date(expiry).toLocaleDateString('ar-SA')   : '—';
-      act.textContent = `${s} → ${e}`;
-    }
-  }
-
-  // 3) نجلب أحدث سجل عضوية من جدول memberships مباشرة (نجرّب بـ sub ثم email)
-  async function fetchLiveMembership() {
-    try {
-      const { email, sub } = await getAuthIdentity();
-      if (!window.supa || (!email && !sub)) {
-        setMembershipUI({ status:'inactive', plan:'—', end_at:null });
-        return;
-      }
-
-      // helper: نختار الأحدث بناءً على end_at/expires_at
-      const pickLatest = (rows=[])=>{
-        if (!rows.length) return null;
-        return rows
-          .map(r => ({...r, _exp: r.expires_at || r.end_at || null }))
-          .sort((a,b)=> new Date(b._exp||0) - new Date(a._exp||0))[0];
-      };
-
-      let rows = [];
-
-      // أ) حاول user_sub
-      if (sub) {
-        const r1 = await window.supa
-          .from('memberships')
-          .select('status, plan, start_at, end_at, expires_at')
-          .eq('user_sub', sub)
-          .limit(5);
-        if (!r1.error && Array.isArray(r1.data)) rows = rows.concat(r1.data);
-
-        // احتياط: بعض الجداول القديمة كانت تسميه user_id
-        const r1b = await window.supa
-          .from('memberships')
-          .select('status, plan, start_at, end_at, expires_at')
-          .eq('user_id', sub)
-          .limit(5);
-        if (!r1b.error && Array.isArray(r1b.data)) rows = rows.concat(r1b.data);
-      }
-
-      // ب) جرّب email (لو فيه)
-      if (email) {
-        const r2 = await window.supa
-          .from('memberships')
-          .select('status, plan, start_at, end_at, expires_at')
-          .eq('email', email)
-          .limit(5);
-        if (!r2.error && Array.isArray(r2.data)) rows = rows.concat(r2.data);
-      }
-
-      const row = pickLatest(rows);
-
-      if (row) {
-        setMembershipUI(row);
-      } else {
-        setMembershipUI({ status:'inactive', plan:'—', end_at:null });
-      }
-    } catch (e) {
-      console.warn('fetchLiveMembership error', e);
-      setMembershipUI({ status:'inactive', plan:'—', end_at:null });
-    }
-  }
-
-  // نشغّلها مع Auth0 (وعندك أصلاً تنادينها داخل initProfile)
-  window.addEventListener('auth0:ready', fetchLiveMembership);
-</script>
-  <!-- حارس الوصول (لا يعرّف $) -->
-  <script src="assets/js/require-auth.js"></script>
-</body>
+    <!-- footer component -->
+    <div id="footer" data-component="components/footer.html"></div>
+  </body>
 </html>

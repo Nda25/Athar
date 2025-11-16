@@ -1,471 +1,328 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>مُـنطــلق</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
-  <meta name="color-scheme" content="dark light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>مُـنطــلق</title>
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico" />
+    <link rel="shortcut icon" href="assets/icons/favicon.ico" />
+    <link rel="apple-touch-icon" href="assets/icons/logo.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="assets/css/athar.css" />
+    <meta name="color-scheme" content="dark light" />
 
-  <!-- تطبيق الثيم مبكرًا مثل index/profile/programs -->
-  <script>
-    (function(){
-      try{
-        var c = localStorage.getItem('athar:theme');
-        if (c) document.documentElement.style.setProperty('--primary', c);
-      }catch(_){}
-    })();
-  </script>
+    <!-- تطبيق الثيم مبكرًا مثل index/profile/programs -->
+    <script>
+      (function () {
+        try {
+          var c = localStorage.getItem("athar:theme");
+          if (c) document.documentElement.style.setProperty("--primary", c);
+        } catch (_) {}
+      })();
+    </script>
 
-  <style>
-    .topbar .left-actions { display:flex; align-items:center; gap:10px; }
-    .emoji-toggle { font-size:18px; line-height:1; }
+    <style></style>
+  </head>
+  <body>
+    <div class="global-bg"></div>
 
-    .controls.card { padding:20px; }
-    .select-wrap{ position:relative }
-    .select-wrap .sel{
-      width:100%; background:#fff; color:#0f172a; border:1px solid rgba(59,130,246,.35);
-      border-radius:12px; padding:.9rem 1rem; padding-inline-start:2.2rem; outline:none; appearance:none;
-    }
-    .dark .select-wrap .sel{ background:#0f172a; color:#f1f5f9; border-color:#3b82f6; }
-    .select-wrap .sel-icon{
-      position:absolute; inset-inline-start:.7rem; top:50%; transform:translateY(-50%);
-      width:16px; height:16px; pointer-events:none; color:var(--sea-500);
-    }
-    .select-wrap .sel-icon svg{ width:16px; height:16px; display:block; fill:currentColor }
-    .dark .select-wrap .sel-icon{ color:#93c5fd }
+    <div id="navbar" data-component="components/navbar.html"></div>
 
-    .muted { color: var(--muted); font-size:.95rem; }
-
-    #out h2, #out h3 { color: var(--sea-600); margin: 0 0 8px; }
-    .dark #out h2, .dark #out h3 { color: #93c5fd; }
-
-    #chips .chip{
-      display:inline-block; padding:.28rem .65rem; border-radius:999px; background:var(--sea-100); color:#0c4a6e; font-size:.82rem; border:1px solid rgba(59,130,246,.25); margin-inline-start:6px;
-    }
-    .dark #chips .chip{ background:#0f172a; color:#e2e8f0; border-color:#3b82f6; }
-
-    #regen{ display:none; }
-
-    .brand-name{
-      font-family:"Cairo", sans-serif; font-weight:700; letter-spacing:.5px;
-      font-size:clamp(44px, 6.2vw, 84px); margin:0; color:#1e40af;
-      text-shadow:0 1px 0 rgba(255,255,255,.55);
-    }
-    .dark .brand-name{ color:#93c5fd; text-shadow:none; }
-    .brand-tag{ color:var(--muted); font-weight:700; margin-top:.4rem; }
-
-    @media (max-width: 640px){ .brand-name{ font-size:2.4rem; } }
-  </style>
-</head>
-<body>
-  <div class="global-bg"></div>
-  <div class="backdrop"></div>
-  <div class="pattern"></div>
-
-  <div class="topbar">
-    <div class="left-actions">
-      <a class="btn" href="index.html" title="الرئيسية">الرئيسية</a>
-    </div>
-    <div class="actions">
-      <button class="btn" id="themeToggle" title="الوضع الداكن/الفاتح">🌓</button>
-    </div>
-    <div class="user">
-      <span id="nav-auth" style="display:none; gap:10px"></span>
-      <a id="nav-programs" class="btn" href="programs.html" style="display:inline-flex">مساحة إبداعي</a>
-    </div>
-  </div>
-
-  <header class="brand-wrap">
-    <div class="brand-row">
-      <h1 class="brand-name">مُـنطــلق</h1>
-    </div>
-    <div class="tag"><span class="dot"></span>حيـثُ تبدأ الخطوة.. ويستمـرُ الأثـر</div>
-  </header>
-  
-  <main class="container">
-    <section class="card controls">
-      <div class="grid" style="grid-template-columns:1fr 1fr; gap:14px">
-        <div>
-          <label>المرحلة الدراسية</label>
-          <div class="select-wrap">
-            <select id="stage" class="sel">
-              <option value="" selected disabled>اختر المرحلة</option>
-              <option value="primary-lower">المرحلة الإبتدائي — دنيا</option>
-              <option value="primary-upper">المرحلة الإبتدائية — عليا</option>
-              <option value="middle">المرحلة المتوسطة</option>
-              <option value="secondary">المرحلة الثانوية</option>
-            </select>
-            <span class="sel-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg></span>
+    <!-- Load shared header component -->
+    <header class="brand-wrap">
+      <div class="brand-row">
+        <h1 class="brand-name">مُـنطــلق</h1>
+      </div>
+      <div class="tag">
+        <span class="dot"></span>حيـثُ تبدأ الخطوة.. ويستمـرُ الأثـر
+      </div>
+    </header>
+    <main class="container">
+      <section class="card controls">
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px">
+          <div>
+            <label>المرحلة الدراسية</label>
+            <div class="select-wrap">
+              <select id="stage" class="sel">
+                <option value="" selected disabled>اختر المرحلة</option>
+                <option value="primary-lower">المرحلة الإبتدائي — دنيا</option>
+                <option value="primary-upper">المرحلة الإبتدائية — عليا</option>
+                <option value="middle">المرحلة المتوسطة</option>
+                <option value="secondary">المرحلة الثانوية</option>
+              </select>
+              <span class="sel-icon" aria-hidden="true"></span>
+            </div>
+          </div>
+          <div>
+            <label>المادة</label>
+            <div class="select-wrap">
+              <select id="subject" class="sel" disabled>
+                <option value="" selected disabled>اختر المادة</option>
+              </select>
+              <span class="sel-icon" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
-        <div>
-          <label>المادة</label>
-          <div class="select-wrap">
-            <select id="subject" class="sel" disabled>
-              <option value="" selected disabled>اختر المادة</option>
-            </select>
-            <span class="sel-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg></span>
+
+        <div
+          class="grid"
+          style="grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px"
+        >
+          <div>
+            <label>تصنيف بلوم</label>
+            <div class="select-wrap">
+              <select id="type" class="sel">
+                <option>الكل</option>
+                <option>تذكّر</option>
+                <option>فهم</option>
+                <option>تطبيق</option>
+                <option>تحليل</option>
+                <option>تقييم</option>
+                <option>إبداع</option>
+              </select>
+              <span class="sel-icon" aria-hidden="true"></span>
+            </div>
+          </div>
+          <div>
+            <label>اسم الدرس</label>
+            <input id="lesson" placeholder="مثال: الاتزان الدوراني" />
           </div>
         </div>
-      </div>
 
-      <div class="grid" style="grid-template-columns:1fr 1fr; gap:14px; margin-top:12px">
-        <div>
-          <label>تصنيف بلوم</label>
-          <div class="select-wrap">
-            <select id="type" class="sel">
-              <option>الكل</option>
-              <option>تذكّر</option><option>فهم</option><option>تطبيق</option>
-              <option>تحليل</option><option>تقييم</option><option>إبداع</option>
-            </select>
-            <span class="sel-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg></span>
+        <!-- حقل التفضيل الجديد (اختياري) -->
+        <div
+          class="grid"
+          style="grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px"
+        >
+          <div>
+            <label>تفضيل شكل الاستراتيجية (اختياري)</label>
+            <div class="select-wrap">
+              <select id="preferred" class="sel">
+                <option value="">بدون تفضيل</option>
+                <option>مخطط فن</option>
+                <option>السبب والنتيجة</option>
+                <option>الرؤوس المرقمة</option>
+                <option>فكر–زاوج–شارك</option>
+                <option>بطاقات الأرقام</option>
+                <option>القبعات الست (مبسطة)</option>
+                <option>محطات التعلم</option>
+                <option>CER (ادّعاء–دليل–تفسير)</option>
+              </select>
+              <span class="sel-icon" aria-hidden="true"></span>
+            </div>
+            <div class="muted" style="margin-top: 4px">
+              لن يغيّر شكل الإخراج؛ فقط يوجّه اختيار الاستراتيجية داخل الحقول
+              نفسها.
+            </div>
           </div>
         </div>
-        <div>
-          <label>اسم الدرس</label>
-          <input id="lesson" placeholder="مثال: الاتزان الدوراني">
-        </div>
-      </div>
 
-      <!-- حقل التفضيل الجديد (اختياري) -->
-      <div class="grid" style="grid-template-columns:1fr 1fr; gap:14px; margin-top:12px">
-        <div>
-          <label>تفضيل شكل الاستراتيجية (اختياري)</label>
-          <div class="select-wrap">
-            <select id="preferred" class="sel">
-              <option value="">بدون تفضيل</option>
-              <option>مخطط فن</option>
-              <option>السبب والنتيجة</option>
-              <option>الرؤوس المرقمة</option>
-              <option>فكر–زاوج–شارك</option>
-              <option>بطاقات الأرقام</option>
-              <option>القبعات الست (مبسطة)</option>
-              <option>محطات التعلم</option>
-              <option>CER (ادّعاء–دليل–تفسير)</option>
-            </select>
-            <span class="sel-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 7l5 5 5-5H5z"/></svg></span>
+        <div
+          class="flex"
+          style="display: flex; align-items: center; gap: 8px; margin-top: 12px"
+        >
+          <button id="go" class="btn primary">✨ساعدني على الإبداع</button>
+          <button id="regen" class="btn">أبدع باستراتيجية أخرى</button>
+          <span id="status" class="muted"></span>
+        </div>
+      </section>
+
+      <section id="out" class="card" style="display: none">
+        <div
+          class="flex"
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+          "
+        >
+          <h2 id="title" class="text-2xl" style="margin: 0"></h2>
+          <div id="chips"></div>
+        </div>
+        <div
+          class="divider"
+          style="
+            height: 12px;
+            opacity: 0.25;
+            margin: 8px 0 12px;
+            background: radial-gradient(
+                  circle at 6px 6px,
+                  var(--sea-500) 3px,
+                  transparent 4px
+                )
+                repeat-x left/26px 12px,
+              radial-gradient(
+                  circle at 18px 6px,
+                  var(--sea-300) 2.2px,
+                  transparent 3.2px
+                )
+                repeat-x left/26px 12px;
+          "
+        ></div>
+
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 16px">
+          <div>
+            <h3>الأهمية</h3>
+            <p id="importance"></p>
           </div>
-          <div class="muted" style="margin-top:4px">لن يغيّر شكل الإخراج؛ فقط يوجّه اختيار الاستراتيجية داخل الحقول نفسها.</div>
+          <div>
+            <h3>مواد/أدوات</h3>
+            <p id="materials"></p>
+          </div>
         </div>
-      </div>
 
-      <div class="flex" style="display:flex; align-items:center; gap:8px; margin-top:12px">
-        <button id="go" class="btn primary">✨ساعدني على الإبداع</button>
-        <button id="regen" class="btn">أبدع باستراتيجية أخرى</button>
-        <span id="status" class="muted"></span>
-      </div>
-    </section>
-
-    <section id="out" class="card" style="display:none">
-      <div class="flex" style="display:flex; align-items:center; justify-content:space-between; gap:10px">
-        <h2 id="title" class="text-2xl" style="margin:0"></h2>
-        <div id="chips"></div>
-      </div>
-      <div class="divider" style="height:12px; opacity:.25; margin:8px 0 12px; background:
-        radial-gradient(circle at 6px 6px, var(--sea-500) 3px, transparent 4px) repeat-x left/26px 12px,
-        radial-gradient(circle at 18px 6px, var(--sea-300) 2.2px, transparent 3.2px) repeat-x left/26px 12px;"></div>
-
-      <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px">
-        <div>
-          <h3>الأهمية</h3>
-          <p id="importance"></p>
+        <div
+          class="grid"
+          style="grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px"
+        >
+          <div>
+            <h3>الأهداف</h3>
+            <ul
+              id="goals"
+              style="
+                margin: 6px 0 0 0;
+                padding-inline-start: 20px;
+                list-style: disc;
+              "
+            ></ul>
+          </div>
+          <div>
+            <h3>خطوات التطبيق</h3>
+            <ol
+              id="steps"
+              style="
+                margin: 6px 0 0 0;
+                padding-inline-start: 20px;
+                list-style: decimal;
+              "
+            ></ol>
+          </div>
         </div>
-        <div>
-          <h3>مواد/أدوات</h3>
-          <p id="materials"></p>
+
+        <div style="margin-top: 10px">
+          <h3>أمثلة عملية</h3>
+          <ul
+            id="examples"
+            style="
+              margin: 6px 0 0 0;
+              padding-inline-start: 20px;
+              list-style: disc;
+            "
+          ></ul>
         </div>
-      </div>
 
-      <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px; margin-top:8px">
-        <div>
-          <h3>الأهداف</h3>
-          <ul id="goals" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:disc"></ul>
+        <div
+          class="grid"
+          style="grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px"
+        >
+          <div>
+            <h3>التقويم</h3>
+            <p id="assessment"></p>
+          </div>
+          <div>
+            <h3>تفريق التعليم</h3>
+            <ul
+              id="diff"
+              style="
+                margin: 6px 0 0 0;
+                padding-inline-start: 20px;
+                list-style: disc;
+              "
+            ></ul>
+          </div>
         </div>
-        <div>
-          <h3>خطوات التطبيق</h3>
-          <ol id="steps" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:decimal"></ol>
+
+        <div style="margin-top: 10px">
+          <h3>الأثر المتوقع</h3>
+          <p id="impact"></p>
         </div>
-      </div>
 
-      <div style="margin-top:10px">
-        <h3>أمثلة عملية</h3>
-        <ul id="examples" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:disc"></ul>
-      </div>
-
-      <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px; margin-top:8px">
-        <div>
-          <h3>التقويم</h3>
-          <p id="assessment"></p>
+        <div style="margin-top: 10px">
+          <h3>مراجع/مصادر</h3>
+          <ul
+            id="cites"
+            style="
+              margin: 6px 0 0 0;
+              padding-inline-start: 20px;
+              list-style: disc;
+            "
+          ></ul>
         </div>
-        <div>
-          <h3>تفريق التعليم</h3>
-          <ul id="diff" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:disc"></ul>
+
+        <div style="margin-top: 12px; display: flex; gap: 8px">
+          <button id="copy" class="btn">نسخ</button>
         </div>
-      </div>
+      </section>
 
-      <div style="margin-top:10px">
-        <h3>الأثر المتوقع</h3>
-        <p id="impact"></p>
-      </div>
+      <!-- صندوق التشخيص -->
+      <section id="dbg" class="card" style="display: none; margin-top: 10px">
+        <h3>تشخيص</h3>
+        <p class="muted">
+          النموذج أعاد JSON ناقص؛ تم عرض ما أمكن من الحقول. أدناه النص الخام
+          للمراجعة:
+        </p>
+        <pre id="dbg-raw" style="white-space: pre-wrap; direction: ltr"></pre>
+      </section>
 
-      <div style="margin-top:10px">
-        <h3>مراجع/مصادر</h3>
-        <ul id="cites" style="margin:6px 0 0 0; padding-inline-start:20px; list-style:disc"></ul>
-      </div>
-
-      <div style="margin-top:12px; display:flex; gap:8px">
-        <button id="copy" class="btn">نسخ</button>
-      </div>
-    </section>
-
-    <!-- صندوق التشخيص -->
-    <section id="dbg" class="card" style="display:none; margin-top:10px">
-      <h3>تشخيص</h3>
-      <p class="muted">
-        النموذج أعاد JSON ناقص؛ تم عرض ما أمكن من الحقول. أدناه النص الخام للمراجعة:
+      <!-- رسالة الخطأ (واحد فقط) -->
+      <p id="err" class="muted" style="text-align: center; display: none">
+        رجاءً اختر المرحلة والمادة.
       </p>
-      <pre id="dbg-raw" style="white-space:pre-wrap;direction:ltr"></pre>
-    </section>
+    </main>
 
-    <!-- رسالة الخطأ (واحد فقط) -->
-    <p id="err" class="muted" style="text-align:center; display:none">
-      رجاءً اختر المرحلة والمادة.
-    </p>
-  </main>
+    <!-- Load shared footer component -->
+    <div id="footer" data-component="components/footer.html"></div>
 
-  <footer>
-    <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-    <p class="foot-name">ندى المجيرش</p>
-
-    <nav class="foot-links">
-      <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-      <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-      <a href="refund-policy.html">سياسة الاسترجاع</a><span class="sep">|</span>
-      <a href="whatsapp.html">تواصل واتساب</a><span class="sep">|</span>
-      <a href="complaints.html">الشكاوى والاقتراحات</a>
-    </nav>
-
-    <div class="foot-copy">© <span id="year"></span> أثــر — كل الحقوق محفوظة.</div>
-  </footer>
-
-  <!-- سنة تلقائية + مزامنة لون الثيم -->
-  <script>
-    (function(){
-      var y=document.getElementById('year');
-      if(y) y.textContent=new Date().getFullYear();
-    })();
-    window.addEventListener('athar:theme-color', function(e){
-      try{ if(e && e.detail){ document.documentElement.style.setProperty('--primary', e.detail); } }catch(_){}
-    });
-  </script>
-
-  <!-- Auth0 SDK -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-          onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"></script>
-
-  <!-- حماية الصفحة -->
-  <script defer src="assets/js/require-auth.js"></script>
-
-  <!-- Supabase -->
-  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script defer src="assets/js/supabase-client.js"></script>
-
-  <!-- التخزين والأدوات العامة -->
-  <script defer src="assets/js/storage.js"></script>
-  <script defer src="app.js"></script>
-
-  <!-- سكربت الصفحة (المصحّح) -->
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // ========= البيانات =========
-    const SUBJECTS = {
-      "primary-lower": ["اللغة العربية","الرياضيات","العلوم","مهارات رقمية","اللغة الإنجليزية","الدراسات الإسلامية","التربية الفنية","التربية البدنية والدفاع عن النفس","مهارات حياتية وأسرية"],
-      "primary-upper": ["اللغة العربية","الرياضيات","العلوم","المهارات الرقمية","اللغة الإنجليزية","الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد","التربية الفنية","التربية البدنية والدفاع عن النفس"],
-      "middle":        ["اللغة العربية","الرياضيات","العلوم","اللغة الإنجليزية","الدراسات الإجتماعية","الدراسات الإسلامية","التفكير الناقد والمنطق","مهارات رقمية","التربية الفنية","التربية البدنية والدفاع عن النفس"],
-      "secondary":     ["الفيزياء","الكيمياء","الأحياء","الرياضيات","اللغة العربية","اللغة الإنجليزية","التاريخ","الدراسات الإسلامية","مهارات رقمية","علم الأرض والفضاء","التفكير الناقد"]
-    };
-
-    // ========= عناصر الواجهة =========
-    const $ = s => document.querySelector(s);
-    const stageSel   = $('#stage');
-    const subjectSel = $('#subject');
-    const bloomSel   = $('#type');   // مهم: id الصحيح
-    const lessonInp  = $('#lesson');
-    const prefSel    = $('#preferred'); // جديد
-    const goBtn      = $('#go');
-    const regenBtn   = $('#regen');
-    const statusEl   = $('#status');
-
-    // تعبئة المواد عند تغيير المرحلة
-    stageSel.addEventListener('change', () => {
-      const s = stageSel.value;
-      subjectSel.innerHTML = '<option value="" selected disabled>اختر المادة</option>';
-      (SUBJECTS[s] || []).forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m; opt.textContent = m;
-        subjectSel.appendChild(opt);
-      });
-      subjectSel.disabled = !(SUBJECTS[s] && SUBJECTS[s].length);
-    });
-
-    const readStageLabel = v => ({"primary-lower":"ابتدائي — دنيا","primary-upper":"ابتدائي — عليا","middle":"متوسط","secondary":"ثانوي"}[v] || v);
-    const safe = s => String(s||'').replace(/[<>&]/g, ch => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[ch]));
-    const listTo = (ul, arr)=>{ if(!ul) return; const a=Array.isArray(arr)?arr:[]; ul.innerHTML = a.map(x=>`<li>${safe(x)}</li>`).join(''); };
-
-    function setLoading(on){
-      if (on){
-        goBtn.dataset._label = goBtn.textContent;
-        goBtn.textContent = "قيد الإبداع … ✨";
-        goBtn.disabled = true; regenBtn.disabled = true;
-      }else{
-        goBtn.textContent = goBtn.dataset._label || "✨ساعدني على الإبداع";
-        goBtn.disabled = false; regenBtn.disabled = false;
-      }
-    }
-
-    // ========= الاتصال بالخادم =========
-    async function callStrategy(payload){
-      const res = await fetch('/.netlify/functions/strategy', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); }
-      catch { throw new Error(`رد غير متوقع من الخادم:\n${text}`); }
-      return data;
-    }
-
-    // ========= طباعة الناتج =========
-    function paintOutput(data, meta){
-      $('#title').textContent = data.strategy_name || '—';
-
-      const chips=[];
-      if (meta.stage)   chips.push(meta.stageLabel || meta.stage);
-      if (meta.subject) chips.push(meta.subject);
-      if (data.bloom || meta.bloomType) chips.push(data.bloom || meta.bloomType);
-      if (meta.lesson)  chips.push('الدرس: '+meta.lesson);
-      $('#chips').innerHTML = chips.map(t=>`<span class="chip">${t}</span>`).join('');
-
-      $('#importance').textContent = data.importance || '—';
-      $('#materials').textContent  = data.materials  || '—';
-      $('#assessment').textContent = data.assessment || '—';
-      $('#impact').textContent     = data.expected_impact || '—';
-
-      const diffUl = $('#diff'); diffUl.innerHTML = '';
-      [['دعم: ',data.diff_support],['أساسي: ',data.diff_core],['تحدّي: ',data.diff_challenge]]
-        .forEach(([k,v])=>{ if(v){ const li=document.createElement('li'); li.textContent = k+v; diffUl.appendChild(li); }});
-
-      listTo($('#goals'), data.goals);
-      listTo($('#steps'), data.steps);
-      listTo($('#examples'), data.examples);
-
-      const citesUl = $('#cites'); citesUl.innerHTML = '';
-      (data.citations||[]).forEach(c=>{
-        if(!c || !c.title) return;
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${safe(c.title)}</strong>${c.benefit? `<p class="muted" style="margin:4px 0 0">${safe(c.benefit)}</p>`:''}`;
-        citesUl.appendChild(li);
-      });
-
-      $('#out').style.display = 'block';
-      $('#err').style.display = 'none';
-      $('#regen').style.display = 'inline-flex';
-    }
-
-    // ——— حاجز تكرار ———
-    const SEEN_KEY = 'muntaq_seen_v1';
-    const loadSeen = () => { try{ return new Set(JSON.parse(sessionStorage.getItem(SEEN_KEY)||'[]')); }catch(_){ return new Set(); } };
-    const saveSeen = (set) => { try{ sessionStorage.setItem(SEEN_KEY, JSON.stringify([...set])); }catch(_){ } };
-    const signatureOf = (d)=>{
-      const parts = [
-        d?.strategy_name||'',
-        (d?.goals||[])[0]||'',
-        (d?.steps||[])[0]||'',
-        (d?.steps||[])[1]||'',
-        (d?.examples||[])[0]||''
-      ].join('||').toLowerCase().replace(/\s+/g,' ').trim();
-      let h=0; for (let i=0;i<parts.length;i++){ h=((h<<5)-h)+parts.charCodeAt(i); h|=0; } return String(h);
-    };
-
-    // ========= التوليد =========
-    async function generate(variant=null, _retry=0){
-      const stage     = stageSel.value;
-      const subject   = subjectSel.value;
-      const bloom     = bloomSel.value;
-      const lesson    = (lessonInp.value||'').trim();
-      const preferred = (prefSel.value||'').trim();  // جديد
-
-      if(!stage || !subject){
-        $('#err').style.display = 'block';
-        return;
-      }
-      $('#err').style.display = 'none';
-      $('#dbg').style.display = 'none'; // إخفاء صندوق التشخيص السابق
-      statusEl.textContent = 'جاري تحويل شغفك إلى استراتيجية ملموسة …✨';
-      setLoading(true);
-
-      try{
-        // ← هنا نرسل preferred للباكند (بدون أي تغيير في شكل الإخراج)
-        const data = await callStrategy({
-          stage,
-          subject,
-          bloomType: bloom,
-          lesson,
-          variant: variant || Math.floor(Math.random()*1e9),
-          preferred // قد يكون فارغًا — وهذا مقبول
-        });
-
-        const meta = { stage, stageLabel: readStageLabel(stage), subject, bloomType:bloom, lesson };
-
-        // رد تشخيصي؟
-        if (data && data.debug === 'incomplete') {
-          if (data.parsed && typeof data.parsed === 'object') {
-            paintOutput(data.parsed, meta);
-          }
-          const dbg = $('#dbg'), raw = $('#dbg-raw');
-          if (dbg && raw) { raw.textContent = data.rawText || '(لا يوجد نص خام)'; dbg.style.display='block'; }
-          statusEl.textContent = 'تم (تشخيص) ✨';
+    <!-- سنة تلقائية + مزامنة لون الثيم -->
+    <script>
+      (function waitSetYear(attempts) {
+        attempts = attempts || 0;
+        var el = document.getElementById("year");
+        if (el) {
+          el.textContent = new Date().getFullYear();
           return;
         }
+        if (attempts < 50)
+          setTimeout(function () {
+            waitSetYear(attempts + 1);
+          }, 100);
+      })();
+      window.addEventListener("athar:theme-color", function (e) {
+        try {
+          if (e && e.detail) {
+            document.documentElement.style.setProperty("--primary", e.detail);
+          }
+        } catch (_) {}
+      });
+    </script>
 
-        // رد مكتمل
-        const seen = loadSeen();
-        const sig = signatureOf(data);
-        if (seen.has(sig) && _retry < 3){
-          return await generate(Date.now()+Math.floor(Math.random()*1e6), _retry+1);
-        }
-        seen.add(sig); saveSeen(seen);
+    <!-- Auth0 SDK -->
+    <script
+      src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+      onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"
+    ></script>
 
-        paintOutput(data, meta);
-        statusEl.textContent = 'تـــم ✨';
-      }catch(err){
-        console.error(err);
-        statusEl.textContent = err.message || 'تعذّر التوليد.';
-      }finally{
-        setLoading(false);
-      }
-    }
+    <!-- حماية الصفحة -->
+    <script defer src="assets/js/require-auth.js"></script>
 
-    // أزرار
-    goBtn.addEventListener('click', ()=> generate(null));
-    regenBtn.addEventListener('click', ()=> generate(Date.now()));
+    <!-- Supabase -->
+    <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script defer src="assets/js/supabase-client.js"></script>
 
-    // نسخ
-    $('#copy')?.addEventListener('click', async ()=>{
-      const text = $('#out').innerText;
-      if (navigator.clipboard && window.isSecureContext){
-        await navigator.clipboard.writeText(text);
-        alert('تم النسخ ✓');
-      } else {
-        const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select();
-        try { document.execCommand('copy'); alert('تم النسخ ✓'); } finally { document.body.removeChild(ta); }
-      }
-    });
-  });
-  </script>
-</body>
+    <!-- التخزين والأدوات العامة -->
+    <script defer src="assets/js/storage.js"></script>
+    <script defer src="app.js"></script>
+
+    <!-- Component loader + navbar behavior -->
+    <script src="assets/js/component-loader.js"></script>
+    <script src="assets/js/navbar.js"></script>
+
+    <!-- سكربت الصفحة (المصحّح) -->
+    <script src="assets/js/athar.js"></script>
+  </body>
 </html>

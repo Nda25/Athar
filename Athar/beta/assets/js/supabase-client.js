@@ -69,6 +69,139 @@
   }
 
   /** -------------------------------------------
+ * إضافة موعد (miyad-add-event)
+ * يمرّر: بيانات الموعد + (نحاول تمرير user_sub للمطابقة)
+ * السيرفر سيحوّلها إلى user_id ويُدخلها في الجدول.
+ * ------------------------------------------ */
+async function supaAddMiyadEvent(eventData = {}) {
+  try {
+    const u = await auth0SafeGetUser(); // بنجيب اليوزر زي كل مرة
+
+    // لو مفيش مستخدم مسجل دخول، هنوقف بهدوء
+    // (الموعد اتحفظ محلياً وده كفاية مؤقتاً)
+    if (!u || !u.sub) {
+      console.debug('No auth user, skipping Supabase event sync.');
+      return { ok: true, data: null };
+    }
+
+    const payload = {
+      user_sub: u.sub, // الـ Function محتاجة تعرف مين اليوزر
+      event_data: eventData // كل بيانات الموعد (المادة، الفصل.. الخ)
+    };
+
+    // هننده الـ Function الجديدة (اللي هنعملها في الخطوة 3)
+    const res = await fetch('/.netlify/functions/add-miyad-event', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    // تعامل مع الأخطاء
+    if (!res.ok && res.status !== 204) {
+      return { ok:false, error: await res.text() };
+    }
+    return { ok:true, data: res.status===204 ? null : await res.json() };
+  } catch (e) {
+    return { ok:false, error: e.message };
+  }
+}
+
+
+/** -------------------------------------------
+ * حفظ إعدادات التذكير (save-reminder-settings)
+ * يمرّر: الـ payload كاملًا (user_id, email, settings)
+ * السيرفر سيتولى عملية الـ upsert
+ * ------------------------------------------ */
+async function supaSaveReminderSettings(settingsPayload = {}) {
+  // الـ payload اللي جاي من index.html فيه كل حاجة (user_id, email)
+  // فمش محتاجين نجيب اليوزر هنا تاني
+  if (!settingsPayload.user_id) {
+    console.warn('supaSaveReminderSettings: No user_id in payload.');
+    return { ok: false, error: 'No user_id provided' };
+  }
+
+  try {
+    // هننده الـ Function الجديدة (اللي هنعملها في الخطوة 3)
+    const res = await fetch('/.netlify/functions/save-reminder-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settingsPayload) // ابعت الـ payload زي ما هو
+    });
+
+    if (!res.ok) {
+      return { ok: false, error: await res.text() };
+    }
+    
+    // رجع 'ok' عشان الدالة الأصلية تكمل شغلها (تعرض "تم الحفظ")
+    return { ok: true, data: await res.json() };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+/** -------------------------------------------
+ * جلب إعدادات التذكير (get-reminder-settings)
+ * يكلم الـ Function عشان تجيب إعدادات المستخدم ده
+ * ------------------------------------------ */
+async function supaGetReminderSettings() {
+  const u = await auth0SafeGetUser(); // بنجيب اليوزر
+  if (!u || !u.sub) {
+    return { ok: false, data: null, error: 'No authenticated user' };
+  }
+
+  try {
+    // هننده الـ Function الجديدة (اللي هنعملها في الخطوة 3)
+    // هنستخدم POST عشان نبعت الـ user_sub في الـ body زي الباقي
+    const res = await fetch('/.netlify/functions/get-reminder-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_sub: u.sub })
+    });
+
+    if (!res.ok) {
+      return { ok: false, data: null, error: await res.text() };
+    }
+    
+    // هترجع الداتا (أو null لو مفيش إعدادات)
+    const data = await res.json();
+    return { ok: true, data: data, error: null };
+  } catch (e) {
+    return { ok: false, data: null, error: e.message };
+  }
+}
+
+/** -------------------------------------------
+ * حذف موعد (delete-miyad-event)
+ * يبعت الـ ID للـ Function عشان تمسحه
+ * ------------------------------------------ */
+async function supaDeleteMiyadEvent(eventId) {
+  const u = await auth0SafeGetUser(); // بنجيب اليوزر عشان الأمان
+  if (!u || !u.sub) {
+    console.debug('No auth user, skipping Supabase event delete.');
+    return { ok: true, data: null };
+  }
+
+  try {
+    const payload = {
+      user_sub: u.sub, // عشان نتأكد إنه بيمسح حاجته هو بس
+      event_id: eventId
+    };
+
+    // هننده الـ Function الجديدة (اللي هنعملها في الخطوة 5)
+    const res = await fetch('/.netlify/functions/delete-miyad-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) { return { ok: false, error: await res.text() }; }
+    return { ok: true, data: await res.json() };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+  /** -------------------------------------------
    * تسجيل استخدام أداة (log-tool-usage)
    * يمرّر: tool_name + meta (+ نحاول تمرير email وsub للمطابقة)
    * السيرفر سيحوّلها إلى user_sub ويُدخلها في الجدول.
@@ -114,4 +247,8 @@
   window.supaEnsureUserProfile = window.supaEnsureUserProfile || supaEnsureUserProfile;
   window.supaLogToolUsage     = window.supaLogToolUsage     || supaLogToolUsage;
   window.supaGetUserByEmail   = window.supaGetUserByEmail   || supaGetUserByEmail;
+  window.supaAddMiyadEvent   = window.supaAddMiyadEvent   || supaAddMiyadEvent;
+  window.supaSaveReminderSettings = window.supaSaveReminderSettings || supaSaveReminderSettings;
+  window.supaGetReminderSettings = window.supaGetReminderSettings || supaGetReminderSettings;
+  window.supaDeleteMiyadEvent = window.supaDeleteMiyadEvent || supaDeleteMiyadEvent;
 })();
