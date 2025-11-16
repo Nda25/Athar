@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ميثــاق</title>
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico" />
+    <link rel="shortcut icon" href="assets/icons/favicon.ico" />
+    <link rel="apple-touch-icon" href="assets/icons/logo.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- تطبيق الثيم مبكرًا (مثل بقية الصفحات) -->
+    <script>
+      (function () {
+        try {
+          var c = localStorage.getItem("athar:theme");
+          if (c) document.documentElement.style.setProperty("--primary", c);
+        } catch (_) {}
+      })();
+    </script>
+
+    <!-- تقدرِين تنسخين ethraa.css وتعدينه إلى mithaq.css أو تعيدين استعمال نفس الملف -->
+    <link rel="stylesheet" href="assets/css/mithaq.css" />
+  </head>
+  <body>
+    <div class="global-bg"></div>
+
+    <div id="navbar" data-component="components/navbar.html"></div>
+
+    <header>
+      <div class="hero">
+        <h1 class="logo">ميثــاق</h1>
+        <div class="tag">
+          <span class="dot"></span>لشَدّ وثاق الدرس بروابط مع الدين والوطن والحياة.
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <section class="card">
+          <h2 class="title">اكتبي بيانات الدرس</h2>
+
+          <div class="field">
+            <label>المادة</label>
+            <input
+              id="subj"
+              placeholder="اكتبي اسم المادة: فيزياء / رياضيات / لغة عربية / مهارات حياتية …"
+            />
+          </div>
+
+          <div class="field">
+            <label>موضوع الدرس</label>
+            <input
+              id="topic"
+              placeholder="اكتبي موضوع الدرس بدقة: قانون حفظ الطاقة / خصائص المادة / الهجرة النبوية …"
+            />
+          </div>
+
+          <div class="field">
+            <label>المرحلة</label>
+            <select id="stage">
+              <option value="p1">ابتدائي دُنيا</option>
+              <option value="p2" selected>ابتدائي عُليا</option>
+              <option value="m">متوسط</option>
+              <option value="h">ثانوي</option>
+            </select>
+          </div>
+
+          <div
+            class="actions-row"
+            style="display: flex; gap: 10px; flex-wrap: wrap"
+          >
+            <button class="btn primary" id="gen">ولّدي بطاقات الربط</button>
+            <button class="btn" id="copy" disabled>نسخ جميع البطاقات</button>
+            <button class="btn" id="print" disabled>طباعة</button>
+          </div>
+        </section>
+
+        <section class="card" id="out" style="display: none">
+          <h2 class="title">بطاقات الربط (ميثــاق)</h2>
+          <div class="cards" id="cards"></div>
+        </section>
+      </div>
+    </main>
+
+    <div id="footer" data-component="components/footer.html"></div>
+    <script>
+      // سنة تلقائية + مزامنة لون الثيم مع تغييره من صفحة البروفايل
+      (function () {
+        var y = document.getElementById("year");
+        if (y) y.textContent = new Date().getFullYear();
+        window.addEventListener("athar:theme-color", function (e) {
+          try {
+            if (e && e.detail) {
+              document.documentElement.style.setProperty("--primary", e.detail);
+            }
+          } catch (_) {}
+        });
+      })();
+    </script>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="assets/js/mithaq.js"></script>
+
+    <!-- Auth0 SDK -->
+    <script
+      defer
+      src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+      onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"
+    ></script>
+
+    <!-- Supabase -->
+    <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script defer src="/assets/js/supabase-client.js"></script>
+
+    <script src="assets/js/component-loader.js"></script>
+    <script src="assets/js/navbar.js"></script>
+    <!-- الحماية -->
+    <script defer src="/assets/js/require-auth.js"></script>
+
+    <!-- سكربتات المشروع -->
+    <script defer src="/app.js"></script>
+  </body>
+</html>
