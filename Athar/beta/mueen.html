@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>مُعين — تقسيم الخطة الأسبوعية</title>
+    <title>مُعين — الخطة الأسبوعية للدرس</title>
     <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico" />
     <link rel="shortcut icon" href="assets/icons/favicon.ico" />
     <link rel="apple-touch-icon" href="assets/icons/logo.png" />
@@ -13,21 +13,84 @@
     />
     <link rel="stylesheet" href="style.css" />
     <meta name="color-scheme" content="dark light" />
+
+    <!-- تطبيق لون الثيم (accent) مثل بقية الصفحات -->
+    <script>
+      (function () {
+        var KEY = "athar:themeColor";
+
+        function hexToRgb(hex) {
+          hex = (hex || "").replace("#", "").trim();
+          if (hex.length === 3)
+            hex = hex
+              .split("")
+              .map((c) => c + c)
+              .join("");
+          var num = parseInt(hex, 16);
+          if (isNaN(num)) return null;
+          return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+        }
+
+        function applyAccent(hex) {
+          if (!hex) return;
+          var root = document.documentElement;
+          var rgb = hexToRgb(hex);
+
+          var vars = [
+            "--accent",
+            "--primary",
+            "--brand",
+            "--brand-500",
+            "--brand-600",
+            "--sea-400",
+            "--sea-500",
+            "--sea-600"
+          ];
+          vars.forEach(function (v) {
+            root.style.setProperty(v, hex);
+          });
+
+          if (rgb) {
+            root.style.setProperty("--accent-r", rgb.r);
+            root.style.setProperty("--accent-g", rgb.g);
+            root.style.setProperty("--accent-b", rgb.b);
+            root.style.setProperty(
+              "--accent-20",
+              "color-mix(in oklab, " + hex + " 20%, transparent)"
+            );
+            root.style.setProperty(
+              "--accent-12",
+              "color-mix(in oklab, " + hex + " 12%, transparent)"
+            );
+            root.style.setProperty(
+              "--accent-08",
+              "color-mix(in oklab, " + hex + " 8%, transparent)"
+            );
+          }
+        }
+
+        function getSaved() {
+          try {
+            var v = localStorage.getItem(KEY);
+            if (v && typeof v === "string" && v.trim()) return v.trim();
+          } catch (_) {}
+          return null;
+        }
+
+        applyAccent(getSaved());
+
+        window.addEventListener("athar:theme-color", function (e) {
+          applyAccent(e && e.detail);
+          try {
+            localStorage.setItem(KEY, e.detail || "");
+          } catch (_) {}
+        });
+      })();
+    </script>
+
     <style>
       .muted {
         opacity: 0.85;
-      }
-      .badge {
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 999px;
-        background: #e5e7eb22;
-        border: 1px solid #e5e7eb33;
-      }
-      .status-active {
-        background: #dcfce733;
-        color: #166534;
-        border-color: #bbf7d066;
       }
       .card-day {
         border: 1px dashed rgba(59, 130, 246, 0.35);
@@ -39,6 +102,7 @@
       .day-head {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 10px;
         margin: 0 0 6px;
       }
@@ -51,6 +115,7 @@
         border-radius: 999px;
         padding: 4px 8px;
         background: color-mix(in oklab, var(--accent) 12%, #fff);
+        font-size: 0.85rem;
       }
       .actions-row {
         display: flex;
@@ -62,38 +127,26 @@
         padding: 6px 10px;
         font-size: 0.9rem;
       }
-      .ok {
-        color: #166534;
+      .list {
+        margin: 0;
+        padding-left: 1.2rem;
       }
-      .danger {
-        color: #7f1d1d;
+      .list li {
+        margin: 2px 0;
       }
     </style>
   </head>
   <body>
     <div class="global-bg"></div>
 
-    <div class="topbar">
-      <div class="left-actions">
-        <a class="btn" href="index.html">الرئيسية</a>
-      </div>
-      <div class="actions">
-        <button class="btn" id="themeToggle">🌓</button>
-      </div>
-      <div class="user">
-        <button id="btn-login" class="btn">تسجيل الدخول</button>
-        <button id="btn-logout" class="btn" style="display: none">
-          تسجيل الخروج
-        </button>
-      </div>
-    </div>
+    <!-- شريط علوي موحّد -->
+    <div id="navbar" data-component="components/navbar.html"></div>
 
     <header>
       <div class="hero">
         <h1 class="logo">مُعين</h1>
         <div class="tag">
-          <span class="dot"></span>نولّد الخطة الأسبوعية — نقرأ أهدافها من “منهج
-          السعودية” (آخر إصدار).
+          <span class="dot"></span>نُعينك على بناء خطة أسبوعية متكاملة لأهداف الدرس.
         </div>
       </div>
     </header>
@@ -103,24 +156,23 @@
         <section class="card">
           <h2 class="title" style="margin-top: 0">مدخلات الخطة الأسبوعية</h2>
           <p class="muted">
-            لا نؤلف أهدافًا من عندنا — نولّدها من فهم الدرس، ثم نُجزّئها على
-            الأسبوع.
+            أدخلي بيانات الدرس، ودعي "مُعين" يساعدك في توزيع أهدافه ومفرداته على أيام الأسبوع.
           </p>
 
           <div class="grid" style="grid-template-columns: 1fr 1fr">
             <div class="field">
               <label>المرحلة/الصف</label>
               <select id="f-grade">
-                <option value="اول ابتدائي">أول ابتدائي</option>
+                <option value="أول ابتدائي">أول ابتدائي</option>
                 <option value="ثاني ابتدائي">ثاني ابتدائي</option>
                 <option value="ثالث ابتدائي">ثالث ابتدائي</option>
                 <option value="رابع ابتدائي">رابع ابتدائي</option>
                 <option value="خامس ابتدائي">خامس ابتدائي</option>
                 <option value="سادس ابتدائي">سادس ابتدائي</option>
-                <option value="اول متوسط">أول متوسط</option>
+                <option value="أول متوسط">أول متوسط</option>
                 <option value="ثاني متوسط">ثاني متوسط</option>
                 <option value="ثالث متوسط">ثالث متوسط</option>
-                <option value="اول ثانوي">أول ثانوي</option>
+                <option value="أول ثانوي">أول ثانوي</option>
                 <option value="ثاني ثانوي">ثاني ثانوي</option>
                 <option value="ثالث ثانوي" selected>ثالث ثانوي</option>
               </select>
@@ -128,40 +180,30 @@
 
             <div class="field">
               <label>المادة</label>
-              <input id="f-subject" placeholder="مثلًا: فيزياء" />
+              <input id="f-subject" placeholder="مثلًا: فيزياء / رياضيات / لغة عربية" />
             </div>
 
             <div class="field">
-              <label>عدد الدروس هذا الأسبوع</label>
+              <label>اسم الدرس</label>
+              <input id="f-lesson" placeholder="مثلًا: قانون حفظ الطاقة" />
+            </div>
+
+            <div class="field">
+              <label>عدد حصص/أيام الدرس هذا الأسبوع</label>
               <select id="f-count">
-                <option>1</option>
-                <option selected>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>أسلوب اختيار الدروس</label>
-              <select id="f-mode">
-                <option value="manual" selected>
-                  أدخل أسماء الدروس يدويًا
-                </option>
-                <option value="ai">دع معين يستنتج الدروس من المنهج</option>
+                <option value="1">حصّة واحدة</option>
+                <option value="2" selected>حصتان</option>
+                <option value="3">ثلاث حصص</option>
+                <option value="4">أربع حصص</option>
+                <option value="5">خمس حصص</option>
               </select>
             </div>
           </div>
 
-          <div
-            id="lessons-box"
-            class="grid"
-            style="grid-template-columns: 1fr; gap: 10px; margin-top: 8px"
-          ></div>
-
           <div class="actions-row" style="margin-top: 10px">
             <button id="btn-generate" class="btn primary">ولّدي الخطة</button>
-            <button id="btn-copy-all" class="btn">نسخ الخطة كاملة</button>
+            <button id="btn-copy-all" class="btn" disabled>نسخ الخطة كاملة</button>
+            <button id="btn-print" class="btn" disabled>طباعة</button>
             <span id="status" class="muted"></span>
           </div>
         </section>
@@ -169,34 +211,37 @@
         <section class="card" id="out" style="display: none">
           <h2 class="title">خطة الأسبوع</h2>
           <div id="meta" class="chips" style="margin-bottom: 6px"></div>
+          <div id="canon-box" class="card" style="margin: 10px 0; padding: 10px;">
+            <h3 style="margin: 0 0 6px;">أهداف الدرس الأساسية ومفرداته</h3>
+            <h4 style="margin: 4px 0;">الأهداف الرئيسة</h4>
+            <ul id="canon-goals" class="list"></ul>
+            <h4 style="margin: 8px 0 4px;">المفردات الجديدة</h4>
+            <ul id="canon-vocab" class="list"></ul>
+          </div>
           <div id="plan"></div>
         </section>
       </div>
     </main>
 
-    <footer>
-      <p class="foot-line">التعليم شرارة صغيرة… تُضيء عقولًا كبيرة.</p>
-      <p class="foot-name">ندى المجيرش</p>
-      <div class="foot-links">
-        <a href="privacy.html">سياسة الخصوصية</a><span class="sep">|</span>
-        <a href="terms.html">الشروط والأحكام</a><span class="sep">|</span>
-        <a href="refund-policy.html">سياسة الاسترجاع</a
-        ><span class="sep">|</span> <a href="whatsapp.html">تواصل واتساب</a
-        ><span class="sep">|</span>
-        <a href="complaints.html">الشكاوى والاقتراحات</a>
-      </div>
-    </footer>
+    <div id="footer" data-component="components/footer.html"></div>
 
     <div class="toast" id="toast"></div>
 
-    <!-- SDK / أدوات المشروع -->
+    <!-- SDKs / سكربتات مشتركة -->
     <script
+      defer
       src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
       onerror="this.onerror=null;this.src='/assets/vendor/auth0-spa-js.production.js'"
     ></script>
-    <script src="assets/js/supabase-client.js"></script>
-    <script src="assets/js/require-auth.js"></script>
-    <script src="assets/js/dom-helpers.js"></script>
+    <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script defer src="assets/js/supabase-client.js"></script>
+    <script defer src="assets/js/require-auth.js"></script>
+    <script defer src="app.js"></script>
+
+    <script src="assets/js/component-loader.js"></script>
+    <script src="assets/js/navbar.js"></script>
+
+    <!-- مُعين -->
     <script src="assets/js/mueen.js"></script>
   </body>
 </html>
