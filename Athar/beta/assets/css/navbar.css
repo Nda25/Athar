@@ -1,0 +1,185 @@
+/* المتغيرات والألوان الهادئة */
+:root {
+  --bg-glass: rgba(255, 255, 255, 0.9);
+  --bg-glass-dark: rgba(15, 23, 42, 0.9);
+
+  --text-primary: #334155; /* Slate 700 */
+  --text-primary-dark: #e2e8f0; /* Slate 200 */
+
+  --accent-color: #64748b; /* Slate 500 */
+  --accent-hover: #3b82f6; /* Blue 500 */
+
+  /* New Variables for Button Backgrounds */
+  --btn-bg: #f1f5f9; /* Light Slate for Light Mode */
+  --btn-bg-dark: rgba(255, 255, 255, 0.05); /* Subtle White for Dark Mode */
+  --btn-bg-hover: #e2e8f0;
+
+  --border-color: rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --nav-height: 70px;
+
+  /* Define Font globally for variables if needed */
+  --main-font: "Cairo", system-ui, sans-serif;
+}
+
+/* الوضع الداكن */
+html.dark {
+  --bg-glass: var(--bg-glass-dark);
+  --text-primary: var(--text-primary-dark);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --btn-bg: var(--btn-bg-dark);
+  --btn-bg-hover: rgba(255, 255, 255, 0.1);
+}
+
+/* تنسيق النافبار الأساسي */
+.navbar-container {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--nav-height);
+  z-index: 1000;
+  background-color: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+
+  /* 1. Force Font Family on Container */
+  font-family: var(--main-font);
+}
+
+/* 2. Force Font Family on all children (Buttons don't inherit by default) */
+.navbar-container button,
+.navbar-container a {
+  font-family: var(--main-font) !important;
+}
+
+.navbar-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+/* الروابط والأزرار */
+.nav-links {
+  display: flex;
+  gap: 15px; /* Reduced gap slightly since buttons have backgrounds now */
+  align-items: center;
+}
+
+.btn-nav {
+  text-decoration: none;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.9rem; /* Slightly smaller to fit the background better */
+  padding: 10px 18px; /* Increased padding for "button" feel */
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  /* 3. Apply Soft Background to all links/buttons */
+  background-color: var(--btn-bg);
+}
+
+.btn-nav:hover {
+  color: var(--accent-hover);
+  background-color: var(--btn-bg-hover); /* Darker shade on hover */
+  transform: translateY(-1px);
+}
+
+.btn-nav:active {
+  transform: translateY(0px);
+}
+
+/* زر مميز (CTA) - Overrides the default btn-nav style */
+.btn-primary {
+  background-color: var(--text-primary);
+  color: #fff;
+}
+
+html.dark .btn-primary {
+  background-color: #3b82f6;
+}
+
+.btn-primary:hover {
+  background-color: var(--text-primary); /* Keep solid color */
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: #fff;
+}
+
+/* زر الثيم */
+#themeToggle {
+  font-size: 1.2rem;
+  padding: 8px 12px;
+  border-radius: 50%; /* Keep circle */
+  background-color: transparent; /* Make specific exception for icon only if you want */
+  /* Or remove background-color: transparent to give it a circle bg */
+}
+
+/* زر القائمة للموبايل */
+.mobile-toggle {
+  display: none;
+  font-size: 1.5rem;
+  background: transparent; /* No background for hamburger icon */
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 5px;
+}
+
+/* ============ التجاوب (Responsive) ============ */
+@media (max-width: 768px) {
+  .mobile-toggle {
+    display: block;
+  }
+
+  .nav-center {
+    position: absolute;
+    top: var(--nav-height);
+    left: 0;
+    width: 100%;
+    background-color: var(--bg-glass);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    flex-direction: column;
+    padding: 20px;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+  }
+
+  .nav-center.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .nav-center .btn-nav {
+    width: 100%;
+    justify-content: center;
+    padding: 14px; /* Larger touch area for mobile */
+  }
+
+  .nav-actions-mobile {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+}

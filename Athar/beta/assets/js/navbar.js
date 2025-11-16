@@ -1,8 +1,7 @@
 /**
  * Navbar Component Logic
- * Handles theme toggle, auth buttons, and navbar interactions
+ * Handles theme toggle, auth buttons, and mobile menu interactions
  */
-
 (function () {
   // Utility: Toast notification
   const toast = (message) => {
@@ -16,13 +15,33 @@
     setTimeout(() => toastEl.classList.remove("show"), 1500);
   };
 
-  // ============ Theme Toggle ============
+  // ============ Mobile Menu Logic (NEW) ============
+  function initMobileMenu() {
+    const menuBtn = document.getElementById("mobileMenuBtn");
+    const navLinks = document.getElementById("navLinksMenu");
+
+    if (menuBtn && navLinks) {
+      menuBtn.addEventListener("click", () => {
+        navLinks.classList.toggle("active");
+        // تغيير أيقونة الزر
+        menuBtn.textContent = navLinks.classList.contains("active") ? "✕" : "☰";
+      });
+
+      // إغلاق القائمة عند الضغط على أي رابط
+      navLinks.querySelectorAll("a, button").forEach((link) => {
+        link.addEventListener("click", () => {
+          // لا نغلق القائمة إذا كان الزر هو themeToggle لأنه موجود خارج القائمة
+          navLinks.classList.remove("active");
+          menuBtn.textContent = "☰";
+        });
+      });
+    }
+  }
+
+  // ============ Theme Toggle (Existing) ============
   function initThemeToggle() {
     const btn = document.getElementById("themeToggle");
-    if (!btn) {
-      console.warn("Theme toggle button not found");
-      return;
-    }
+    if (!btn) return;
 
     btn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -31,51 +50,46 @@
       try {
         localStorage.setItem("theme", isDark ? "dark" : "light");
       } catch (_) {}
-      toast(isDark ? "تم تفعيل الوضع الداكن" : "تم تفعيل الوضع الفاتح");
+      toast(isDark ? "🌙 الوضع الليلي" : "☀️ الوضع النهاري");
     });
 
-    // Restore theme preference
+    // Initialize theme from localStorage
     try {
-      if (localStorage.getItem("theme") === "dark") {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "dark") {
         document.documentElement.classList.add("dark");
+      } else if (savedTheme === "light") {
+        document.documentElement.classList.remove("dark");
       }
     } catch (_) {}
   }
 
-  // ============ Auth Button Logic ============
+  // ============ Auth Button Logic (Existing) ============
   function bindAuthCTA() {
     const btn = document.getElementById("authCta");
     const logoutBtn = document.getElementById("logout");
-    const auth = window.auth; // from require-auth.js
+    const auth = window.auth;
 
-    if (!btn) {
-      console.warn("Auth CTA button not found");
-      return;
-    }
+    if (!btn) return; // Silent return if elements not found yet
 
     if (!auth) {
-      console.warn("Auth0 not initialized yet, will retry...");
-      // Retry in 500ms if auth not ready
       setTimeout(bindAuthCTA, 500);
       return;
     }
 
-    // Login/Register button
     btn.disabled = false;
-    btn.onclick = null; // Clear any previous onclick
+    btn.onclick = null;
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       auth.loginWithRedirect({
         authorizationParams: {
           redirect_uri: window.location.origin + "/profile.html",
-          // screen_hint: 'signup' // uncomment to show signup directly
         },
       });
     });
 
-    // Logout button
     if (logoutBtn) {
-      logoutBtn.onclick = null; // Clear any previous onclick
+      logoutBtn.onclick = null;
       logoutBtn.addEventListener("click", (e) => {
         e.preventDefault();
         auth.logout({ logoutParams: { returnTo: window.location.origin } });
@@ -83,85 +97,88 @@
     }
   }
 
-  // ============ Sync Auth UI ============
-  function syncAuthButtons() {
-    const auth = window.auth; // from require-auth.js
+  // ============ Sync Auth UI (Existing) ============
+  // ============ Sync Auth UI (Updated) ============
+  async function syncAuthButtons() {
+    const auth = window.auth;
     if (!auth) {
-      console.warn("⚠️ Auth0 not available for sync, will retry...");
-      // Retry in 500ms
       setTimeout(syncAuthButtons, 500);
       return;
     }
 
     try {
-      auth
-        .isAuthenticated()
-        .then((ok) => {
-          console.log("✓ Auth check completed:", ok);
-          updateAuthButtons(ok);
-        })
-        .catch((err) => {
-          console.error("Error checking authentication:", err);
-          updateAuthButtons(false);
-        });
-    } catch (error) {
-      console.error("Error checking authentication:", error);
-      updateAuthButtons(false);
+      const isAuthed = await auth.isAuthenticated();
+
+      if (isAuthed) {
+        // 1. نجلب بيانات المستخدم
+        const user = await auth.getUser();
+        // 2. نرسل البيانات لدالة التحديث
+        updateAuthButtons(true, user);
+      } else {
+        updateAuthButtons(false, null);
+      }
+    } catch (err) {
+      console.error("Auth check failed:", err);
+      updateAuthButtons(false, null);
     }
   }
 
-  function updateAuthButtons(isAuthed) {
+  function updateAuthButtons(isAuthed, user) {
     const showEl = (el, show) => {
       if (!el) return;
-      el.style.display = show ? "inline-flex" : "none";
+      if (show) {
+        el.style.removeProperty("display");
+        el.style.display = "inline-flex";
+      } else {
+        el.style.display = "none";
+      }
     };
 
-    console.log("📊 Updating auth UI - User authenticated:", isAuthed);
+    // ============ Admin Check Logic ============
+    // ضع إيميلك (أو إيميلات الأدمن) هنا
+    const adminEmails = [
+      "hazemezz988@gmail.com",
+      "na.da25@icloud.com",
+      "unknown.00.brother@gmail.com",
+    ];
 
-    showEl(document.getElementById("authCta"), !isAuthed); // Login/Register button
-    showEl(document.getElementById("logout"), isAuthed); // Logout button
-    showEl(document.getElementById("nav-profile"), isAuthed); // Profile link
-    showEl(document.getElementById("adminBtn"), isAuthed); // Admin panel link (can be enhanced with role check)
+    // نتحقق: هل المستخدم مسجل + هل إيميله موجود في قائمة الأدمن؟
+    const isAdmin =
+      isAuthed && user && user.email && adminEmails.includes(user.email);
+
+    // ============ Update UI ============
+    showEl(document.getElementById("authCta"), !isAuthed); // زر الدخول يظهر لغير المسجلين
+    showEl(document.getElementById("logout"), isAuthed); // زر الخروج للمسجلين
+    showEl(document.getElementById("nav-profile"), isAuthed); // الملف الشخصي للمسجلين
+
+    // زر الأدمن يظهر فقط للأدمن
+    showEl(document.getElementById("adminBtn"), isAdmin);
   }
 
-  // ============ Wait for navbar to be loaded in DOM ============
-  function waitForNavbar(callback, attempts = 0) {
-    const authCta = document.getElementById("authCta");
-    const themeToggle = document.getElementById("themeToggle");
-
-    if (authCta && themeToggle) {
-      // Navbar components are in DOM
-      console.log("✓ Navbar components found in DOM, initializing...");
-      callback();
-    } else if (attempts < 50) {
-      // Keep trying for up to 5 seconds (50 * 100ms)
-      if (attempts === 0) {
-        console.log("⏳ Waiting for navbar components to load...");
-      }
-      setTimeout(() => waitForNavbar(callback, attempts + 1), 100);
-    } else {
-      console.error("✗ Navbar components failed to load after timeout");
-    }
-  }
-
-  // ============ Initialize on DOM Ready ============
+  // ============ Init ============
   function init() {
-    // Wait for navbar to be loaded, then initialize
-    waitForNavbar(() => {
-      initThemeToggle();
-      bindAuthCTA();
-      syncAuthButtons();
-    });
+    // نحاول العثور على العناصر عدة مرات إذا لم تكن موجودة
+    const checkElements = setInterval(() => {
+      const navLinks = document.getElementById("navLinksMenu");
+      if (navLinks) {
+        clearInterval(checkElements);
+        initThemeToggle();
+        initMobileMenu(); // New Function
+        bindAuthCTA();
+        syncAuthButtons();
+      }
+    }, 100);
+
+    // إيقاف المحاولة بعد 5 ثواني لتجنب الذاكرة
+    setTimeout(() => clearInterval(checkElements), 5000);
   }
 
-  // Wait for DOM to be ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
 
-  // Also bind when Auth0 is ready
   document.addEventListener("auth0:ready", () => {
     bindAuthCTA();
     syncAuthButtons();

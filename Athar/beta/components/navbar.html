@@ -1,43 +1,49 @@
-<div class="topbar">
-  <div class="tb-left">
-    <button
-      id="authCta"
-      class="btn"
-      type="button"
-      style="display: none; font-family: Cairo, system-ui, Tahoma, Arial"
-    >
-      الدخول / التسجيل
-    </button>
-    <button
-      id="logout"
-      class="btn"
-      type="button"
-      style="display: none; font-family: Cairo, system-ui, Tahoma, Arial"
-    >
-      تسجيل خروج
-    </button>
-  </div>
+<link rel="stylesheet" href="../assets/css/navbar.css" />
+<nav class="navbar-container">
+  <div class="navbar-content">
+    <div class="nav-actions-mobile">
+      <button id="themeToggle" class="btn-nav" title="تبديل الوضع">🌓</button>
+      <button id="mobileMenuBtn" class="mobile-toggle">☰</button>
+    </div>
 
-  <div class="tb-center">
-    <a id="adminBtn" href="/admin.html" style="display: none" class="btn"
-      >لوحة التحكم</a
-    >
-    <button
-      class="btn"
-      id="themeToggle"
-      title="الوضع الداكن/الفاتح"
-      style="font-family: Cairo, system-ui, Tahoma, Arial"
-    >
-      🌓
-    </button>
-    <a class="btn" href="programs.html">مساحة إبداعي</a>
-    <a class="btn" href="index.html">الصفحة الرئيسية</a>
-  </div>
+    <div class="nav-links nav-center" id="navLinksMenu">
+      <a class="btn-nav" href="index.html">الرئيسية</a>
+      <a class="btn-nav" href="programs.html">مساحة إبداعي</a>
+      <a class="btn-nav" href="pricing.html">الأسعار</a>
 
-  <div class="tb-right">
-    <a class="btn" href="pricing.html">الدفع والإشتراك</a>
-    <a id="nav-profile" class="btn" href="profile.html" style="display: none"
-      >ملفي الشخصي</a
-    >
+      <a id="adminBtn" href="/admin.html" class="btn-nav" style="display: none"
+        >⚙️ لوحة التحكم</a
+      >
+      <a
+        id="nav-profile"
+        href="profile.html"
+        class="btn-nav"
+        style="display: none"
+        >👤 ملفي</a
+      >
+
+      <button id="authCta" class="btn-nav btn-primary" style="display: none">
+        تسجيل الدخول
+      </button>
+      <button id="logout" class="btn-nav" style="display: none; color: #ef4444">
+        تسجيل خروج
+      </button>
+    </div>
+
+    <div class="nav-brand">
+      <a
+        href="index.html"
+        style="
+          font-weight: bold;
+          font-size: 1.2rem;
+          color: var(--text-primary);
+          text-decoration: none;
+        "
+      >
+        أثَر
+      </a>
+    </div>
   </div>
-</div>
+</nav>
+
+<div id="toast" class="toast"></div>

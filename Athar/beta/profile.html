@@ -1,296 +1,315 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ملفي الشخصي — أثــر</title>
-  <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico" />
-  <link rel="shortcut icon" href="assets/icons/favicon.ico" />
-  <link rel="apple-touch-icon" href="assets/icons/logo.png" />
-  <!-- خطوط وهوية -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap"
-    rel="stylesheet"
-  />
-  <!-- ملف النمط الأساسي (لو موجود) -->
-  <link rel="stylesheet" href="style.css" />
-  <meta name="color-scheme" content="dark light" />
-  <link rel="stylesheet" href="assets/css/profile.css" />
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ملفي الشخصي — أثــر</title>
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico" />
+    <link rel="shortcut icon" href="assets/icons/favicon.ico" />
+    <link rel="apple-touch-icon" href="assets/icons/logo.png" />
+    <!-- خطوط وهوية -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- ملف النمط الأساسي (لو موجود) -->
+    <link rel="stylesheet" href="style.css" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="assets/css/profile.css" />
+  </head>
 
-<body>
-  <!-- خلفيات (تظهر لو طبّقتِ style.css) -->
-  <div class="global-bg"></div>
+  <body>
+    <!-- خلفيات (تظهر لو طبّقتِ style.css) -->
+    <div class="global-bg"></div>
 
-  <!-- navbar component -->
-  <div id="navbar" data-component="components/navbar.html"></div>
+    <!-- navbar component -->
+    <div id="navbar" data-component="components/navbar.html"></div>
 
-  <!-- هيدر الصفحة -->
-  <header>
-    <div class="hero">
-      <div class="hero-plate"></div>
-      <h1 class="logo">أثــر</h1>
-      <div class="tag" style="color: #d4af37">الملف الشخصــــي</div>
-    </div>
-  </header>
+    <!-- هيدر الصفحة -->
+    <header>
+      <div class="hero">
+        <div class="hero-plate"></div>
+        <h1 class="logo">أثــر</h1>
+        <div class="tag" style="color: #d4af37">الملف الشخصــــي</div>
+      </div>
+    </header>
 
-  <!-- المحتوى -->
-  <main>
-    <div class="container page-grid">
-      <!-- هيدر الحساب -->
-      <section class="profile-header card" id="cardHeader" data-ready="0">
-        <div class="ph-avatar">
-          <!-- صورة افتراضية inline — لا 404 -->
-          <img
-            id="u-avatar"
-            alt="صورة الحساب"
-            src="data:image/svg+xml;utf8,<?xml version='1.0' encoding='UTF-8'?><svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23e5f0ff'/><stop offset='100%' stop-color='%23cfe0ff'/></linearGradient></defs><rect width='96' height='96' rx='48' fill='url(%23g)'/><circle cx='48' cy='38' r='16' fill='%23b7c7ff'/><path d='M16 82c6-16 22-24 32-24s26 8 32 24' fill='%23d7e4ff'/></svg>"
-          />
-          <label class="ph-edit" title="تعديل الصورة">
-            ✎
-            <input id="avatarInput" type="file" accept="image/*" hidden />
-          </label>
-        </div>
-        <div class="ph-identity">
-          <div class="ph-name">
-            <span id="displayName" class="js-user-name">—</span>
-            <button id="editNameBtn" class="btn" style="padding: 2px 8px">
-              تعديل
-            </button>
+    <!-- المحتوى -->
+    <main>
+      <div class="container page-grid">
+        <!-- هيدر الحساب -->
+        <section class="profile-header card" id="cardHeader" data-ready="0">
+          <div class="ph-avatar">
+            <!-- صورة افتراضية inline — لا 404 -->
+            <img
+              id="u-avatar"
+              alt="صورة الحساب"
+              src="data:image/svg+xml;utf8,<?xml version='1.0' encoding='UTF-8'?><svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23e5f0ff'/><stop offset='100%' stop-color='%23cfe0ff'/></linearGradient></defs><rect width='96' height='96' rx='48' fill='url(%23g)'/><circle cx='48' cy='38' r='16' fill='%23b7c7ff'/><path d='M16 82c6-16 22-24 32-24s26 8 32 24' fill='%23d7e4ff'/></svg>"
+            />
+            <label class="ph-edit" title="تعديل الصورة">
+              ✎
+              <input id="avatarInput" type="file" accept="image/*" hidden />
+            </label>
           </div>
-          <div class="ph-meta" style="color: #6b7280; font-size: 13px">
-            <span><strong>البريد:</strong> <span id="u-email">—</span></span>
-            ·
-            <span><strong>المعرّف:</strong> <span id="u-sub">—</span></span>
+          <div class="ph-identity">
+            <div class="ph-name">
+              <span id="displayName" class="js-user-name">—</span>
+              <button id="editNameBtn" class="btn" style="padding: 2px 8px">
+                تعديل
+              </button>
+            </div>
+            <div class="ph-meta" style="color: #6b7280; font-size: 13px">
+              <span><strong>البريد:</strong> <span id="u-email">—</span></span>
+              ·
+              <span><strong>المعرّف:</strong> <span id="u-sub">—</span></span>
+            </div>
+            <div id="acc-badge" class="badge inactive" data-membership-badge>
+              غير نشط
+            </div>
           </div>
-          <div id="acc-badge" class="badge inactive" data-membership-badge>
-            غير نشط
+          <div class="ph-actions">
+            <a class="btn" href="pricing.html">إدارة الاشتراك</a>
+            <a id="logout" class="btn">تسجيل الخروج</a>
           </div>
-        </div>
-        <div class="ph-actions">
-          <a class="btn" href="pricing.html">إدارة الاشتراك</a>
-          <a id="logout" class="btn">تسجيل الخروج</a>
-        </div>
-      </section>
+        </section>
 
-      <!-- شبكة -->
-      <section class="grid-2">
-        <!-- تفاصيل الاشتراك -->
-        <div class="box card" id="cardSub" data-ready="0">
-          <h3>تفاصيل الاشتراك</h3>
-          <p class="sub">معلومات تساعدك على متابعة حالة حسابك.</p>
+        <!-- شبكة -->
+        <section class="grid-2">
+          <!-- تفاصيل الاشتراك -->
+          <div class="box card" id="cardSub" data-ready="0">
+            <h3>تفاصيل الاشتراك</h3>
+            <p class="sub">معلومات تساعدك على متابعة حالة حسابك.</p>
+            <div
+              style="display: grid; grid-template-columns: 160px 1fr; gap: 8px"
+            >
+              <div class="muted">تاريخ التسجيل:</div>
+              <div id="u-joined">—</div>
+              <div class="muted">آخر ظهور:</div>
+              <div id="u-last">—</div>
+              <div class="muted">حالة الحساب:</div>
+              <div id="u-status-text">—</div>
+              <div class="muted">الخطة الحالية:</div>
+              <div id="u-plan" data-membership-plan>—</div>
+              <div class="muted">تاريخ تفعيل/انتهاء:</div>
+              <div id="u-activation" data-membership-exp>—</div>
+            </div>
+          </div>
+
+          <!-- تخصيص الواجهة -->
+          <div class="box card">
+            <h3>تخصيص الواجهة</h3>
+            <p class="sub">اختر لونك المفضل—يُحفَظ تلقائيًا لحسابك.</p>
+            <div
+              id="themePicker"
+              class="theme-picker"
+              data-v2="1"
+              aria-label="لوحة ألوان"
+            >
+              <button data-color="#1f2937" title="أسود"></button>
+              <button data-color="#064e3b" title="زيتي"></button>
+              <button data-color="#16a34a" title="أخضر"></button>
+              <button data-color="#0ea5e9" title="سماوي"></button>
+              <button data-color="#6366f1" title="بنفسجي"></button>
+              <button data-color="#f59e0b" title="برتقالي"></button>
+              <button data-color="#facc15" title="أصفر"></button>
+              <button data-color="#be123c" title="خمري"></button>
+              <button data-reset title="الافتراضي"></button>
+            </div>
+            <div class="theme-note">
+              يمكنك العودة للّون الافتراضي في أي وقت.
+            </div>
+          </div>
+
+          <!-- الفواتير -->
           <div
-            style="display: grid; grid-template-columns: 160px 1fr; gap: 8px"
+            class="box card"
+            id="cardInvoices"
+            data-ready="0"
+            style="grid-column: 1/-1"
           >
-            <div class="muted">تاريخ التسجيل:</div>
-            <div id="u-joined">—</div>
-            <div class="muted">آخر ظهور:</div>
-            <div id="u-last">—</div>
-            <div class="muted">حالة الحساب:</div>
-            <div id="u-status-text">—</div>
-            <div class="muted">الخطة الحالية:</div>
-            <div id="u-plan" data-membership-plan>—</div>
-            <div class="muted">تاريخ تفعيل/انتهاء:</div>
-            <div id="u-activation" data-membership-exp>—</div>
+            <h3>الفواتير</h3>
+            <p class="sub">تعرض عمليات الدفع بعد الإشتراك .</p>
+            <div id="invWrap">
+              <table class="table" id="invTable" style="display: none">
+                <thead>
+                  <tr>
+                    <th>التاريخ</th>
+                    <th>المبلغ</th>
+                    <th>البوابة</th>
+                    <th>الحالة</th>
+                    <th>المرجع</th>
+                  </tr>
+                </thead>
+                <tbody id="invBody"></tbody>
+              </table>
+              <div id="invEmpty" class="muted">لا توجد فواتير حتى الآن.</div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <!-- تخصيص الواجهة -->
-        <div class="box card">
-          <h3>تخصيص الواجهة</h3>
-          <p class="sub">اختر لونك المفضل—يُحفَظ تلقائيًا لحسابك.</p>
-          <div
-            id="themePicker"
-            class="theme-picker"
-            data-v2="1"
-            aria-label="لوحة ألوان"
-          >
-            <button data-color="#1f2937" title="أسود"></button>
-            <button data-color="#064e3b" title="زيتي"></button>
-            <button data-color="#16a34a" title="أخضر"></button>
-            <button data-color="#0ea5e9" title="سماوي"></button>
-            <button data-color="#6366f1" title="بنفسجي"></button>
-            <button data-color="#f59e0b" title="برتقالي"></button>
-            <button data-color="#facc15" title="أصفر"></button>
-            <button data-color="#be123c" title="خمري"></button>
-            <button data-reset title="الافتراضي"></button>
-          </div>
-          <div class="theme-note">
-            يمكنك العودة للّون الافتراضي في أي وقت.
-          </div>
-        </div>
+        <!-- الشكاوى والاقتراحات -->
+        <section class="card" style="grid-column: 1/-1">
+          <h3>الشكاوى والاقتراحات</h3>
+          <p class="sub">تتبع حالة شكاويك واقتراحاتك المرسلة.</p>
 
-        <!-- الفواتير -->
-        <div
-          class="box card"
-          id="cardInvoices"
-          data-ready="0"
-          style="grid-column: 1/-1"
-        >
-          <h3>الفواتير</h3>
-          <p class="sub">تعرض عمليات الدفع بعد الإشتراك .</p>
-          <div id="invWrap">
-            <table class="table" id="invTable" style="display: none">
-              <thead>
-                <tr>
-                  <th>التاريخ</th>
-                  <th>المبلغ</th>
-                  <th>البوابة</th>
-                  <th>الحالة</th>
-                  <th>المرجع</th>
-                </tr>
-              </thead>
-              <tbody id="invBody"></tbody>
-            </table>
-            <div id="invEmpty" class="muted">لا توجد فواتير حتى الآن.</div>
+          <div id="user-complaints" class="complaints-list">
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <p>جاري تحميل الشكاوى...</p>
+            </div>
           </div>
-        </div>
-      </section>
 
-      <!-- الشكاوى والاقتراحات -->
-      <section class="card" style="grid-column: 1/-1">
-        <h3>الشكاوى والاقتراحات</h3>
-        <p class="sub">تتبع حالة شكاويك واقتراحاتك المرسلة.</p>
-        
-        <div id="user-complaints" class="complaints-list">
-          <div class="loading-state">
-            <div class="spinner"></div>
-            <p>جاري تحميل الشكاوى...</p>
+          <div style="margin-top: 16px; text-align: center">
+            <a href="complaints.html" class="btn primary">إرسال شكوى جديدة</a>
           </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Name Edit Modal -->
+    <div id="nameEditModal" class="modal" style="display: none;">
+      <div class="modal-overlay" onclick="closeNameModal()"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>تعديل الاسم</h3>
+          <button class="modal-close" onclick="closeNameModal()">&times;</button>
         </div>
-        
-        <div style="margin-top: 16px; text-align: center;">
-          <a href="complaints.html" class="btn primary">إرسال شكوى جديدة</a>
+        <div class="modal-body">
+          <label for="newNameInput">الاسم الجديد:</label>
+          <input type="text" id="newNameInput" placeholder="أدخل الاسم الجديد" />
         </div>
-      </section>
+        <div class="modal-footer">
+          <button class="btn" onclick="closeNameModal()">إلغاء</button>
+          <button class="btn primary" onclick="saveNewName()">حفظ</button>
+        </div>
+      </div>
     </div>
-  </main>
 
-  <script>
-    (function () {
-      var y = document.getElementById("year");
-      if (y) y.textContent = new Date().getFullYear();
-    })();
-  </script>
-  <div
-    class="toast"
-    id="toast"
-    style="
-      position: fixed;
-      bottom: 18px;
-      right: 18px;
-      background: #111827;
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 10px;
-      display: none;
-    "
-  ></div>
-
-  <!-- مودال القص -->
-  <div id="cropModal" class="modal" aria-hidden="true">
+    <script>
+      (function () {
+        var y = document.getElementById("year");
+        if (y) y.textContent = new Date().getFullYear();
+      })();
+    </script>
     <div
-      class="panel"
-      role="dialog"
-      aria-modal="true"
-      aria-label="قصّ الصورة"
-    >
-      <div class="head">
-        <strong>قصّ الصورة</strong
-        ><button class="btn small" data-close>إغلاق</button>
-      </div>
-      <div class="body">
-        <div class="crop-stage">
-          <canvas id="cropCanvas" class="crop-canvas"></canvas
-          ><canvas id="cropOverlay" class="crop-overlay"></canvas>
+      class="toast"
+      id="toast"
+      style="
+        position: fixed;
+        bottom: 18px;
+        right: 18px;
+        background: #111827;
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 10px;
+        display: none;
+      "
+    ></div>
+
+    <!-- مودال القص -->
+    <div id="cropModal" class="modal" aria-hidden="true">
+      <div
+        class="panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="قصّ الصورة"
+      >
+        <div class="head">
+          <strong>قصّ الصورة</strong
+          ><button class="btn small" data-close>إغلاق</button>
         </div>
-        <div class="ctrls">
-          <div class="row">
-            <label>النسبة:</label
-            ><select id="cropAspect">
-              <option value="1">1:1 (مربّع)</option>
-              <option value="1.3333333">4:3</option>
-              <option value="0.75">3:4</option>
-            </select>
+        <div class="body">
+          <div class="crop-stage">
+            <canvas id="cropCanvas" class="crop-canvas"></canvas
+            ><canvas id="cropOverlay" class="crop-overlay"></canvas>
           </div>
-          <div class="row">
-            <label>التقريب:</label
-            ><input
-              id="cropZoom"
-              type="range"
-              min="0.5"
-              max="3"
-              step="0.01"
-              value="1"
-            />
-          </div>
-          <div class="row">
-            <label>الجودة:</label
-            ><input
-              id="cropQuality"
-              type="range"
-              min="0.6"
-              max="0.95"
-              step="0.01"
-              value="0.82"
-            />
-          </div>
-          <div class="row">
-            <label>الحجم الأقصى(px):</label
-            ><input
-              id="cropMax"
-              type="number"
-              min="256"
-              max="2048"
-              step="64"
-              value="768"
-            />
-          </div>
-          <div class="row" style="font-size: 12px; color: #94a3b8">
-            اسحبي الصورة داخل الإطار وغيّري التقريب.
+          <div class="ctrls">
+            <div class="row">
+              <label>النسبة:</label
+              ><select id="cropAspect">
+                <option value="1">1:1 (مربّع)</option>
+                <option value="1.3333333">4:3</option>
+                <option value="0.75">3:4</option>
+              </select>
+            </div>
+            <div class="row">
+              <label>التقريب:</label
+              ><input
+                id="cropZoom"
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.01"
+                value="1"
+              />
+            </div>
+            <div class="row">
+              <label>الجودة:</label
+              ><input
+                id="cropQuality"
+                type="range"
+                min="0.6"
+                max="0.95"
+                step="0.01"
+                value="0.82"
+              />
+            </div>
+            <div class="row">
+              <label>الحجم الأقصى(px):</label
+              ><input
+                id="cropMax"
+                type="number"
+                min="256"
+                max="2048"
+                step="64"
+                value="768"
+              />
+            </div>
+            <div class="row" style="font-size: 12px; color: #94a3b8">
+              اسحبي الصورة داخل الإطار وغيّري التقريب.
+            </div>
           </div>
         </div>
-      </div>
-      <div class="foot">
-        <button id="cropCancel" class="btn">إلغاء</button
-        ><button id="cropConfirm" class="btn primary">حفظ ورفع</button>
+        <div class="foot">
+          <button id="cropCancel" class="btn">إلغاء</button
+          ><button id="cropConfirm" class="btn primary">حفظ ورفع</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- SDKs -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/supabase-client.js"></script>
-  <script src="assets/js/ui.js"></script>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+    <!-- SDKs -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/supabase-client.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-  <!-- Component Loader -->
-  <script src="assets/js/component-loader.js"></script>
-  <script src="assets/js/navbar.js"></script>
+    <!-- Component Loader -->
+    <script src="assets/js/component-loader.js"></script>
+    <script src="assets/js/navbar.js"></script>
 
-  <!-- تعريف آمن لـ $ (مرة واحدة فقط) -->
-  <script>
-    window.$ = window.$ || ((sel) => document.querySelector(sel));
-    function toast(msg) {
-      const t = $("#toast");
-      if (!t) {
-        alert(msg);
-        return;
+    <!-- تعريف آمن لـ $ (مرة واحدة فقط) -->
+    <script>
+      window.$ = window.$ || ((sel) => document.querySelector(sel));
+      function toast(msg) {
+        const t = $("#toast");
+        if (!t) {
+          alert(msg);
+          return;
+        }
+        t.textContent = msg;
+        t.style.display = "block";
+        setTimeout(() => {
+          t.style.display = "none";
+        }, 1600);
       }
-      t.textContent = msg;
-      t.style.display = "block";
-      setTimeout(() => {
-        t.style.display = "none";
-      }, 1600);
-    }
-  </script>
+    </script>
 
-  <!-- منطق الصفحة -->
-  <script src="assets/js/profile.js"></script>
-  <!-- حارس الوصول (لا يعرّف $) -->
-  <script src="assets/js/require-auth.js"></script>
+    <!-- منطق الصفحة -->
+    <script src="assets/js/profile.js"></script>
+    <!-- حارس الوصول (لا يعرّف $) -->
+    <script src="assets/js/require-auth.js"></script>
 
-  <!-- footer component -->
-  <div id="footer" data-component="components/footer.html"></div>
-</body>
+    <!-- footer component -->
+    <div id="footer" data-component="components/footer.html"></div>
+  </body>
 </html>
