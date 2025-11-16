@@ -24,8 +24,8 @@
       })();
     </script>
 
-    <!-- تقدرِين تنسخين ethraa.css وتعدينه إلى mithaq.css أو تعيدين استعمال نفس الملف -->
-    <link rel="stylesheet" href="assets/css/mithaq.css" />
+    <!-- يمكنك نسخ ethraa.css مع تعديلات بسيطة أو استخدام ملف جديد -->
+    <link rel="stylesheet" href="assets/css/ethraa.css" />
   </head>
   <body>
     <div class="global-bg"></div>
@@ -36,7 +36,7 @@
       <div class="hero">
         <h1 class="logo">ميثــاق</h1>
         <div class="tag">
-          <span class="dot"></span>لشَدّ وثاق الدرس بروابط مع الدين والوطن والحياة.
+          <span class="dot"></span>يشدّ وثاق الدرس بروابطٍ مع الدين والوطن والحياة.
         </div>
       </div>
     </header>
@@ -44,26 +44,26 @@
     <main>
       <div class="container">
         <section class="card">
-          <h2 class="title">اكتبي بيانات الدرس</h2>
+          <h2 class="title">اكتبي المادة وموضوع الدرس</h2>
 
           <div class="field">
             <label>المادة</label>
             <input
               id="subj"
-              placeholder="اكتبي اسم المادة: فيزياء / رياضيات / لغة عربية / مهارات حياتية …"
+              placeholder="مثل: فيزياء ٢ / مهارات حياتية / لغة عربية …"
             />
           </div>
 
           <div class="field">
-            <label>موضوع الدرس</label>
+            <label>موضوع الدرس (مطلوب)</label>
             <input
               id="topic"
-              placeholder="اكتبي موضوع الدرس بدقة: قانون حفظ الطاقة / خصائص المادة / الهجرة النبوية …"
+              placeholder="مثل: قانون حفظ الطاقة / التناسب الطردي / دورة الماء …"
             />
           </div>
 
           <div class="field">
-            <label>المرحلة</label>
+            <label>المرحلة الدراسية</label>
             <select id="stage">
               <option value="p1">ابتدائي دُنيا</option>
               <option value="p2" selected>ابتدائي عُليا</option>
@@ -71,6 +71,8 @@
               <option value="h">ثانوي</option>
             </select>
           </div>
+
+          <!-- ميثاق لا يترك المعلم يختار نوع الربط: دائماً يولد الجميع -->
 
           <div
             class="actions-row"
@@ -83,7 +85,9 @@
         </section>
 
         <section class="card" id="out" style="display: none">
-          <h2 class="title">بطاقات الربط (ميثــاق)</h2>
+          <h2 class="title">بطاقات الربط (دين • وطن • مواد أخرى • حياة • دول أخرى)</h2>
+
+          <!-- بطاقات القسم الأساسي -->
           <div class="cards" id="cards"></div>
         </section>
       </div>
@@ -109,7 +113,7 @@
 
     <script src="assets/js/mithaq.js"></script>
 
-    <!-- Auth0 SDK -->
+    <!-- Auth0 SDK (اختياري - يُفضّل إبقاؤه مع فولباك) -->
     <script
       defer
       src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
@@ -122,10 +126,10 @@
 
     <script src="assets/js/component-loader.js"></script>
     <script src="assets/js/navbar.js"></script>
-    <!-- الحماية -->
+    <!-- الحماية (يجب أن يسبق أي كود يعتمد على تسجيل الدخول) -->
     <script defer src="/assets/js/require-auth.js"></script>
 
-    <!-- سكربتات المشروع -->
+    <!-- سكربتات مشروعك -->
     <script defer src="/app.js"></script>
   </body>
 </html>
