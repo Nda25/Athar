@@ -1,5 +1,5 @@
-// مُعين — توليد خطة أسبوعية من أهداف الدرس
-// يعتمد نفس نمط ميثاق/إثراء: Auth0 + عضوية + استدعاء Function جاهز
+// مُعين — خطة أسبوعية لعدة دروس، كل يوم لدرس واحد فقط
+// نفس روح ميثاق/إثراء: Auth0 + استدعاء Function جاهز
 
 (function () {
   const DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس"];
@@ -11,6 +11,7 @@
     subject: $("#f-subject"),
     grade: $("#f-grade"),
     count: $("#f-count"),
+    lessonsBox: $("#lessons-box"),
     status: $("#status"),
     out: $("#out"),
     meta: $("#meta"),
@@ -25,7 +26,7 @@
 
   let currentPlan = null;
 
-  // Toast بسيط (نفس أسلوب الصفحات الأخرى تقريبًا)
+  /* ===== Toast بسيط ===== */
   function toast(msg, ms = 1600) {
     if (!DOM.toast) return;
     DOM.toast.textContent = msg;
@@ -36,8 +37,30 @@
       ms
     );
   }
+  window.toast = window.toast || toast;
 
-  // بيانات ميتا لاستخدامها في log-tool-usage لو لزم
+  /* ===== رسم خانات الدروس حسب العدد ===== */
+  function lessonRow(i) {
+    const wrap = document.createElement("div");
+    wrap.className = "field";
+    wrap.innerHTML = `
+      <label>اسم الدرس ${i + 1}</label>
+      <input class="lesson-name" data-idx="${i}" placeholder="اكتبي اسم الدرس كما في المنهج">
+    `;
+    return wrap;
+  }
+
+  function drawLessonInputs() {
+    DOM.lessonsBox.innerHTML = "";
+    const n = Number(DOM.count.value) || 1;
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < n; i++) {
+      frag.appendChild(lessonRow(i));
+    }
+    DOM.lessonsBox.appendChild(frag);
+  }
+
+  /* ===== ميتا للاستخدام ===== */
   function metaForLog() {
     return {
       subject: (DOM.subject.value || "").trim() || null,
@@ -58,8 +81,8 @@
     }
   }
 
-  // استدعاء Function
-  async function fetchPlan(subject, grade, count) {
+  /* ===== استدعاء Function من السيرفر ===== */
+  async function fetchPlan(subject, grade, count, lessons) {
     if (!window.auth) {
       toast("خطأ: المصادقة غير جاهزة");
       throw new Error("Auth0 client not ready");
@@ -81,7 +104,7 @@
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ subject, grade, count }),
+        body: JSON.stringify({ subject, grade, count, lessons }),
       });
 
       if (res.status === 402) {
@@ -113,11 +136,13 @@
     return c;
   }
 
+  /* ===== عرض Canon (أهداف + مفردات كل درس) ===== */
   function renderCanon(canon) {
-    const goals = Array.isArray(canon?.objectives) ? canon.objectives : [];
-    const vocab = Array.isArray(canon?.vocab) ? canon.vocab : [];
+    let list = [];
+    if (Array.isArray(canon)) list = canon;
+    else if (canon && typeof canon === "object") list = [canon];
 
-    if (!goals.length && !vocab.length) {
+    if (!list.length) {
       DOM.canonBox.style.display = "none";
       DOM.canonGoals.innerHTML = "";
       DOM.canonVocab.innerHTML = "";
@@ -127,41 +152,49 @@
     DOM.canonBox.style.display = "block";
 
     DOM.canonGoals.innerHTML = "";
-    goals.forEach((g) => {
-      const li = document.createElement("li");
-      li.textContent = g;
-      DOM.canonGoals.appendChild(li);
-    });
-
     DOM.canonVocab.innerHTML = "";
-    vocab.forEach((v) => {
-      const li = document.createElement("li");
-      li.textContent = v;
-      DOM.canonVocab.appendChild(li);
+
+    list.forEach((c) => {
+      const lessonName = c.lesson || c.lessonTitle || "الدرس";
+
+      (c.objectives || []).forEach((g) => {
+        const li = document.createElement("li");
+        li.textContent = `«${lessonName}» — ${g}`;
+        DOM.canonGoals.appendChild(li);
+      });
+
+      (c.vocab || []).forEach((v) => {
+        const li = document.createElement("li");
+        li.textContent = `«${lessonName}» — ${v}`;
+        DOM.canonVocab.appendChild(li);
+      });
     });
   }
 
+  /* ===== عرض الخطة ===== */
   function renderPlan(data) {
     currentPlan = data || null;
     if (!data) return;
 
     DOM.out.style.display = "block";
 
-    // meta chips
+    // meta
     DOM.meta.innerHTML = "";
     const fragMeta = document.createDocumentFragment();
     fragMeta.appendChild(createChip(data.meta.subject));
     fragMeta.appendChild(createChip(`الصف: ${data.meta.grade}`));
     fragMeta.appendChild(
-      createChip(`عدد الحصص هذا الأسبوع: ${data.meta.count}`)
+      createChip(`عدد الدروس هذا الأسبوع: ${data.meta.count}`)
     );
-    if (data.meta.lesson) {
-      fragMeta.appendChild(createChip(`الدرس: ${data.meta.lesson}`));
+    if (Array.isArray(data.meta.lessons)) {
+      fragMeta.appendChild(
+        createChip(`الدروس: ${data.meta.lessons.join(" | ")}`)
+      );
     }
     DOM.meta.appendChild(fragMeta);
 
     // canon
-    renderCanon(data.canon || {});
+    renderCanon(data.canon || []);
 
     // الأيام
     DOM.plan.innerHTML = "";
@@ -173,9 +206,8 @@
 
       const header = document.createElement("div");
       header.className = "day-head";
-      header.innerHTML = `<h3 style="margin:0">${DAYS[i]} — <span class="muted">Segment ${
-        i + 1
-      }</span></h3>`;
+      const lessonLabel = d.lesson ? ` — «${d.lesson}»` : "";
+      header.innerHTML = `<h3 style="margin:0">${DAYS[i]}${lessonLabel}</h3>`;
       card.appendChild(header);
 
       // الأهداف
@@ -253,12 +285,10 @@
     });
 
     DOM.plan.appendChild(frag);
-
-    // فعّلي زر نسخ الكل
     DOM.copyAllBtn.disabled = !(data.days && data.days.length);
   }
 
-  // التعامل مع أزرار اليوم (تعديل / نسخ)
+  /* ===== تعامل مع أزرار اليوم ===== */
   function handlePlanClick(e) {
     if (!currentPlan) return;
     const target = e.target;
@@ -271,7 +301,6 @@
     if (editIdx !== undefined) {
       const i = Number(editIdx);
       if (!Number.isFinite(i)) return;
-
       const day = currentPlan.days[i];
       if (!day) return;
 
@@ -287,7 +316,7 @@
       }
 
       const v = prompt(
-        `عدّلي المفردات ليوم ${DAYS[i]} (سطر لكل مفردة — يُفضّل أن تبقى من مفردات الدرس):`,
+        `عدّلي المفردات ليوم ${DAYS[i]} (سطر لكل مفردة):`,
         (day.vocab || []).join("\n")
       );
       if (v != null) {
@@ -308,7 +337,7 @@
       const day = currentPlan.days[j];
       if (!day) return;
 
-      const txt = `${DAYS[j]} — ${currentPlan.meta.subject} (${currentPlan.meta.grade})
+      const txt = `${DAYS[j]} — ${currentPlan.meta.subject} (${currentPlan.meta.grade})${day.lesson ? " — «" + day.lesson + "»" : ""}
 
 الأهداف:
 - ${(day.goals || []).join("\n- ")}
@@ -324,15 +353,15 @@ ${day.homework || ""}
 `;
       navigator.clipboard.writeText(txt);
       toast("نُسخ يوم " + DAYS[j] + " ✓");
-      logUsage("mueen_copy_day", { day: DAYS[j] });
+      logUsage("mueen_copy_day", { day: DAYS[j], lesson: day.lesson || null });
     }
   }
 
-  // نسخ الخطة كاملة
+  /* ===== نسخ الخطة كاملة ===== */
   function copyAll() {
     if (!currentPlan) return;
     const blocks = currentPlan.days.map((day, i) => {
-      return `${DAYS[i]}
+      return `${DAYS[i]}${day.lesson ? " — «" + day.lesson + "»" : ""}
 
 الأهداف:
 - ${(day.goals || []).join("\n- ")}
@@ -354,14 +383,24 @@ ${day.homework || ""}
     logUsage("mueen_copy_all");
   }
 
+  /* ===== توليد الخطة ===== */
   async function onGenerate() {
     const subject = (DOM.subject.value || "").trim();
     const grade = DOM.grade.value;
     const count = Number(DOM.count.value) || 1;
+    const lessons = [...$$(".lesson-name")]
+      .map((i) => i.value.trim())
+      .filter(Boolean);
 
     if (!subject) {
-      toast("اكتبي مادة الدرس أو موضوعه أولًا");
+      toast("اكتبي مادة الدرس / مجاله أولًا");
       DOM.subject.focus();
+      return;
+    }
+    if (!lessons.length) {
+      toast("اكتبي أسماء الدروس أولًا");
+      const first = $(".lesson-name");
+      if (first) first.focus();
       return;
     }
 
@@ -370,7 +409,7 @@ ${day.homework || ""}
     DOM.copyAllBtn.disabled = true;
 
     try {
-      const data = await fetchPlan(subject, grade, count);
+      const data = await fetchPlan(subject, grade, count, lessons);
       renderPlan(data);
       DOM.status.textContent = "تم ✓";
       await logUsage("mueen_generate", { ok: true });
@@ -379,19 +418,23 @@ ${day.homework || ""}
       if (DOM.status.textContent === "جارٍ التوليد…") {
         DOM.status.textContent = "تعذر التوليد";
       }
-      await logUsage("mueen_generate", { ok: false, error: String(e?.message || e) });
+      await logUsage("mueen_generate", {
+        ok: false,
+        error: String(e?.message || e),
+      });
     } finally {
       DOM.genBtn.disabled = false;
     }
   }
 
+  /* ===== init ===== */
   function init() {
+    drawLessonInputs();
+    DOM.count.addEventListener("change", drawLessonInputs);
     if (DOM.genBtn) DOM.genBtn.addEventListener("click", onGenerate);
     if (DOM.copyAllBtn)
       DOM.copyAllBtn.addEventListener("click", copyAll);
     if (DOM.plan) DOM.plan.addEventListener("click", handlePlanClick);
-
-    // تأكد من تفعيل require-auth (الباقي على سكربت الحماية)
   }
 
   if (document.readyState === "loading") {
