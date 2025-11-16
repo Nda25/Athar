@@ -1,7 +1,5 @@
 // netlify/functions/mulham.js
 // مُلهم — توليد حِزم أنشطة صفّية جاهزة (حركي / جماعي / فردي)
-// حماية: requireUser (Auth0) + فحص اشتراك Supabase + تتبّع استخدام
-// التزام صارم بالفئة العمرية + منع التكرار + بدائل Zero-prep وتكييف
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@supabase/supabase-js");
@@ -69,7 +67,12 @@ async function supaLogToolUsage(user, meta) {
 }
 
 // ====== أدوات عامة ======
-const AGE_LABEL = { p1: "ابتدائي دُنيا", p2: "ابتدائي عُليا", m: "متوسط", h: "ثانوي" };
+const AGE_LABEL = {
+  p1: "ابتدائي دُنيا",
+  p2: "ابتدائي عُليا",
+  m: "متوسط",
+  h: "ثانوي",
+};
 const ageLabel = (age) => AGE_LABEL[age] || "ابتدائي عُليا";
 
 function clampInt(v, min, max, def) {
@@ -78,7 +81,6 @@ function clampInt(v, min, max, def) {
   return def;
 }
 
-// FNV-like hash → لتثبيت اختيار نشاط لكل مُدخلات
 function hashInt(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
@@ -89,27 +91,22 @@ function hashInt(str) {
 }
 
 const stripFences = (s = "") =>
-  String(s).replace(/^\s*```json\b/i, "").replace(/^\s*```/i, "").replace(/```$/i, "").trim();
+  String(s)
+    .replace(/^\s*```json\b/i, "")
+    .replace(/^\s*```/i, "")
+    .replace(/```$/i, "")
+    .trim();
 
-// فلترة أنشطة غير مناسبة عمريًا (ألفاظ/أفعال)
-// - للثانوي: امنعي “ركض/قفز/جري/رقص/ألعاب مطاردة”… إلخ
-// - للابتدائي: امنعي أدوات أو تعليمات غير آمنة/معمليّة معقدة
 function isAgeAppropriate(txt, stage) {
   const t = String(txt || "").toLowerCase();
+  const bannedHigh = /(ركض|جر[يى]|قفز|سباق|مطاردة|رقص|صراخ)/;
+  const bannedPrimary = /(حمض|قلوي|لهب|غاز سام|مذيب|كحول مركز|مشرط)/;
 
-  const bannedHigh = /(ركض|جر[يى]|قفز|سباق|مطاردة|رقص|كوكلات|صراخ|تصفيق صاخب)/;
-  const bannedPrimary = /(حمض|قلوي|لهب|غاز سام|مذيب|تيار كهربائي مباشر|كحول مركز|مشرط)/;
-
-  if (stage === "h") {
-    if (bannedHigh.test(t)) return false;
-  }
-  if (stage === "p1" || stage === "p2") {
-    if (bannedPrimary.test(t)) return false;
-  }
+  if (stage === "h" && bannedHigh.test(t)) return false;
+  if ((stage === "p1" || stage === "p2") && bannedPrimary.test(t)) return false;
   return true;
 }
 
-// إزالة التكرار + ضبط 2..3 عناصر لكل فئة
 function dedupActivities(arr, stage, max = 3) {
   if (!Array.isArray(arr)) return [];
   const out = [];
@@ -119,8 +116,10 @@ function dedupActivities(arr, stage, max = 3) {
     const idea = (a?.summary || a?.description || "").trim();
     if (!title || !idea) continue;
 
-    // فلترة الملاءمة
-    if (!isAgeAppropriate(`${title} ${idea} ${(a?.steps || []).join(" ")}`, stage)) continue;
+    if (
+      !isAgeAppropriate(`${title} ${idea} ${(a?.steps || []).join(" ")}`, stage)
+    )
+      continue;
 
     const key = (title + "|" + idea).toLowerCase();
     if (seen.has(key)) continue;
@@ -132,11 +131,18 @@ function dedupActivities(arr, stage, max = 3) {
 }
 
 function normalizeActivity(a = {}, totalMinutes) {
-  const dur = typeof a.duration === "number" && a.duration > 0
-    ? clampInt(a.duration, 3, Math.max(10, totalMinutes), Math.max(5, Math.round(totalMinutes / 2)))
-    : Math.max(5, Math.min(20, Math.round(totalMinutes / 2)));
+  const dur =
+    typeof a.duration === "number" && a.duration > 0
+      ? clampInt(
+          a.duration,
+          3,
+          Math.max(10, totalMinutes),
+          Math.max(5, Math.round(totalMinutes / 2))
+        )
+      : Math.max(5, Math.min(20, Math.round(totalMinutes / 2)));
 
-  const arr = (x) => (Array.isArray(x) ? x.filter(Boolean).map(String).slice(0, 10) : []);
+  const arr = (x) =>
+    Array.isArray(x) ? x.filter(Boolean).map(String).slice(0, 10) : [];
   const txt = (x) => (typeof x === "string" ? x.trim() : "") || "";
 
   return {
@@ -154,6 +160,50 @@ function normalizeActivity(a = {}, totalMinutes) {
   };
 }
 
+// ====== توجيهات بسيطة حسب المرحلة ======
+function getAgeGuidance(stage) {
+  const guides = {
+    p1: `
+- العمر: 6-9 سنوات (ابتدائي دُنيا)
+- اللغة: كلمات بسيطة جداً، جمل قصيرة (5-7 كلمات)
+- التفكير: تذكّر بسيط، لا تحليل معقد
+- الأمثلة: من حياتهم اليومية (البيت، المدرسة، المسجد، الحي)
+- السياق السعودي: التمر، النخيل، الكعبة، العلم السعودي، رمضان
+- الأنشطة: هادئة وآمنة تماماً، بدون جري/قفز/ركض
+- التعليمات: مباشرة ('ارسم'، 'لوّن'، 'قل'، 'عدّ')`,
+
+    p2: `
+- العمر: 10-12 سنة (ابتدائي عُليا)
+- اللغة: واضحة، جمل 8-12 كلمة، مصطلحات بسيطة
+- التفكير: فهم وتطبيق بسيط
+- الأمثلة: من بيئتهم المحلية والوطنية
+- السياق السعودي: مدن المملكة، يوم التأسيس، رؤية 2030 (مبسطة)، مواسم السعودية
+- الأنشطة: تفاعلية هادئة، عمل جماعي بسيط
+- التعليمات: واضحة ('قارن'، 'صنّف'، 'اشرح بكلماتك')`,
+
+    m: `
+- العمر: 13-15 سنة (متوسط)
+- اللغة: دقيقة، مصطلحات علمية واضحة
+- التفكير: تحليل وربط واستنتاج
+- الأمثلة: قضايا محلية ومشاريع وطنية
+- السياق السعودي: رؤية 2030، الطاقة المتجددة، الاستدامة، المشاريع الوطنية
+- الأنشطة: تعاون منظم، مشاريع قصيرة، تجارب بسيطة
+- التعليمات: تحليلية ('حلل'، 'استنتج'، 'قارن واستخلص')`,
+
+    h: `
+- العمر: 16-18 سنة (ثانوي)
+- اللغة: أكاديمية، مصطلحات متخصصة
+- التفكير: تقييم ونقد وإبداع
+- الأمثلة: بحث علمي، ابتكار، قضايا معاصرة
+- السياق السعودي: ريادة الأعمال، الذكاء الاصطناعي، سوق العمل، الجامعات السعودية
+- الأنشطة: رصينة، دراسات حالة، مشاريع بحثية، نقاش أكاديمي
+- التعليمات: متقدمة ('قيّم'، 'انقد بموضوعية'، 'ابتكر حلاً')
+- ممنوع: الركض، القفز، الجري، الرقص، الأنشطة الطفولية`,
+  };
+
+  return guides[stage] || guides.p2;
+}
+
 // ================== HANDLER ==================
 exports.handler = async (event) => {
   try {
@@ -164,13 +214,11 @@ exports.handler = async (event) => {
       return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
     }
 
-    // حماية JWT
     const gate = await requireUser(event);
     if (!gate.ok) {
       return { statusCode: gate.status, headers: CORS, body: gate.error };
     }
 
-    // اشتراك نشط
     const active = await isActiveMembership(gate.user?.sub, gate.user?.email);
     if (!active) {
       return {
@@ -180,7 +228,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // قراءة الجسم
     let payload = {};
     try {
       payload = JSON.parse(event.body || "{}");
@@ -200,67 +247,78 @@ exports.handler = async (event) => {
       variant = "",
     } = payload;
 
-    // (1) ضبط/تطبيع القيم — ***لا نعيد تعريف اسم مرة ثانية***
     const DURATION_MIN = clampInt(time, 5, 60, 20);
     const SUBJ = String(subject || "").slice(0, 120);
     const TOPIC = String(topic || SUBJ || "").slice(0, 160);
-    const STAGE = age; // p1/p2/m/h
+    const STAGE = age;
 
-    // (2) إعداد Gemini
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) {
       return { statusCode: 500, headers: CORS, body: "Missing GEMINI_API_KEY" };
     }
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash"; // ثابت مثل بقية الملفات
+    const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
-    // (3) برومبت صارم
-    const stageNote = {
-      p1: "ابتدائي دُنيا (أعمار 6–9): حركات بسيطة هادئة، لغة شديدة البساطة، ألعاب تعليمية آمنة بدون جري/ركض/قفز.",
-      p2: "ابتدائي عُليا (10–12): تجسيد وتمثيل بصري بسيط، تجنب الجري/الركض/القفز الطويل.",
-      m: "متوسط (13–15): تعاون منظم، تعليمات واضحة، تجنّب أنشطة طفولية أو راقصة.",
-      h: "ثانوي (16–18): أنشطة رصينة، تطبيقات واقعية، **يُمنع** الركض/القفز/الرقص/مطاردات.",
-    }[STAGE] || "ابتدائي عُليا: لغة بسيطة وأنشطة آمنة.";
-
+    // بناء البرومبت
+    const ageGuidance = getAgeGuidance(STAGE);
     const constraints = [];
-    constraints.push(`إجمالي الوقت ~ ${DURATION_MIN} دقيقة؛ كل نشاط 5–${Math.max(10, DURATION_MIN)} دقائق.`);
-    constraints.push(`مستوى بلوم المستهدف: ${bloom}. المرحلة: ${ageLabel(STAGE)}.`);
-    constraints.push("اللغة عربية سليمة، جمل قصيرة، آمنة تمامًا، بدون مخاطر/كيماويات/لهب.");
-    constraints.push("الأنشطة قابلة للتنفيذ فورًا داخل الفصل المدرسي.");
-    if (noTools) constraints.push("Zero-prep: بدون مواد مطبوعة/قص/لصق/تجهيزات معقدة.");
+    constraints.push(`الوقت الإجمالي: ${DURATION_MIN} دقيقة`);
+    constraints.push(`مستوى بلوم: ${bloom}`);
+    constraints.push("اللغة عربية سليمة، آمنة تماماً، بدون مخاطر");
+    constraints.push("الأنشطة قابلة للتنفيذ فوراً داخل الفصل");
+    if (noTools) constraints.push("Zero-prep: بدون تجهيزات معقدة");
 
     const adaptations = [];
-    if (adaptLow) adaptations.push("تكيّف منخفض التحفيز: مهام قصيرة جدًا، تعزيز فوري، خيارات بسيطة، فواصل دقيقة.");
-    if (adaptDiff) adaptations.push("فروق فردية: (سهل/متوسط/متقدم) أو منتجات بديلة.");
+    if (adaptLow)
+      adaptations.push("تكيّف منخفض التحفيز: مهام قصيرة، تعزيز فوري");
+    if (adaptDiff)
+      adaptations.push("فروق فردية: مستويات متعددة (سهل/متوسط/متقدم)");
 
     const prompt = `
-أنت مصمم تعلمي عربي خبير. أعطني **JSON واحد فقط** بالشكل المبين لاحقًا، يحوي ثلاث فئات:
-1) أنشطة صفّية حركية، 2) أنشطة صفّية جماعية، 3) أنشطة صفّية فردية.
-لكل فئة قدِّم **٢ إلى ٣** أنشطة مختلفة قوية **مناسبة تمامًا** لـ "${ageLabel(STAGE)}".
-المجال: "${SUBJ}"، الموضوع: "${TOPIC}".
+أنت مصمم أنشطة تعليمية للمدارس السعودية. أعطني **JSON واحد فقط** يحوي 3 فئات:
+1) أنشطة صفّية حركية
+2) أنشطة صفّية جماعية  
+3) أنشطة صفّية فردية
 
-${stageNote}
-${constraints.map((s) => "- " + s).join("\n")}
-${adaptations.length ? "\nالتكييفات:\n" + adaptations.map((s) => "- " + s).join("\n") : ""}
+لكل فئة: **٢-٣ أنشطة** مختلفة ومناسبة تماماً للمرحلة.
 
-قواعد صارمة:
-- العناوين رصينة ومناسبة للعمر. للثانوي **ممنوع**: ركض/جري/قفز/رقص/مطاردة/تصفيق صاخب. للابتدائي **ممنوع**: أي مواد خطرة أو تجارب معملية معقدة.
-- "steps" = خطوات تنفيذ مباشرة (أوامر عملية)، لا أسئلة مفتوحة من نوع "ناقش/تخيّل".
-- "exit" = تذكرة خروج دقيقة واحدة بصياغة عربية سليمة، ليست سؤال نقاش مفتوح.
-- لا تكرار للأفكار بين الأنشطة.
-- إذا لم تُستخدم مواد اكتبي "materials": [] ولا تخترعي أدوات.
+📚 المادة: "${SUBJ}"
+📖 الموضوع: "${TOPIC}"
 
-استجيبي **فقط** بهذا القالب:
+👥 المرحلة والتوجيهات:
+${ageGuidance}
+
+📌 القواعد:
+${constraints.map((c) => `- ${c}`).join("\n")}
+${
+  adaptations.length
+    ? "\n🎯 التكييفات:\n" + adaptations.map((a) => `- ${a}`).join("\n")
+    : ""
+}
+
+⚠️ مهم جداً:
+- العناوين رصينة ومناسبة للعمر
+- خطوات عملية واضحة (ليست أسئلة نقاش)
+- تذكرة خروج محددة (ليست سؤال مفتوح)
+- لا تكرار بين الأنشطة
+- إذا لم تُستخدم مواد اكتبي []
+
+JSON فقط:
 {
   "categories": [
-    { "name": "أنشطة صفّية حركية",
+    {
+      "name": "أنشطة صفّية حركية",
       "activities": [
         {
-          "title": "...", "summary": "...", "duration": 7,
-          "materials": ["..."], "steps": ["...", "..."],
-          "exit": "...", "impact": "...",
-          "zeroPrep": true,
-          "lowMotivation": "إن لزم", "differentiation": "إن لزم"
+          "title": "...",
+          "summary": "...",
+          "duration": 7,
+          "materials": ["..."],
+          "steps": ["...", "..."],
+          "exit": "...",
+          "impact": "...",
+          "lowMotivation": "...",
+          "differentiation": "..."
         }
       ]
     },
@@ -269,7 +327,6 @@ ${adaptations.length ? "\nالتكييفات:\n" + adaptations.map((s) => "- " +
   ],
   "tips": ["...", "..."]
 }
-بدون أي نص خارج JSON.
 `.trim();
 
     const req = {
@@ -287,33 +344,55 @@ ${adaptations.length ? "\nالتكييفات:\n" + adaptations.map((s) => "- " +
     const model = genAI.getGenerativeModel({ model: MODEL });
     const res = await model.generateContent(req);
 
-    // (4) قراءة النص
     const rawText =
       (typeof res?.response?.text === "function" ? res.response.text() : "") ||
       res?.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "";
 
     if (!rawText) {
-      return { statusCode: 502, headers: CORS, body: "Empty response from model" };
+      return {
+        statusCode: 502,
+        headers: CORS,
+        body: "Empty response from model",
+      };
     }
 
-    // (5) JSON parsing + تنظيف
     let data;
     try {
       data = JSON.parse(stripFences(rawText));
     } catch (e) {
-      return {
-        statusCode: 500,
-        headers: CORS,
-        body: "Model returned non-JSON response",
-      };
+      // محاولة استخراج JSON من النص
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          data = JSON.parse(jsonMatch[0]);
+        } catch (e2) {
+          return {
+            statusCode: 500,
+            headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
+            body: `Model returned non-JSON response. Raw text:\n${rawText.slice(
+              0,
+              500
+            )}`,
+          };
+        }
+      } else {
+        return {
+          statusCode: 500,
+          headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" },
+          body: `Model returned non-JSON response. Raw text:\n${rawText.slice(
+            0,
+            500
+          )}`,
+        };
+      }
     }
 
     if (!data || !Array.isArray(data.categories)) {
       return { statusCode: 500, headers: CORS, body: "Invalid JSON shape" };
     }
 
-    // (6) إزالة التكرار وضبط 2..3 لكل فئة + فلترة الملاءمة
+    // إزالة التكرار وفلترة
     const categories = (data.categories || []).map((c) => {
       const acts = Array.isArray(c.activities) ? c.activities : [];
       return {
@@ -322,7 +401,7 @@ ${adaptations.length ? "\nالتكييفات:\n" + adaptations.map((s) => "- " +
       };
     });
 
-    // (7) اختيار عنصر ثابت لكل فئة اعتمادًا على seed
+    // اختيار نشاط واحد لكل فئة
     const seedStr = `${variant}|${TOPIC}|${STAGE}|${bloom}|${DURATION_MIN}`;
     const idxSeed = hashInt(seedStr);
 
@@ -342,21 +421,20 @@ ${adaptations.length ? "\nالتكييفات:\n" + adaptations.map((s) => "- " +
       else if (!group && /جمع/.test(n)) group = pickOne(c);
       else if (!individual && /فرد/.test(n)) individual = pickOne(c);
     }
-    // احتياطي بالترتيب إن لم تُسمّ الفئات بدقة
     if (!movement && categories[0]) movement = pickOne(categories[0]);
     if (!group && categories[1]) group = pickOne(categories[1]);
     if (!individual && categories[2]) individual = pickOne(categories[2]);
 
-    // (8) تحويل لصيغة الواجهة
     const sets = {
       movement: movement ? normalizeActivity(movement, DURATION_MIN) : {},
       group: group ? normalizeActivity(group, DURATION_MIN) : {},
       individual: individual ? normalizeActivity(individual, DURATION_MIN) : {},
     };
 
-    const tips = Array.isArray(data.tips) ? data.tips.filter(Boolean).slice(0, 10) : [];
+    const tips = Array.isArray(data.tips)
+      ? data.tips.filter(Boolean).slice(0, 10)
+      : [];
 
-    // (9) ميتا
     const meta = {
       subject: SUBJ,
       topic: TOPIC,
@@ -367,12 +445,12 @@ ${adaptations.length ? "\nالتكييفات:\n" + adaptations.map((s) => "- " +
       model: MODEL,
     };
 
-    // (10) تتبّع
     const ua = event.headers["user-agent"] || null;
     const ref = event.headers["referer"] || event.headers["referrer"] || null;
     const ip =
       event.headers["x-nf-client-connection-ip"] ||
-      (event.headers["x-forwarded-for"]?.split(",")[0] || null);
+      event.headers["x-forwarded-for"]?.split(",")[0] ||
+      null;
     supaLogToolUsage(gate.user, {
       subject: SUBJ,
       topic: TOPIC,
