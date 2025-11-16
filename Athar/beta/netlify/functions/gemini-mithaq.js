@@ -63,7 +63,8 @@ function clampCards(arr) {
   }
 
   // نحتاج على الأقل 5 بطاقات
-  return out.length >= 5 ? out : [];
+// نسمح بأي عدد من البطاقات (التقييم يصير لاحقًا في isStrict/isSoft)
+return out;
 }
 
 const isStrict = (d) => Array.isArray(d?.cards) && d.cards.length >= 5;
