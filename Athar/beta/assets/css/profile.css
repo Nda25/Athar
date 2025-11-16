@@ -95,6 +95,12 @@ header {
   font-size: 14px;
 }
 
+.dark .tag {
+  background: rgba(96, 165, 250, 0.15);
+  color: #93c5fd !important;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
 /* الشبكة والكروت */
 .page-grid {
   display: grid;
@@ -183,7 +189,7 @@ header {
   gap: 12px;
 }
 .ph-meta {
-  color: var(--text-main);
+  color: var(--text-muted);
   font-size: 14px;
   margin-bottom: 12px;
   line-height: 1.5;
@@ -193,17 +199,17 @@ header {
   font-weight: 600;
 }
 .ph-meta span {
-  color: var(--text-main);
+  color: var(--text-muted);
 }
 
 .dark .ph-meta {
-  color: var(--text-main);
+  color: #cbd5e1;
 }
 .dark .ph-meta strong {
-  color: var(--text-main);
+  color: #f1f5f9;
 }
 .dark .ph-meta span {
-  color: #e5e7eb;
+  color: #cbd5e1;
 }
 
 /* Badges & Pills */
@@ -317,6 +323,13 @@ h3 {
   background: #dcfce7;
   color: #166534;
 }
+.complaint-status.rejected {
+  background: #fee2e2; /* أحمر فاتح هادئ (Soft Red) */
+  color: #991b1b; /* أحمر داكن واضح (Dark Red) */
+
+  /* يفضل إضافة هذا السطر لتوحيد التنسيق مع الألوان الهادئة */
+  border: 1px solid #fca5a5;
+}
 
 .complaint-meta {
   font-size: 13px;
@@ -354,14 +367,30 @@ h3 {
   border-color: var(--primary);
 }
 
-.theme-picker button[data-color="#1f2937"] { background: #1f2937; }
-.theme-picker button[data-color="#064e3b"] { background: #064e3b; }
-.theme-picker button[data-color="#16a34a"] { background: #16a34a; }
-.theme-picker button[data-color="#0ea5e9"] { background: #0ea5e9; }
-.theme-picker button[data-color="#6366f1"] { background: #6366f1; }
-.theme-picker button[data-color="#f59e0b"] { background: #f59e0b; }
-.theme-picker button[data-color="#facc15"] { background: #facc15; }
-.theme-picker button[data-color="#be123c"] { background: #be123c; }
+.theme-picker button[data-color="#1f2937"] {
+  background: #1f2937;
+}
+.theme-picker button[data-color="#064e3b"] {
+  background: #064e3b;
+}
+.theme-picker button[data-color="#16a34a"] {
+  background: #16a34a;
+}
+.theme-picker button[data-color="#0ea5e9"] {
+  background: #0ea5e9;
+}
+.theme-picker button[data-color="#6366f1"] {
+  background: #6366f1;
+}
+.theme-picker button[data-color="#f59e0b"] {
+  background: #f59e0b;
+}
+.theme-picker button[data-color="#facc15"] {
+  background: #facc15;
+}
+.theme-picker button[data-color="#be123c"] {
+  background: #be123c;
+}
 
 .theme-picker button[data-reset] {
   background: linear-gradient(45deg, var(--primary), var(--primary-hover));
@@ -391,7 +420,9 @@ h3 {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Dark mode badge adjustments */
@@ -425,9 +456,31 @@ h3 {
   color: #a7f3d0;
 }
 
-.dark .tag {
-  background: rgba(96, 165, 250, 0.2);
-  color: #93c5fd;
+/* Dark mode profile header text contrast fix */
+.dark .profile-header {
+  background: var(--bg-card);
+}
+
+.dark .ph-name {
+  color: #f1f5f9;
+}
+
+.dark .ph-meta {
+  color: #cbd5e1;
+}
+
+.dark .ph-meta strong {
+  color: #f1f5f9;
+  font-weight: 700;
+}
+
+.dark .ph-meta span {
+  color: #cbd5e1;
+}
+
+/* Hidden utility class */
+.hidden {
+  display: none !important;
 }
 
 /* Modal styles */
@@ -498,4 +551,124 @@ h3 {
   justify-content: flex-end;
   padding: 20px;
   border-top: 1px solid var(--border);
+}
+
+/* Complaint detail styles */
+.complaint-item {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.complaint-item:hover {
+  background: rgba(30, 64, 175, 0.05);
+}
+
+.dark .complaint-item:hover {
+  background: rgba(96, 165, 250, 0.1);
+}
+
+.pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pill.new {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.pill.in_progress {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pill.resolved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.pill.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.dark .pill.new {
+  background: #1e3a8a;
+  color: #93c5fd;
+}
+
+.dark .pill.in_progress {
+  background: #92400e;
+  color: #fde68a;
+}
+
+.dark .pill.resolved {
+  background: #064e3b;
+  color: #a7f3d0;
+}
+
+.dark .pill.rejected {
+  background: #7f1d1d;
+  color: #fecaca;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-family: Cairo, system-ui, sans-serif;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.dark .field textarea:focus,
+.dark .field select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.actions-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.actions-row .btn {
+  flex: 1;
+  min-width: 120px;
+}
+
+@media (max-width: 768px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
 }

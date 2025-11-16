@@ -327,6 +327,8 @@ async function initApp() {
 /**
  * 4. جلب شكاوى المستخدم
  */
+let currentComplaints = [];
+
 async function loadUserComplaints() {
   const container = document.getElementById("user-complaints");
   if (!container) return;
@@ -341,28 +343,38 @@ async function loadUserComplaints() {
 
     const token = await (window.auth0Client || window.auth).getTokenSilently();
     const response = await fetch(
-      "/.netlify/functions/complaints-list?user_email=" +
-        encodeURIComponent(user.email),
+      `/.netlify/functions/user-complaints-list?user_email=${encodeURIComponent(
+        user.email
+      )}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }
     );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Complaints list error:", response.status, errorText);
+      throw new Error(`Failed to load complaints: ${response.status}`);
+    }
+
     const data = await response.json();
-    const complaints = data.rows || [];
+    currentComplaints = data.rows || [];
 
     container.innerHTML = "";
 
-    if (complaints.length === 0) {
+    if (currentComplaints.length === 0) {
       container.innerHTML =
         '<div class="empty-state"><p>لا توجد شكاوى أو اقتراحات</p></div>';
       return;
     }
 
-    complaints.forEach((complaint) => {
+    currentComplaints.forEach((complaint, index) => {
       const statusText =
-        complaint.status === "new"
+        complaint.status == "rejected"
+          ? "مرفوضة"
+          : complaint.status === "new"
           ? "جديدة"
           : complaint.status === "in_progress"
           ? "قيد المعالجة"
@@ -375,6 +387,8 @@ async function loadUserComplaints() {
 
       const item = document.createElement("div");
       item.className = "complaint-item";
+      item.dataset.index = index;
+      item.style.cursor = "pointer";
       item.innerHTML = `
         <div class="complaint-header">
           <h4 class="complaint-title">${complaint.subject}</h4>
@@ -387,6 +401,7 @@ async function loadUserComplaints() {
         complaint.message.length > 100 ? "..." : ""
       }</div>
       `;
+      item.addEventListener("click", () => showComplaintDetail(index));
       container.appendChild(item);
     });
   } catch (error) {
@@ -394,6 +409,164 @@ async function loadUserComplaints() {
     container.innerHTML =
       '<div class="empty-state" style="color: #ef4444;"><p>خطأ في تحميل الشكاوى</p></div>';
   }
+}
+
+/**
+ * عرض تفاصيل الشكوى
+ */
+async function showComplaintDetail(index) {
+  const complaint = currentComplaints[index];
+  if (!complaint) return;
+
+  const detailBox = document.getElementById("complaint-box");
+  const emptyBox = document.getElementById("complaint-empty");
+  const threadDiv = document.getElementById("cd-thread");
+
+  // إخفاء الرسالة الفارغة وإظهار التفاصيل
+  emptyBox.classList.add("hidden");
+  detailBox.classList.remove("hidden");
+
+  // عرض حالة التحميل
+  threadDiv.innerHTML =
+    '<div class="muted" style="text-align: center; padding: 20px;">جاري تحميل الرسائل...</div>';
+
+  // ملء البيانات الأساسية
+  const statusText =
+    complaint.status == "rejected"
+      ? "مرفوضة"
+      : complaint.status === "new"
+      ? "جديدة"
+      : complaint.status === "in_progress"
+      ? "قيد المعالجة"
+      : complaint.status === "resolved"
+      ? "مغلقة"
+      : complaint.status;
+
+  const typeText = complaint.type === "complaint" ? "شكوى" : "اقتراح";
+
+  document.getElementById("cd-subject").textContent = complaint.subject;
+  document.getElementById("cd-kind").textContent = typeText;
+  document.getElementById("cd-status").textContent = statusText;
+  document.getElementById("cd-status").className = `pill ${complaint.status}`;
+
+  // جلب الرسائل من السيرفر
+  try {
+    const user = await (window.auth0Client || window.auth).getUser();
+    const token = await (window.auth0Client || window.auth).getTokenSilently();
+
+    const response = await fetch(
+      `/.netlify/functions/complaint-messages?complaint_id=${
+        complaint.id
+      }&user_email=${encodeURIComponent(user.email)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Messages fetch error:", response.status, errorText);
+      throw new Error(`Failed to fetch messages: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const messages = data.messages || [];
+
+    // عرض سجل الرسائل
+    threadDiv.innerHTML = "";
+
+    if (messages.length > 0) {
+      messages.forEach((msg) => {
+        const msgEl = document.createElement("div");
+        msgEl.style.marginBottom = "12px";
+        msgEl.style.paddingBottom = "12px";
+        msgEl.style.borderBottom = "1px solid rgba(229, 231, 235, 0.3)";
+
+        const sender = msg.sender === "admin" ? "الإدارة" : "أنت";
+        const senderStyle =
+          msg.sender === "admin"
+            ? "color: #1e40af; font-weight: 700;"
+            : "color: #666;";
+
+        msgEl.innerHTML = `
+          <div style="font-size: 12px; ${senderStyle}; margin-bottom: 4px;">
+            ${sender} • ${new Date(msg.created_at).toLocaleString("ar-SA")}
+          </div>
+          <div style="font-size: 14px; line-height: 1.5;">${msg.body}</div>
+        `;
+        threadDiv.appendChild(msgEl);
+      });
+    } else {
+      threadDiv.innerHTML =
+        '<div class="muted" style="text-align: center; padding: 20px;">لا توجد رسائل بعد</div>';
+    }
+  } catch (error) {
+    console.error("Error loading messages:", error);
+    threadDiv.innerHTML =
+      '<div class="muted" style="text-align: center; padding: 20px; color: #ef4444;">خطأ في تحميل الرسائل</div>';
+  }
+
+  // تفعيل أزرار الإجراء
+  const replyTextarea = document.getElementById("cd-reply");
+  const sendBtn = document.getElementById("cd-send");
+  const statusMsg = document.getElementById("cd-statusmsg");
+
+  replyTextarea.value = "";
+  statusMsg.textContent = "";
+
+  // زر الإرسال
+  sendBtn.onclick = async () => {
+    const reply = replyTextarea.value.trim();
+    if (!reply) {
+      UTILS.toast("الرجاء كتابة رد");
+      return;
+    }
+
+    sendBtn.disabled = true;
+    statusMsg.textContent = "جاري الإرسال...";
+
+    try {
+      const user = await (window.auth0Client || window.auth).getUser();
+      const token = await (
+        window.auth0Client || window.auth
+      ).getTokenSilently();
+
+      const response = await fetch("/.netlify/functions/complaint-user-reply", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          complaint_id: complaint.id,
+          message: reply,
+          user_email: user.email,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to send reply");
+
+      UTILS.toast("تم إرسال الرد بنجاح ✓");
+      replyTextarea.value = "";
+
+      // إعادة تحميل الشكاوى والرسائل
+      await loadUserComplaints();
+      await showComplaintDetail(index);
+    } catch (error) {
+      console.error("Error sending reply:", error);
+      statusMsg.textContent = "خطأ في الإرسال";
+    } finally {
+      sendBtn.disabled = false;
+    }
+  };
+
+  // تحديث قائمة الشكاوى (تمييز المختارة)
+  document.querySelectorAll(".complaint-item").forEach((item, i) => {
+    item.style.borderLeft = i === index ? "4px solid #1e40af" : "none";
+    item.style.paddingLeft = i === index ? "12px" : "0";
+  });
 }
 
 // تشغيل التطبيق

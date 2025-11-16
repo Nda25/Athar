@@ -129,6 +129,29 @@ html.dark .btn-primary {
   /* Or remove background-color: transparent to give it a circle bg */
 }
 
+/* زر تسجيل الخروج */
+#logout {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+  border: 1px solid #fecaca;
+}
+
+#logout:hover {
+  background-color: #fecaca !important;
+  color: #7f1d1d !important;
+}
+
+html.dark #logout {
+  background-color: #7f1d1d !important;
+  color: #fecaca !important;
+  border: 1px solid #991b1b;
+}
+
+html.dark #logout:hover {
+  background-color: #991b1b !important;
+  color: #fee2e2 !important;
+}
+
 /* زر القائمة للموبايل */
 .mobile-toggle {
   display: none;

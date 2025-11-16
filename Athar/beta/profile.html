@@ -58,7 +58,7 @@
                 تعديل
               </button>
             </div>
-            <div class="ph-meta" style="color: #6b7280; font-size: 13px">
+            <div class="ph-meta" style="font-size: 13px">
               <span><strong>البريد:</strong> <span id="u-email">—</span></span>
               ·
               <span><strong>المعرّف:</strong> <span id="u-sub">—</span></span>
@@ -152,10 +152,65 @@
           <h3>الشكاوى والاقتراحات</h3>
           <p class="sub">تتبع حالة شكاويك واقتراحاتك المرسلة.</p>
 
-          <div id="user-complaints" class="complaints-list">
-            <div class="loading-state">
-              <div class="spinner"></div>
-              <p>جاري تحميل الشكاوى...</p>
+          <div class="grid grid-2">
+            <!-- قائمة الشكاوى -->
+            <div class="card">
+              <div id="user-complaints" class="complaints-list">
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <p>جاري تحميل الشكاوى...</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- تفاصيل الشكوى -->
+            <div class="card" id="complaint-detail">
+              <h3 style="margin-top: 0; font-size: 18px">التفاصيل</h3>
+              <div id="complaint-empty" class="muted">
+                اختر شكوى من القائمة…
+              </div>
+
+              <div id="complaint-box" class="hidden">
+                <p style="margin: 10px 0">
+                  <strong>العنوان:</strong> <span id="cd-subject">—</span>
+                </p>
+                <p style="margin: 10px 0">
+                  <strong>النوع:</strong> <span id="cd-kind">—</span>
+                </p>
+                <p style="margin: 10px 0">
+                  <strong>الحالة:</strong>
+                  <span id="cd-status" class="pill">—</span>
+                </p>
+
+                <div class="field">
+                  <label>سجل الرسائل</label>
+                  <div
+                    id="cd-thread"
+                    style="
+                      border: 1px solid rgba(229, 231, 235, 0.2);
+                      border-radius: 8px;
+                      padding: 16px;
+                      max-height: 340px;
+                      overflow: auto;
+                      background: rgba(0, 0, 0, 0.02);
+                    "
+                  ></div>
+                </div>
+
+                <div class="field">
+                  <label>الرد على الإدارة</label>
+                  <textarea
+                    id="cd-reply"
+                    rows="4"
+                    placeholder="اكتب ردك هنا…"
+                  ></textarea>
+                </div>
+
+                <div class="actions-row">
+                  <button class="btn primary" id="cd-send">إرسال الرد</button>
+                  <span id="cd-statusmsg" class="muted"></span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -167,16 +222,22 @@
     </main>
 
     <!-- Name Edit Modal -->
-    <div id="nameEditModal" class="modal" style="display: none;">
+    <div id="nameEditModal" class="modal" style="display: none">
       <div class="modal-overlay" onclick="closeNameModal()"></div>
       <div class="modal-content">
         <div class="modal-header">
           <h3>تعديل الاسم</h3>
-          <button class="modal-close" onclick="closeNameModal()">&times;</button>
+          <button class="modal-close" onclick="closeNameModal()">
+            &times;
+          </button>
         </div>
         <div class="modal-body">
           <label for="newNameInput">الاسم الجديد:</label>
-          <input type="text" id="newNameInput" placeholder="أدخل الاسم الجديد" />
+          <input
+            type="text"
+            id="newNameInput"
+            placeholder="أدخل الاسم الجديد"
+          />
         </div>
         <div class="modal-footer">
           <button class="btn" onclick="closeNameModal()">إلغاء</button>
