@@ -159,6 +159,53 @@ async function fetchAnnouncements() {
         a.active &&
         (!a.start_at || new Date(a.start_at) <= new Date()) &&
         (!a.expires_at || new Date(a.expires_at) > new Date());
+
+      // Format target pages for display
+      const pageNames = {
+        all: "جميع الصفحات",
+        mueen: "معين",
+        darsi: "مُرتكز",
+        mutasiq: "مُتسق",
+        mulham: "مُلهم",
+        miyad: "ميعاد",
+        masar: "مسار",
+        mithaq: "ميثاق",
+        ethraa: "إثراء",
+        athar: "أثر",
+        programs: "البرامج",
+        pricing: "الأسعار",
+        profile: "الملف الشخصي",
+      };
+
+      let targetPages = a.target_pages;
+
+      // Robust parsing for target_pages
+      if (typeof targetPages === "string") {
+        try {
+          // Try JSON parse first
+          targetPages = JSON.parse(targetPages.replace(/'/g, '"'));
+        } catch {
+          // Fallback: strip brackets/quotes and split
+          targetPages = targetPages
+            .replace(/[\[\]"']/g, "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+      }
+
+      if (!Array.isArray(targetPages) || targetPages.length === 0) {
+        targetPages = ["all"];
+      }
+      const pagesBadges = targetPages
+        .map(
+          (p) =>
+            `<span class="pill" style="font-size:0.85em;background:rgba(59,130,246,0.15);color:#3b82f6;padding:2px 8px">${
+              pageNames[p] || p
+            }</span>`
+        )
+        .join(" ");
+
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
@@ -181,6 +228,9 @@ async function fetchAnnouncements() {
                   ? '<span class="pill" style="margin-inline-start:6px">منشور حاليًا</span>'
                   : ""
               }
+            </div>
+            <div style="margin-top:6px">
+              <strong style="font-size:0.9em">الصفحات:</strong> ${pagesBadges}
             </div>
           </div>
           <div class="actions-row" style="margin:0">
@@ -246,6 +296,31 @@ async function deleteAnnouncement(id) {
   );
 }
 
+// Handle "all pages" checkbox logic
+document.addEventListener("change", (e) => {
+  const checkbox = e.target.closest("[data-page-checkbox]");
+  if (!checkbox) return;
+
+  const allCheckbox = document.querySelector(
+    '[data-page-checkbox][value="all"]'
+  );
+  const otherCheckboxes = document.querySelectorAll(
+    '[data-page-checkbox]:not([value="all"])'
+  );
+
+  if (checkbox.value === "all") {
+    // If "all pages" is checked, uncheck others
+    if (checkbox.checked) {
+      otherCheckboxes.forEach((cb) => (cb.checked = false));
+    }
+  } else {
+    // If any specific page is checked, uncheck "all pages"
+    if (checkbox.checked && allCheckbox) {
+      allCheckbox.checked = false;
+    }
+  }
+});
+
 document.addEventListener("click", async (e) => {
   if (e.target.id !== "btn-publish") return;
 
@@ -255,8 +330,18 @@ document.addEventListener("click", async (e) => {
   const expires = toIso("ann-end-cal", "ann-end-g", "ann-end-h");
   const stat = document.getElementById("ann-status");
 
+  // Collect selected pages
+  const selectedPages = Array.from(
+    document.querySelectorAll("[data-page-checkbox]:checked")
+  ).map((cb) => cb.value);
+
   if (!text) {
     toast("أكتب نص الإعلان");
+    return;
+  }
+
+  if (selectedPages.length === 0) {
+    toast("اختر صفحة واحدة على الأقل");
     return;
   }
 
@@ -264,11 +349,21 @@ document.addEventListener("click", async (e) => {
   try {
     await apiFetch("/.netlify/functions/admin-announcement", {
       method: "POST",
-      body: JSON.stringify({ text, active, start, expires }),
+      body: JSON.stringify({
+        text,
+        active,
+        start,
+        expires,
+        target_pages: selectedPages,
+      }),
     });
     stat.textContent = "نُشر ✓";
     toast("✓ تم نشر/تحديث الإعلان");
     document.getElementById("ann-text").value = "";
+    // Reset checkboxes to "all pages"
+    document.querySelectorAll("[data-page-checkbox]").forEach((cb) => {
+      cb.checked = cb.value === "all";
+    });
     await fetchAnnouncements();
   } catch (err) {
     stat.textContent = "✗ تعذّر النشر";
@@ -296,13 +391,15 @@ document.addEventListener("click", async (e) => {
   }
 
   const unitText = unit === "days" ? "يوم" : unit === "months" ? "شهر" : "سنة";
-  
+
   // Show confirmation modal
   document.getElementById("confirm-email").textContent = email || "غير محدد";
-  document.getElementById("confirm-duration").textContent = `${amount} ${unitText}`;
+  document.getElementById(
+    "confirm-duration"
+  ).textContent = `${amount} ${unitText}`;
   document.getElementById("confirm-note").textContent = note || "لا توجد";
   document.getElementById("confirmModal").style.display = "flex";
-  
+
   // Wait for user confirmation
   const confirmed = await new Promise((resolve) => {
     document.getElementById("modal-confirm").onclick = () => {
@@ -314,7 +411,7 @@ document.addEventListener("click", async (e) => {
       resolve(false);
     };
   });
-  
+
   if (!confirmed) return;
 
   stat.textContent = "جارٍ التفعيل…";
@@ -590,13 +687,16 @@ document
       unit = "years";
     }
 
-    const unitText = unit === "days" ? "يوم" : unit === "months" ? "شهر" : "سنة";
-    
+    const unitText =
+      unit === "days" ? "يوم" : unit === "months" ? "شهر" : "سنة";
+
     // Show quick confirmation modal
     document.getElementById("quick-email").textContent = email;
-    document.getElementById("quick-duration").textContent = `${amount} ${unitText}`;
+    document.getElementById(
+      "quick-duration"
+    ).textContent = `${amount} ${unitText}`;
     document.getElementById("quickModal").style.display = "flex";
-    
+
     // Wait for user confirmation
     const confirmed = await new Promise((resolve) => {
       document.getElementById("quick-confirm").onclick = () => {
@@ -608,13 +708,19 @@ document
         resolve(false);
       };
     });
-    
+
     if (!confirmed) return;
 
     try {
       await apiFetch("/.netlify/functions/admin-activate", {
         method: "POST",
-        body: JSON.stringify({ email, user_id, amount, unit, note: "admin-quick-activate" }),
+        body: JSON.stringify({
+          email,
+          user_id,
+          amount,
+          unit,
+          note: "admin-quick-activate",
+        }),
       });
       toast("✓ تم التفعيل");
       await loadUsers();

@@ -66,11 +66,42 @@ class BannerRotator {
   }
 }
 
+// Helper function to detect current page
+function detectCurrentPage() {
+  const path = window.location.pathname;
+  const filename = path.split("/").pop().replace(".html", "");
+
+  // Map filenames to page identifiers
+  const pageMap = {
+    mueen: "mueen",
+    darsi: "darsi",
+    mutasiq: "mutasiq",
+    mulham: "mulham",
+    miyad: "miyad",
+    masar: "masar",
+    mithaq: "mithaq",
+    ethraa: "ethraa",
+    athar: "athar",
+    programs: "programs",
+    pricing: "pricing",
+    profile: "profile",
+    admin: "admin",
+    index: "athar",
+    "": "athar",
+  };
+
+  return pageMap[filename] || "all";
+}
+
 async function fetchAnnouncements() {
   try {
-    const res = await fetch("/.netlify/functions/admin-announcement?active=1", {
-      cache: "no-store",
-    });
+    const currentPage = detectCurrentPage();
+    const res = await fetch(
+      `/.netlify/functions/admin-announcement?active=1&page=${encodeURIComponent(
+        currentPage
+      )}`,
+      { cache: "no-store" }
+    );
     if (!res.ok) throw new Error();
     const data = await res.json();
     return (data.announcements || []).map((a, i) => ({
@@ -78,14 +109,23 @@ async function fetchAnnouncements() {
       bg: COLORS[i % COLORS.length],
     }));
   } catch {
-    const res = await fetch("/.netlify/functions/admin-announcement?latest=1", {
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.latest?.active
-      ? [{ text: data.latest.text, bg: COLORS[0] }]
-      : [];
+    try {
+      const currentPage = detectCurrentPage();
+      const res = await fetch(
+        `/.netlify/functions/admin-announcement?latest=1&page=${encodeURIComponent(
+          currentPage
+        )}`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.latest?.active
+        ? [{ text: data.latest.text, bg: COLORS[0] }]
+        : [];
+    } catch {
+      // If both API calls fail, return empty array
+      return [];
+    }
   }
 }
 
@@ -122,7 +162,11 @@ async function mountRotatingBanners() {
     getTrialBanner(),
   ]);
 
-  announcements.forEach((a) => rotator.add(a.text, a.bg));
+  // Defensive check: ensure announcements is an array
+  if (Array.isArray(announcements)) {
+    announcements.forEach((a) => rotator.add(a.text, a.bg));
+  }
+
   if (trial) rotator.add(trial.text, trial.bg, trial.color);
 
   rotator.start();

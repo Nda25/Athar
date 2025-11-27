@@ -14,7 +14,80 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="assets/css/admin.css" />
     <meta name="color-scheme" content="dark light" />
-    <style></style>
+    <style>
+      /* Custom Checkbox Styles */
+      .page-checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        background: rgba(15, 23, 42, 0.6);
+        border: 2px solid rgba(148, 163, 184, 0.2);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .page-checkbox-label:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+      }
+
+      .page-checkbox-label.featured {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.4);
+      }
+
+      .page-checkbox-label input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .checkbox-custom {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(148, 163, 184, 0.5);
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .page-checkbox-label input[type="checkbox"]:checked ~ .checkbox-custom {
+        background: #3b82f6;
+        border-color: #3b82f6;
+      }
+
+      .page-checkbox-label
+        input[type="checkbox"]:checked
+        ~ .checkbox-custom::after {
+        content: "✓";
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .page-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+      }
+
+      .page-name {
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+
+      .page-checkbox-label input[type="checkbox"]:checked ~ .page-name {
+        color: #3b82f6;
+        font-weight: 600;
+      }
+    </style>
   </head>
 
   <body>
@@ -183,6 +256,138 @@
                 style="display: none"
               />
             </div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top: 18px">
+          <label
+            style="font-size: 1.05rem; margin-bottom: 12px; display: block"
+          >
+            <span style="display: inline-flex; align-items: center; gap: 6px">
+              🎯 الصفحات المستهدفة
+            </span>
+          </label>
+
+          <div
+            id="ann-pages"
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+              gap: 12px;
+              margin-top: 12px;
+              padding: 16px;
+              background: rgba(15, 23, 42, 0.4);
+              border: 1px solid rgba(148, 163, 184, 0.2);
+              border-radius: 10px;
+            "
+          >
+            <!-- All Pages - Featured -->
+            <label class="page-checkbox-label featured" data-page-option>
+              <input type="checkbox" value="all" checked data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">🌐</span>
+              <span class="page-name">جميع الصفحات</span>
+            </label>
+
+            <!-- Individual Pages -->
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="mueen" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">📊</span>
+              <span class="page-name">معين</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="darsi" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">📚</span>
+              <span class="page-name">مُرتكز</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="mutasiq" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">✍️</span>
+              <span class="page-name">مُتسق</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="mulham" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">💡</span>
+              <span class="page-name">مُلهم</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="miyad" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">📅</span>
+              <span class="page-name">ميعاد</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="masar" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">🗺️</span>
+              <span class="page-name">مسار</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="mithaq" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">📜</span>
+              <span class="page-name">ميثاق</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="ethraa" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">⭐</span>
+              <span class="page-name">إثراء</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="athar" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">🏠</span>
+              <span class="page-name">أثر الأساسية</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="programs" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">🎓</span>
+              <span class="page-name">البرامج</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="pricing" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">💰</span>
+              <span class="page-name">الأسعار</span>
+            </label>
+
+            <label class="page-checkbox-label" data-page-option>
+              <input type="checkbox" value="profile" data-page-checkbox />
+              <span class="checkbox-custom"></span>
+              <span class="page-icon">👤</span>
+              <span class="page-name">الملف الشخصي</span>
+            </label>
+          </div>
+
+          <div
+            class="muted"
+            style="
+              font-size: 0.9em;
+              margin-top: 12px;
+              padding: 10px 14px;
+              background: rgba(59, 130, 246, 0.08);
+              border-inline-start: 3px solid rgba(59, 130, 246, 0.5);
+              border-radius: 6px;
+            "
+          >
+            💡 اختر الصفحات التي سيظهر عليها الإعلان. "جميع الصفحات" تعني كل
+            صفحات الموقع.
           </div>
         </div>
 
@@ -426,6 +631,8 @@
     <!-- moment + hijri -->
     <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment-hijri@2.3.1/moment-hijri.js"></script>
+
+    <!-- Announcements/Banners -->
 
     <!-- سكربت عام (ثيم/أزرار) -->
     <script src="app.js"></script>

@@ -226,7 +226,11 @@ async function logToolViewIfAny() {
 document.addEventListener("DOMContentLoaded", () => {
   bindThemeToggle();
   bindAuthButtons();
-  mountRotatingBanners();
+
+  // Only mount banners if the function exists (loaded from banners.js)
+  if (typeof mountRotatingBanners === "function") {
+    mountRotatingBanners();
+  }
 
   const onAuthReady = async () => {
     await Promise.allSettled([

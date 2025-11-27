@@ -27,9 +27,11 @@ exports.handler = async (event) => {
 
   // === PUBLIC READ (GET) ===
   if (method === "GET") {
-    // ✅ NEW: Get all active announcements for rotation
+    // ✅ NEW: Get all active announcements for rotation (with page filtering)
     if (qs.active) {
       const now = new Date();
+      const page = qs.page || "all";
+
       const { data, error } = await supabase
         .from("site_announcements")
         .select("*")
@@ -40,9 +42,31 @@ exports.handler = async (event) => {
 
       if (error) return res(500, error.message);
 
-      // Filter expired announcements
+      // Filter expired announcements and by page targeting
       const activeAnnouncements = (data || [])
         .filter((a) => !a.expires_at || new Date(a.expires_at) > now)
+        .filter((a) => {
+          let targets = a.target_pages;
+
+          // Robust parsing
+          if (typeof targets === "string") {
+            try {
+              targets = JSON.parse(targets.replace(/'/g, '"'));
+            } catch {
+              targets = targets
+                .replace(/[\[\]"']/g, "")
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
+            }
+          }
+
+          if (!targets || (Array.isArray(targets) && targets.length === 0))
+            return true;
+          if (!Array.isArray(targets)) targets = [targets];
+
+          return targets.includes("all") || targets.includes(page);
+        })
         .sort(
           (a, b) =>
             new Date(b.start_at || b.created_at) -
@@ -52,9 +76,11 @@ exports.handler = async (event) => {
       return res(200, { announcements: activeAnnouncements });
     }
 
-    // Original: Get single latest (for backwards compatibility)
+    // Original: Get single latest (for backwards compatibility with page filtering)
     if (qs.latest) {
       const now = new Date();
+      const page = qs.page || "all";
+
       const { data, error } = await supabase
         .from("site_announcements")
         .select("*")
@@ -68,6 +94,28 @@ exports.handler = async (event) => {
       const latest =
         (data || [])
           .filter((a) => !a.expires_at || new Date(a.expires_at) > now)
+          .filter((a) => {
+            let targets = a.target_pages;
+
+            // Robust parsing
+            if (typeof targets === "string") {
+              try {
+                targets = JSON.parse(targets.replace(/'/g, '"'));
+              } catch {
+                targets = targets
+                  .replace(/[\[\]"']/g, "")
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+              }
+            }
+
+            if (!targets || (Array.isArray(targets) && targets.length === 0))
+              return true;
+            if (!Array.isArray(targets)) targets = [targets];
+
+            return targets.includes("all") || targets.includes(page);
+          })
           .sort(
             (a, b) =>
               new Date(b.start_at || b.created_at) -
@@ -104,12 +152,19 @@ exports.handler = async (event) => {
         const text = (body.text || "").trim();
         if (!text) return res(400, "text required");
 
+        // Get target_pages from body, default to ['all']
+        const target_pages =
+          Array.isArray(body.target_pages) && body.target_pages.length > 0
+            ? body.target_pages
+            : ["all"];
+
         result = await query
           .insert({
             text,
             active: !!body.active,
             start_at: toISO(body.start),
             expires_at: toISO(body.expires),
+            target_pages,
             tenant_id: gate.org_id || null,
           })
           .select()
@@ -125,6 +180,8 @@ exports.handler = async (event) => {
         if (typeof body.text === "string") patch.text = body.text.trim();
         if (body.start !== undefined) patch.start_at = toISO(body.start);
         if (body.expires !== undefined) patch.expires_at = toISO(body.expires);
+        if (Array.isArray(body.target_pages))
+          patch.target_pages = body.target_pages;
 
         result = await query.update(patch).eq("id", body.id).select().single();
         break;
