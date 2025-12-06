@@ -1,23 +1,17 @@
 /* =========================================
-   الجزء الأول: أدوات الربط مع Supabase
-   (هذا هو المحرك الخلفي للنظام)
+   ميعاد (Miyad) - Frontend Logic
+   =========================================
+   ⚠️ ملاحظة مهمة:
+   جميع دوال Supabase موجودة في ملف supabase-client.js:
+   - window.supaEnsureUserProfile
+   - window.supaAddMiyadEvent
+   - window.supaDeleteMiyadEvent
+   - window.supaSaveReminderSettings
+   - window.supaGetReminderSettings
+   - window.supaLogToolUsage
+   
+   هذه الدوال تستخدم Netlify Functions للتواصل الآمن مع Supabase.
    ========================================= */
-
-// دالة مساعدة: ننتظر حتى يتم تحميل Supabase
-async function waitForSupa(max = 40) {
-  for (let i = 0; i < max; i++) {
-    // بنبحث عن الكلاينت سواء كان اسمه supa أو supabaseClient
-    if (
-      window.supabaseClient &&
-      typeof window.supabaseClient.from === "function"
-    )
-      return window.supabaseClient;
-    if (window.supa && typeof window.supa.from === "function")
-      return window.supa;
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  return null;
-}
 
 // دالة مساعدة: جلب المستخدم الحالي من Auth0
 async function getAuthUser() {
@@ -27,109 +21,6 @@ async function getAuthUser() {
     return null;
   }
 }
-
-/* --- 1. تسجيل المستخدم الجديد تلقائياً (أهم دالة لصاحبك) --- */
-window.supaEnsureUserProfile = async function () {
-  const sb = await waitForSupa();
-  const user = await getAuthUser();
-
-  if (!sb || !user) return;
-
-  console.log("Checking user profile for:", user.email);
-
-  // نرسل البيانات لقاعدة البيانات (إنشاء لو جديد / تحديث لو موجود)
-  const { error } = await sb.from("miyad_settings").upsert(
-    {
-      user_id: user.sub, // معرف المستخدم
-      email: user.email, // الإيميل (عشان Resend يبعتله)
-      reminders_enabled: true, // تفعيل التنبيهات افتراضياً
-      remind_days_before: 1, // التنبيه قبل الموعد بيوم
-      updated_at: new Date(),
-    },
-    { onConflict: "user_id" }
-  );
-
-  if (error) console.error("Supabase Profile Error:", error);
-  else console.log("User profile synced successfully ✅");
-};
-
-/* --- 2. إضافة موعد جديد للداتابيز --- */
-window.supaAddMiyadEvent = async function (evt) {
-  const sb = await waitForSupa();
-  const user = await getAuthUser();
-
-  if (!sb || !user) {
-    console.error("No Supabase client or user authenticated");
-    return { data: null, error: "Not logged in" };
-  }
-
-  console.log("Adding to DB:", evt, "User:", user.sub);
-
-  try {
-    // تأكد من وجود البروفايل أولاً
-    await window.supaEnsureUserProfile();
-
-    // ثم أضف الحدث
-    const result = await sb
-      .from("miyad_events")
-      .insert([
-        {
-          user_id: user.sub,
-          subj: evt.subj,
-          class: evt.cls,
-          day: evt.day,
-          slot: evt.slot,
-          date: evt.date || null,
-          color: evt.color,
-        },
-      ])
-      .select();
-
-    if (result.error) {
-      console.error("Supabase insert error:", result.error);
-      throw result.error;
-    }
-
-    return result;
-  } catch (error) {
-    console.error("Error adding miyad event:", error);
-    return { data: null, error: error.message };
-  }
-};
-
-/* --- 3. حذف موعد من الداتابيز --- */
-window.supaDeleteMiyadEvent = async function (id) {
-  const sb = await waitForSupa();
-  if (!sb) return;
-  console.log("Deleting from DB ID:", id);
-  return await sb.from("miyad_events").delete().eq("id", id);
-};
-
-/* --- 4. حفظ إعدادات التنبيه يدوياً --- */
-window.supaSaveReminderSettings = async function (payload) {
-  const sb = await waitForSupa();
-  if (!sb) return { error: "No client" };
-  return await sb.from("miyad_settings").upsert(payload).select();
-};
-
-/* --- 5. جلب الإعدادات عند الفتح --- */
-window.supaGetReminderSettings = async function () {
-  const sb = await waitForSupa();
-  const user = await getAuthUser();
-  if (!sb || !user) return { data: null };
-
-  return await sb
-    .from("miyad_settings")
-    .select("*")
-    .eq("user_id", user.sub)
-    .single();
-};
-
-/* --- أداة تتبع بسيطة (اختياري) --- */
-window.supaLogToolUsage = async function (tag, details) {
-  // يمكنك تركها فارغة أو تفعيلها لو عندك جدول logs
-  console.log("Log:", tag, details);
-};
 
 /* =========================================
    الجزء الثاني: منطق الواجهة (Frontend)
@@ -255,18 +146,28 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // 1. إرسال للسيرفر (Supabase)
+      // 1. إرسال للسيرفر (Supabase via Netlify Function)
       let serverSuccess = false;
       try {
         toast("جارِ الحفظ...");
         const result = await window.supaAddMiyadEvent(newEvent);
 
-        if (result.error) {
+        // supabase-client.js returns { ok: boolean, data: ..., error: ... }
+        if (!result.ok) {
           console.error("Server error:", result.error);
-          toast("خطأ في الحفظ: " + result.error);
-        } else if (result.data && result.data.length > 0) {
-          newEvent.id = result.data[0].id;
+          toast("خطأ في الحفظ: " + (result.error || "خطأ غير معروف"));
+        } else if (result.data) {
+          // النتيجة من Netlify Function هي array من الـ IDs
+          const idData = Array.isArray(result.data)
+            ? result.data[0]
+            : result.data;
+          if (idData && idData.id) {
+            newEvent.id = idData.id;
+          }
           serverSuccess = true;
+        } else {
+          // ok = true but no data means user not authenticated (saved locally only)
+          serverSuccess = false;
         }
       } catch (e) {
         console.error("Error syncing to server:", e);
@@ -365,12 +266,14 @@ async function loadReminderSettings() {
   const user = await getAuthUser();
   if (!user) return;
 
-  const { data, error } = await window.supaGetReminderSettings();
-  if (error) {
-    console.warn("loadSettings error:", error);
+  const result = await window.supaGetReminderSettings();
+  // supabase-client.js returns { ok, data, error }
+  if (!result.ok || result.error) {
+    console.warn("loadSettings error:", result.error);
     return;
   }
 
+  const data = result.data;
   const enable = data?.reminders_enabled ?? false;
   const days = data?.remind_days_before ?? 2;
 
@@ -406,10 +309,11 @@ async function saveReminderSettings() {
     updated_at: new Date(), // تحديث وقت التعديل
   };
 
-  const { data, error } = await window.supaSaveReminderSettings(payload);
+  const result = await window.supaSaveReminderSettings(payload);
 
-  if (error) {
-    console.error("Save Settings Error:", error);
+  // supabase-client.js returns { ok, data, error }
+  if (!result.ok || result.error) {
+    console.error("Save Settings Error:", result.error);
     if (stat) stat.textContent = "تعذّر الحفظ";
     toast("تعذّر حفظ الإعدادات");
   } else {

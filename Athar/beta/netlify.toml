@@ -20,3 +20,16 @@
     "@google/generative-ai"
   ]
   included_files = ["netlify/functions/**"]
+
+# ====================================
+# Scheduled Functions (Cron Jobs)
+# ====================================
+
+[[functions]]
+  path = "/remind-miyad"
+  schedule = "@daily"  # تعمل مرة واحدة يومياً (12:00 AM UTC = 2:00 AM مصر)
+  
+# ملاحظة: لو عايز توقيت محدد، استخدم Cron Expression:
+# schedule = "0 6 * * *"  ← الساعة 6:00 صباحاً UTC (8:00 صباحاً مصر)
+# schedule = "0 22 * * *" ← الساعة 10:00 مساءً UTC (12:00 منتصف الليل مصر)
+
