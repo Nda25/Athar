@@ -1,8 +1,12 @@
 name: Beta Auto Update
+
 on:
   schedule:
-    - cron: "0 0 * * *" # يومياً عند منتصف الليل UTC
+    - cron: "0 0 * * *" # يوميا عند منتصف الليل UTC 
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   update:
@@ -10,15 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # تحديث مكتبة Google AI
-      - run: npm i -S @google/generative-ai@latest
+      # Update google library
+      - run: npm update @google/generative-ai
 
-      # إعداد هوية البوت للـ commit
+      # Git bot identity
       - run: git config user.name "auto-bot"
       - run: git config user.email "bot@example.com"
 
-      # رفع التغييرات
+      # Stage changes
       - run: git add -A
+
+      # Commit + push only if needed
       - run: |
-          git commit -m "chore(beta): auto-update Gemini → gemini-flash-latest" || echo "no changes"
-      - run: git push
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "chore(beta): auto-update Gemini → latest"
+            git push
+          fi
