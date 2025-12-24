@@ -25,8 +25,7 @@
 # Scheduled Functions (Cron Jobs)
 # ====================================
 
-[[functions]]
-  path = "/remind-miyad"
+[functions."remind-miyad"]
   schedule = "@daily"  # تعمل مرة واحدة يومياً (12:00 AM UTC = 2:00 AM مصر)
   
 # ملاحظة: لو عايز توقيت محدد، استخدم Cron Expression:
