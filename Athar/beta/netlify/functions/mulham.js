@@ -334,7 +334,7 @@ JSON فقط:
       generationConfig: {
         responseMimeType: "application/json",
         candidateCount: 1,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 4096,
         temperature: 0.75,
         topK: 64,
         topP: 0.9,

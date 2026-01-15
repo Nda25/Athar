@@ -149,6 +149,16 @@
   margin-top: 8px;
   font-size: 0.95rem;
 }
+
+/* Dark mode fixes for chips and diff-box */
+.dark .chip {
+  background: color-mix(in oklab, var(--accent) 25%, #1e293b);
+  color: #e2e8f0;
+}
+.dark .diff-box {
+  background: color-mix(in oklab, var(--accent) 15%, #1e293b);
+  color: #e2e8f0;
+}
 .btn[disabled] {
   opacity: 0.6;
   cursor: not-allowed;
