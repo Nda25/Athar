@@ -90,28 +90,17 @@ function initProfileActions(user) {
   // --- تعديل الاسم ---
   const nameBtn = document.getElementById("editNameBtn");
   if (nameBtn) {
-    nameBtn.onclick = async () => {
+    nameBtn.onclick = () => {
       const displayEl = document.getElementById("displayName");
-      const newName = prompt(
-        "أدخلي الاسم الجديد:",
-        displayEl.textContent.trim()
-      );
-      if (!newName || !newName.trim()) return;
-
-      const cleanName = newName.trim();
-      displayEl.textContent = cleanName;
-      localStorage.setItem("athar:displayName", cleanName);
-      UTILS.toast("تم تحديث الاسم محلياً ✓");
-
-      // حفظ في السيرفر
-      if (window.supa && user.sub) {
-        await window.supa
-          .from("user_prefs")
-          .upsert(
-            { user_sub: user.sub, display_name: cleanName },
-            { onConflict: "user_sub" }
-          );
+      const input = document.getElementById("newNameInput");
+      if (input) {
+        input.value =
+          displayEl.textContent.trim() === "—"
+            ? ""
+            : displayEl.textContent.trim();
       }
+      const modal = document.getElementById("nameEditModal");
+      if (modal) modal.style.display = "flex";
     };
   }
 
@@ -194,29 +183,55 @@ async function loadUserData(user, claims) {
   if (!window.supa) return;
 
   const fetchMembership = async () => {
-    // جلب أحدث اشتراك
-    const { data } = await window.supa
-      .from("memberships")
-      .select("*")
-      .or(`user_sub.eq.${user.sub},email.eq.${user.email}`)
-      .order("end_at", { ascending: false })
-      .limit(1);
+    // جلب بيانات الاشتراك عبر الـ Netlify function (تستخدم service role)
+    try {
+      const token = await window.auth0Client.getTokenSilently();
+      const res = await fetch("/.netlify/functions/user-status", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (data && data[0]) {
-      const m = data[0];
-      const end = m.expires_at || m.end_at;
-      const isActive = m.status === "active" && new Date(end) > new Date();
-
-      // تحديث الواجهة بأحدث بيانات من الداتابيس
-      UTILS.renderBadge(isActive ? "active" : m.status);
-      if (m.start_at && end) {
-        document.getElementById("u-activation").textContent = `${new Date(
-          m.start_at
-        ).toLocaleDateString("ar-SA")} → ${new Date(end).toLocaleDateString(
-          "ar-SA"
-        )}`;
+      if (!res.ok) {
+        console.error("[Profile] user-status failed:", res.status);
+        return;
       }
-      document.getElementById("cardSub").setAttribute("data-ready", "1");
+
+      const data = await res.json();
+      console.log("[Profile] user-status response:", data);
+
+      if (data.ok) {
+        const isActive = data.active;
+
+        // تحديث الواجهة بأحدث بيانات من الداتابيس
+        UTILS.renderBadge(isActive ? "active" : data.status);
+
+        // تحديث نص الحالة أيضاً
+        const statusText = isActive
+          ? "مفعّل"
+          : data.status === "trial"
+          ? "تجريبي"
+          : "غير نشط";
+        document.getElementById("u-status-text").textContent = statusText;
+
+        if (data.plan) {
+          document.getElementById("u-plan").textContent = data.plan;
+        }
+
+        if (data.start_at && data.expires_at) {
+          document.getElementById("u-activation").textContent = `${new Date(
+            data.start_at
+          ).toLocaleDateString("ar-SA")} → ${new Date(
+            data.expires_at
+          ).toLocaleDateString("ar-SA")}`;
+        } else if (data.expires_at) {
+          document.getElementById("u-activation").textContent = `حتى ${new Date(
+            data.expires_at
+          ).toLocaleDateString("ar-SA")}`;
+        }
+
+        document.getElementById("cardSub").setAttribute("data-ready", "1");
+      }
+    } catch (err) {
+      console.error("[Profile] Error fetching user status:", err);
     }
   };
 
@@ -584,3 +599,47 @@ document.getElementById("logout")?.addEventListener("click", () => {
     logoutParams: { returnTo: window.location.origin },
   });
 });
+
+/**
+ * وظائف مودال تعديل الاسم
+ */
+window.closeNameModal = () => {
+  const modal = document.getElementById("nameEditModal");
+  if (modal) modal.style.display = "none";
+};
+
+window.saveNewName = async () => {
+  const input = document.getElementById("newNameInput");
+  const newName = input?.value.trim();
+
+  if (!newName) {
+    UTILS.toast("الرجاء إدخال اسم صحيح");
+    return;
+  }
+
+  try {
+    const displayEl = document.getElementById("displayName");
+    displayEl.textContent = newName;
+    localStorage.setItem("athar:displayName", newName);
+
+    // تحديث في السيرفر
+    const client = window.auth0Client || window.auth;
+    const user = await client?.getUser();
+
+    if (window.supa && user?.sub) {
+      const { error } = await window.supa
+        .from("user_prefs")
+        .upsert(
+          { user_sub: user.sub, display_name: newName },
+          { onConflict: "user_sub" }
+        );
+      if (error) throw error;
+    }
+
+    UTILS.toast("تم تحديث الاسم بنجاح ✓");
+    window.closeNameModal();
+  } catch (err) {
+    console.error("Error saving name:", err);
+    UTILS.toast("حدث خطأ أثناء حفظ الاسم");
+  }
+};

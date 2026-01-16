@@ -13,7 +13,7 @@ const supabase = createClient(
 
 /**
  * يجيب حالة العضوية من v_user_status إن وجدت،
- * وإلا يفحص memberships بالاعتماد على end_at/expires_at.
+ * وإلا يفحص memberships، وإلا يفحص users مباشرة.
  */
 async function fetchMembershipStatus(user_sub, email) {
   // 1) جرّبي v_user_status إن كانت موجودة
@@ -21,7 +21,7 @@ async function fetchMembershipStatus(user_sub, email) {
     const { data, error } = await supabase
       .from("v_user_status")
       .select("status, active, expires_at")
-      .or(`user_sub.eq.${user_sub},email.eq.${(email||"").toLowerCase()}`)
+      .or(`user_sub.eq.${user_sub},email.eq.${(email || "").toLowerCase()}`)
       .limit(1)
       .maybeSingle();
 
@@ -29,7 +29,7 @@ async function fetchMembershipStatus(user_sub, email) {
       return {
         status: data.active ? "active" : data.status || "none",
         active: !!data.active,
-        expires_at: data.expires_at || null
+        expires_at: data.expires_at || null,
       };
     }
   } catch (_) {}
@@ -43,25 +43,46 @@ async function fetchMembershipStatus(user_sub, email) {
       .limit(1);
 
     if (user_sub) q = q.eq("user_id", user_sub);
-    else if (email) q = q.eq("email", (email||"").toLowerCase());
+    else if (email) q = q.eq("email", (email || "").toLowerCase());
     else return { status: "none", active: false, expires_at: null };
 
     const { data: rows, error } = await q;
-    if (error) throw error;
+    if (!error && rows && rows[0]) {
+      const row = rows[0];
+      const exp = row.end_at || row.expires_at;
+      const active = exp ? new Date(exp) > new Date() : false;
+      return {
+        status: active ? "active" : row.status || "expired",
+        active,
+        expires_at: exp || null,
+      };
+    }
+  } catch (_) {}
 
-    const row = rows?.[0];
-    if (!row) return { status: "none", active: false, expires_at: null };
+  // 3) احتياطي ثاني: جدول users مباشرة
+  try {
+    const { data: userData, error } = await supabase
+      .from("users")
+      .select("status, end_at, start_at, plan")
+      .eq("email", (email || "").toLowerCase())
+      .limit(1)
+      .maybeSingle();
 
-    const exp = row.end_at || row.expires_at;
-    const active = exp ? new Date(exp) > new Date() : false;
-    return {
-      status: active ? "active" : (row.status || "expired"),
-      active,
-      expires_at: exp || null
-    };
-  } catch (_) {
-    return { status: "none", active: false, expires_at: null };
-  }
+    if (!error && userData) {
+      const exp = userData.end_at;
+      const active =
+        userData.status === "active" && exp && new Date(exp) > new Date();
+      return {
+        status: active ? "active" : userData.status || "none",
+        active,
+        expires_at: exp || null,
+        plan: userData.plan || null,
+        start_at: userData.start_at || null,
+      };
+    }
+  } catch (_) {}
+
+  return { status: "none", active: false, expires_at: null };
 }
 
 exports.handler = async (event) => {
@@ -75,19 +96,22 @@ exports.handler = async (event) => {
     return { statusCode: gate.status, body: gate.error };
   }
 
-  const sub   = gate.user?.sub || null;
+  const sub = gate.user?.sub || null;
   const email = gate.user?.email || null;
 
   const res = await fetchMembershipStatus(sub, email);
 
   return {
     statusCode: 200,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
     body: JSON.stringify({
       ok: true,
       user_sub: sub,
       email,
-      ...res
-    })
+      ...res,
+    }),
   };
 };
