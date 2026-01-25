@@ -12,8 +12,7 @@ const AUTH0_DOMAIN = import.meta.env.VITE_AUTH0_DOMAIN;
 const AUTH0_CLIENT_ID = import.meta.env.VITE_AUTH0_CLIENT_ID;
 const AUTH0_AUDIENCE = import.meta.env.VITE_AUTH0_AUDIENCE;
 const AUTH0_CALLBACK_URL =
-  import.meta.env.VITE_AUTH0_CALLBACK_URL ||
-  window.location.origin + "/profile";
+  import.meta.env.VITE_AUTH0_CALLBACK_URL || window.location.origin;
 
 /**
  * Inner component that sets up the token getter after Auth0 is initialized
@@ -48,8 +47,8 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
   const onRedirectCallback = (appState) => {
-    // Redirect to the intended page after login
-    navigate(appState?.returnTo || "/profile");
+    // Redirect to the intended page after login, default to home
+    navigate(appState?.returnTo || "/");
   };
 
   if (!AUTH0_DOMAIN || !AUTH0_CLIENT_ID) {
