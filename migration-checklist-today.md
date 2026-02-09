@@ -1,0 +1,22 @@
+# Migration Checklist (Today)
+
+- [x] Converted app structure to module-first architecture (`src/modules`, `src/app`, `src/shared`)
+- [x] Removed old legacy structure leftovers (`pages/features/widgets/components/services/hooks`)
+- [x] Added/updated aliases and routing to module imports (`@modules/*`, `@shared/*`, `@app/*`)
+- [x] Migrated and wired core pages: Home, Programs, Pricing, Profile, Complaints, Legal, Admin
+- [x] Migrated all tool modules into `modules/programs/tools/*`
+- [x] Completed tools Wave 1: `muntalaq`, `murtakiz`, `masar`, `miaad`
+- [x] Completed tools Wave 2: `mueen`, `mithaq`, `ethraa`, `mulham`
+- [x] Added missing `mutasiq` as a full module + route (`/programs/mutasiq`)
+- [x] Replaced tools raw JSON outputs with structured UI (copy/print actions, polished result blocks)
+- [x] Rebuilt Pricing with real payment + promo flow (`payments-create-invoice`, `promo-redeem`)
+- [x] Implemented user complaints flow (create/list/thread/reply)
+- [x] Migrated legal pages (privacy/terms/refund) from placeholders to real content
+- [x] Migrated Profile to real data (status, invoices, complaints) and removed dummy stats/activity
+- [x] Added profile edit features (display name, avatar upload preview, theme color + save)
+- [x] Replaced admin dashboard dummy data with live metrics/cards
+- [x] Replaced admin categories "coming soon" with working CRUD UI (local persistence)
+- [x] Fixed dev CORS/proxy behavior for Netlify functions via Vite proxy path strategy
+- [x] Fixed complaints API integration (`user_email` required parameter now sent correctly)
+- [x] Updated footer WhatsApp link to target number
+- [x] Repeatedly validated with successful builds (`npm run build`)
