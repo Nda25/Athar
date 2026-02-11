@@ -6,7 +6,7 @@
 import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { setTokenGetter } from "@shared/api";
+import { setTokenGetter, setUnauthorizedHandler } from "@shared/api";
 
 const AUTH0_DOMAIN = import.meta.env.VITE_AUTH0_DOMAIN;
 const AUTH0_CLIENT_ID = import.meta.env.VITE_AUTH0_CLIENT_ID;
@@ -18,7 +18,7 @@ const AUTH0_CALLBACK_URL =
  * Inner component that sets up the token getter after Auth0 is initialized
  */
 function AuthSetup({ children }) {
-  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -31,11 +31,26 @@ function AuthSetup({ children }) {
           return null;
         }
       });
+
+      setUnauthorizedHandler(() => {
+        const inAdmin = window.location.pathname.startsWith("/admin");
+        if (!inAdmin) return;
+
+        loginWithRedirect({
+          appState: {
+            returnTo:
+              window.location.pathname +
+              window.location.search +
+              window.location.hash,
+          },
+        });
+      });
     } else {
       // Clear token getter when not authenticated
       setTokenGetter(null);
+      setUnauthorizedHandler(null);
     }
-  }, [isAuthenticated, getAccessTokenSilently]);
+  }, [isAuthenticated, getAccessTokenSilently, loginWithRedirect]);
 
   return children;
 }

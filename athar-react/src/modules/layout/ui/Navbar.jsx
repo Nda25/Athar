@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Menu, X, User, LogOut, Moon, Sun, Shield } from "lucide-react";
 import { Button } from "@shared/ui/button";
 import { useAuth } from "@modules/auth";
 import { brand, nav } from "@shared/config/content";
@@ -14,9 +14,42 @@ const NAV_LINKS = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const { isAuthenticated, isLoading, user, loginWithRedirect, logout } =
+  const [canAccessAdmin, setCanAccessAdmin] = useState(false);
+  const { isAuthenticated, isLoading, user, loginWithRedirect, logout, isAdmin } =
     useAuth();
-  const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
+
+    setIsDark(shouldUseDark);
+    document.documentElement.classList.toggle("dark", shouldUseDark);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+
+    const checkAdmin = async () => {
+      if (!isAuthenticated) {
+        if (alive) setCanAccessAdmin(false);
+        return;
+      }
+      try {
+        const admin = await isAdmin();
+        if (alive) setCanAccessAdmin(Boolean(admin));
+        return;
+      } catch {
+        // no-op
+      }
+      if (alive) setCanAccessAdmin(false);
+    };
+
+    checkAdmin();
+    return () => {
+      alive = false;
+    };
+  }, [isAuthenticated, user, isAdmin]);
 
   const handleLogin = () => {
     loginWithRedirect();
@@ -39,11 +72,11 @@ export function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 z-50 w-full bg-transparent border-b-0 transition-all duration-300 font-bold ">
+    <nav className="fixed top-0 z-50 w-full border-b border-slate-200 bg-white/95 font-bold backdrop-blur-md transition-all duration-300 dark:border-slate-800 dark:bg-slate-950/95">
       <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between relative">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl  text-brand tracking-tight">
+          <span className="text-2xl tracking-tight text-brand dark:text-sea-300">
             {brand.nameShort}
           </span>
         </Link>
@@ -54,7 +87,7 @@ export function Navbar() {
             <Link
               key={link.href}
               to={link.href}
-              className="text-muted hover:text-brand  transition-colors text-sm"
+              className="text-sm text-slate-700 transition-colors hover:text-brand dark:text-slate-200"
             >
               {link.label}
             </Link>
@@ -64,11 +97,11 @@ export function Navbar() {
         {/* Auth Buttons & Theme Toggle */}
         <div className="flex items-center gap-3">
           {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-sea-50 text-muted transition-colors"
-            title="تبديل الوضع"
-          >
+            <button
+              onClick={toggleTheme}
+              className="rounded-full p-2 text-slate-700 transition-colors hover:bg-sea-50 dark:text-slate-200 dark:hover:bg-slate-800"
+              title="تبديل الوضع"
+            >
             {isDark ? (
               <Sun className="w-5 h-5" />
             ) : (
@@ -82,9 +115,18 @@ export function Navbar() {
               <div className="w-20 h-9 bg-sea-100 animate-pulse rounded-md" />
             ) : isAuthenticated ? (
               <>
+                {canAccessAdmin && (
+                  <Link
+                  to="/admin"
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-sea-50 hover:text-brand dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    <Shield className="h-4 w-4" />
+                    {nav.admin}
+                  </Link>
+                )}
                 <Link
                   to="/profile"
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-ink hover:text-brand transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 transition-colors hover:text-brand dark:text-slate-200"
                 >
                   <User className="w-4 h-4" />
                   {nav.profile}
@@ -93,18 +135,18 @@ export function Navbar() {
                   variant="ghost"
                   size="sm"
                   onClick={handleLogout}
-                  className="text-muted hover:text-red-600 "
+                  className="text-slate-700 hover:text-red-600 dark:text-slate-200"
                 >
                   <LogOut className="w-4 h-4 ml-2" />
                   {nav.logout}
                 </Button>
               </>
             ) : (
-              <Button
-                onClick={handleLogin}
-                variant="ghost"
-                className="text-muted hover:text-brand hover:bg-sea-50"
-              >
+                <Button
+                  onClick={handleLogin}
+                  variant="ghost"
+                  className="text-slate-700 hover:bg-sea-50 hover:text-brand dark:text-slate-200 dark:hover:bg-slate-800"
+                >
                 {nav.login}
               </Button>
             )}
@@ -143,6 +185,16 @@ export function Navbar() {
               <div className="w-full h-10 bg-sea-100 animate-pulse rounded-md" />
             ) : isAuthenticated ? (
               <>
+                {canAccessAdmin && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-2 rounded-lg px-4 py-3 text-ink hover:bg-sea-50"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Shield className="w-4 h-4" />
+                    {nav.admin}
+                  </Link>
+                )}
                 <Link
                   to="/profile"
                   className="flex items-center gap-2 px-4 py-3 text-ink hover:bg-sea-50 rounded-lg"

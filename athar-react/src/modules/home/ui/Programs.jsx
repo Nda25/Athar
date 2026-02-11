@@ -150,7 +150,7 @@ export function Programs() {
                       {common.buttons.tryNow} &larr;
                     </Link>
                   ) : (
-                    <span className="text-sm text-muted/50 cursor-not-allowed">
+                    <span className="cursor-not-allowed text-sm text-muted/80">
                       {common.buttons.notAvailable}
                     </span>
                   )}

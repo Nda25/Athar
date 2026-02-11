@@ -95,20 +95,20 @@ export default function Activation() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">التفعيل اليدوي</h2>
-          <p className="text-muted-foreground mt-2">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">التفعيل اليدوي</h2>
+          <p className="mt-2 text-slate-700 dark:text-slate-300">
             تفعيل أو تمديد اشتراك مستخدم يدوياً.
           </p>
         </div>
       </div>
 
-      <Card>
+      <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900">
         <CardHeader>
-          <CardTitle>بيانات الاشتراك</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-slate-900 dark:text-slate-100">بيانات الاشتراك</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">
             أدخل تفاصيل المستخدم والمدة المطلوبة.
           </CardDescription>
         </CardHeader>
@@ -123,9 +123,7 @@ export default function Activation() {
                   id="email"
                   placeholder="example@email.com"
                   {...form.register("email")}
-                  className={
-                    form.formState.errors.email ? "border-red-500" : ""
-                  }
+                  className={form.formState.errors.email ? "border-red-500" : ""}
                 />
                 {form.formState.errors.email && (
                   <p className="text-sm text-red-500">
@@ -163,7 +161,7 @@ export default function Activation() {
                   defaultValue="months"
                   onValueChange={(val) => form.setValue("unit", val)}
                 >
-                  <SelectTrigger>
+                    <SelectTrigger className="dark:border-slate-700 dark:bg-slate-800">
                     <SelectValue placeholder="اختر الوحدة" />
                   </SelectTrigger>
                   <SelectContent>
@@ -198,7 +196,7 @@ export default function Activation() {
         open={!!confirmData}
         onOpenChange={(open) => !open && setConfirmData(null)}
       >
-        <DialogContent>
+        <DialogContent className="border-slate-200 dark:border-slate-700 dark:bg-slate-900">
           <DialogHeader>
             <DialogTitle>تأكيد التفعيل</DialogTitle>
             <DialogDescription>
@@ -209,11 +207,11 @@ export default function Activation() {
           {confirmData && (
             <div className="grid gap-2 py-4 text-sm">
               <div className="grid grid-cols-4 items-center gap-4">
-                <span className="font-semibold text-right">المستخدم:</span>
+                <span className="text-right font-semibold text-slate-900 dark:text-slate-100">المستخدم:</span>
                 <span className="col-span-3">{confirmData.email}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <span className="font-semibold text-right">المدة:</span>
+                <span className="text-right font-semibold text-slate-900 dark:text-slate-100">المدة:</span>
                 <span className="col-span-3">
                   {confirmData.amount}
                   {confirmData.unit === "months" && " شهر"}
@@ -223,11 +221,11 @@ export default function Activation() {
               </div>
               {confirmData.note && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <span className="font-semibold text-right">ملاحظة:</span>
-                  <span className="col-span-3 text-muted-foreground">
-                    {confirmData.note}
-                  </span>
-                </div>
+                    <span className="text-right font-semibold text-slate-900 dark:text-slate-100">ملاحظة:</span>
+                    <span className="col-span-3 text-slate-600 dark:text-slate-400">
+                      {confirmData.note}
+                    </span>
+                  </div>
               )}
             </div>
           )}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -69,6 +69,26 @@ const announcementSchema = z.object({
   targetPages: z.array(z.string()).min(1, "يجب اختيار صفحة واحدة على الأقل"),
 });
 
+function normalizeTargetPages(value) {
+  if (Array.isArray(value) && value.length > 0) return value;
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value.replace(/'/g, '"'));
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {
+      const fallback = value
+        .replace(/[[\]"']/g, "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+      if (fallback.length > 0) return fallback;
+    }
+  }
+
+  return ["all"];
+}
+
 export default function Announcements() {
   const [announcements, setAnnouncements] = useState({
     latest: null,
@@ -138,6 +158,23 @@ export default function Announcements() {
     loadData();
   }, []);
 
+  const metrics = useMemo(() => {
+    const items = Array.isArray(announcements.items) ? announcements.items : [];
+    let active = 0;
+    let scheduled = 0;
+
+    for (const item of items) {
+      if (item?.active) active += 1;
+      if (item?.start_at && new Date(item.start_at) > new Date()) scheduled += 1;
+    }
+
+    return {
+      total: items.length,
+      active,
+      scheduled,
+    };
+  }, [announcements.items]);
+
   const onSubmit = async (data) => {
     setSubmitting(true);
     try {
@@ -206,19 +243,48 @@ export default function Announcements() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">إدارة الإعلانات</h2>
-        <p className="text-muted-foreground mt-2">
-          نشر إعلانات عامة تظهر للمستخدمين في صفحات مختلفة.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <Badge className="mb-3 bg-slate-900 text-white hover:bg-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100">
+              إدارة الإعلانات
+            </Badge>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              مركز التنبيهات العامة
+            </h2>
+            <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+              إنشاء الإعلانات ومتابعة حالتها ونطاق استهدافها من مكان واحد.
+            </p>
+          </div>
+          <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="block text-xs text-slate-600 dark:text-slate-400">الإجمالي</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {loading ? "..." : metrics.total}
+              </span>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="block text-xs text-slate-600 dark:text-slate-400">إعلانات نشطة</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {loading ? "..." : metrics.active}
+              </span>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="block text-xs text-slate-600 dark:text-slate-400">مجدولة</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {loading ? "..." : metrics.scheduled}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Create Announcement Form */}
-        <Card>
+        <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <CardHeader>
-            <CardTitle>نشر إعلان جديد</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-slate-100">نشر إعلان جديد</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -256,7 +322,7 @@ export default function Announcements() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 border p-3 rounded-md bg-slate-50">
+              <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
                 <Controller
                   control={form.control}
                   name="active"
@@ -286,13 +352,13 @@ export default function Announcements() {
                                     cursor-pointer flex items-center gap-2 p-2 rounded-md border text-sm transition-all
                                     ${
                                       isChecked
-                                        ? "bg-blue-50 border-blue-200 text-blue-700 font-medium"
-                                        : "bg-white border-slate-200 hover:bg-slate-50"
+                                        ? "bg-blue-100 border-blue-300 text-blue-800 font-medium dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-200"
+                                        : "bg-white border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
                                     }
                                 `}
                       >
                         <div
-                          className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? "bg-blue-600 border-blue-600" : "border-slate-300"}`}
+                           className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? "bg-blue-600 border-blue-600" : "border-slate-300 dark:border-slate-600"}`}
                         >
                           {isChecked && (
                             <span className="text-white text-[10px]">✓</span>
@@ -325,16 +391,16 @@ export default function Announcements() {
 
         {/* Existing Announcements List */}
         <div className="space-y-6">
-          <Card>
+          <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium text-slate-500">
+              <CardTitle className="text-base font-medium text-slate-600 dark:text-slate-300">
                 المنشور حالياً
               </CardTitle>
             </CardHeader>
             <CardContent>
               {announcements.latest ? (
-                <div className="flex items-start gap-3 bg-blue-50 p-4 rounded-lg border border-blue-100 text-blue-900">
-                  <Megaphone className="h-5 w-5 mt-0.5 shrink-0 text-blue-600" />
+                <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                  <Megaphone className="mt-0.5 h-5 w-5 shrink-0 text-slate-700 dark:text-slate-300" />
                   <div>
                     <p className="font-medium">{announcements.latest.text}</p>
                     <div className="flex gap-2 mt-2 text-xs opacity-80">
@@ -352,16 +418,16 @@ export default function Announcements() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-slate-400 text-sm italic">
+                <div className="text-center py-8 text-sm italic text-slate-500 dark:text-slate-400">
                   لا يوجد إعلان نشط حالياً
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <CardHeader>
-              <CardTitle>سجل الإعلانات</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-slate-100">سجل الإعلانات</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {loading ? (
@@ -377,22 +443,22 @@ export default function Announcements() {
                   {announcements.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                      className="flex flex-col gap-4 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           {item.active ? (
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                           ) : (
-                            <StopCircle className="h-4 w-4 text-slate-300" />
+                            <StopCircle className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                           )}
                           <span
-                            className={`font-medium ${!item.active && "text-slate-500 line-through"}`}
+                            className={`font-medium text-slate-900 dark:text-slate-100 ${!item.active && "text-slate-600 dark:text-slate-400 line-through"}`}
                           >
                             {item.text}
                           </span>
                         </div>
-                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
                           <span>
                             {item.start_at
                               ? format(new Date(item.start_at), "d MMM", {
@@ -410,7 +476,7 @@ export default function Announcements() {
                           </span>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {(item.target_pages || ["all"]).map((p) => {
+                          {normalizeTargetPages(item.target_pages).map((p) => {
                             const label =
                               TARGET_PAGES.find((tp) => tp.id === p)?.label ||
                               p;
@@ -418,7 +484,7 @@ export default function Announcements() {
                               <Badge
                                 key={p}
                                 variant="secondary"
-                                className="text-[10px] px-1 h-5 bg-slate-100 text-slate-600 font-normal"
+                                className="h-5 bg-slate-100 px-1 text-[10px] font-normal text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                               >
                                 {label}
                               </Badge>

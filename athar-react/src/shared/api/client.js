@@ -35,6 +35,8 @@ const api = axios.create({
 // ===== Auth Token Storage =====
 // We store the token getter function to be called on each request
 let tokenGetter = null;
+let unauthorizedHandler = null;
+let isHandlingUnauthorized = false;
 
 /**
  * Set the token getter function (called from AuthProvider)
@@ -42,6 +44,14 @@ let tokenGetter = null;
  */
 export function setTokenGetter(getter) {
   tokenGetter = getter;
+}
+
+/**
+ * Set unauthorized handler (called on 401 responses)
+ * @param {Function|null} handler
+ */
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = typeof handler === "function" ? handler : null;
 }
 
 // ===== Request Interceptor =====
@@ -87,6 +97,19 @@ api.interceptors.response.use(
       switch (status) {
         case 401:
           console.error("[API] Unauthorized - Token may be expired");
+          if (unauthorizedHandler && !isHandlingUnauthorized) {
+            isHandlingUnauthorized = true;
+            try {
+              Promise.resolve(unauthorizedHandler(error)).finally(() => {
+                setTimeout(() => {
+                  isHandlingUnauthorized = false;
+                }, 1000);
+              });
+            } catch (handlerError) {
+              console.warn("[API] Unauthorized handler failed:", handlerError);
+              isHandlingUnauthorized = false;
+            }
+          }
           // Could trigger a re-login here
           break;
         case 403:
@@ -284,7 +307,37 @@ export async function createPaymentInvoice(invoiceData) {
  * Get user's invoices list
  */
 export async function getInvoicesList() {
-  return api.get("/invoices-list");
+  const payload = await api.get("/invoices-list");
+
+  const rows = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.invoices)
+      ? payload.invoices
+      : Array.isArray(payload?.rows)
+        ? payload.rows
+        : [];
+
+  return rows.map((invoice) => {
+    if (!invoice || typeof invoice !== "object") return invoice;
+
+    const amountInMinorUnits =
+      invoice.amount != null
+        ? invoice.amount
+        : invoice.amount_sar != null
+          ? Math.round(Number(invoice.amount_sar) * 100)
+          : null;
+    const normalizedAmount =
+      amountInMinorUnits == null ? null : Number(amountInMinorUnits);
+
+    return {
+      ...invoice,
+      id: invoice.id || invoice.invoice_id || invoice.provider_event_id || null,
+      user_email: invoice.user_email || invoice.email || null,
+      user_name: invoice.user_name || invoice.name || invoice.email || null,
+      amount: Number.isFinite(normalizedAmount) ? normalizedAmount : null,
+      currency: invoice.currency || "sar",
+    };
+  });
 }
 
 // ===== Promo Functions =====
@@ -313,7 +366,36 @@ export async function upsertUserProfile(payload) {
  * Get admin users list
  */
 export async function getAdminUsersList() {
-  return api.get("/admin-users-list");
+  const payload = await api.get("/admin-users-list");
+
+  const rows = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.users)
+      ? payload.users
+      : Array.isArray(payload?.rows)
+        ? payload.rows
+        : [];
+
+  return rows.map((user) => {
+    if (!user || typeof user !== "object") return user;
+
+    const appMetadata = user.app_metadata || {};
+    const hasEntitlement =
+      appMetadata.plan_entitlement !== undefined
+        ? appMetadata.plan_entitlement
+        : Boolean(user.active);
+
+    return {
+      ...user,
+      user_id: user.user_id || user.user_sub || user.id || null,
+      name: user.name || user.display_name || user.email || "",
+      picture: user.picture || user.avatar_url || null,
+      app_metadata: {
+        ...appMetadata,
+        plan_entitlement: hasEntitlement,
+      },
+    };
+  });
 }
 
 /**
@@ -331,7 +413,39 @@ export async function createAnnouncement(data) {
 export async function getAnnouncements() {
   const latest = await api.get("/admin-announcement?latest=1");
   const list = await api.get("/admin-announcement?list=1");
-  return { latest: latest?.latest, items: list?.items || [] };
+
+  const parseTargetPages = (value) => {
+    if (Array.isArray(value) && value.length > 0) return value;
+
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value.replace(/'/g, '"'));
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {
+        const fallback = value
+          .replace(/[[\]"']/g, "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+        if (fallback.length > 0) return fallback;
+      }
+    }
+
+    return ["all"];
+  };
+
+  const normalizeAnnouncement = (item) => {
+    if (!item || typeof item !== "object") return item;
+    return {
+      ...item,
+      target_pages: parseTargetPages(item.target_pages),
+    };
+  };
+
+  return {
+    latest: normalizeAnnouncement(latest?.latest),
+    items: (list?.items || []).map(normalizeAnnouncement),
+  };
 }
 
 export async function updateAnnouncement(data) {

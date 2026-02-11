@@ -5,6 +5,8 @@
 
 @import "tw-animate-css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ===== Athar Design System (Strict) ===== */
 :root {
   /* Sea Palette */
@@ -21,7 +23,7 @@
 
   /* Semantic Colors */
   --ink: #0f172a;
-  --muted: #334155;
+  --muted: #475569;
   --bg: #ffffff;
   --card: #ffffff;
   --gold: #c8a84e;
@@ -34,22 +36,35 @@
   /* Brand mappings */
   --primary: var(--sea-600);
   --primary-2: var(--sea-500);
-  --brand: var(--primary);
-  --brand-2: var(--primary-2);
+  --brand: var(--sea-600);
+  --brand-2: var(--sea-500);
 
   /* Shadcn/Tailwind mappings for compatibility */
   --background: var(--bg);
   --foreground: var(--ink);
+  --card-foreground: var(--ink);
+  --popover: var(--card);
+  --popover-foreground: var(--ink);
+  --primary: var(--sea-600);
+  --primary-foreground: #ffffff;
+  --secondary: #eaf2ff;
+  --secondary-foreground: #1e3a8a;
+  --muted-foreground: var(--muted);
+  --accent: #edf4ff;
+  --accent-foreground: #1e3a8a;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
   --border: var(--sea-200);
   --input: var(--sea-200);
   --ring: var(--brand);
+  --radius-sm: 0.5rem;
 }
 
 .dark {
   --bg: #0b1220;
-  --card: #0f172a;
-  --ink: #f1f5f9;
-  --muted: #cbd5e1;
+  --card: #111b31;
+  --ink: #f8fafc;
+  --muted: #a8b3c5;
   --shadow:
     0 22px 60px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
   --glass: rgba(255, 255, 255, 0.06);
@@ -59,8 +74,21 @@
   /* Shadcn mappings */
   --background: var(--bg);
   --foreground: var(--ink);
+  --card-foreground: var(--ink);
+  --popover: #0f172a;
+  --popover-foreground: #f1f5f9;
+  --primary: #60a5fa;
+  --primary-foreground: #0b1220;
+  --secondary: #1f2a3e;
+  --secondary-foreground: #f1f5f9;
+  --muted-foreground: #cbd5e1;
+  --accent: #26324a;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   --border: var(--sea-700);
   --input: var(--sea-700);
+  --ring: #60a5fa;
 }
 
 @theme {
@@ -85,6 +113,25 @@
   --color-card: var(--card);
   --color-gold: var(--gold);
 
+   /* Semantic shadcn palette */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
   /* Semantic */
   --color-brand: var(--brand);
   --color-brand-2: var(--brand-2);
@@ -100,6 +147,11 @@
 html {
   scroll-behavior: smooth;
   font-family: var(--font-sans);
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {

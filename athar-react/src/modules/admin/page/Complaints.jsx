@@ -124,10 +124,13 @@ export default function Complaints() {
 
   const getStatusBadge = (status) => {
     const styles = {
-      new: "bg-blue-100 text-blue-700 hover:bg-blue-200",
-      in_progress: "bg-amber-100 text-amber-700 hover:bg-amber-200",
-      resolved: "bg-green-100 text-green-700 hover:bg-green-200",
-      rejected: "bg-red-100 text-red-700 hover:bg-red-200",
+      new: "bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300",
+      in_progress:
+        "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300",
+      resolved:
+        "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300",
+      rejected:
+        "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300",
     };
     const labels = {
       new: "جديدة",
@@ -145,24 +148,24 @@ export default function Complaints() {
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
           الشكاوى والمقترحات
         </h2>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-slate-700 dark:text-slate-300">
           متابعة تذاكر الدعم الفني ورسائل المستخدمين.
         </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
         {/* List Section */}
-        <Card className="flex flex-col lg:w-1/3 min-w-[320px]">
-          <CardHeader className="p-4 border-b space-y-3">
+        <Card className="flex min-w-[320px] flex-col border-slate-200 dark:border-slate-700 dark:bg-slate-900 lg:w-1/3">
+          <CardHeader className="space-y-3 border-b border-slate-200 p-4 dark:border-slate-700">
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="بحث..."
-                  className="pr-8"
+                    className="pr-8 dark:border-slate-700 dark:bg-slate-800"
                   value={filters.q}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, q: e.target.value }))
@@ -227,17 +230,17 @@ export default function Complaints() {
                   لا توجد شكاوى مطابقة
                 </div>
               ) : (
-                <div className="divide-y">
-                  {complaints.map((c) => (
-                    <div
-                      key={c.id}
-                      className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors ${selectedComplaint?.id === c.id ? "bg-blue-50/50" : ""}`}
-                      onClick={() => handleSelectComplaint(c)}
-                    >
+                  <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                    {complaints.map((c) => (
+                      <div
+                        key={c.id}
+                        className={`cursor-pointer p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${selectedComplaint?.id === c.id ? "bg-blue-100 dark:bg-blue-900/30" : ""}`}
+                        onClick={() => handleSelectComplaint(c)}
+                      >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-semibold text-sm line-clamp-1 text-slate-900">
-                          {c.subject}
-                        </h4>
+                          <h4 className="line-clamp-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {c.subject}
+                          </h4>
                         <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">
                           {format(new Date(c.created_at), "dd/MM/yy", {
                             locale: arSA,
@@ -245,7 +248,7 @@ export default function Complaints() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                        <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                           <User className="h-3 w-3" /> {c.user_name || "مجهول"}
                         </span>
                         {getStatusBadge(c.status)}
@@ -267,15 +270,15 @@ export default function Complaints() {
         </Card>
 
         {/* Detail Section */}
-        <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-slate-200 dark:border-slate-700 dark:bg-slate-900">
           {!selectedComplaint ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground bg-slate-50/30">
+            <div className="flex flex-1 flex-col items-center justify-center bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
               <MessageSquare className="h-12 w-12 mb-4 opacity-20" />
               <p>اختر شكوى لعرض التفاصيل</p>
             </div>
           ) : (
             <>
-              <CardHeader className="p-4 border-b bg-slate-50/40">
+              <CardHeader className="border-b border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -284,7 +287,7 @@ export default function Complaints() {
                           ? "شكوى"
                           : "اقتراح"}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
                         {format(
                           new Date(selectedComplaint.created_at),
                           "PPP p",
@@ -292,13 +295,13 @@ export default function Complaints() {
                         )}
                       </span>
                     </div>
-                    <CardTitle className="text-xl">
+                    <CardTitle className="text-xl text-slate-900 dark:text-slate-100">
                       {selectedComplaint.subject}
                     </CardTitle>
                   </div>
                   {getStatusBadge(selectedComplaint.status)}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-slate-600 mt-2">
+                <div className="mt-2 flex items-center gap-4 text-sm text-slate-700 dark:text-slate-300">
                   <div className="flex items-center gap-1.5">
                     <User className="h-4 w-4" />
                     <span>{selectedComplaint.user_name}</span>
@@ -314,7 +317,7 @@ export default function Complaints() {
 
               <CardContent className="flex-1 flex flex-col gap-4 p-0 min-h-0">
                 {/* Messages Area */}
-                <ScrollArea className="flex-1 p-4 bg-slate-50/30">
+                <ScrollArea className="flex-1 bg-slate-50 p-4 dark:bg-slate-800">
                   {detailsLoading ? (
                     <div className="flex justify-center p-8">
                       <Loader2 className="animate-spin text-slate-400" />
@@ -338,8 +341,8 @@ export default function Complaints() {
                           key={msg.id || msg.created_at}
                           className={`flex flex-col max-w-[85%] rounded-lg p-3 text-sm ${
                             msg.sender === "admin"
-                              ? "self-end bg-blue-100/50 border-blue-100 ml-auto"
-                              : "self-start bg-white border shadow-sm"
+                              ? "ml-auto self-end border border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-900/30"
+                              : "self-start border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
                           }`}
                         >
                           <div className="flex justify-between items-center gap-4 mb-2 opacity-70 text-xs">
@@ -362,7 +365,7 @@ export default function Complaints() {
                 </ScrollArea>
 
                 {/* Reply Area */}
-                <div className="p-4 border-t bg-white">
+                <div className="border-t border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
                   <div className="mb-3">
                     <Label className="text-xs text-muted-foreground mb-1 block">
                       تغيير الحالة (اختياري)

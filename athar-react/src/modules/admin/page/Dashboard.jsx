@@ -1,12 +1,26 @@
 import { useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { Activity, AlertCircle, Megaphone, Users } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  Clock3,
+  Megaphone,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+
+import { Badge } from "@shared/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@shared/ui/card";
-import { getAdminUsersList, filterComplaints, getAnnouncements } from "@shared/api";
+import {
+  filterComplaints,
+  getAdminUsersList,
+  getAnnouncements,
+} from "@shared/api";
 
 function normalizeUsers(data) {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.users)) return data.users;
+  if (Array.isArray(data?.rows)) return data.rows;
   return [];
 }
 
@@ -16,12 +30,32 @@ function normalizeComplaints(data) {
   return [];
 }
 
+function formatDate(value) {
+  if (!value) return "-";
+  return new Date(value).toLocaleDateString("ar-SA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function toPercent(part, total) {
+  if (!total) return 0;
+  return Math.min(100, Math.round((part / total) * 100));
+}
+
 export default function Dashboard() {
   const [usersQuery, complaintsQuery, announcementsQuery] = useQueries({
     queries: [
       { queryKey: ["admin-dashboard-users"], queryFn: getAdminUsersList },
-      { queryKey: ["admin-dashboard-complaints"], queryFn: () => filterComplaints({}) },
-      { queryKey: ["admin-dashboard-announcements"], queryFn: getAnnouncements },
+      {
+        queryKey: ["admin-dashboard-complaints"],
+        queryFn: () => filterComplaints({}),
+      },
+      {
+        queryKey: ["admin-dashboard-announcements"],
+        queryFn: getAnnouncements,
+      },
     ],
   });
 
@@ -30,139 +64,325 @@ export default function Dashboard() {
     () => normalizeComplaints(complaintsQuery.data),
     [complaintsQuery.data],
   );
-  const announcements = announcementsQuery.data?.items || [];
+  const announcements = useMemo(
+    () => announcementsQuery.data?.items || [],
+    [announcementsQuery.data],
+  );
 
-  const activeUsers = users.filter(
-    (u) =>
-      u?.app_metadata?.plan_entitlement ||
-      u?.status === "active" ||
-      u?.membership_status === "active",
-  ).length;
+  const metrics = useMemo(() => {
+    let activeUsers = 0;
+    let adminUsers = 0;
+    for (const user of users) {
+      const isActive =
+        user?.app_metadata?.plan_entitlement ||
+        user?.status === "active" ||
+        user?.membership_status === "active";
+      if (isActive) activeUsers += 1;
+      if (user?.app_metadata?.roles?.includes("admin")) adminUsers += 1;
+    }
 
-  const openComplaints = complaints.filter(
-    (c) => c.status === "new" || c.status === "in_progress",
-  ).length;
+    let openComplaints = 0;
+    for (const complaint of complaints) {
+      if (complaint?.status === "new" || complaint?.status === "in_progress") {
+        openComplaints += 1;
+      }
+    }
 
-  const activeAnnouncements = announcements.filter((a) => a.active).length;
+    let activeAnnouncements = 0;
+    for (const announcement of announcements) {
+      if (announcement?.active) activeAnnouncements += 1;
+    }
 
-  const isLoading = usersQuery.isLoading || complaintsQuery.isLoading || announcementsQuery.isLoading;
+    return {
+      totalUsers: users.length,
+      activeUsers,
+      adminUsers,
+      totalComplaints: complaints.length,
+      openComplaints,
+      totalAnnouncements: announcements.length,
+      activeAnnouncements,
+      activeUsersRatio: toPercent(activeUsers, users.length),
+      openComplaintsRatio: toPercent(openComplaints, complaints.length),
+      liveAnnouncementsRatio: toPercent(activeAnnouncements, announcements.length),
+    };
+  }, [users, complaints, announcements]);
 
-  const stats = [
-    {
-      title: "إجمالي المستخدمين",
-      value: users.length,
-      description: "من واقع بيانات المستخدمين",
-      icon: Users,
-      color: "text-blue-600",
-      bg: "bg-blue-100",
-    },
-    {
-      title: "المستخدمون النشطون",
-      value: activeUsers,
-      description: "اشتراك فعّال حاليًا",
-      icon: Activity,
-      color: "text-emerald-600",
-      bg: "bg-emerald-100",
-    },
-    {
-      title: "الشكاوى المفتوحة",
-      value: openComplaints,
-      description: "جديدة أو قيد المعالجة",
-      icon: AlertCircle,
-      color: "text-amber-600",
-      bg: "bg-amber-100",
-    },
-    {
-      title: "الإعلانات النشطة",
-      value: activeAnnouncements,
-      description: "المفعّلة حاليًا",
-      icon: Megaphone,
-      color: "text-violet-600",
-      bg: "bg-violet-100",
-    },
-  ];
+  const isLoading =
+    usersQuery.isLoading ||
+    complaintsQuery.isLoading ||
+    announcementsQuery.isLoading;
 
-  const recentUsers = [...users]
-    .filter((u) => u.created_at)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 5);
+  const statCards = useMemo(
+    () => [
+      {
+        title: "إجمالي المستخدمين",
+        value: metrics.totalUsers,
+        description: "قاعدة المستخدمين الحالية",
+        icon: Users,
+        iconColor: "text-sky-700 dark:text-sky-300",
+        iconBg: "bg-sky-100",
+        border: "border-sky-200",
+      },
+      {
+        title: "المستخدمون النشطون",
+        value: metrics.activeUsers,
+        description: `${metrics.activeUsersRatio}% من إجمالي المستخدمين`,
+        icon: Activity,
+        iconColor: "text-emerald-700 dark:text-emerald-300",
+        iconBg: "bg-emerald-100",
+        border: "border-emerald-200",
+      },
+      {
+        title: "الشكاوى المفتوحة",
+        value: metrics.openComplaints,
+        description: `${metrics.openComplaintsRatio}% من إجمالي الشكاوى`,
+        icon: AlertCircle,
+        iconColor: "text-amber-700 dark:text-amber-300",
+        iconBg: "bg-amber-100",
+        border: "border-amber-200",
+      },
+      {
+        title: "الإعلانات النشطة",
+        value: metrics.activeAnnouncements,
+        description: `${metrics.liveAnnouncementsRatio}% من سجل الإعلانات`,
+        icon: Megaphone,
+        iconColor: "text-indigo-700 dark:text-indigo-300",
+        iconBg: "bg-indigo-100",
+        border: "border-indigo-200",
+      },
+    ],
+    [metrics],
+  );
 
-  const recentComplaints = [...complaints]
-    .filter((c) => c.created_at)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 5);
+  const recentUsers = useMemo(
+    () =>
+      [...users]
+        .filter((u) => u.created_at)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5),
+    [users],
+  );
+
+  const recentComplaints = useMemo(
+    () =>
+      [...complaints]
+        .filter((c) => c.created_at)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5),
+    [complaints],
+  );
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">نظرة عامة</h2>
-        <p className="text-muted-foreground mt-2">إحصائيات مباشرة من بيانات المنصة.</p>
-      </div>
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <Badge className="mb-3 bg-slate-900 text-white hover:bg-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100">
+              لوحة الإدارة
+            </Badge>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              نظرة تشغيلية مباشرة
+            </h2>
+            <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+              حالة المنصة الآن: المستخدمون، الشكاوى، والإعلانات في شاشة واحدة.
+            </p>
+          </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <div className={`rounded-full p-2 ${stat.bg}`}>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+          <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="block text-xs text-slate-600 dark:text-slate-400">نسبة النشطين</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {isLoading ? "..." : `${metrics.activeUsersRatio}%`}
+              </span>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="block text-xs text-slate-600 dark:text-slate-400">الشكاوى المفتوحة</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {isLoading ? "..." : metrics.openComplaints}
+              </span>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="block text-xs text-slate-600 dark:text-slate-400">إعلانات حية</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {isLoading ? "..." : metrics.activeAnnouncements}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {statCards.map((stat) => (
+          <Card
+            key={stat.title}
+            className={`border ${stat.border} bg-white shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800`}
+          >
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
+              <div>
+                <CardTitle className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {stat.title}
+                </CardTitle>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{stat.description}</p>
+              </div>
+              <div className={`rounded-xl p-2 ${stat.iconBg} dark:bg-slate-800`}>
+                <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{isLoading ? "..." : stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
+              <div className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
+                {isLoading ? "..." : stat.value}
+              </div>
             </CardContent>
           </Card>
         ))}
-      </div>
+      </section>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>أحدث المستخدمين</CardTitle>
+      <section className="grid gap-4 lg:grid-cols-3">
+        <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900 lg:col-span-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-slate-900 dark:text-slate-100">مؤشرات الجودة</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-slate-700 dark:text-slate-300">المستخدمون النشطون</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {isLoading ? "..." : `${metrics.activeUsersRatio}%`}
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+                <div
+                  className="h-2 rounded-full bg-emerald-500 transition-all"
+                  style={{ width: `${metrics.activeUsersRatio}%` }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-slate-700 dark:text-slate-300">الشكاوى المفتوحة</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {isLoading ? "..." : `${metrics.openComplaintsRatio}%`}
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+                <div
+                  className="h-2 rounded-full bg-amber-500 transition-all"
+                  style={{ width: `${metrics.openComplaintsRatio}%` }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-slate-700 dark:text-slate-300">الإعلانات النشطة</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {isLoading ? "..." : `${metrics.liveAnnouncementsRatio}%`}
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+                <div
+                  className="h-2 rounded-full bg-indigo-500 transition-all"
+                  style={{ width: `${metrics.liveAnnouncementsRatio}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              <div className="mb-1 flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
+                <ShieldCheck className="h-4 w-4" />
+                مستخدمون بصلاحية Admin
+              </div>
+              <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {isLoading ? "..." : metrics.adminUsers}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900 lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base text-slate-900 dark:text-slate-100">أحدث المستخدمين</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
             {recentUsers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">لا توجد بيانات بعد.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">لا توجد بيانات مستخدمين بعد.</p>
             ) : (
               recentUsers.map((u, idx) => (
-                <div key={u.user_id || u.email || idx} className="flex justify-between border-b pb-2 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">{u.name || "مستخدم"}</p>
-                    <p className="text-xs text-muted-foreground">{u.email || "—"}</p>
+                <div
+                  key={u.user_id || u.email || idx}
+                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {u.name || "مستخدم"}
+                    </p>
+                    <p className="truncate text-xs text-slate-600 dark:text-slate-400">{u.email || "-"}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(u.created_at).toLocaleDateString("ar-SA")}
-                  </p>
+                  <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                    <Clock3 className="h-3.5 w-3.5" />
+                    {formatDate(u.created_at)}
+                  </div>
                 </div>
               ))
             )}
           </CardContent>
         </Card>
+      </section>
 
-        <Card>
+      <section className="grid gap-4 md:grid-cols-2">
+        <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900">
           <CardHeader>
-            <CardTitle>آخر الشكاوى</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-slate-100">آخر الشكاوى</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {recentComplaints.length === 0 ? (
-              <p className="text-sm text-muted-foreground">لا توجد شكاوى بعد.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">لا توجد شكاوى بعد.</p>
             ) : (
               recentComplaints.map((c, idx) => (
-                <div key={c.id || idx} className="flex justify-between border-b pb-2 last:border-0">
+                <div
+                  key={c.id || idx}
+                  className="flex justify-between border-b border-slate-200 pb-2 last:border-0 dark:border-slate-700"
+                >
                   <div>
-                    <p className="text-sm font-medium line-clamp-1">{c.subject || "بدون عنوان"}</p>
-                    <p className="text-xs text-muted-foreground">{c.status || "new"}</p>
+                    <p className="text-sm font-medium text-slate-900 line-clamp-1 dark:text-slate-100">
+                      {c.subject || "بدون عنوان"}
+                    </p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{c.status || "new"}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {c.created_at ? new Date(c.created_at).toLocaleDateString("ar-SA") : "—"}
-                  </p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{formatDate(c.created_at)}</p>
                 </div>
               ))
             )}
           </CardContent>
         </Card>
-      </div>
+
+        <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900">
+          <CardHeader>
+            <CardTitle className="text-slate-900 dark:text-slate-100">مؤشرات سريعة</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="text-sm text-slate-800 dark:text-slate-300">إجمالي الشكاوى</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {isLoading ? "..." : metrics.totalComplaints}
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="text-sm text-slate-800 dark:text-slate-300">إجمالي الإعلانات</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {isLoading ? "..." : metrics.totalAnnouncements}
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="text-sm text-slate-800 dark:text-slate-300">مستخدمون بصلاحية Admin</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {isLoading ? "..." : metrics.adminUsers}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }

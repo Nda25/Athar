@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Users,
@@ -76,11 +76,42 @@ export default function UsersList() {
     loadUsers();
   }, []);
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.email?.toLowerCase().includes(search.toLowerCase()) ||
-      u.name?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const safeUsers = Array.isArray(users) ? users : [];
+
+  const filteredUsers = useMemo(() => {
+    const term = search.toLowerCase().trim();
+    if (!term) return safeUsers;
+
+    return safeUsers.filter((u) => {
+      const email = String(u.email || "").toLowerCase();
+      const name = String(u.name || "").toLowerCase();
+      return email.includes(term) || name.includes(term);
+    });
+  }, [safeUsers, search]);
+
+  const metrics = useMemo(() => {
+    let activeUsers = 0;
+    let adminUsers = 0;
+
+    for (const user of safeUsers) {
+      if (
+        user?.app_metadata?.plan_entitlement ||
+        user?.status === "active" ||
+        user?.membership_status === "active"
+      ) {
+        activeUsers += 1;
+      }
+      if (user?.app_metadata?.roles?.includes("admin")) {
+        adminUsers += 1;
+      }
+    }
+
+    return {
+      total: safeUsers.length,
+      active: activeUsers,
+      admins: adminUsers,
+    };
+  }, [safeUsers]);
 
   const handleOpenActivate = (user) => {
     setSelectedUser(user);
@@ -111,22 +142,51 @@ export default function UsersList() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">إدارة المستخدمين</h2>
-        <p className="text-muted-foreground mt-2">
-          عرض المستخدمين المسجلين وحالة اشتراكاتهم.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <Badge className="mb-3 bg-slate-900 text-white hover:bg-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100">
+              إدارة المستخدمين
+            </Badge>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              المستخدمون والاشتراكات
+            </h2>
+            <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+              عرض المستخدمين المسجلين ومتابعة حالة الاشتراك والتفعيل بسرعة.
+            </p>
+          </div>
+          <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="block text-xs text-slate-600 dark:text-slate-400">إجمالي المستخدمين</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {loading ? "..." : metrics.total}
+              </span>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="block text-xs text-slate-600 dark:text-slate-400">مستخدمون نشطون</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {loading ? "..." : metrics.active}
+              </span>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <span className="block text-xs text-slate-600 dark:text-slate-400">حسابات Admin</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {loading ? "..." : metrics.admins}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <Card>
+      <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <div className="relative w-full sm:w-72">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:w-80">
               <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="بحث بالبريد الإلكتروني أو الاسم..."
-                className="pr-8"
+                className="border-slate-200 bg-white pr-8 dark:border-slate-700 dark:bg-slate-800"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -157,12 +217,12 @@ export default function UsersList() {
               {filteredUsers.map((user) => (
                 <Card
                   key={user.user_id || user.email}
-                  className="overflow-hidden hover:shadow-md transition-shadow"
+                  className="overflow-hidden border-slate-200 bg-white shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
                 >
                   <div className="p-4 space-y-3">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-200">
                           {(
                             user.name?.[0] ||
                             user.email?.[0] ||
@@ -171,13 +231,13 @@ export default function UsersList() {
                         </div>
                         <div>
                           <p
-                            className="font-semibold text-sm line-clamp-1"
+                            className="line-clamp-1 text-sm font-semibold text-slate-900 dark:text-slate-100"
                             title={user.name}
                           >
                             {user.name || "مستخدم"}
                           </p>
                           <p
-                            className="text-[10px] text-muted-foreground line-clamp-1"
+                            className="line-clamp-1 text-[10px] text-slate-600 dark:text-slate-400"
                             title={user.email}
                           >
                             {user.email}
@@ -212,20 +272,20 @@ export default function UsersList() {
                       </DropdownMenu>
                     </div>
 
-                    <div className="space-y-1 pt-2 border-t">
+                    <div className="space-y-1 border-t border-slate-200 pt-2 dark:border-slate-700">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">الحالة:</span>
                         {user.app_metadata?.plan_entitlement ? (
                           <Badge
                             variant="outline"
-                            className="bg-green-50 text-green-700 border-green-200"
+                            className="border-green-300 bg-green-100 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300"
                           >
                             مشترك
                           </Badge>
                         ) : (
                           <Badge
                             variant="outline"
-                            className="bg-slate-50 text-slate-500"
+                            className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                           >
                             غير مشترك
                           </Badge>
@@ -235,7 +295,7 @@ export default function UsersList() {
                         <span className="text-muted-foreground">
                           تاريخ التسجيل:
                         </span>
-                        <span className="font-mono">
+                          <span className="font-mono text-slate-800 dark:text-slate-200">
                           {user.created_at
                             ? format(new Date(user.created_at), "dd/MM/yy")
                             : "-"}
@@ -246,7 +306,7 @@ export default function UsersList() {
                         <div className="pt-1">
                           <Badge
                             variant="secondary"
-                            className="text-[10px] w-full justify-center bg-purple-50 text-purple-700 hover:bg-purple-100"
+                            className="w-full justify-center bg-purple-100 text-[10px] text-purple-800 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300"
                           >
                             <Shield className="h-3 w-3 ml-1" /> مسؤول
                           </Badge>

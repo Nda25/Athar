@@ -5,7 +5,6 @@ import { HomePage } from "@modules/home";
 import {
   AdminActivationPage,
   AdminAnnouncementsPage,
-  AdminCategoriesPage,
   AdminComplaintsPage,
   AdminDashboardPage,
   AdminInvoicesPage,
@@ -136,7 +135,6 @@ export default function AppRouter() {
           <Route path="complaints" element={<AdminComplaintsPage />} />
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="invoices" element={<AdminInvoicesPage />} />
-          <Route path="categories" element={<AdminCategoriesPage />} />
         </Route>
       </Route>
 
