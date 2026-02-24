@@ -11,6 +11,7 @@ import {
   Package,
   Moon,
   Sun,
+  Home,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@shared/ui/button";
@@ -145,15 +146,28 @@ export default function AdminLayout() {
             </h1>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            title="تبديل الوضع"
-            className="text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              title="العودة للصفحة الرئيسية"
+              className="text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <Link to="/">
+                <Home className="h-5 w-5" />
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              title="تبديل الوضع"
+              className="text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+          </div>
         </header>
 
         <main className="flex-1 p-4 lg:p-8">
