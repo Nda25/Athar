@@ -5,7 +5,7 @@
 
 import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { setTokenGetter, setUnauthorizedHandler } from "@shared/api";
 
 const AUTH0_DOMAIN = import.meta.env.VITE_AUTH0_DOMAIN;
@@ -19,23 +19,14 @@ const AUTH0_CALLBACK_URL =
  */
 function AuthSetup({ children }) {
   const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0();
+  const isRedirectingToLoginRef = useRef(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      // Set the token getter for Axios interceptor
-      setTokenGetter(async () => {
-        try {
-          return await getAccessTokenSilently();
-        } catch (error) {
-          console.warn("[Auth] Failed to get token silently:", error);
-          return null;
-        }
-      });
+    const redirectToLogin = () => {
+      if (isRedirectingToLoginRef.current) return;
 
-      setUnauthorizedHandler(() => {
-        const inAdmin = window.location.pathname.startsWith("/admin");
-        if (!inAdmin) return;
-
+      isRedirectingToLoginRef.current = true;
+      Promise.resolve(
         loginWithRedirect({
           appState: {
             returnTo:
@@ -43,10 +34,53 @@ function AuthSetup({ children }) {
               window.location.search +
               window.location.hash,
           },
+        }),
+      )
+        .catch((error) => {
+          console.warn("[Auth] Failed to redirect to login:", error);
+        })
+        .finally(() => {
+          setTimeout(() => {
+            isRedirectingToLoginRef.current = false;
+          }, 1000);
         });
+    };
+
+    if (isAuthenticated) {
+      // Set the token getter for Axios interceptor
+      setTokenGetter(async () => {
+        try {
+          return await getAccessTokenSilently();
+        } catch (error) {
+          console.warn("[Auth] Failed to get token silently:", error);
+
+          const code = error?.error || error?.code;
+          const message = String(error?.message || "").toLowerCase();
+          const shouldRedirectToLogin =
+            code === "login_required" ||
+            code === "consent_required" ||
+            code === "interaction_required" ||
+            code === "missing_refresh_token" ||
+            code === "invalid_grant" ||
+            code === "invalid_token" ||
+            message.includes("login required") ||
+            message.includes("missing refresh token") ||
+            message.includes("invalid_grant");
+
+          if (shouldRedirectToLogin) {
+            redirectToLogin();
+          }
+
+          return null;
+        }
+      });
+
+      setUnauthorizedHandler(() => {
+        redirectToLogin();
       });
     } else {
       // Clear token getter when not authenticated
+      isRedirectingToLoginRef.current = false;
       setTokenGetter(null);
       setUnauthorizedHandler(null);
     }

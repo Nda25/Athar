@@ -64,6 +64,7 @@ async function logUsage(user, meta, ok) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         tool_name: "mueen",
+        user_sub: user?.sub || null,
         user_email: user?.email || null,
         meta: { ...(meta || {}), ok: !!ok },
       }),
@@ -261,7 +262,7 @@ ${lessonsList}
       "";
 
     if (!raw) {
-      await logUsage(user, meta, false);
+      void logUsage(user, meta, false);
       return { statusCode: 502, headers: CORS, body: "Empty response" };
     }
 
@@ -271,7 +272,7 @@ ${lessonsList}
     try {
       j = JSON.parse(raw);
     } catch (e) {
-      await logUsage(user, meta, false);
+      void logUsage(user, meta, false);
       return {
         statusCode: 502,
         headers: CORS,
@@ -363,7 +364,7 @@ ${lessonsList}
       days: safeDays,
     };
 
-    await logUsage(user, payload.meta, true);
+    void logUsage(user, payload.meta, true);
 
     return {
       statusCode: 200,

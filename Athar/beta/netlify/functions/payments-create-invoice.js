@@ -4,6 +4,7 @@
 const { createClient } = require("@supabase/supabase-js");
 const { requireUser } = require("./_auth.js");
 const { CORS, preflight } = require("./_cors.js");
+const { createPerf } = require("./_perf.js");
 
 // ===== Supabase (Service Role) =====
 const supabase = createClient(
@@ -31,6 +32,68 @@ const PERIOD_DAYS = {
   semi: 180,
   annual: 365
 };
+
+const PAYMENT_UPSTREAM_TIMEOUT_MS = Math.max(
+  1000,
+  Number(process.env.PAYMENT_UPSTREAM_TIMEOUT_MS || 8000)
+);
+
+function shouldUseMockPayments() {
+  return process.env.MOCK_PAYMENTS === "1";
+}
+
+function canFallbackToMock() {
+  if (process.env.MOCK_PAYMENTS === "1") return true;
+  if (process.env.ALLOW_PAYMENT_MOCK_FALLBACK === "0") return false;
+  const nodeEnv = String(process.env.NODE_ENV || "development").toLowerCase();
+  const context = String(process.env.CONTEXT || "dev").toLowerCase();
+  return nodeEnv !== "production" && context !== "production";
+}
+
+function buildMockInvoiceUrl(plan, promo) {
+  const query = new URLSearchParams({
+    paid: "1",
+    mock_paid: "1",
+    plan: String(plan || "monthly"),
+  });
+  if (promo) query.set("promo", String(promo).toUpperCase());
+  return `/pricing?${query.toString()}`;
+}
+
+function sanitizeBaseUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  return raw.replace(/\/+$/, "");
+}
+
+function resolveBaseUrl(event) {
+  const configured =
+    sanitizeBaseUrl(process.env.PUBLIC_BASE_URL) ||
+    sanitizeBaseUrl(process.env.SITE_BASE_URL) ||
+    sanitizeBaseUrl(process.env.URL) ||
+    sanitizeBaseUrl(process.env.DEPLOY_PRIME_URL);
+
+  if (configured) return configured;
+
+  const host = event.headers.host || "n-athar.co";
+  return `https://${host}`;
+}
+
+function collectMoyasarSecrets() {
+  const raw = [
+    process.env.MOYASAR_SK,
+    process.env.MOYASAR_SECRET_KEY,
+    process.env.MOYASAR_API_SECRET,
+    process.env.MOYASAR_API_KEY,
+  ];
+
+  return [...new Set(
+    raw
+      .map((value) => String(value || "").trim().replace(/^['\"]|['\"]$/g, ""))
+      .filter(Boolean)
+      .filter((value) => value.startsWith("sk_"))
+  )];
+}
 
 // تطبيع اسم الخطة الواردة من الواجهة
 function normalizePlan(input) {
@@ -62,37 +125,27 @@ exports.handler = async (event) => {
   const pf = preflight(event);
   if (pf) return pf;
 
+  const perf = createPerf("payments-create-invoice", event);
+
   try {
     if (event.httpMethod !== "POST") {
+      perf.end({ statusCode: 405 });
       return { statusCode: 405, headers: CORS, body: "Method Not Allowed" };
     }
 
     // 1) تحقق المستخدم (JWT)
     const gate = await requireUser(event);
+    perf.mark("auth_done");
     const userObj = gate?.user || gate;
     const isOk = gate?.ok !== false;
     if (!isOk || !userObj) {
+      perf.end({ statusCode: gate?.status || 401, unauthorized: true });
       return { statusCode: gate?.status || 401, headers: CORS, body: JSON.stringify({ error: gate?.error || "Unauthorized" }) };
     }
 
     // === قراءة الـ payload مبكرًا ===
     let payload = {};
     try { payload = JSON.parse(event.body || "{}"); } catch {}
-
-    console.log("=== DEBUG userObj ===");
-    console.log(JSON.stringify(userObj, null, 2));
-    const auth = event.headers.authorization || event.headers.Authorization || "";
-    console.log("=== DEBUG rawAuthHeader ===", auth);
-
-    if (auth.startsWith("Bearer ")) {
-      const jwt = auth.slice(7);
-      try {
-        const p = JSON.parse(Buffer.from((jwt.split(".")[1] || ""), "base64url").toString("utf8"));
-        console.log("=== DEBUG decoded JWT payload ===", p);
-      } catch (err) {
-        console.error("Failed to decode JWT:", err);
-      }
-    }
 
     const user_sub = userObj.sub || userObj.user?.sub || null;
 
@@ -137,6 +190,7 @@ exports.handler = async (event) => {
     // 3) السعر النهائي (بالهللات)
     const baseSar     = PRICE_SAR[plan];
     const percent     = await resolvePromoPercent(promo);
+    perf.mark("promo_done");
     const discounted  = Math.max(0, baseSar * (1 - percent / 100));
     const amountCents = Math.round(discounted * 100); // هللات
 
@@ -146,53 +200,114 @@ exports.handler = async (event) => {
     }
 
     // 4) مفاتيح/روابط
-    const MOYASAR_SECRET = process.env.MOYASAR_SK;
-    if (!MOYASAR_SECRET) {
-      return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "Missing Moyasar secret" }) };
+    const moyasarSecrets = collectMoyasarSecrets();
+    if (moyasarSecrets.length === 0) {
+      if (shouldUseMockPayments()) {
+        const mockUrl = buildMockInvoiceUrl(plan, promo);
+        perf.end({ statusCode: 200, mock: true, reason: "missing_secret" });
+        return {
+          statusCode: 200,
+          headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
+          body: JSON.stringify({ url: mockUrl, mock: true }),
+        };
+      }
+
+      return {
+        statusCode: 500,
+        headers: CORS,
+        body: JSON.stringify({
+          error: "Missing Moyasar secret",
+          details:
+            "Set MOYASAR_SK (or MOYASAR_SECRET_KEY) to a valid Moyasar secret key that starts with sk_"
+        })
+      };
     }
 
-    const BASE =
-      process.env.PUBLIC_BASE_URL ||
-      process.env.SITE_BASE_URL ||
-      `https://${event.headers.host || "n-athar.co"}`;
+    const BASE = resolveBaseUrl(event);
 
     const callbackUrl = `${BASE}/.netlify/functions/payments-webhook`; // Webhook
-    const returnUrl   = `${BASE}/pricing.html?paid=1`;                 // الرجوع للمستخدم بعد الدفع
+    const returnUrl   = `${BASE}/pricing?paid=1`;                      // الرجوع للمستخدم بعد الدفع
 
     // 5) إنشاء الفاتورة لدى Moyasar
-    const msRes = await fetch("https://api.moyasar.com/v1/invoices", {
-      method: "POST",
-      headers: {
-        Authorization: "Basic " + Buffer.from(MOYASAR_SECRET + ":").toString("base64"),
-        "Content-Type": "application/json",
-        Accept: "application/json"
+    const invoicePayload = {
+      amount: amountCents,
+      currency: "SAR",
+      description: `Athar subscription: ${plan}${percent ? ` (promo -${percent}%)` : ""}`,
+      metadata: {
+        email,
+        user_sub,
+        plan,
+        period_days: PERIOD_DAYS[plan],
+        // (اختياري) بيانات إضافية مفيدة للتتبّع
+        price_sar: baseSar,
+        price_after_discount_sar: discounted,
+        promo_code: percent ? promo.toUpperCase() : null
       },
-      body: JSON.stringify({
-        amount: amountCents,
-        currency: "SAR",
-        description: `Athar subscription: ${plan}${percent ? ` (promo -${percent}%)` : ""}`,
-        metadata: {
-          email,
-          user_sub,
-          plan,
-          period_days: PERIOD_DAYS[plan],
-          // (اختياري) بيانات إضافية مفيدة للتتبّع
-          price_sar: baseSar,
-          price_after_discount_sar: discounted,
-          promo_code: percent ? promo.toUpperCase() : null
-        },
-        callback_url: callbackUrl,
-        return_url:   returnUrl,
-        redirect_url: returnUrl
-      })
-    });
+      callback_url: callbackUrl,
+      return_url: returnUrl,
+      redirect_url: returnUrl
+    };
 
-    // نقرأ النص أولاً لسهولة التشخيص
-    const text = await msRes.text();
+    let msRes = null;
+    let text = "";
     let out = {};
-    try { out = JSON.parse(text); } catch {}
+    let upstreamAttempts = 0;
+
+    for (const secret of moyasarSecrets) {
+      upstreamAttempts += 1;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), PAYMENT_UPSTREAM_TIMEOUT_MS);
+      try {
+        msRes = await fetch("https://api.moyasar.com/v1/invoices", {
+          method: "POST",
+          headers: {
+            Authorization: "Basic " + Buffer.from(secret + ":").toString("base64"),
+            "Content-Type": "application/json",
+            Accept: "application/json"
+          },
+          body: JSON.stringify(invoicePayload),
+          signal: controller.signal,
+        });
+
+        text = await msRes.text();
+        out = {};
+        try { out = JSON.parse(text); } catch {}
+      } catch (error) {
+        msRes = { ok: false, status: 504 };
+        out = {};
+        text = `Moyasar request timeout after ${PAYMENT_UPSTREAM_TIMEOUT_MS}ms`;
+        console.warn("payments-create-invoice upstream timeout:", error?.message || error);
+      } finally {
+        clearTimeout(timer);
+      }
+
+      if (msRes.status !== 401) {
+        break;
+      }
+    }
+    perf.mark("moyasar_done");
 
     if (!msRes.ok || !out?.url) {
+      const upstreamMessage =
+        (out && typeof out === "object" && (out.message || out.error_description || out.error)) ||
+        null;
+      const invalidAuth = msRes.status === 401;
+
+      if (invalidAuth && canFallbackToMock()) {
+        const mockUrl = buildMockInvoiceUrl(plan, promo);
+        console.warn("payments-create-invoice: falling back to mock due to invalid Moyasar credentials");
+        perf.end({ statusCode: 200, mock: true, reason: "invalid_credentials" });
+        return {
+          statusCode: 200,
+          headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
+          body: JSON.stringify({
+            url: mockUrl,
+            mock: true,
+            warning: "Moyasar credentials invalid; used mock payment flow",
+          }),
+        };
+      }
+
       // لوج فشل الإنشاء
       const { error: logErr1 } = await supabase.from("payments_log").insert([{
         gateway: "moyasar",
@@ -209,9 +324,15 @@ exports.handler = async (event) => {
       if (logErr1) console.warn("payments_log insert (fail) error:", logErr1.message);
 
       return {
-        statusCode: 502,
+        statusCode: invalidAuth ? 500 : 502,
         headers: CORS,
-        body: JSON.stringify({ error: "Moyasar create invoice failed", details: text })
+        body: JSON.stringify({
+          error: invalidAuth
+            ? "Invalid Moyasar credentials"
+            : "Moyasar create invoice failed",
+          details: upstreamMessage || text,
+          provider_status: msRes.status
+        })
       };
     }
 
@@ -227,6 +348,7 @@ exports.handler = async (event) => {
       note: percent ? `promo:${promo.toUpperCase()}(-${percent}%)` : null
     }]);
     if (piErr) console.warn("payment_intents insert warn:", piErr.message);
+    perf.mark("intent_done");
 
     // لوج نجاح الإنشاء
     const { error: logErr2 } = await supabase.from("payments_log").insert([{
@@ -245,8 +367,10 @@ exports.handler = async (event) => {
       amount_sar: discounted
     }]);
     if (logErr2) console.warn("payments_log insert (success) warn:", logErr2.message);
+    perf.mark("log_done");
 
     // 7) نعيد رابط الدفع للمستخدم
+    perf.end({ statusCode: 200, upstream_attempts: upstreamAttempts });
     return {
       statusCode: 200,
       headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" },
@@ -255,6 +379,7 @@ exports.handler = async (event) => {
 
   } catch (e) {
     console.error("payments-create-invoice error:", e);
+    perf.end({ statusCode: 500, unhandled: true });
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "Server error" }) };
   }
 };

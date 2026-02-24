@@ -47,20 +47,23 @@ export default function ProfilePage() {
     queryKey: ["profile-status"],
     queryFn: checkUserStatus,
     enabled: !isLoading && isAuthenticated,
-    retry: 2,
-    refetchOnMount: "always",
+    retry: 1,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   const invoicesQuery = useQuery({
     queryKey: ["profile-invoices"],
     queryFn: getInvoicesList,
     enabled: !isLoading && isAuthenticated,
+    staleTime: 60 * 1000,
   });
 
   const complaintsQuery = useQuery({
     queryKey: ["profile-complaints", user?.email],
     queryFn: () => getUserComplaints(user?.email?.toLowerCase()),
     enabled: !isLoading && isAuthenticated,
+    staleTime: 60 * 1000,
   });
 
   const membership = statusQuery.data || {};
