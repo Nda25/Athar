@@ -1,18 +1,22 @@
-import { Layout } from "@modules/layout";
-import { Hero } from "../ui/Hero";
-import { Programs } from "../ui/Programs";
-import { Quotes } from "../ui/Quotes";
-import { Services } from "../ui/Services";
-import { SEO } from "@shared/seo/SEO";
+import { useAuth } from "@modules/auth";
+import { PreRegistrationLanding } from "../ui/PreRegistrationLanding";
+import { PostRegistrationLanding } from "../ui/PostRegistrationLanding";
 
 export default function Home() {
-  return (
-    <Layout>
-      <SEO page="home" />
-      <Hero />
-      <Services />
-      <Quotes />
-      <Programs />
-    </Layout>
-  );
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    // A simple beautiful loader while auth state resolves
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <PostRegistrationLanding />;
+  }
+
+  return <PreRegistrationLanding />;
 }
