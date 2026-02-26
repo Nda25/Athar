@@ -1,12 +1,57 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>athar-react</title>
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Open Graph / Twitter default settings (Overwritten dynamically by React) -->
+    <meta property="og:title" content="أثـَـر" />
+    <meta
+      property="og:description"
+      content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر"
+    />
+    <meta property="og:image" content="https://n-athar.co/assets/icon.png" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="أثـَـر" />
+    <meta
+      name="twitter:description"
+      content="حين يلتقي الشغف بالمعرفة .. يُصنع الأثر"
+    />
+    <meta name="twitter:image" content="https://n-athar.co/assets/icon.png" />
+
+    <!-- Title fallback -->
+    <title>بوابة أثر</title>
   </head>
   <body>
+    <!-- Theme loading script to prevent unstyled flash in React -->
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var theme = localStorage.getItem("theme");
+        if (
+          theme === "dark" ||
+          (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ) {
+          root.classList.add("dark");
+        } else {
+          root.classList.remove("dark");
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
