@@ -6,26 +6,70 @@ import {
   Crown,
   LayoutGrid,
   ChevronLeft,
+  Rocket,
+  Anchor,
+  Calendar,
+  Clock,
+  Layout,
+  BookOpen,
+  Bot,
+  ClipboardCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@modules/auth";
-import { Layout } from "@modules/layout";
+import { Layout as PageLayout } from "@modules/layout";
 import { ToolsSidebar } from "@modules/layout";
 import { Button } from "@shared/ui/button";
 import { SEO } from "@shared/seo/SEO";
 import { tools } from "@shared/config/content";
 
-/* ─── Tool icon map ────────────────────────────────────────────────── */
-const TOOL_ICONS = {
-  montalaq: "🚀",
-  murtakiz: "🏗️",
-  masar: "📅",
-  miaad: "🔔",
-  mueen: "📋",
-  mithaq: "🔗",
-  ethraa: "✨",
-  mulham: "🎨",
-  mutasiq: "📊",
+/* ─── Tool icon + color map (matches Programs.jsx) ───────────────── */
+const TOOL_CONFIG = {
+  montalaq: {
+    icon: Rocket,
+    color: "text-blue-600",
+    bg: "bg-blue-50 dark:bg-blue-500/10",
+  },
+  murtakiz: {
+    icon: Anchor,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+  },
+  masar: {
+    icon: Layout,
+    color: "text-purple-600",
+    bg: "bg-purple-50 dark:bg-purple-500/10",
+  },
+  miaad: {
+    icon: Clock,
+    color: "text-amber-600",
+    bg: "bg-amber-50 dark:bg-amber-500/10",
+  },
+  mueen: {
+    icon: Calendar,
+    color: "text-cyan-600",
+    bg: "bg-cyan-50 dark:bg-cyan-500/10",
+  },
+  mithaq: {
+    icon: BookOpen,
+    color: "text-rose-600",
+    bg: "bg-rose-50 dark:bg-rose-500/10",
+  },
+  ethraa: {
+    icon: Sparkles,
+    color: "text-indigo-600",
+    bg: "bg-indigo-50 dark:bg-indigo-500/10",
+  },
+  mulham: {
+    icon: Bot,
+    color: "text-pink-600",
+    bg: "bg-pink-50 dark:bg-pink-500/10",
+  },
+  mutasiq: {
+    icon: ClipboardCheck,
+    color: "text-teal-600",
+    bg: "bg-teal-50 dark:bg-teal-500/10",
+  },
 };
 
 /* ─── Featured tools for the hero tabs (first 3) ──────────────────── */
@@ -56,14 +100,14 @@ export function PostRegistrationLanding() {
 
   const featuredTools = FEATURED_IDS.map((id) => ({
     id,
-    icon: TOOL_ICONS[id],
+    config: TOOL_CONFIG[id],
     ...tools[id],
   }));
 
   const activeTool = featuredTools[activeTab];
 
   return (
-    <Layout>
+    <PageLayout>
       <SEO page="home" />
       {/* pt-16 to clear the fixed navbar */}
       <div className="min-h-[calc(100vh-4rem)] pt-16 flex bg-background">
@@ -100,20 +144,23 @@ export function PostRegistrationLanding() {
             >
               {/* Tab switcher */}
               <div className="flex gap-2 flex-wrap">
-                {featuredTools.map((t, idx) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setActiveTab(idx)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                      activeTab === idx
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "bg-card text-muted border border-border hover:border-primary/50 hover:text-primary"
-                    }`}
-                  >
-                    <span>{t.icon}</span>
-                    {t.nameShort}
-                  </button>
-                ))}
+                {featuredTools.map((t, idx) => {
+                  const TabIcon = t.config?.icon;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setActiveTab(idx)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                        activeTab === idx
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "bg-card text-muted border border-border hover:border-primary/50 hover:text-primary"
+                      }`}
+                    >
+                      {TabIcon && <TabIcon className="w-4 h-4" />}
+                      {t.nameShort}
+                    </button>
+                  );
+                })}
                 <span className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs text-muted border border-border/50 bg-secondary">
                   <Sparkles className="w-3 h-3 text-primary" />
                   الأبرز
@@ -150,9 +197,11 @@ export function PostRegistrationLanding() {
                   </div>
 
                   {/* Icon badge */}
-                  <div className="w-40 h-40 bg-white/10 rounded-full flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/20">
-                    <span className="text-7xl">{activeTool.icon}</span>
-                  </div>
+                  {activeTool.config?.icon && (
+                    <div className="w-40 h-40 bg-white/10 rounded-full flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/20">
+                      <activeTool.config.icon className="w-20 h-20 text-white/90 stroke-[1.5]" />
+                    </div>
+                  )}
                 </div>
               </motion.div>
 
@@ -219,7 +268,7 @@ export function PostRegistrationLanding() {
                     <h3 className="font-bold text-foreground line-clamp-1">
                       {user?.name || "المستخدم"}
                     </h3>
-                    <p className="text-sm text-muted">{user?.email}</p>
+                    <p className="text-xs text-muted ">{user?.email}</p>
                   </div>
                 </div>
 
@@ -252,17 +301,26 @@ export function PostRegistrationLanding() {
                     وصول سريع
                   </p>
                   <div className="space-y-1">
-                    {FEATURED_IDS.map((id) => (
-                      <Link
-                        key={id}
-                        to={tools[id].href}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors"
-                      >
-                        <span className="text-base">{TOOL_ICONS[id]}</span>
-                        {tools[id].nameShort}
-                        <ChevronLeft className="w-3 h-3 mr-auto text-muted" />
-                      </Link>
-                    ))}
+                    {FEATURED_IDS.map((id) => {
+                      const cfg = TOOL_CONFIG[id];
+                      if (!cfg) return null;
+                      const QuickIcon = cfg.icon;
+                      return (
+                        <Link
+                          key={id}
+                          to={tools[id].href}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors group"
+                        >
+                          <div
+                            className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${cfg.bg} ${cfg.color}`}
+                          >
+                            <QuickIcon className="w-3.5 h-3.5 stroke-[2]" />
+                          </div>
+                          {tools[id].nameShort}
+                          <ChevronLeft className="w-3 h-3 mr-auto text-muted" />
+                        </Link>
+                      );
+                    })}
                     <Link
                       to="/programs"
                       className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-primary font-bold hover:bg-primary/10 transition-colors"
@@ -277,6 +335,6 @@ export function PostRegistrationLanding() {
           </div>
         </div>
       </div>
-    </Layout>
+    </PageLayout>
   );
 }

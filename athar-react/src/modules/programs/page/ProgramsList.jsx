@@ -1,6 +1,17 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Rocket,
+  Anchor,
+  Calendar,
+  Clock,
+  Layout as LayoutIcon,
+  BookOpen,
+  Sparkles,
+  Bot,
+  ClipboardCheck,
+} from "lucide-react";
 import { Layout } from "@modules/layout";
 import { Link } from "react-router-dom";
 import { tools } from "@shared/config/content";
@@ -19,16 +30,52 @@ const ACTIVE_IDS = new Set([
   "mutasiq",
 ]);
 
-const TOOL_ICONS = {
-  montalaq: "🚀",
-  murtakiz: "🏗️",
-  masar: "📅",
-  miaad: "🔔",
-  mueen: "📋",
-  mithaq: "🔗",
-  ethraa: "✨",
-  mulham: "🎨",
-  mutasiq: "📊",
+const TOOL_CONFIG = {
+  montalaq: {
+    icon: Rocket,
+    color: "text-blue-600",
+    bg: "bg-blue-50 dark:bg-blue-500/10",
+  },
+  murtakiz: {
+    icon: Anchor,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+  },
+  masar: {
+    icon: LayoutIcon,
+    color: "text-purple-600",
+    bg: "bg-purple-50 dark:bg-purple-500/10",
+  },
+  miaad: {
+    icon: Clock,
+    color: "text-amber-600",
+    bg: "bg-amber-50 dark:bg-amber-500/10",
+  },
+  mueen: {
+    icon: Calendar,
+    color: "text-cyan-600",
+    bg: "bg-cyan-50 dark:bg-cyan-500/10",
+  },
+  mithaq: {
+    icon: BookOpen,
+    color: "text-rose-600",
+    bg: "bg-rose-50 dark:bg-rose-500/10",
+  },
+  ethraa: {
+    icon: Sparkles,
+    color: "text-indigo-600",
+    bg: "bg-indigo-50 dark:bg-indigo-500/10",
+  },
+  mulham: {
+    icon: Bot,
+    color: "text-pink-600",
+    bg: "bg-pink-50 dark:bg-pink-500/10",
+  },
+  mutasiq: {
+    icon: ClipboardCheck,
+    color: "text-teal-600",
+    bg: "bg-teal-50 dark:bg-teal-500/10",
+  },
 };
 
 const CATEGORY_MAP = {
@@ -84,7 +131,7 @@ export default function ProgramsList() {
         desc: tool.description,
         tagline: tool.tagline,
         href: tool.href,
-        icon: TOOL_ICONS[id] || "🛠️",
+        config: TOOL_CONFIG[id],
         category: CATEGORY_MAP[id] || "أدوات ذكية",
         active: ACTIVE_IDS.has(id),
       })),
@@ -219,8 +266,12 @@ export default function ProgramsList() {
                         >
                           {/* Top row: icon + badge */}
                           <div className="flex items-start justify-between">
-                            <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-200">
-                              {prog.icon}
+                            <div
+                              className={`w-12 h-12 rounded-2xl ${prog.config?.bg || "bg-secondary"} flex items-center justify-center ${prog.config?.color || "text-foreground"} group-hover:scale-110 transition-transform duration-200`}
+                            >
+                              {prog.config?.icon && (
+                                <prog.config.icon className="w-6 h-6 stroke-[2]" />
+                              )}
                             </div>
                             <span
                               className={`text-[10px] font-bold px-2 py-1 rounded-full ${catStyle.bg} ${catStyle.color}`}

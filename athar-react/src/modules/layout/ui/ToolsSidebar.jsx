@@ -4,7 +4,20 @@
  */
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronRight, ChevronLeft, LayoutGrid } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronLeft,
+  LayoutGrid,
+  Rocket,
+  Anchor,
+  Calendar,
+  Clock,
+  Layout as LayoutIcon,
+  BookOpen,
+  Sparkles,
+  Bot,
+  ClipboardCheck,
+} from "lucide-react";
 import { tools } from "@shared/config/content";
 
 /* ─── Category grouping ──────────────────────────────────────────── */
@@ -27,17 +40,53 @@ const CATEGORIES = [
   },
 ];
 
-/* ─── Tool icon map (emoji fallback) ────────────────────────────── */
-const TOOL_ICONS = {
-  montalaq: "🚀",
-  murtakiz: "🏗️",
-  masar: "📅",
-  miaad: "🔔",
-  mueen: "📋",
-  mithaq: "🔗",
-  ethraa: "✨",
-  mulham: "🎨",
-  mutasiq: "📊",
+/* ─── Tool icon + color map (matches Programs.jsx) ───────────────── */
+const TOOL_CONFIG = {
+  montalaq: {
+    icon: Rocket,
+    color: "text-blue-600",
+    bg: "bg-blue-50 dark:bg-blue-500/10",
+  },
+  murtakiz: {
+    icon: Anchor,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+  },
+  masar: {
+    icon: LayoutIcon,
+    color: "text-purple-600",
+    bg: "bg-purple-50 dark:bg-purple-500/10",
+  },
+  miaad: {
+    icon: Clock,
+    color: "text-amber-600",
+    bg: "bg-amber-50 dark:bg-amber-500/10",
+  },
+  mueen: {
+    icon: Calendar,
+    color: "text-cyan-600",
+    bg: "bg-cyan-50 dark:bg-cyan-500/10",
+  },
+  mithaq: {
+    icon: BookOpen,
+    color: "text-rose-600",
+    bg: "bg-rose-50 dark:bg-rose-500/10",
+  },
+  ethraa: {
+    icon: Sparkles,
+    color: "text-indigo-600",
+    bg: "bg-indigo-50 dark:bg-indigo-500/10",
+  },
+  mulham: {
+    icon: Bot,
+    color: "text-pink-600",
+    bg: "bg-pink-50 dark:bg-pink-500/10",
+  },
+  mutasiq: {
+    icon: ClipboardCheck,
+    color: "text-teal-600",
+    bg: "bg-teal-50 dark:bg-teal-500/10",
+  },
 };
 
 export function ToolsSidebar({ className = "" }) {
@@ -75,8 +124,8 @@ export function ToolsSidebar({ className = "" }) {
         <nav className="flex flex-col gap-0.5 flex-1 overflow-y-auto">
           {CATEGORIES.map((cat) => {
             const catTools = cat.ids
-              .map((id) => ({ id, ...tools[id] }))
-              .filter(Boolean);
+              .map((id) => ({ id, ...tools[id], config: TOOL_CONFIG[id] }))
+              .filter((t) => t.config);
 
             return (
               <div key={cat.label} className="mb-2">
@@ -100,9 +149,11 @@ export function ToolsSidebar({ className = "" }) {
                           : "text-foreground/70 hover:bg-secondary hover:text-foreground"
                       }`}
                     >
-                      <span className="text-base shrink-0 leading-none">
-                        {TOOL_ICONS[tool.id]}
-                      </span>
+                      <div
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${tool.config.bg} ${tool.config.color}`}
+                      >
+                        <tool.config.icon className="w-4 h-4 stroke-[2]" />
+                      </div>
                       {isOpen && (
                         <span className="truncate">{tool.nameShort}</span>
                       )}
