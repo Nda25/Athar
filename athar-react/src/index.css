@@ -58,12 +58,12 @@
 }
 
 .dark {
-  /* Dark mode adjustments ensuring contrast and maintaining brand */
-  --color-bg: #181c14;
-  --color-surface: #222d20;
-  --color-border: #3b4b35;
-  --color-text: #f0f4ea;
-  --color-text-muted: #aab8a3;
+  /* True dark — neutral backgrounds so brand green reads as an accent, not a tint */
+  --color-bg: #0f1117; /* near-black neutral */
+  --color-surface: #1a1d27; /* deep neutral surface */
+  --color-border: #2a2d3e; /* subtle neutral border */
+  --color-text: #e8eaf0; /* pure light neutral text */
+  --color-text-muted: #8b8fa8; /* neutral muted text */
 
   --ink: var(--color-text);
   --muted: var(--color-text-muted);
@@ -75,21 +75,22 @@
   --popover: var(--card);
   --popover-foreground: var(--ink);
 
-  --primary: #94b574; /* Lighter more visible brand color for dark mode */
-  --primary-foreground: #1a2218; /* Dark text on primary in dark mode */
-  --secondary: #3b4b35;
-  --secondary-foreground: #f0f4ea;
+  /* Brand green now pops as a vivid accent on the neutral dark background */
+  --primary: #6db86b;
+  --primary-foreground: #0f1117;
+  --secondary: #252836;
+  --secondary-foreground: #e8eaf0;
   --muted-foreground: var(--muted);
-  --accent: #f39c12; /* Slightly brighter accent for dark mode */
-  --accent-foreground: #1a2218;
+  --accent: #f5a623; /* warm amber accent */
+  --accent-foreground: #0f1117;
   --border: var(--color-border);
   --input: var(--color-border);
   --ring: var(--primary);
 
   --shadow-premium:
-    0 10px 40px -10px rgba(0, 0, 0, 0.4), 0 4px 12px -5px rgba(0, 0, 0, 0.3);
+    0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 12px -5px rgba(0, 0, 0, 0.4);
   --shadow-premium-hover:
-    0 20px 50px -10px rgba(0, 0, 0, 0.5), 0 8px 24px -10px rgba(0, 0, 0, 0.4);
+    0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 8px 24px -10px rgba(0, 0, 0, 0.5);
 }
 
 @theme {
