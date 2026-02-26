@@ -243,9 +243,10 @@ export async function deleteMiyadEvent(payload) {
 
 /**
  * Get reminder settings
+ * @param {Object} payload
  */
-export async function getReminderSettings() {
-  return api.post("/get-reminder-settings", {});
+export async function getReminderSettings(payload = {}) {
+  return api.post("/get-reminder-settings", payload);
 }
 
 /**
@@ -409,13 +410,49 @@ export async function adminActivateUser(activationData) {
   return api.post("/admin-activate", activationData);
 }
 
+/**
+ * Get all invoices list (admin only)
+ */
+export async function getAdminInvoicesList() {
+  const payload = await api.get("/admin-invoices-list");
+
+  const rows = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.invoices)
+      ? payload.invoices
+      : Array.isArray(payload?.rows)
+        ? payload.rows
+        : [];
+
+  return rows.map((invoice) => {
+    if (!invoice || typeof invoice !== "object") return invoice;
+
+    const amountInMinorUnits =
+      invoice.amount != null
+        ? invoice.amount
+        : invoice.amount_sar != null
+          ? Math.round(Number(invoice.amount_sar) * 100)
+          : null;
+    const normalizedAmount =
+      amountInMinorUnits == null ? null : Number(amountInMinorUnits);
+
+    return {
+      ...invoice,
+      id: invoice.id || invoice.invoice_id || invoice.provider_event_id || null,
+      user_email: invoice.user_email || invoice.email || null,
+      user_name: invoice.user_name || invoice.name || invoice.email || null,
+      amount: Number.isFinite(normalizedAmount) ? normalizedAmount : null,
+      currency: invoice.currency || "sar",
+    };
+  });
+}
+
 export async function createAnnouncement(data) {
   return api.post("/admin-announcement", data);
 }
 
 export async function getAnnouncements() {
   const latest = await api.get("/admin-announcement?latest=1");
-  const list = await api.get("/admin-announcement?list=1");
 
   const parseTargetPages = (value) => {
     if (Array.isArray(value) && value.length > 0) return value;
@@ -447,7 +484,7 @@ export async function getAnnouncements() {
 
   return {
     latest: normalizeAnnouncement(latest?.latest),
-    items: (list?.items || []).map(normalizeAnnouncement),
+    items: [],
   };
 }
 

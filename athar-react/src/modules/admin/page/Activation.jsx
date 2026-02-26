@@ -98,17 +98,19 @@ export default function Activation() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">التفعيل اليدوي</h2>
-          <p className="mt-2 text-slate-700 dark:text-slate-300">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">
+            التفعيل اليدوي
+          </h2>
+          <p className="mt-2 text-muted-foreground">
             تفعيل أو تمديد اشتراك مستخدم يدوياً.
           </p>
         </div>
       </div>
 
-      <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900">
+      <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-slate-900 dark:text-slate-100">بيانات الاشتراك</CardTitle>
-          <CardDescription className="text-slate-600 dark:text-slate-400">
+          <CardTitle className="text-foreground">بيانات الاشتراك</CardTitle>
+          <CardDescription className="text-muted-foreground">
             أدخل تفاصيل المستخدم والمدة المطلوبة.
           </CardDescription>
         </CardHeader>
@@ -123,7 +125,9 @@ export default function Activation() {
                   id="email"
                   placeholder="example@email.com"
                   {...form.register("email")}
-                  className={form.formState.errors.email ? "border-red-500" : ""}
+                  className={
+                    form.formState.errors.email ? "border-red-500" : ""
+                  }
                 />
                 {form.formState.errors.email && (
                   <p className="text-sm text-red-500">
@@ -161,7 +165,7 @@ export default function Activation() {
                   defaultValue="months"
                   onValueChange={(val) => form.setValue("unit", val)}
                 >
-                    <SelectTrigger className="dark:border-slate-700 dark:bg-slate-800">
+                  <SelectTrigger className="border-border bg-card">
                     <SelectValue placeholder="اختر الوحدة" />
                   </SelectTrigger>
                   <SelectContent>
@@ -183,7 +187,11 @@ export default function Activation() {
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={isLoading}>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+              >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 تفعيل الاشتراك
               </Button>
@@ -196,7 +204,7 @@ export default function Activation() {
         open={!!confirmData}
         onOpenChange={(open) => !open && setConfirmData(null)}
       >
-        <DialogContent className="border-slate-200 dark:border-slate-700 dark:bg-slate-900">
+        <DialogContent className="border-border bg-card">
           <DialogHeader>
             <DialogTitle>تأكيد التفعيل</DialogTitle>
             <DialogDescription>
@@ -207,12 +215,18 @@ export default function Activation() {
           {confirmData && (
             <div className="grid gap-2 py-4 text-sm">
               <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold text-slate-900 dark:text-slate-100">المستخدم:</span>
-                <span className="col-span-3">{confirmData.email}</span>
+                <span className="text-right font-semibold text-foreground">
+                  المستخدم:
+                </span>
+                <span className="col-span-3 text-muted-foreground">
+                  {confirmData.email}
+                </span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold text-slate-900 dark:text-slate-100">المدة:</span>
-                <span className="col-span-3">
+                <span className="text-right font-semibold text-foreground">
+                  المدة:
+                </span>
+                <span className="col-span-3 text-muted-foreground">
                   {confirmData.amount}
                   {confirmData.unit === "months" && " شهر"}
                   {confirmData.unit === "days" && " يوم"}
@@ -221,11 +235,13 @@ export default function Activation() {
               </div>
               {confirmData.note && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                    <span className="text-right font-semibold text-slate-900 dark:text-slate-100">ملاحظة:</span>
-                    <span className="col-span-3 text-slate-600 dark:text-slate-400">
-                      {confirmData.note}
-                    </span>
-                  </div>
+                  <span className="text-right font-semibold text-foreground">
+                    ملاحظة:
+                  </span>
+                  <span className="col-span-3 text-muted-foreground">
+                    {confirmData.note}
+                  </span>
+                </div>
               )}
             </div>
           )}

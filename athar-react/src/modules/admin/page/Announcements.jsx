@@ -165,7 +165,8 @@ export default function Announcements() {
 
     for (const item of items) {
       if (item?.active) active += 1;
-      if (item?.start_at && new Date(item.start_at) > new Date()) scheduled += 1;
+      if (item?.start_at && new Date(item.start_at) > new Date())
+        scheduled += 1;
     }
 
     return {
@@ -244,35 +245,35 @@ export default function Announcements() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <Badge className="mb-3 bg-slate-900 text-white hover:bg-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100">
+            <Badge className="mb-3 bg-primary text-primary-foreground">
               إدارة الإعلانات
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">
               مركز التنبيهات العامة
             </h2>
-            <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+            <p className="mt-2 text-sm text-muted-foreground">
               إنشاء الإعلانات ومتابعة حالتها ونطاق استهدافها من مكان واحد.
             </p>
           </div>
-          <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-              <span className="block text-xs text-slate-600 dark:text-slate-400">الإجمالي</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
+          <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+            <div className="rounded-xl border border-border bg-secondary px-3 py-2">
+              <span className="block text-xs text-muted">الإجمالي</span>
+              <span className="font-semibold text-foreground">
                 {loading ? "..." : metrics.total}
               </span>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-              <span className="block text-xs text-slate-600 dark:text-slate-400">إعلانات نشطة</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
+            <div className="rounded-xl border border-border bg-secondary px-3 py-2">
+              <span className="block text-xs text-muted">إعلانات نشطة</span>
+              <span className="font-semibold text-foreground">
                 {loading ? "..." : metrics.active}
               </span>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-              <span className="block text-xs text-slate-600 dark:text-slate-400">مجدولة</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
+            <div className="rounded-xl border border-border bg-secondary px-3 py-2">
+              <span className="block text-xs text-muted">مجدولة</span>
+              <span className="font-semibold text-foreground">
                 {loading ? "..." : metrics.scheduled}
               </span>
             </div>
@@ -282,9 +283,9 @@ export default function Announcements() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Create Announcement Form */}
-        <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <Card className="border-border shadow-sm bg-card">
           <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-slate-100">نشر إعلان جديد</CardTitle>
+            <CardTitle className="text-foreground">نشر إعلان جديد</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -322,7 +323,7 @@ export default function Announcements() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+              <div className="flex items-center gap-2 rounded-md border border-border bg-secondary p-3">
                 <Controller
                   control={form.control}
                   name="active"
@@ -334,7 +335,10 @@ export default function Announcements() {
                     />
                   )}
                 />
-                <Label htmlFor="active" className="cursor-pointer">
+                <Label
+                  htmlFor="active"
+                  className="cursor-pointer text-foreground"
+                >
                   تفعيل الإعلان فور النشر
                 </Label>
               </div>
@@ -349,19 +353,21 @@ export default function Announcements() {
                         key={page.id}
                         onClick={() => handlePageToggle(page.id)}
                         className={`
-                                    cursor-pointer flex items-center gap-2 p-2 rounded-md border text-sm transition-all
+                                    cursor-pointer flex items-center gap-2 p-2 rounded-md border text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm
                                     ${
                                       isChecked
-                                        ? "bg-blue-100 border-blue-300 text-blue-800 font-medium dark:bg-blue-900/40 dark:border-blue-800 dark:text-blue-200"
-                                        : "bg-white border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
+                                        ? "bg-primary/20 border-primary text-primary font-medium"
+                                        : "bg-card border-border hover:bg-secondary text-foreground"
                                     }
                                 `}
                       >
                         <div
-                           className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? "bg-blue-600 border-blue-600" : "border-slate-300 dark:border-slate-600"}`}
+                          className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? "bg-primary border-primary" : "border-border"}`}
                         >
                           {isChecked && (
-                            <span className="text-white text-[10px]">✓</span>
+                            <span className="text-primary-foreground text-[10px]">
+                              ✓
+                            </span>
                           )}
                         </div>
                         <span className="text-lg">{page.icon}</span>
@@ -377,7 +383,11 @@ export default function Announcements() {
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={submitting}>
+              <Button
+                type="submit"
+                className="w-full transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+                disabled={submitting}
+              >
                 {submitting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -391,19 +401,19 @@ export default function Announcements() {
 
         {/* Existing Announcements List */}
         <div className="space-y-6">
-          <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <Card className="border-border shadow-sm bg-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium text-slate-600 dark:text-slate-300">
+              <CardTitle className="text-base font-medium text-foreground">
                 المنشور حالياً
               </CardTitle>
             </CardHeader>
             <CardContent>
               {announcements.latest ? (
-                <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-                  <Megaphone className="mt-0.5 h-5 w-5 shrink-0 text-slate-700 dark:text-slate-300" />
+                <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary p-4 text-foreground">
+                  <Megaphone className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
                   <div>
                     <p className="font-medium">{announcements.latest.text}</p>
-                    <div className="flex gap-2 mt-2 text-xs opacity-80">
+                    <div className="flex gap-2 mt-2 text-xs opacity-80 text-muted-foreground">
                       {announcements.latest.expires_at && (
                         <span>
                           ينتهي:{" "}
@@ -427,7 +437,9 @@ export default function Announcements() {
 
           <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <CardHeader>
-              <CardTitle className="text-slate-900 dark:text-slate-100">سجل الإعلانات</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-slate-100">
+                سجل الإعلانات
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {loading ? (
@@ -440,25 +452,25 @@ export default function Announcements() {
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {announcements.items.map((item) => (
+                  {announcements.items.map((item, idx) => (
                     <div
-                      key={item.id}
-                      className="flex flex-col gap-4 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 sm:flex-row sm:items-center sm:justify-between"
+                      key={item.id || idx}
+                      className="flex flex-col gap-4 rounded-lg border border-border p-3 transition-colors duration-200 hover:bg-secondary/40 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           {item.active ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                           ) : (
-                            <StopCircle className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                            <StopCircle className="h-4 w-4 text-muted-foreground" />
                           )}
                           <span
-                            className={`font-medium text-slate-900 dark:text-slate-100 ${!item.active && "text-slate-600 dark:text-slate-400 line-through"}`}
+                            className={`font-medium text-foreground ${!item.active && "text-muted-foreground line-through"}`}
                           >
                             {item.text}
                           </span>
                         </div>
-                        <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
+                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                           <span>
                             {item.start_at
                               ? format(new Date(item.start_at), "d MMM", {
@@ -476,20 +488,22 @@ export default function Announcements() {
                           </span>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {normalizeTargetPages(item.target_pages).map((p) => {
-                            const label =
-                              TARGET_PAGES.find((tp) => tp.id === p)?.label ||
-                              p;
-                            return (
-                              <Badge
-                                key={p}
-                                variant="secondary"
-                                className="h-5 bg-slate-100 px-1 text-[10px] font-normal text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                              >
-                                {label}
-                              </Badge>
-                            );
-                          })}
+                          {normalizeTargetPages(item.target_pages).map(
+                            (p, idx) => {
+                              const label =
+                                TARGET_PAGES.find((tp) => tp.id === p)?.label ||
+                                p;
+                              return (
+                                <Badge
+                                  key={p || idx}
+                                  variant="secondary"
+                                  className="h-5 px-1 text-[10px] font-normal"
+                                >
+                                  {label}
+                                </Badge>
+                              );
+                            },
+                          )}
                         </div>
                       </div>
 

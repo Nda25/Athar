@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@modules/auth";
 import { Toaster } from "@shared/ui/sonner";
 
+import { ScrollToTop } from "@app/router/ScrollToTop";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -16,6 +18,7 @@ export function AppProviders({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ScrollToTop />
         <AuthProvider>
           {children}
           <Toaster />

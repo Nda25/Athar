@@ -12,7 +12,7 @@ const buttonVariants = cva(
           "bg-[var(--brand)] text-white shadow hover:bg-[var(--brand-2)]",
         destructive: "bg-red-500 text-white shadow-sm hover:bg-red-600",
         outline:
-          "border border-[var(--brand)] bg-transparent text-[var(--brand)] shadow-sm hover:bg-[var(--sea-50)]",
+          "border border-[var(--brand)] bg-transparent text-[var(--brand)] dark:text-primary shadow-sm hover:bg-[var(--sea-50)] hover:shadow-md transition-all duration-200",
         secondary:
           "bg-[var(--sea-100)] text-[var(--sea-800)] shadow-sm hover:bg-[var(--sea-200)]",
         ghost:

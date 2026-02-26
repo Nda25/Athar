@@ -95,21 +95,21 @@ export function ToolsSidebar({ className = "" }) {
 
   return (
     <aside
-      className={`flex-shrink-0 transition-all duration-300 ease-in-out ${
-        isOpen ? "w-64" : "w-14"
+      className={`shrink-0 transition-all duration-300 ease-in-out h-fit ${
+        isOpen ? "w-64" : "w-[70px]"
       } ${className}`}
     >
       <div className="glass-card h-full p-3 flex flex-col gap-1 overflow-hidden">
         {/* Header / Toggle */}
         <div className="flex items-center justify-between mb-2 px-1">
           {isOpen && (
-            <span className="text-xs font-bold text-muted uppercase tracking-widest">
+            <span className="text-xs font-bold text-muted uppercase tracking-widest animate-in fade-in slide-in-from-right-2 duration-300 delay-150 fill-mode-both">
               الأدوات
             </span>
           )}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="rounded-lg p-1.5 text-muted hover:bg-secondary hover:text-primary transition-colors ml-auto"
+            className="rounded-lg p-2 text-muted hover:bg-secondary hover:text-primary transition-colors ml-auto"
             title={isOpen ? "إخفاء الشريط" : "إظهار الشريط"}
           >
             {isOpen ? (
@@ -131,7 +131,7 @@ export function ToolsSidebar({ className = "" }) {
               <div key={cat.label} className="mb-2">
                 {/* Category label — only visible when open */}
                 {isOpen && (
-                  <p className="text-[10px] font-bold text-muted/60 uppercase tracking-widest px-2 py-1">
+                  <p className="text-[10px] font-bold text-muted/60 uppercase tracking-widest px-2 py-1 animate-in fade-in slide-in-from-right-2 duration-300 delay-150 fill-mode-both">
                     {cat.label}
                   </p>
                 )}
@@ -155,10 +155,12 @@ export function ToolsSidebar({ className = "" }) {
                         <tool.config.icon className="w-4 h-4 stroke-[2]" />
                       </div>
                       {isOpen && (
-                        <span className="truncate">{tool.nameShort}</span>
+                        <span className="truncate animate-in fade-in duration-300 delay-200 fill-mode-both">
+                          {tool.nameShort}
+                        </span>
                       )}
                       {isOpen && isActive && (
-                        <ChevronLeft className="w-3 h-3 mr-auto opacity-60" />
+                        <ChevronLeft className="w-3 h-3 mr-auto opacity-60 animate-in fade-in duration-300 delay-200 fill-mode-both" />
                       )}
                     </Link>
                   );
@@ -169,13 +171,22 @@ export function ToolsSidebar({ className = "" }) {
         </nav>
 
         {/* Browse all link */}
-        {isOpen && (
+        {isOpen ? (
           <Link
             to="/programs"
             className="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-bold text-muted hover:bg-secondary hover:text-primary transition-colors border border-border/50 mt-2"
           >
             <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
-            كافة الأدوات
+            <span className="animate-in fade-in duration-300 delay-[250ms] fill-mode-both">
+              كافة الأدوات
+            </span>
+          </Link>
+        ) : (
+          <Link
+            to="/programs"
+            className="flex items-center justify-center gap-2 px-2 py-2 rounded-xl text-xs font-bold text-muted hover:bg-secondary hover:text-primary transition-colors border border-border/50 mt-2"
+          >
+            <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
           </Link>
         )}
       </div>

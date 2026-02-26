@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Shield, Sparkles, Stars, Timer, WandSparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Shield,
+  Sparkles,
+  Stars,
+  Timer,
+  WandSparkles,
+} from "lucide-react";
 
 import { useAuth } from "@modules/auth";
 import { Badge } from "@shared/ui/badge";
@@ -150,7 +157,10 @@ export function Hero() {
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                   لوحة إنجاز يومك التعليمي
                 </h3>
-                <Badge variant="secondary" className="bg-slate-100 text-slate-700">
+                <Badge
+                  variant="secondary"
+                  className="bg-slate-100 text-slate-700"
+                >
                   مباشر
                 </Badge>
               </div>

@@ -148,24 +148,24 @@ export default function Complaints() {
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col gap-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">
           الشكاوى والمقترحات
         </h2>
-        <p className="mt-2 text-slate-700 dark:text-slate-300">
+        <p className="mt-2 text-muted-foreground">
           متابعة تذاكر الدعم الفني ورسائل المستخدمين.
         </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
         {/* List Section */}
-        <Card className="flex min-w-[320px] flex-col border-slate-200 dark:border-slate-700 dark:bg-slate-900 lg:w-1/3">
-          <CardHeader className="space-y-3 border-b border-slate-200 p-4 dark:border-slate-700">
+        <Card className="flex min-w-[320px] flex-col border-border bg-card lg:w-1/3">
+          <CardHeader className="space-y-3 border-b border-border bg-secondary/30 p-4">
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="بحث..."
-                    className="pr-8 dark:border-slate-700 dark:bg-slate-800"
+                  className="pr-8 bg-card border-border"
                   value={filters.q}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, q: e.target.value }))
@@ -223,24 +223,24 @@ export default function Complaints() {
             <ScrollArea className="h-full">
               {loading ? (
                 <div className="flex justify-center p-8">
-                  <Loader2 className="animate-spin text-slate-400" />
+                  <Loader2 className="animate-spin text-muted-foreground" />
                 </div>
               ) : complaints.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                   لا توجد شكاوى مطابقة
                 </div>
               ) : (
-                  <div className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {complaints.map((c) => (
-                      <div
-                        key={c.id}
-                        className={`cursor-pointer p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${selectedComplaint?.id === c.id ? "bg-blue-100 dark:bg-blue-900/30" : ""}`}
-                        onClick={() => handleSelectComplaint(c)}
-                      >
+                <div className="divide-y divide-border">
+                  {complaints.map((c) => (
+                    <div
+                      key={c.id}
+                      className={`cursor-pointer p-4 transition-colors duration-200 hover:bg-secondary/70 ${selectedComplaint?.id === c.id ? "bg-primary/10" : ""}`}
+                      onClick={() => handleSelectComplaint(c)}
+                    >
                       <div className="flex justify-between items-start mb-1">
-                          <h4 className="line-clamp-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                            {c.subject}
-                          </h4>
+                        <h4 className="line-clamp-1 text-sm font-semibold text-foreground">
+                          {c.subject}
+                        </h4>
                         <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">
                           {format(new Date(c.created_at), "dd/MM/yy", {
                             locale: arSA,
@@ -248,7 +248,7 @@ export default function Complaints() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <User className="h-3 w-3" /> {c.user_name || "مجهول"}
                         </span>
                         {getStatusBadge(c.status)}
@@ -270,15 +270,15 @@ export default function Complaints() {
         </Card>
 
         {/* Detail Section */}
-        <Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-slate-200 dark:border-slate-700 dark:bg-slate-900">
+        <Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-border bg-card">
           {!selectedComplaint ? (
-            <div className="flex flex-1 flex-col items-center justify-center bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+            <div className="flex flex-1 flex-col items-center justify-center bg-secondary/30 text-muted-foreground">
               <MessageSquare className="h-12 w-12 mb-4 opacity-20" />
               <p>اختر شكوى لعرض التفاصيل</p>
             </div>
           ) : (
             <>
-              <CardHeader className="border-b border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+              <CardHeader className="border-b border-border bg-secondary/50 p-4">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -287,7 +287,7 @@ export default function Complaints() {
                           ? "شكوى"
                           : "اقتراح"}
                       </Badge>
-                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                      <span className="text-xs text-muted-foreground">
                         {format(
                           new Date(selectedComplaint.created_at),
                           "PPP p",
@@ -295,13 +295,13 @@ export default function Complaints() {
                         )}
                       </span>
                     </div>
-                    <CardTitle className="text-xl text-slate-900 dark:text-slate-100">
+                    <CardTitle className="text-xl text-foreground">
                       {selectedComplaint.subject}
                     </CardTitle>
                   </div>
                   {getStatusBadge(selectedComplaint.status)}
                 </div>
-                <div className="mt-2 flex items-center gap-4 text-sm text-slate-700 dark:text-slate-300">
+                <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <User className="h-4 w-4" />
                     <span>{selectedComplaint.user_name}</span>
@@ -317,10 +317,10 @@ export default function Complaints() {
 
               <CardContent className="flex-1 flex flex-col gap-4 p-0 min-h-0">
                 {/* Messages Area */}
-                <ScrollArea className="flex-1 bg-slate-50 p-4 dark:bg-slate-800">
+                <ScrollArea className="flex-1 bg-secondary/30 p-4">
                   {detailsLoading ? (
                     <div className="flex justify-center p-8">
-                      <Loader2 className="animate-spin text-slate-400" />
+                      <Loader2 className="animate-spin text-muted-foreground" />
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -328,7 +328,7 @@ export default function Complaints() {
                                but here standard seems to be messages list. If message list is empty, show nothing?) 
                            */}
                       {messages.length === 0 && (
-                        <div className="p-4 rounded-lg bg-white border shadow-sm text-sm">
+                        <div className="p-4 rounded-lg bg-card border border-border shadow-sm text-sm text-foreground">
                           <p className="whitespace-pre-wrap">
                             {/* Original body if available separate from messages? */}
                           </p>
@@ -336,13 +336,13 @@ export default function Complaints() {
                         </div>
                       )}
 
-                      {messages.map((msg) => (
+                      {messages.map((msg, idx) => (
                         <div
-                          key={msg.id || msg.created_at}
-                          className={`flex flex-col max-w-[85%] rounded-lg p-3 text-sm ${
+                          key={msg.id || msg.created_at || idx}
+                          className={`flex flex-col max-w-[85%] rounded-lg p-3 text-sm text-foreground ${
                             msg.sender === "admin"
-                              ? "ml-auto self-end border border-blue-200 bg-blue-100 dark:border-blue-800 dark:bg-blue-900/30"
-                              : "self-start border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                              ? "ml-auto self-end border border-primary/20 bg-primary/10"
+                              : "self-start border border-border bg-card shadow-sm"
                           }`}
                         >
                           <div className="flex justify-between items-center gap-4 mb-2 opacity-70 text-xs">
@@ -365,7 +365,7 @@ export default function Complaints() {
                 </ScrollArea>
 
                 {/* Reply Area */}
-                <div className="border-t border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                <div className="border-t border-border bg-card p-4">
                   <div className="mb-3">
                     <Label className="text-xs text-muted-foreground mb-1 block">
                       تغيير الحالة (اختياري)
@@ -393,6 +393,7 @@ export default function Complaints() {
                   </div>
                   <div className="flex justify-end mt-2">
                     <Button
+                      className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                       onClick={handleSendReply}
                       disabled={sending || !replyText.trim()}
                     >

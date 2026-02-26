@@ -139,6 +139,27 @@
     box-sizing: border-box;
   }
 
+  /* Custom Scrollbar matching theme colors */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--brand-2);
+    border-radius: var(--radius-sm);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--brand);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--brand-2) var(--bg);
+  }
+
   html {
     scroll-behavior: smooth;
   }
@@ -257,7 +278,10 @@
     @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-premium rounded-2xl md:rounded-3xl;
   }
 }
-
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
 /* Animations and a11y */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -90,8 +90,7 @@ export default function ComplaintsPage() {
 
   const messagesQuery = useQuery({
     queryKey: ["complaint-messages", selectedId, user?.email],
-    queryFn: () =>
-      getComplaintMessages(selectedId, user?.email?.toLowerCase()),
+    queryFn: () => getComplaintMessages(selectedId, user?.email?.toLowerCase()),
     enabled: Boolean(selectedId && isAuthenticated),
   });
 
@@ -124,7 +123,9 @@ export default function ComplaintsPage() {
     onSuccess: () => {
       toast.success("تم إرسال الرد");
       setReply("");
-      queryClient.invalidateQueries({ queryKey: ["complaint-messages", selectedId] });
+      queryClient.invalidateQueries({
+        queryKey: ["complaint-messages", selectedId],
+      });
       queryClient.invalidateQueries({ queryKey: ["user-complaints"] });
     },
     onError: (error) => {
@@ -182,7 +183,9 @@ export default function ComplaintsPage() {
     <Layout>
       <section className="container mx-auto px-4 pt-28 pb-16 space-y-8">
         <div className="max-w-3xl space-y-2">
-          <h1 className="text-3xl md:text-4xl font-bold">الشكاوى والاقتراحات</h1>
+          <h1 className="text-3xl md:text-4xl font-bold">
+            الشكاوى والاقتراحات
+          </h1>
           <p className="text-muted-foreground">
             شاركنا ملاحظاتك وسنتابع الطلب حتى الإغلاق.
           </p>
@@ -214,7 +217,9 @@ export default function ComplaintsPage() {
                     <Label>نوع المراسلة</Label>
                     <Select
                       value={form.type}
-                      onValueChange={(value) => setForm((prev) => ({ ...prev, type: value }))}
+                      onValueChange={(value) =>
+                        setForm((prev) => ({ ...prev, type: value }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -230,7 +235,12 @@ export default function ComplaintsPage() {
                     <Label>العنوان</Label>
                     <Input
                       value={form.subject}
-                      onChange={(e) => setForm((prev) => ({ ...prev, subject: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          subject: e.target.value,
+                        }))
+                      }
                       placeholder="اكتب عنوانًا مختصرًا"
                     />
                   </div>
@@ -239,7 +249,9 @@ export default function ComplaintsPage() {
                     <Label>الاسم</Label>
                     <Input
                       value={form.name}
-                      onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, name: e.target.value }))
+                      }
                       placeholder="اسمك"
                     />
                   </div>
@@ -248,7 +260,9 @@ export default function ComplaintsPage() {
                     <Label>البريد الإلكتروني</Label>
                     <Input
                       value={form.email}
-                      onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, email: e.target.value }))
+                      }
                       placeholder="example@email.com"
                       type="email"
                     />
@@ -259,7 +273,9 @@ export default function ComplaintsPage() {
                   <Label>الرسالة</Label>
                   <Textarea
                     value={form.message}
-                    onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, message: e.target.value }))
+                    }
                     rows={6}
                     placeholder="اكتب التفاصيل هنا..."
                   />
@@ -270,7 +286,10 @@ export default function ComplaintsPage() {
                   <Input
                     value={form.order_number}
                     onChange={(e) =>
-                      setForm((prev) => ({ ...prev, order_number: e.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        order_number: e.target.value,
+                      }))
                     }
                     placeholder="إن وجد"
                   />
@@ -308,21 +327,32 @@ export default function ComplaintsPage() {
                   <Loader2 className="h-4 w-4 animate-spin" /> جار التحميل...
                 </div>
               ) : complaints.length === 0 ? (
-                <p className="text-sm text-muted-foreground">لا توجد رسائل بعد.</p>
+                <p className="text-sm text-muted-foreground">
+                  لا توجد رسائل بعد.
+                </p>
               ) : (
                 <div className="space-y-2 max-h-72 overflow-auto">
-                  {complaints.map((item) => (
+                  {complaints.map((item, idx) => (
                     <button
-                      key={item.id}
+                      key={item.id || idx}
                       type="button"
                       className={`w-full text-right border rounded-lg p-3 transition ${
-                        selectedId === item.id ? "border-brand bg-brand/5" : "hover:bg-muted/40"
+                        selectedId === item.id
+                          ? "border-brand bg-brand/5"
+                          : "hover:bg-muted/40"
                       }`}
                       onClick={() => setSelectedId(item.id)}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium truncate">{item.subject || "بدون عنوان"}</p>
-                        <Badge className={statusTone[item.status] || "bg-slate-100 text-slate-700"}>
+                        <p className="font-medium truncate">
+                          {item.subject || "بدون عنوان"}
+                        </p>
+                        <Badge
+                          className={
+                            statusTone[item.status] ||
+                            "bg-slate-100 text-slate-700"
+                          }
+                        >
                           {statusText[item.status] || item.status || "جديدة"}
                         </Badge>
                       </div>
@@ -343,15 +373,21 @@ export default function ComplaintsPage() {
 
                   <div className="space-y-2 max-h-56 overflow-auto">
                     {messagesQuery.isLoading ? (
-                      <div className="text-sm text-muted-foreground">جاري تحميل الرسائل...</div>
+                      <div className="text-sm text-muted-foreground">
+                        جاري تحميل الرسائل...
+                      </div>
                     ) : messages.length === 0 ? (
-                      <div className="text-sm text-muted-foreground">لا توجد ردود حتى الآن.</div>
+                      <div className="text-sm text-muted-foreground">
+                        لا توجد ردود حتى الآن.
+                      </div>
                     ) : (
-                      messages.map((msg) => (
+                      messages.map((msg, idx) => (
                         <div
-                          key={msg.id || `${msg.created_at}-${msg.body}`}
+                          key={msg.id || `msg-${idx}`}
                           className={`rounded-lg p-2 text-sm ${
-                            msg.sender === "admin" ? "bg-blue-50" : "bg-muted/50"
+                            msg.sender === "admin"
+                              ? "bg-blue-50"
+                              : "bg-muted/50"
                           }`}
                         >
                           <p className="mb-1 text-xs text-muted-foreground">

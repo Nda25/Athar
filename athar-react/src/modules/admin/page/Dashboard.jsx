@@ -59,7 +59,10 @@ export default function Dashboard() {
     ],
   });
 
-  const users = useMemo(() => normalizeUsers(usersQuery.data), [usersQuery.data]);
+  const users = useMemo(
+    () => normalizeUsers(usersQuery.data),
+    [usersQuery.data],
+  );
   const complaints = useMemo(
     () => normalizeComplaints(complaintsQuery.data),
     [complaintsQuery.data],
@@ -103,7 +106,10 @@ export default function Dashboard() {
       activeAnnouncements,
       activeUsersRatio: toPercent(activeUsers, users.length),
       openComplaintsRatio: toPercent(openComplaints, complaints.length),
-      liveAnnouncementsRatio: toPercent(activeAnnouncements, announcements.length),
+      liveAnnouncementsRatio: toPercent(
+        activeAnnouncements,
+        announcements.length,
+      ),
     };
   }, [users, complaints, announcements]);
 
@@ -174,36 +180,36 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <Badge className="mb-3 bg-slate-900 text-white hover:bg-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100">
+            <Badge className="mb-3 bg-primary text-primary-foreground">
               لوحة الإدارة
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">
               نظرة تشغيلية مباشرة
             </h2>
-            <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+            <p className="mt-2 text-sm text-muted-foreground">
               حالة المنصة الآن: المستخدمون، الشكاوى، والإعلانات في شاشة واحدة.
             </p>
           </div>
 
-          <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-              <span className="block text-xs text-slate-600 dark:text-slate-400">نسبة النشطين</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
+          <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+            <div className="rounded-xl border border-border bg-secondary px-3 py-2">
+              <span className="block text-xs text-muted">نسبة النشطين</span>
+              <span className="font-semibold text-foreground">
                 {isLoading ? "..." : `${metrics.activeUsersRatio}%`}
               </span>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-              <span className="block text-xs text-slate-600 dark:text-slate-400">الشكاوى المفتوحة</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
+            <div className="rounded-xl border border-border bg-secondary px-3 py-2">
+              <span className="block text-xs text-muted">الشكاوى المفتوحة</span>
+              <span className="font-semibold text-foreground">
                 {isLoading ? "..." : metrics.openComplaints}
               </span>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-              <span className="block text-xs text-slate-600 dark:text-slate-400">إعلانات حية</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
+            <div className="rounded-xl border border-border bg-secondary px-3 py-2">
+              <span className="block text-xs text-muted">إعلانات حية</span>
+              <span className="font-semibold text-foreground">
                 {isLoading ? "..." : metrics.activeAnnouncements}
               </span>
             </div>
@@ -215,21 +221,25 @@ export default function Dashboard() {
         {statCards.map((stat) => (
           <Card
             key={stat.title}
-            className={`border ${stat.border} bg-white shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800`}
+            className={`border ${stat.border} bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:bg-secondary/40`}
           >
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
               <div>
-                <CardTitle className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                <CardTitle className="text-sm font-medium text-foreground">
                   {stat.title}
                 </CardTitle>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{stat.description}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {stat.description}
+                </p>
               </div>
-              <div className={`rounded-xl p-2 ${stat.iconBg} dark:bg-slate-800`}>
+              <div
+                className={`rounded-xl p-2 ${stat.iconBg} dark:bg-secondary/80`}
+              >
                 <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
+              <div className="text-3xl font-semibold text-foreground">
                 {isLoading ? "..." : stat.value}
               </div>
             </CardContent>
@@ -238,21 +248,25 @@ export default function Dashboard() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900 lg:col-span-1">
+        <Card className="border-border bg-card lg:col-span-1 border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-slate-900 dark:text-slate-100">مؤشرات الجودة</CardTitle>
+            <CardTitle className="text-base text-foreground">
+              مؤشرات الجودة
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-slate-700 dark:text-slate-300">المستخدمون النشطون</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                <span className="text-muted-foreground">
+                  المستخدمون النشطون
+                </span>
+                <span className="font-semibold text-foreground">
                   {isLoading ? "..." : `${metrics.activeUsersRatio}%`}
                 </span>
               </div>
-              <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+              <div className="h-2 rounded-full bg-secondary">
                 <div
-                  className="h-2 rounded-full bg-emerald-500 transition-all"
+                  className="h-2 rounded-full bg-emerald-500 transition-all duration-1000 ease-out"
                   style={{ width: `${metrics.activeUsersRatio}%` }}
                 />
               </div>
@@ -260,14 +274,14 @@ export default function Dashboard() {
 
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-slate-700 dark:text-slate-300">الشكاوى المفتوحة</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                <span className="text-muted-foreground">الشكاوى المفتوحة</span>
+                <span className="font-semibold text-foreground">
                   {isLoading ? "..." : `${metrics.openComplaintsRatio}%`}
                 </span>
               </div>
-              <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+              <div className="h-2 rounded-full bg-secondary">
                 <div
-                  className="h-2 rounded-full bg-amber-500 transition-all"
+                  className="h-2 rounded-full bg-amber-500 transition-all duration-1000 ease-out"
                   style={{ width: `${metrics.openComplaintsRatio}%` }}
                 />
               </div>
@@ -275,51 +289,57 @@ export default function Dashboard() {
 
             <div>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-slate-700 dark:text-slate-300">الإعلانات النشطة</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                <span className="text-muted-foreground">الإعلانات النشطة</span>
+                <span className="font-semibold text-foreground">
                   {isLoading ? "..." : `${metrics.liveAnnouncementsRatio}%`}
                 </span>
               </div>
-              <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+              <div className="h-2 rounded-full bg-secondary">
                 <div
-                  className="h-2 rounded-full bg-indigo-500 transition-all"
+                  className="h-2 rounded-full bg-indigo-500 transition-all duration-1000 ease-out"
                   style={{ width: `${metrics.liveAnnouncementsRatio}%` }}
                 />
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              <div className="mb-1 flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
+            <div className="rounded-xl border border-border bg-secondary p-3 text-xs text-muted-foreground">
+              <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
                 <ShieldCheck className="h-4 w-4" />
                 مستخدمون بصلاحية Admin
               </div>
-              <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <div className="text-lg font-semibold text-foreground">
                 {isLoading ? "..." : metrics.adminUsers}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900 lg:col-span-2">
+        <Card className="border-border bg-card lg:col-span-2 border">
           <CardHeader>
-            <CardTitle className="text-base text-slate-900 dark:text-slate-100">أحدث المستخدمين</CardTitle>
+            <CardTitle className="text-base text-foreground">
+              أحدث المستخدمين
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {recentUsers.length === 0 ? (
-              <p className="text-sm text-slate-600 dark:text-slate-400">لا توجد بيانات مستخدمين بعد.</p>
+              <p className="text-sm text-muted-foreground">
+                لا توجد بيانات مستخدمين بعد.
+              </p>
             ) : (
               recentUsers.map((u, idx) => (
                 <div
                   key={u.user_id || u.email || idx}
-                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                  className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2 transition-all duration-200 hover:bg-secondary/40"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <p className="truncate text-sm font-medium text-foreground">
                       {u.name || "مستخدم"}
                     </p>
-                    <p className="truncate text-xs text-slate-600 dark:text-slate-400">{u.email || "-"}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {u.email || "-"}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock3 className="h-3.5 w-3.5" />
                     {formatDate(u.created_at)}
                   </div>
@@ -331,52 +351,58 @@ export default function Dashboard() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900">
+        <Card className="border-border bg-card border">
           <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-slate-100">آخر الشكاوى</CardTitle>
+            <CardTitle className="text-foreground">آخر الشكاوى</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {recentComplaints.length === 0 ? (
-              <p className="text-sm text-slate-600 dark:text-slate-400">لا توجد شكاوى بعد.</p>
+              <p className="text-sm text-muted-foreground">
+                لا توجد شكاوى بعد.
+              </p>
             ) : (
               recentComplaints.map((c, idx) => (
                 <div
                   key={c.id || idx}
-                  className="flex justify-between border-b border-slate-200 pb-2 last:border-0 dark:border-slate-700"
+                  className="flex justify-between border-b border-border pb-2 last:border-0 transition-colors duration-200 hover:bg-secondary/40 p-2 -mx-2 rounded-lg"
                 >
                   <div>
-                    <p className="text-sm font-medium text-slate-900 line-clamp-1 dark:text-slate-100">
+                    <p className="text-sm font-medium text-foreground line-clamp-1">
                       {c.subject || "بدون عنوان"}
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">{c.status || "new"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {c.status || "new"}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">{formatDate(c.created_at)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(c.created_at)}
+                  </p>
                 </div>
               ))
             )}
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900">
+        <Card className="border-border bg-card border">
           <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-slate-100">مؤشرات سريعة</CardTitle>
+            <CardTitle className="text-foreground">مؤشرات سريعة</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-              <span className="text-sm text-slate-800 dark:text-slate-300">إجمالي الشكاوى</span>
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-secondary px-3 py-2 transition-all duration-200 hover:shadow-sm">
+              <span className="text-sm text-muted">إجمالي الشكاوى</span>
+              <span className="text-sm font-semibold text-foreground">
                 {isLoading ? "..." : metrics.totalComplaints}
               </span>
             </div>
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-              <span className="text-sm text-slate-800 dark:text-slate-300">إجمالي الإعلانات</span>
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-secondary px-3 py-2 transition-all duration-200 hover:shadow-sm">
+              <span className="text-sm text-muted">إجمالي الإعلانات</span>
+              <span className="text-sm font-semibold text-foreground">
                 {isLoading ? "..." : metrics.totalAnnouncements}
               </span>
             </div>
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-              <span className="text-sm text-slate-800 dark:text-slate-300">مستخدمون بصلاحية Admin</span>
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-secondary px-3 py-2 transition-all duration-200 hover:shadow-sm">
+              <span className="text-sm text-muted">مستخدمون بصلاحية Admin</span>
+              <span className="text-sm font-semibold text-foreground">
                 {isLoading ? "..." : metrics.adminUsers}
               </span>
             </div>

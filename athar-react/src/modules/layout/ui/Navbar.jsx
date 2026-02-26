@@ -4,6 +4,7 @@ import { Menu, X, User, LogOut, Moon, Sun, Shield } from "lucide-react";
 import { Button } from "@shared/ui/button";
 import { useAuth } from "@modules/auth";
 import { brand, nav } from "@shared/config/content";
+import { useScrollDirection } from "@shared/lib/hooks/useScrollDirection";
 
 const NAV_LINKS = [
   { label: nav.home, href: "/" },
@@ -15,6 +16,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [canAccessAdmin, setCanAccessAdmin] = useState(false);
+  const scrollDirection = useScrollDirection();
   const {
     isAuthenticated,
     isLoading,
@@ -80,7 +82,11 @@ export function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-border/60 bg-card/80 font-bold backdrop-blur-md transition-all duration-300">
+    <nav
+      className={`fixed top-0 z-50 w-full border-b border-border/60 bg-card/80 font-bold backdrop-blur-md transition-transform duration-300 ${
+        scrollDirection === "down" ? "-translate-y-full" : "translate-y-0"
+      }`}
+    >
       <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between relative">
         {/* Logo */}
         <Link

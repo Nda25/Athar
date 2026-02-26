@@ -112,7 +112,7 @@ export function PostRegistrationLanding() {
       {/* pt-16 to clear the fixed navbar */}
       <div className="min-h-[calc(100vh-4rem)] pt-16 flex bg-background">
         {/* ── Tools Sidebar ─────────────────────────────────────────── */}
-        <div className="hidden lg:flex p-4 pr-0 flex-shrink-0">
+        <div className="hidden lg:flex p-4 pr-0 shrink-0">
           <ToolsSidebar />
         </div>
 
@@ -173,23 +173,23 @@ export function PostRegistrationLanding() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="glass-card p-8 bg-gradient-to-br from-brand to-brand-2 text-white relative overflow-hidden group"
+                className="glass-card p-8 bg-gradient-to-br from-brand to-brand-2 dark:from-primary/10 dark:to-primary/5 text-white dark:text-foreground relative overflow-hidden group dark:border-border"
               >
-                <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform duration-700" />
+                <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 dark:bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform duration-700" />
 
                 <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center justify-between">
                   <div>
-                    <p className="text-white/70 text-sm font-medium mb-2">
+                    <p className="text-white/70 dark:text-muted-foreground text-sm font-medium mb-2">
                       {activeTool.tagline}
                     </p>
-                    <h2 className="text-2xl md:text-3xl font-bold mb-3 font-display">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-3 font-display text-sand dark:text-primary">
                       {activeTool.name}
                     </h2>
-                    <p className="text-white/80 mb-6 max-w-md leading-relaxed text-sm">
+                    <p className="text-white/80 dark:text-foreground/80 mb-6 max-w-md leading-relaxed text-sm">
                       {activeTool.description}
                     </p>
                     <Link to={activeTool.href}>
-                      <Button className="bg-white text-brand hover:bg-white/90 font-bold rounded-xl px-6 h-12 shadow-lg w-full md:w-auto">
+                      <Button className="bg-white text-brand hover:bg-white/90 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90 font-bold rounded-xl px-6 h-12 shadow-lg w-full md:w-auto">
                         ابدأ الآن
                         <ArrowLeft className="mr-2 w-4 h-4" />
                       </Button>
@@ -198,8 +198,8 @@ export function PostRegistrationLanding() {
 
                   {/* Icon badge */}
                   {activeTool.config?.icon && (
-                    <div className="w-40 h-40 bg-white/10 rounded-full flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/20">
-                      <activeTool.config.icon className="w-20 h-20 text-white/90 stroke-[1.5]" />
+                    <div className="w-40 h-40 bg-white/10 dark:bg-secondary/80 rounded-full flex items-center justify-center shrink-0 backdrop-blur-sm border border-white/20 dark:border-primary/20">
+                      <activeTool.config.icon className="w-20 h-20 text-white/90 dark:text-primary stroke-[1.5]" />
                     </div>
                   )}
                 </div>
@@ -215,7 +215,7 @@ export function PostRegistrationLanding() {
                     <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
                       تصفح كافة الأدوات
                     </h3>
-                    <p className="text-muted text-sm leading-relaxed mb-4 flex-grow">
+                    <p className="text-muted text-sm leading-relaxed mb-4 grow">
                       اكتشف مجموعة أثـر المتكاملة من الأدوات لمختلف احتياجاتك.
                     </p>
                     <span className="text-xs font-bold text-primary flex items-center mt-auto">
@@ -232,7 +232,7 @@ export function PostRegistrationLanding() {
                     <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-accent transition-colors">
                       ترقية الباقة
                     </h3>
-                    <p className="text-muted text-sm leading-relaxed mb-4 flex-grow">
+                    <p className="text-muted text-sm leading-relaxed mb-4 grow">
                       احصل على وصول غير محدود لكافة ميزات أثـر المتقدمة.
                     </p>
                     <span className="text-xs font-bold text-accent flex items-center mt-auto">
@@ -272,11 +272,11 @@ export function PostRegistrationLanding() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 ">
                   <Link to="/profile">
                     <Button
                       variant="outline"
-                      className="w-full justify-between h-12 rounded-xl border-border hover:bg-secondary mb-3 cursor-pointer"
+                      className="w-full justify-between h-12 rounded-xl border-border hover:bg-secondary mb-3 cursor-pointer  dark:text-primary"
                     >
                       إعدادات الحساب
                       <LayoutGrid className="w-4 h-4 ml-2 opacity-50" />
@@ -286,7 +286,7 @@ export function PostRegistrationLanding() {
                     <Link to="/admin">
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-12 rounded-xl border-border hover:bg-secondary cursor-pointer"
+                        className="w-full justify-between h-12 rounded-xl border-border hover:bg-secondary cursor-pointer dark:text-primary"
                       >
                         لوحة الإدارة
                         <Crown className="w-4 h-4 ml-2 opacity-50" />
