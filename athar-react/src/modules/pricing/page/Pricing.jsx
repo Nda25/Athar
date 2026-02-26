@@ -35,6 +35,13 @@ export default function PricingPage() {
   );
 
   useEffect(() => {
+    if (searchParams.get("mock_paid") === "1") {
+      toast.success("تم تفعيل الدفع التجريبي", {
+        description: "هذه عملية تجريبية محلية وليست عملية خصم حقيقية.",
+      });
+      return;
+    }
+
     if (searchParams.get("paid") === "1") {
       toast.success("تم الدفع بنجاح!", {
         description: "شكرا لاشتراكك في أثر. تم تفعيل العملية بنجاح.",

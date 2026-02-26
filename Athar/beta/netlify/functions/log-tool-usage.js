@@ -12,28 +12,34 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const { tool_name, user_email, meta } = body;
+    const { tool_name, user_email, user_sub, meta } = body;
 
     if (!tool_name) {
       return { statusCode: 400, body: 'missing tool_name' };
     }
 
-    // لو ما فيه إيميل، نتجاهل بهدوء (لا نسجل)
-    if (!user_email) {
+    const explicitUserSub = String(user_sub || '').trim();
+
+    // لو ما فيه user_sub ولا إيميل، نتجاهل بهدوء (لا نسجل)
+    if (!explicitUserSub && !user_email) {
       return { statusCode: 204, body: '' };
     }
 
-    // نجيب auth0_sub من جدول users بناء على الإيميل
-    const email = String(user_email).toLowerCase();
-    const { data: userRow, error: userErr } = await supaAdmin
-      .from('users')
-      .select('auth0_sub')
-      .eq('email', email)
-      .single();
+    let resolvedUserSub = explicitUserSub || null;
+    if (!resolvedUserSub && user_email) {
+      // نجيب auth0_sub من جدول users بناء على الإيميل
+      const email = String(user_email).toLowerCase();
+      const { data: userRow, error: userErr } = await supaAdmin
+        .from('users')
+        .select('auth0_sub')
+        .eq('email', email)
+        .single();
 
-    // لو المستخدم غير موجود في users، نتجاهل بهدوء
-    if (userErr || !userRow || !userRow.auth0_sub) {
-      return { statusCode: 204, body: '' };
+      // لو المستخدم غير موجود في users، نتجاهل بهدوء
+      if (userErr || !userRow || !userRow.auth0_sub) {
+        return { statusCode: 204, body: '' };
+      }
+      resolvedUserSub = userRow.auth0_sub;
     }
 
     // معلومات إضافية مفيدة
@@ -44,7 +50,7 @@ exports.handler = async (event) => {
       (event.headers['x-forwarded-for']?.split(',')[0] || null);
 
     const payload = {
-      user_sub: userRow.auth0_sub,      // << المهم: الحقل الصحيح
+      user_sub: resolvedUserSub,      // << المهم: الحقل الصحيح
       tool_name,
       path: ref,
       meta: meta || {},

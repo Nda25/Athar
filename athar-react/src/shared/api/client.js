@@ -126,11 +126,14 @@ api.interceptors.response.use(
       }
 
       // Create a more helpful error
-      const apiError = new Error(
+      const extractedMessage =
         typeof data === "string"
           ? data
-          : data?.message || `Request failed with status ${status}`,
-      );
+          : data?.message ||
+            data?.error ||
+            data?.details ||
+            `Request failed with status ${status}`;
+      const apiError = new Error(extractedMessage);
       apiError.status = status;
       apiError.data = data;
       return Promise.reject(apiError);

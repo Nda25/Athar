@@ -9,6 +9,7 @@
 // ================================================================
 
 const { requireUser } = require("./_auth.js");
+const { createPerf } = require("./_perf.js");
 
 // ——— أدوات مساعدة مشتركة ———
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -64,14 +65,19 @@ const isSoft = (d) => Array.isArray(d?.cards) && d.cards.length >= 1;
 
 // ——— المعالج الرئيسي مع حماية ———
 exports.handler = async (event) => {
+  const perf = createPerf("gemini-mithaq", event);
+
   // POST فقط
   if (event.httpMethod !== "POST") {
+    perf.end({ statusCode: 405 });
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
   // تحقق المستخدم (Auth0)
   const auth = await requireUser(event);
+  perf.mark("auth_done");
   if (!auth?.ok) {
+    perf.end({ statusCode: auth?.status || 401, unauthorized: true });
     return {
       statusCode: auth?.status || 401,
       body: auth?.error || "Unauthorized",
@@ -83,6 +89,7 @@ exports.handler = async (event) => {
   try {
     payload = JSON.parse(event.body || "{}");
   } catch {
+    perf.end({ statusCode: 400, bad_json: true });
     return { statusCode: 400, body: "Bad JSON body" };
   }
 
@@ -92,19 +99,23 @@ exports.handler = async (event) => {
 
   // متغيرات البيئة
   const API_KEY = process.env.GEMINI_API_KEY;
-  if (!API_KEY) return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+  if (!API_KEY) {
+    perf.end({ statusCode: 500, missing_key: true });
+    return { statusCode: 500, body: "Missing GEMINI_API_KEY" };
+  }
 
   const PRIMARY = process.env.GEMINI_MODEL || "gemini-1.5-flash";
   const FALLBACKS = (process.env.GEMINI_FALLBACKS ||
-    "gemini-1.5-flash-8b,gemini-1.5-flash-latest,gemini-1.5-pro")
+    "gemini-1.5-flash-8b,gemini-1.5-flash-latest")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const MODELS = [PRIMARY, ...FALLBACKS];
+  const MAX_MODELS = Math.max(1, +(process.env.GEMINI_MAX_MODELS || 2));
+  const MODELS = [PRIMARY, ...FALLBACKS].slice(0, MAX_MODELS);
 
-  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 23000);
-  const MAX_RETRIES = +(process.env.RETRIES || 2);
-  const BACKOFF_MS = +(process.env.BACKOFF_MS || 700);
+  const TIMEOUT_MS = +(process.env.TIMEOUT_MS || 14000);
+  const MAX_RETRIES = +(process.env.RETRIES || 1);
+  const BACKOFF_MS = +(process.env.BACKOFF_MS || 300);
 
   // مخطط الاستجابة (يوجّه Gemini)
   const responseSchema = {
@@ -276,6 +287,7 @@ ${prevRaw}
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           tool_name: "mithaq",
+          user_sub: auth?.user?.sub || null,
           user_email: auth?.user?.email || null,
           meta: { subject, topic, stage, count },
         }),
@@ -329,7 +341,8 @@ ${prevRaw}
   }
 
   if (finalStrict) {
-    await logUsage(finalStrict.cards.length);
+    void logUsage(finalStrict.cards.length);
+    perf.end({ statusCode: 200, result: "strict", model: usedModel });
     return {
       statusCode: 200,
       headers,
@@ -342,7 +355,8 @@ ${prevRaw}
   }
 
   if (finalSoft) {
-    await logUsage(finalSoft.cards.length);
+    void logUsage(finalSoft.cards.length);
+    perf.end({ statusCode: 200, result: "soft", model: usedModel });
     return {
       statusCode: 200,
       headers,
@@ -357,8 +371,9 @@ ${prevRaw}
     };
   }
 
-  await logUsage(0);
+  void logUsage(0);
   const failMsg = "Model returned incomplete JSON after retries";
+  perf.end({ statusCode: 200, result: "incomplete", model: usedModel || null });
   return {
     statusCode: 200,
     headers,

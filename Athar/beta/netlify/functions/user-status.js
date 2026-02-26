@@ -4,12 +4,38 @@
 
 const { createClient } = require("@supabase/supabase-js");
 const { requireUser } = require("./_auth.js");
+const { createPerf } = require("./_perf.js");
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE,
   { auth: { persistSession: false } }
 );
+
+const STATUS_CACHE_TTL_MS = Math.max(
+  0,
+  Number(process.env.USER_STATUS_CACHE_TTL_MS || 15000)
+);
+const statusCache = new Map();
+
+function getCachedStatus(key) {
+  if (!STATUS_CACHE_TTL_MS) return null;
+  const item = statusCache.get(key);
+  if (!item) return null;
+  if (item.expiresAt <= Date.now()) {
+    statusCache.delete(key);
+    return null;
+  }
+  return item.value;
+}
+
+function setCachedStatus(key, value) {
+  if (!STATUS_CACHE_TTL_MS) return;
+  statusCache.set(key, {
+    value,
+    expiresAt: Date.now() + STATUS_CACHE_TTL_MS,
+  });
+}
 
 /**
  * يجيب حالة العضوية من v_user_status إن وجدت،
@@ -86,32 +112,59 @@ async function fetchMembershipStatus(user_sub, email) {
 }
 
 exports.handler = async (event) => {
+  const perf = createPerf("user-status", event);
+
   if (event.httpMethod !== "GET") {
+    perf.end({ statusCode: 405 });
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
   // تحقق المستخدم من التوكن
   const gate = await requireUser(event);
+  perf.mark("auth_done");
   if (!gate.ok) {
+    perf.end({ statusCode: gate.status || 401, unauthorized: true });
     return { statusCode: gate.status, body: gate.error };
   }
 
   const sub = gate.user?.sub || null;
   const email = gate.user?.email || null;
+  const cacheKey = `${sub || ""}|${(email || "").toLowerCase()}`;
+
+  const cached = getCachedStatus(cacheKey);
+  if (cached) {
+    perf.end({ statusCode: 200, cache: "hit" });
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Athar-Cache": "HIT",
+      },
+      body: JSON.stringify(cached),
+    };
+  }
 
   const res = await fetchMembershipStatus(sub, email);
+  perf.mark("db_done");
+
+  const responseBody = {
+    ok: true,
+    user_sub: sub,
+    email,
+    ...res,
+  };
+
+  setCachedStatus(cacheKey, responseBody);
+  perf.end({ statusCode: 200, cache: "miss" });
 
   return {
     statusCode: 200,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
+      "X-Athar-Cache": "MISS",
     },
-    body: JSON.stringify({
-      ok: true,
-      user_sub: sub,
-      email,
-      ...res,
-    }),
+    body: JSON.stringify(responseBody),
   };
 };
