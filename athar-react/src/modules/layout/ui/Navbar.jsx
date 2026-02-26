@@ -1,10 +1,20 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, X, User, LogOut, Moon, Sun, Shield } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  Menu,
+  X,
+  User,
+  LogOut,
+  Moon,
+  Sun,
+  Shield,
+  Megaphone,
+} from "lucide-react";
 import { Button } from "@shared/ui/button";
 import { useAuth } from "@modules/auth";
 import { brand, nav } from "@shared/config/content";
 import { useScrollDirection } from "@shared/lib/hooks/useScrollDirection";
+import { getAnnouncements } from "@shared/api";
 
 const NAV_LINKS = [
   { label: nav.home, href: "/" },
@@ -12,11 +22,53 @@ const NAV_LINKS = [
   { label: nav.pricing, href: "/pricing" },
 ];
 
+const getPageIdForRoute = (pathname) => {
+  if (pathname === "/" || pathname === "/athar") return "athar";
+  if (pathname === "/programs") return "programs";
+  if (pathname === "/pricing") return "pricing";
+  if (pathname === "/profile") return "profile";
+
+  if (pathname.startsWith("/programs/montalaq")) return "montalaq";
+  if (pathname.startsWith("/programs/mueen")) return "mueen";
+  if (pathname.startsWith("/programs/murtakiz")) return "darsi";
+  if (pathname.startsWith("/programs/miaad")) return "miyad";
+  if (pathname.startsWith("/programs/mithaq")) return "mithaq";
+  if (pathname.startsWith("/programs/ethraa")) return "ethraa";
+  if (pathname.startsWith("/programs/mulham")) return "mulham";
+  if (pathname.startsWith("/programs/mutasiq")) return "mutasiq";
+  if (pathname.startsWith("/programs/masar")) return "masar";
+
+  return null;
+};
+
+const normalizeTargetPages = (value) => {
+  if (Array.isArray(value) && value.length > 0) return value;
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value.replace(/'/g, '"'));
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {
+      const fallback = value
+        .replace(/[[\]"']/g, "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+      if (fallback.length > 0) return fallback;
+    }
+  }
+
+  return ["all"];
+};
+
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [canAccessAdmin, setCanAccessAdmin] = useState(false);
+  const [announcement, setAnnouncement] = useState(null);
+  const [isAnnouncementLoading, setIsAnnouncementLoading] = useState(true);
   const scrollDirection = useScrollDirection();
+  const location = useLocation();
   const {
     isAuthenticated,
     isLoading,
@@ -61,6 +113,37 @@ export function Navbar() {
     };
   }, [isAuthenticated, user, isAdmin]);
 
+  useEffect(() => {
+    let alive = true;
+
+    const fetchAnnouncement = async () => {
+      try {
+        const data = await getAnnouncements();
+        if (alive) setAnnouncement(data?.latest || null);
+      } catch {
+        if (alive) setAnnouncement(null);
+      } finally {
+        if (alive) setIsAnnouncementLoading(false);
+      }
+    };
+
+    fetchAnnouncement();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const isAnnouncementVisible = useMemo(() => {
+    if (!announcement) return false;
+
+    const targetPages = normalizeTargetPages(announcement.target_pages);
+    if (targetPages.includes("all")) return true;
+
+    const currentPageId = getPageIdForRoute(location.pathname);
+    return Boolean(currentPageId && targetPages.includes(currentPageId));
+  }, [announcement, location.pathname]);
+
   const handleLogin = () => {
     loginWithRedirect();
   };
@@ -87,32 +170,51 @@ export function Navbar() {
         scrollDirection === "down" ? "-translate-y-full" : "translate-y-0"
       }`}
     >
-      <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between relative">
-        {/* Logo */}
-        <Link
-          to="/"
-          className="flex items-center gap-2 group transition-transform hover:scale-[1.02]"
-        >
-          <span className="text-4xl tracking-tight text-primary font-display dark:text-primary">
-            {brand.nameShort}
-          </span>
-        </Link>
+      <div className="container mx-auto relative flex h-16 items-center justify-between px-4 md:px-8">
+        <div className="relative z-20 flex min-w-0 items-center gap-2 md:gap-3">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 group transition-transform hover:scale-[1.02]"
+          >
+            <span className="text-4xl tracking-tight text-primary font-display dark:text-primary">
+              {brand.nameShort}
+            </span>
+          </Link>
 
-        {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              to={link.href}
-              className="text-sm text-foreground/80 transition-colors hover:text-primary"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {(isAnnouncementLoading || isAnnouncementVisible) && (
+            <div className="min-w-0 max-w-[44vw] animate-pulse rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 md:max-w-[16rem] md:px-4 md:py-2 lg:max-w-[22rem] xl:max-w-[26rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
+              {isAnnouncementLoading ? (
+                <div className="h-4 w-20 animate-pulse rounded bg-primary/20 md:w-40" />
+              ) : (
+                <div className="flex items-center gap-2 text-[11px] text-foreground/85 md:text-xs">
+                  <Megaphone className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <p className="leading-none">{announcement?.text}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Middle Area */}
+        <div className="absolute left-1/2 hidden w-[min(62vw,860px)] -translate-x-1/2 items-center justify-center md:flex">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex shrink-0 items-center gap-8">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="text-sm text-foreground/80 transition-colors hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Auth Buttons & Theme Toggle */}
-        <div className="flex items-center gap-3">
+        <div className="absolute left-4 top-1/2 z-20 flex -translate-y-1/2 items-center gap-2 md:static md:left-auto md:top-auto md:translate-y-0 md:gap-3">
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}

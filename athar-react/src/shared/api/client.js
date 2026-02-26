@@ -451,40 +451,54 @@ export async function createAnnouncement(data) {
   return api.post("/admin-announcement", data);
 }
 
+function parseAnnouncementTargetPages(value) {
+  if (Array.isArray(value) && value.length > 0) return value;
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value.replace(/'/g, '"'));
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {
+      const fallback = value
+        .replace(/[[\]"']/g, "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+      if (fallback.length > 0) return fallback;
+    }
+  }
+
+  return ["all"];
+}
+
+function normalizeAnnouncement(item) {
+  if (!item || typeof item !== "object") return item;
+  return {
+    ...item,
+    target_pages: parseAnnouncementTargetPages(item.target_pages),
+  };
+}
+
 export async function getAnnouncements() {
   const latest = await api.get("/admin-announcement?latest=1");
-
-  const parseTargetPages = (value) => {
-    if (Array.isArray(value) && value.length > 0) return value;
-
-    if (typeof value === "string") {
-      try {
-        const parsed = JSON.parse(value.replace(/'/g, '"'));
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch {
-        const fallback = value
-          .replace(/[[\]"']/g, "")
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean);
-        if (fallback.length > 0) return fallback;
-      }
-    }
-
-    return ["all"];
-  };
-
-  const normalizeAnnouncement = (item) => {
-    if (!item || typeof item !== "object") return item;
-    return {
-      ...item,
-      target_pages: parseTargetPages(item.target_pages),
-    };
-  };
 
   return {
     latest: normalizeAnnouncement(latest?.latest),
     items: [],
+  };
+}
+
+export async function getAdminAnnouncements() {
+  const [latest, list] = await Promise.all([
+    api.get("/admin-announcement?latest=1"),
+    api.get("/admin-announcement?list=1"),
+  ]);
+
+  return {
+    latest: normalizeAnnouncement(latest?.latest),
+    items: Array.isArray(list?.items)
+      ? list.items.map(normalizeAnnouncement)
+      : [],
   };
 }
 

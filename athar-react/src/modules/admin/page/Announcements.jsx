@@ -8,8 +8,8 @@ import {
   Trash2,
   RefreshCw,
   StopCircle,
-  CalendarIcon,
-  Globe,
+  Pencil,
+  X,
   Loader2,
   CheckCircle2,
 } from "lucide-react";
@@ -20,7 +20,6 @@ import { Button } from "@shared/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@shared/ui/card";
@@ -28,17 +27,9 @@ import { Input } from "@shared/ui/input";
 import { Label } from "@shared/ui/label";
 import { Textarea } from "@shared/ui/textarea";
 import { Checkbox } from "@shared/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@shared/ui/select";
 import { Badge } from "@shared/ui/badge";
-import { Switch } from "@shared/ui/switch"; // Assuming we have or will use switch, else checkbox
 import {
-  getAnnouncements,
+  getAdminAnnouncements,
   createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,
@@ -69,6 +60,21 @@ const announcementSchema = z.object({
   targetPages: z.array(z.string()).min(1, "يجب اختيار صفحة واحدة على الأقل"),
 });
 
+const DEFAULT_FORM_VALUES = {
+  text: "",
+  active: true,
+  startDate: "",
+  endDate: "",
+  targetPages: ["all"],
+};
+
+function toDateInputValue(value) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toISOString().slice(0, 10);
+}
+
 function normalizeTargetPages(value) {
   if (Array.isArray(value) && value.length > 0) return value;
 
@@ -96,17 +102,12 @@ export default function Announcements() {
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   // Form setup
   const form = useForm({
     resolver: zodResolver(announcementSchema),
-    defaultValues: {
-      text: "",
-      active: true,
-      startDate: "",
-      endDate: "",
-      targetPages: ["all"],
-    },
+    defaultValues: DEFAULT_FORM_VALUES,
   });
 
   // Watch target pages to handle "all" logic
@@ -145,9 +146,9 @@ export default function Announcements() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await getAnnouncements();
+      const data = await getAdminAnnouncements();
       setAnnouncements(data);
-    } catch (error) {
+    } catch {
       toast.error("فشل تحميل الإعلانات");
     } finally {
       setLoading(false);
@@ -177,58 +178,102 @@ export default function Announcements() {
   }, [announcements.items]);
 
   const onSubmit = async (data) => {
+    const payload = {
+      text: data.text,
+      active: data.active,
+      start: data.startDate ? new Date(data.startDate).toISOString() : null,
+      expires: data.endDate ? new Date(data.endDate).toISOString() : null,
+      target_pages: data.targetPages,
+    };
+
     setSubmitting(true);
     try {
-      await createAnnouncement({
-        text: data.text,
-        active: data.active,
-        start: data.startDate ? new Date(data.startDate).toISOString() : null,
-        expires: data.endDate ? new Date(data.endDate).toISOString() : null,
-        target_pages: data.targetPages,
-      });
+      if (editingId) {
+        await updateAnnouncement({
+          id: editingId,
+          ...payload,
+        });
+        toast.success("تم تحديث الإعلان بنجاح");
+      } else {
+        await createAnnouncement(payload);
+        toast.success("تم نشر الإعلان بنجاح");
+      }
 
-      toast.success("تم نشر الإعلان بنجاح");
-      form.reset({
-        text: "",
-        active: true,
-        startDate: "",
-        endDate: "",
-        targetPages: ["all"],
-      });
-      loadData();
+      setEditingId(null);
+      form.reset(DEFAULT_FORM_VALUES);
+      await loadData();
     } catch (error) {
       console.error(error);
-      toast.error("حدث خطأ أثناء النشر");
+      toast.error(editingId ? "حدث خطأ أثناء التحديث" : "حدث خطأ أثناء النشر");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const startEdit = (item) => {
+    if (!item?.id) {
+      toast.error("تعذر تعديل هذا الإعلان");
+      return;
+    }
+
+    setEditingId(item.id);
+    form.reset({
+      text: item.text || "",
+      active: !!item.active,
+      startDate: toDateInputValue(item.start_at),
+      endDate: toDateInputValue(item.expires_at),
+      targetPages: normalizeTargetPages(item.target_pages),
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    form.reset(DEFAULT_FORM_VALUES);
+  };
+
   const handleDelete = async (id) => {
+    if (!id) {
+      toast.error("معرف الإعلان غير متوفر");
+      return;
+    }
+
     if (!confirm("هل أنت متأكد من حذف هذا الإعلان؟")) return;
     try {
       await deleteAnnouncement(id);
+      if (editingId === id) {
+        cancelEdit();
+      }
       toast.success("تم الحذف");
-      loadData();
-    } catch (error) {
+      await loadData();
+    } catch {
       toast.error("فشل الحذف");
     }
   };
 
   const handleToggleStatus = async (item, newStatus) => {
+    if (!item?.id) {
+      toast.error("معرف الإعلان غير متوفر");
+      return;
+    }
+
     try {
       await updateAnnouncement({
         id: item.id,
         active: newStatus,
       });
       toast.success(newStatus ? "تم تفعيل الإعلان" : "تم إيقاف الإعلان");
-      loadData();
-    } catch (error) {
+      await loadData();
+    } catch {
       toast.error("حدث خطأ");
     }
   };
 
   const handleRepublish = async (item) => {
+    if (!item?.id) {
+      toast.error("معرف الإعلان غير متوفر");
+      return;
+    }
+
     try {
       await updateAnnouncement({
         id: item.id,
@@ -237,8 +282,8 @@ export default function Announcements() {
         // Original code sent start: null on republish
       });
       toast.success("تم إعادة النشر");
-      loadData();
-    } catch (error) {
+      await loadData();
+    } catch {
       toast.error("حدث خطأ");
     }
   };
@@ -282,10 +327,12 @@ export default function Announcements() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Create Announcement Form */}
+        {/* Create / Edit Announcement Form */}
         <Card className="border-border shadow-sm bg-card">
           <CardHeader>
-            <CardTitle className="text-foreground">نشر إعلان جديد</CardTitle>
+            <CardTitle className="text-foreground">
+              {editingId ? "تعديل الإعلان" : "نشر إعلان جديد"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -383,18 +430,32 @@ export default function Announcements() {
                 )}
               </div>
 
-              <Button
-                type="submit"
-                className="w-full transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Megaphone className="mr-2 h-4 w-4" />
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="submit"
+                  className="w-full transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Megaphone className="mr-2 h-4 w-4" />
+                  )}
+                  {editingId ? "حفظ التعديلات" : "نشر الإعلان"}
+                </Button>
+                {editingId && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={cancelEdit}
+                    disabled={submitting}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    إلغاء التعديل
+                  </Button>
                 )}
-                نشر الإعلان
-              </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -409,22 +470,92 @@ export default function Announcements() {
             </CardHeader>
             <CardContent>
               {announcements.latest ? (
-                <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary p-4 text-foreground">
-                  <Megaphone className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{announcements.latest.text}</p>
-                    <div className="flex gap-2 mt-2 text-xs opacity-80 text-muted-foreground">
-                      {announcements.latest.expires_at && (
-                        <span>
-                          ينتهي:{" "}
-                          {format(
-                            new Date(announcements.latest.expires_at),
-                            "dd MMM yyyy",
-                            { locale: arSA },
-                          )}
-                        </span>
-                      )}
+                <div className="space-y-3 rounded-lg border border-border bg-secondary p-4 text-foreground">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <Megaphone className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{announcements.latest.text}</p>
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          <span>
+                            {announcements.latest.start_at
+                              ? format(
+                                  new Date(announcements.latest.start_at),
+                                  "d MMM yyyy",
+                                  { locale: arSA },
+                                )
+                              : "فوري"}
+                          </span>
+                          <span>→</span>
+                          <span>
+                            {announcements.latest.expires_at
+                              ? format(
+                                  new Date(announcements.latest.expires_at),
+                                  "d MMM yyyy",
+                                  { locale: arSA },
+                                )
+                              : "∞"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEdit(announcements.latest)}
+                        title="تعديل"
+                      >
+                        <Pencil className="h-4 w-4 text-blue-600" />
+                      </Button>
+                      {announcements.latest.active ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            handleToggleStatus(announcements.latest, false)
+                          }
+                          title="إيقاف"
+                        >
+                          <StopCircle className="h-4 w-4 text-amber-600" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRepublish(announcements.latest)}
+                          title="إعادة نشر"
+                        >
+                          <RefreshCw className="h-4 w-4 text-blue-600" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(announcements.latest.id)}
+                        title="حذف"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1">
+                    {normalizeTargetPages(announcements.latest.target_pages).map(
+                      (p, idx) => {
+                        const label =
+                          TARGET_PAGES.find((tp) => tp.id === p)?.label || p;
+                        return (
+                          <Badge
+                            key={`${p}-${idx}`}
+                            variant="secondary"
+                            className="h-5 px-1 text-[10px] font-normal"
+                          >
+                            {label}
+                          </Badge>
+                        );
+                      },
+                    )}
                   </div>
                 </div>
               ) : (
@@ -508,6 +639,14 @@ export default function Announcements() {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startEdit(item)}
+                          title="تعديل"
+                        >
+                          <Pencil className="h-4 w-4 text-blue-600" />
+                        </Button>
                         {!item.active ? (
                           <Button
                             variant="ghost"

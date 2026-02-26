@@ -81,10 +81,13 @@ const TOOL_CONFIG = {
 };
 
 // Merge content with config
-const TOOLS_LIST = Object.entries(tools).map(([id, tool]) => ({
-  ...tool,
-  ...TOOL_CONFIG[id],
-}));
+const TOOLS_LIST = Object.entries(tools)
+  .map(([id, tool]) => {
+    const config = TOOL_CONFIG[id];
+    if (!tool || !config) return null;
+    return { ...tool, ...config, id };
+  })
+  .filter(Boolean);
 
 export function Programs() {
   return (

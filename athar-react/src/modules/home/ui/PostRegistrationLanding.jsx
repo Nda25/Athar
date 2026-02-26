@@ -98,13 +98,18 @@ export function PostRegistrationLanding() {
     };
   }, [isAdmin]);
 
-  const featuredTools = FEATURED_IDS.map((id) => ({
-    id,
-    config: TOOL_CONFIG[id],
-    ...tools[id],
-  }));
+  const featuredTools = FEATURED_IDS.map((id) => {
+    const tool = tools[id];
+    const config = TOOL_CONFIG[id];
+    if (!tool || !config) return null;
+    return { ...tool, id, config };
+  }).filter(Boolean);
 
-  const activeTool = featuredTools[activeTab];
+  const activeTool = featuredTools[activeTab] || featuredTools[0];
+
+  if (!activeTool) {
+    return null;
+  }
 
   return (
     <PageLayout>

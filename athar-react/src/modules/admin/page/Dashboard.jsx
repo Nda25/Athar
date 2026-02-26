@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@shared/ui/card";
 import {
   filterComplaints,
   getAdminUsersList,
-  getAnnouncements,
+  getAdminAnnouncements,
 } from "@shared/api";
 
 function normalizeUsers(data) {
@@ -54,7 +54,7 @@ export default function Dashboard() {
       },
       {
         queryKey: ["admin-dashboard-announcements"],
-        queryFn: getAnnouncements,
+        queryFn: getAdminAnnouncements,
       },
     ],
   });

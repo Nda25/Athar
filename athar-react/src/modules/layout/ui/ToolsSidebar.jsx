@@ -124,8 +124,13 @@ export function ToolsSidebar({ className = "" }) {
         <nav className="flex flex-col gap-0.5 flex-1 overflow-y-auto">
           {CATEGORIES.map((cat) => {
             const catTools = cat.ids
-              .map((id) => ({ id, ...tools[id], config: TOOL_CONFIG[id] }))
-              .filter((t) => t.config);
+              .map((id) => {
+                const tool = tools[id];
+                const config = TOOL_CONFIG[id];
+                if (!tool || !config) return null;
+                return { ...tool, id, config };
+              })
+              .filter(Boolean);
 
             return (
               <div key={cat.label} className="mb-2">
@@ -140,7 +145,7 @@ export function ToolsSidebar({ className = "" }) {
                   const isActive = location.pathname === tool.href;
                   return (
                     <Link
-                      key={tool.id}
+                      key={`${cat.label}-${tool.id}`}
                       to={tool.href}
                       title={!isOpen ? tool.nameShort : undefined}
                       className={`flex items-center gap-2.5 px-2 py-2 rounded-xl text-sm font-medium transition-colors group ${

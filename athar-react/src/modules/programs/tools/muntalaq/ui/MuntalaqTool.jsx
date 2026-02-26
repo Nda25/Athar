@@ -7,10 +7,6 @@ import {
   Loader2,
   Copy,
   Printer,
-  RefreshCw,
-  Wand2,
-  ChevronDown,
-  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,7 +16,6 @@ import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardContent,
 } from "@shared/ui/card";
 import {
@@ -30,7 +25,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@shared/ui/form";
 import {
   Select,
@@ -255,8 +249,8 @@ export default function MuntalaqTool() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {availableSubjects.map((sub, idx) => (
-                            <SelectItem key={idx} value={sub}>
+                          {availableSubjects.map((sub) => (
+                            <SelectItem key={sub} value={sub}>
                               {sub}
                             </SelectItem>
                           ))}
@@ -284,8 +278,8 @@ export default function MuntalaqTool() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {BLOOM_TYPES.map((t, idx) => (
-                            <SelectItem key={idx} value={t}>
+                          {BLOOM_TYPES.map((t) => (
+                            <SelectItem key={t} value={t}>
                               {t}
                             </SelectItem>
                           ))}
@@ -333,8 +327,8 @@ export default function MuntalaqTool() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {PREFERRED_STRATEGIES.map((t, idx) => (
-                            <SelectItem key={idx} value={t}>
+                          {PREFERRED_STRATEGIES.map((t) => (
+                            <SelectItem key={t} value={t}>
                               {t}
                             </SelectItem>
                           ))}
@@ -416,7 +410,7 @@ export default function MuntalaqTool() {
                 <h3 className="font-semibold text-lg">الأهداف</h3>
                 <ul className="space-y-2 list-disc list-inside text-muted-foreground">
                   {result.goals?.map((g, i) => (
-                    <li key={i}>{g}</li>
+                    <li key={`${g ?? "goal"}-${i}`}>{g}</li>
                   ))}
                 </ul>
               </div>
@@ -424,7 +418,7 @@ export default function MuntalaqTool() {
                 <h3 className="font-semibold text-lg">خطوات التطبيق</h3>
                 <ol className="space-y-3 list-decimal list-inside text-muted-foreground">
                   {result.steps?.map((step, i) => (
-                    <li key={i} className="leading-relaxed pl-2">
+                    <li key={`${step ?? "step"}-${i}`} className="leading-relaxed pl-2">
                       {step}
                     </li>
                   ))}
@@ -438,7 +432,7 @@ export default function MuntalaqTool() {
                 <h3 className="font-semibold text-lg">أمثلة عملية</h3>
                 <ul className="space-y-2 list-disc list-inside text-muted-foreground">
                   {result.examples?.map((ex, i) => (
-                    <li key={i}>{ex}</li>
+                    <li key={`${ex ?? "example"}-${i}`}>{ex}</li>
                   ))}
                 </ul>
               </div>
