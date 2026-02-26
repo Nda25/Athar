@@ -22,7 +22,6 @@ import {
   MueenPage,
   MulhamPage,
   MuntalaqPage,
-  MutasiqPage,
   MurtakizPage,
 } from "@modules/programs";
 import { ProfilePage } from "@modules/profile";
@@ -118,15 +117,6 @@ export default function AppRouter() {
           </SubscriptionRoute>
         }
       />
-      <Route
-        path="/programs/mutasiq"
-        element={
-          <SubscriptionRoute>
-            <MutasiqPage />
-          </SubscriptionRoute>
-        }
-      />
-
       <Route element={<AdminRoute />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboardPage />} />

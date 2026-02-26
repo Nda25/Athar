@@ -16,7 +16,6 @@ import {
   BookOpen,
   Sparkles,
   Bot,
-  ClipboardCheck,
 } from "lucide-react";
 import { tools } from "@shared/config/content";
 
@@ -33,10 +32,6 @@ const CATEGORIES = [
   {
     label: "الإثراء والتفاعل",
     ids: ["mithaq", "ethraa", "mulham"],
-  },
-  {
-    label: "المتابعة والتقييم",
-    ids: ["mutasiq"],
   },
 ];
 
@@ -81,11 +76,6 @@ const TOOL_CONFIG = {
     icon: Bot,
     color: "text-pink-600",
     bg: "bg-pink-50 dark:bg-pink-500/10",
-  },
-  mutasiq: {
-    icon: ClipboardCheck,
-    color: "text-teal-600",
-    bg: "bg-teal-50 dark:bg-teal-500/10",
   },
 };
 

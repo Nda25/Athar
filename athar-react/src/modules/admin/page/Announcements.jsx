@@ -37,19 +37,18 @@ import {
 
 // Page options matching original admin.html
 const TARGET_PAGES = [
-  { id: "all", label: "جميع الصفحات", icon: "🌐" },
-  { id: "mueen", label: "معين", icon: "📊" },
-  { id: "darsi", label: "مُرتكز", icon: "📚" },
-  { id: "mutasiq", label: "مُتسق", icon: "✍️" },
-  { id: "mulham", label: "مُلهم", icon: "💡" },
-  { id: "miyad", label: "ميعاد", icon: "📅" },
-  { id: "masar", label: "مسار", icon: "🗺️" },
-  { id: "mithaq", label: "ميثاق", icon: "📜" },
-  { id: "ethraa", label: "إثراء", icon: "⭐" },
-  { id: "athar", label: "أثر الأساسية", icon: "🏠" },
-  { id: "programs", label: "البرامج", icon: "🎓" },
-  { id: "pricing", label: "الأسعار", icon: "💰" },
-  { id: "profile", label: "الملف الشخصي", icon: "👤" },
+  { id: "all", label: "جميع الصفحات" },
+  { id: "mueen", label: "معين" },
+  { id: "darsi", label: "مُرتكز" },
+  { id: "mulham", label: "مُلهم" },
+  { id: "miyad", label: "ميعاد" },
+  { id: "masar", label: "مسار" },
+  { id: "mithaq", label: "ميثاق" },
+  { id: "ethraa", label: "إثراء" },
+  { id: "athar", label: "أثر الأساسية" },
+  { id: "programs", label: "البرامج" },
+  { id: "pricing", label: "الأسعار" },
+  { id: "profile", label: "الملف الشخصي" },
 ];
 
 const announcementSchema = z.object({
@@ -400,7 +399,7 @@ export default function Announcements() {
                         key={page.id}
                         onClick={() => handlePageToggle(page.id)}
                         className={`
-                                    cursor-pointer flex items-center gap-2 p-2 rounded-md border text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm
+                                    cursor-pointer flex items-center gap-2.5 p-2 rounded-md border text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm
                                     ${
                                       isChecked
                                         ? "bg-primary/20 border-primary text-primary font-medium"
@@ -417,7 +416,6 @@ export default function Announcements() {
                             </span>
                           )}
                         </div>
-                        <span className="text-lg">{page.icon}</span>
                         <span>{page.label}</span>
                       </div>
                     );
@@ -503,39 +501,43 @@ export default function Announcements() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="group rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/10"
                         onClick={() => startEdit(announcements.latest)}
                         title="تعديل"
                       >
-                        <Pencil className="h-4 w-4 text-blue-600" />
+                        <Pencil className="h-4 w-4 text-primary transition-transform duration-200 group-hover:scale-110" />
                       </Button>
                       {announcements.latest.active ? (
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="group rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-amber-500/10"
                           onClick={() =>
                             handleToggleStatus(announcements.latest, false)
                           }
                           title="إيقاف"
                         >
-                          <StopCircle className="h-4 w-4 text-amber-600" />
+                          <StopCircle className="h-4 w-4 text-amber-600 transition-transform duration-200 group-hover:scale-110" />
                         </Button>
                       ) : (
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="group rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/10"
                           onClick={() => handleRepublish(announcements.latest)}
                           title="إعادة نشر"
                         >
-                          <RefreshCw className="h-4 w-4 text-blue-600" />
+                          <RefreshCw className="h-4 w-4 text-primary transition-transform duration-200 group-hover:scale-110" />
                         </Button>
                       )}
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="group rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-500/10"
                         onClick={() => handleDelete(announcements.latest.id)}
                         title="حذف"
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-4 w-4 text-red-500 transition-transform duration-200 group-hover:scale-110" />
                       </Button>
                     </div>
                   </div>
@@ -559,23 +561,24 @@ export default function Announcements() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-sm italic text-slate-500 dark:text-slate-400">
+                <div className="py-8 text-center text-sm italic text-muted-foreground">
                   لا يوجد إعلان نشط حالياً
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <CardHeader>
-              <CardTitle className="text-slate-900 dark:text-slate-100">
+          <Card className="border-border bg-card shadow-sm">
+            <CardHeader className="border-b border-border/60 bg-gradient-to-l from-primary/10 via-primary/5 to-transparent">
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <Megaphone className="h-4 w-4 text-primary" />
                 سجل الإعلانات
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-4">
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="animate-spin text-slate-400" />
+                  <Loader2 className="animate-spin text-primary/60" />
                 </div>
               ) : announcements.items.length === 0 ? (
                 <p className="text-center py-4 text-muted-foreground">
@@ -586,12 +589,12 @@ export default function Announcements() {
                   {announcements.items.map((item, idx) => (
                     <div
                       key={item.id || idx}
-                      className="flex flex-col gap-4 rounded-lg border border-border p-3 transition-colors duration-200 hover:bg-secondary/40 sm:flex-row sm:items-center sm:justify-between"
+                      className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background/60 p-3 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           {item.active ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
                           ) : (
                             <StopCircle className="h-4 w-4 text-muted-foreground" />
                           )}
@@ -642,37 +645,41 @@ export default function Announcements() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="group rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/10"
                           onClick={() => startEdit(item)}
                           title="تعديل"
                         >
-                          <Pencil className="h-4 w-4 text-blue-600" />
+                          <Pencil className="h-4 w-4 text-primary transition-transform duration-200 group-hover:scale-110" />
                         </Button>
                         {!item.active ? (
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="group rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/10"
                             onClick={() => handleRepublish(item)}
                             title="إعادة نشر"
                           >
-                            <RefreshCw className="h-4 w-4 text-blue-600" />
+                            <RefreshCw className="h-4 w-4 text-primary transition-transform duration-200 group-hover:scale-110" />
                           </Button>
                         ) : (
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="group rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-amber-500/10"
                             onClick={() => handleToggleStatus(item, false)}
                             title="إيقاف"
                           >
-                            <StopCircle className="h-4 w-4 text-amber-600" />
+                            <StopCircle className="h-4 w-4 text-amber-600 transition-transform duration-200 group-hover:scale-110" />
                           </Button>
                         )}
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="group rounded-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-500/10"
                           onClick={() => handleDelete(item.id)}
                           title="حذف"
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-red-500 transition-transform duration-200 group-hover:scale-110" />
                         </Button>
                       </div>
                     </div>

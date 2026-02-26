@@ -13,7 +13,6 @@ import {
   Layout,
   BookOpen,
   Bot,
-  ClipboardCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@modules/auth";
@@ -64,11 +63,6 @@ const TOOL_CONFIG = {
     icon: Bot,
     color: "text-pink-600",
     bg: "bg-pink-50 dark:bg-pink-500/10",
-  },
-  mutasiq: {
-    icon: ClipboardCheck,
-    color: "text-teal-600",
-    bg: "bg-teal-50 dark:bg-teal-500/10",
   },
 };
 

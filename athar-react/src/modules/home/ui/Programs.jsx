@@ -9,7 +9,6 @@ import {
   BookOpen,
   Sparkles,
   Bot,
-  ClipboardCheck,
 } from "lucide-react";
 import { tools, common } from "@shared/config/content";
 
@@ -69,13 +68,6 @@ const TOOL_CONFIG = {
     color: "text-pink-600",
     bg: "bg-pink-50 dark:bg-pink-500/10",
     borderColor: "border-pink-200 dark:border-pink-900",
-    active: true,
-  },
-  mutasiq: {
-    icon: ClipboardCheck,
-    color: "text-teal-600",
-    bg: "bg-teal-50 dark:bg-teal-500/10",
-    borderColor: "border-teal-200 dark:border-teal-900",
     active: true,
   },
 };

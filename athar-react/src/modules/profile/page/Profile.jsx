@@ -189,9 +189,6 @@ export default function ProfilePage() {
                     {subscriptionLabel}
                   </Badge>
                 </div>
-                <p className="text-muted">
-                  هذا الملف يعتمد على بيانات حسابك الفعلية دون بيانات تجريبية.
-                </p>
 
                 {statusQuery.isError ? (
                   <p className="text-xs text-amber-700 mt-2">

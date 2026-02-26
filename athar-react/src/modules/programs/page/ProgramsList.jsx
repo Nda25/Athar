@@ -10,7 +10,6 @@ import {
   BookOpen,
   Sparkles,
   Bot,
-  ClipboardCheck,
 } from "lucide-react";
 import { Layout } from "@modules/layout";
 import { Link } from "react-router-dom";
@@ -27,7 +26,6 @@ const ACTIVE_IDS = new Set([
   "mithaq",
   "ethraa",
   "mulham",
-  "mutasiq",
 ]);
 
 const TOOL_CONFIG = {
@@ -71,11 +69,6 @@ const TOOL_CONFIG = {
     color: "text-pink-600",
     bg: "bg-pink-50 dark:bg-pink-500/10",
   },
-  mutasiq: {
-    icon: ClipboardCheck,
-    color: "text-teal-600",
-    bg: "bg-teal-50 dark:bg-teal-500/10",
-  },
 };
 
 const CATEGORY_MAP = {
@@ -87,7 +80,6 @@ const CATEGORY_MAP = {
   mithaq: "الإثراء والتفاعل",
   ethraa: "الإثراء والتفاعل",
   mulham: "الإثراء والتفاعل",
-  mutasiq: "المتابعة والتقييم",
 };
 
 // Ordered category list with subtle accent colors
@@ -107,11 +99,6 @@ const CATEGORIES = [
     label: "الإثراء والتفاعل",
     color: "text-violet-600 dark:text-violet-400",
     bg: "bg-violet-50 dark:bg-violet-900/20",
-  },
-  {
-    label: "المتابعة والتقييم",
-    color: "text-amber-600 dark:text-amber-400",
-    bg: "bg-amber-50 dark:bg-amber-900/20",
   },
 ];
 

@@ -35,7 +35,6 @@ const getPageIdForRoute = (pathname) => {
   if (pathname.startsWith("/programs/mithaq")) return "mithaq";
   if (pathname.startsWith("/programs/ethraa")) return "ethraa";
   if (pathname.startsWith("/programs/mulham")) return "mulham";
-  if (pathname.startsWith("/programs/mutasiq")) return "mutasiq";
   if (pathname.startsWith("/programs/masar")) return "masar";
 
   return null;

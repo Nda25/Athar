@@ -15,5 +15,3 @@ export { default as EthraaPage } from "./tools/ethraa/page/EthraaPage";
 export { EthraaTool } from "./tools/ethraa/ui";
 export { default as MulhamPage } from "./tools/mulham/page/MulhamPage";
 export { MulhamTool } from "./tools/mulham/ui";
-export { default as MutasiqPage } from "./tools/mutasiq/page/MutasiqPage";
-export { MutasiqTool } from "./tools/mutasiq/ui";
