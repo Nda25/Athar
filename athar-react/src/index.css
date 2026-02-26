@@ -1,119 +1,111 @@
-/* Import Google Font FIRST (must be before @import "tailwindcss") */
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap");
-
+﻿@import url("https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@200..1000&display=swap");
 @import "tailwindcss";
-
 @import "tw-animate-css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ===== Athar Design System (Strict) ===== */
 :root {
-  /* Sea Palette */
-  --sea-25: #f0f9ff;
-  --sea-50: #e6f2ff;
-  --sea-100: #d7e9ff;
-  --sea-200: #b9d7ff;
-  --sea-300: #93c5fd;
-  --sea-400: #60a5fa;
-  --sea-500: #3b82f6;
-  --sea-600: #1e40af;
-  --sea-700: #1e3a8a;
-  --sea-800: #172554;
+  /* New Color Palette Palette */
+  --color-brand-900: #40513b;
+  --color-brand-700: #628141;
+  --color-sand: #e5d9b6;
+  --color-accent: #e67e22;
 
-  /* Semantic Colors */
-  --ink: #0f172a;
-  --muted: #475569;
-  --bg: #ffffff;
-  --card: #ffffff;
-  --gold: #c8a84e;
+  /* Basic Surface & Text setup */
+  --color-bg: #f9f6ef; /* Very light sand variation */
+  --color-surface: #ffffff;
+  --color-border: #e2dabc; /* Light sand border */
+  --color-text: #2c3628; /* Very dark brand color for text, high contrast */
+  --color-text-muted: #5a6b53; /* Lighter text for secondary info */
 
-  /* Effects */
-  --radius: 20px;
-  --shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
-  --glass: rgba(255, 255, 255, 0.12);
+  /* Extracted for components */
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --bg: var(--color-bg);
+  --card: var(--color-surface);
+  --brand: var(--color-brand-900);
+  --brand-2: var(--color-brand-700);
 
-  /* Brand mappings */
-  --primary: var(--sea-600);
-  --primary-2: var(--sea-500);
-  --brand: var(--sea-600);
-  --brand-2: var(--sea-500);
+  /* Modern clean radiuses & shadows */
+  --radius: 1rem;
+  --radius-sm: 0.5rem;
+  --radius-lg: 1.5rem;
+  --shadow-premium:
+    0 10px 40px -10px rgba(64, 81, 59, 0.12),
+    0 4px 12px -5px rgba(64, 81, 59, 0.08);
+  --shadow-premium-hover:
+    0 20px 50px -10px rgba(64, 81, 59, 0.18),
+    0 8px 24px -10px rgba(64, 81, 59, 0.12);
 
-  /* Shadcn/Tailwind mappings for compatibility */
+  /* Shadcn UI compatibility variables */
   --background: var(--bg);
   --foreground: var(--ink);
   --card-foreground: var(--ink);
   --popover: var(--card);
   --popover-foreground: var(--ink);
-  --primary: var(--sea-600);
+  --primary: var(--brand);
   --primary-foreground: #ffffff;
-  --secondary: #eaf2ff;
-  --secondary-foreground: #1e3a8a;
+  --secondary: var(--color-sand);
+  --secondary-foreground: var(--color-brand-900);
   --muted-foreground: var(--muted);
-  --accent: #edf4ff;
-  --accent-foreground: #1e3a8a;
+  --accent: var(--color-accent);
+  --accent-foreground: #ffffff;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: var(--sea-200);
-  --input: var(--sea-200);
-  --ring: var(--brand);
-  --radius-sm: 0.5rem;
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: var(--brand-2);
 }
 
 .dark {
-  --bg: #0b1220;
-  --card: #111b31;
-  --ink: #f8fafc;
-  --muted: #a8b3c5;
-  --shadow:
-    0 22px 60px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
-  --glass: rgba(255, 255, 255, 0.06);
+  /* True dark — neutral backgrounds so brand green reads as an accent, not a tint */
+  --color-bg: #0f1117; /* near-black neutral */
+  --color-surface: #1a1d27; /* deep neutral surface */
+  --color-border: #2a2d3e; /* subtle neutral border */
+  --color-text: #e8eaf0; /* pure light neutral text */
+  --color-text-muted: #8b8fa8; /* neutral muted text */
 
-  /* Brand mappings remain same unless overridden */
-
-  /* Shadcn mappings */
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --bg: var(--color-bg);
+  --card: var(--color-surface);
   --background: var(--bg);
   --foreground: var(--ink);
   --card-foreground: var(--ink);
-  --popover: #0f172a;
-  --popover-foreground: #f1f5f9;
-  --primary: #60a5fa;
-  --primary-foreground: #0b1220;
-  --secondary: #1f2a3e;
-  --secondary-foreground: #f1f5f9;
-  --muted-foreground: #cbd5e1;
-  --accent: #26324a;
-  --accent-foreground: #f1f5f9;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: var(--sea-700);
-  --input: var(--sea-700);
-  --ring: #60a5fa;
+  --popover: var(--card);
+  --popover-foreground: var(--ink);
+
+  /* Brand green now pops as a vivid accent on the neutral dark background */
+  --primary: #6db86b;
+  --primary-foreground: #0f1117;
+  --secondary: #252836;
+  --secondary-foreground: #e8eaf0;
+  --muted-foreground: var(--muted);
+  --accent: #f5a623; /* warm amber accent */
+  --accent-foreground: #0f1117;
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: var(--primary);
+
+  --shadow-premium:
+    0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 12px -5px rgba(0, 0, 0, 0.4);
+  --shadow-premium-hover:
+    0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 8px 24px -10px rgba(0, 0, 0, 0.5);
 }
 
 @theme {
-  /* Typography */
-  --font-sans: "IBM Plex Sans Arabic", "Cairo", system-ui, sans-serif;
+  --font-sans: "Cairo", system-ui, sans-serif;
+  --font-display: "Aref Ruqaa", "Cairo", serif;
 
-  /* Extend colors to use CSS variables directly */
-  --color-sea-25: var(--sea-25);
-  --color-sea-50: var(--sea-50);
-  --color-sea-100: var(--sea-100);
-  --color-sea-200: var(--sea-200); /* Used for borders */
-  --color-sea-300: var(--sea-300);
-  --color-sea-400: var(--sea-400);
-  --color-sea-500: var(--sea-500);
-  --color-sea-600: var(--sea-600);
-  --color-sea-700: var(--sea-700);
-  --color-sea-800: var(--sea-800);
+  --color-brand: var(--brand);
+  --color-brand-2: var(--brand-2);
+  --color-sand: var(--color-sand);
 
-  --color-ink: var(--ink);
-  --color-muted: var(--muted);
   --color-bg: var(--bg);
   --color-card: var(--card);
-  --color-gold: var(--gold);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
 
-   /* Semantic shadcn palette */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card-foreground: var(--card-foreground);
@@ -132,43 +124,147 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Semantic */
-  --color-brand: var(--brand);
-  --color-brand-2: var(--brand-2);
+  --radius-lg: var(--radius-lg);
+  --radius-md: var(--radius);
+  --radius-sm: var(--radius-sm);
 
-  /* Radii */
-  --radius: var(--radius);
-
-  /* Shadows */
-  --shadow-soft: var(--shadow);
+  --shadow-premium: var(--shadow-premium);
+  --shadow-premium-hover: var(--shadow-premium-hover);
 }
 
-/* Base Styles */
-html {
-  scroll-behavior: smooth;
-  font-family: var(--font-sans);
-  color-scheme: light;
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    direction: rtl;
+    line-height: 1.7;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Typography Hierarchy for Premium Look */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--color-foreground);
+    line-height: 1.2;
+    letter-spacing: -0.01em; /* Tighter letter-spacing for premium feel in Cairo */
+  }
+
+  h1 {
+    font-size: 3rem;
+    font-weight: 800;
+  }
+  h2 {
+    font-size: 2.25rem;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  @media (min-width: 768px) {
+    h1 {
+      font-size: 4.5rem;
+    }
+    h2 {
+      font-size: 3rem;
+    }
+    h3 {
+      font-size: 1.875rem;
+    }
+  }
+
+  p {
+    color: var(--color-muted);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
 }
 
-html.dark {
-  color-scheme: dark;
+@layer components {
+  /* Semantic Landing Classes to keep React clean */
+  .landing-section {
+    @apply py-20 md:py-32 relative overflow-hidden;
+  }
+
+  .landing-container {
+    @apply container mx-auto px-6 md:px-12 relative z-10;
+  }
+
+  .landing-title {
+    @apply text-foreground mb-6;
+  }
+
+  .landing-subtitle {
+    @apply text-lg md:text-xl md:leading-relaxed text-muted max-w-2xl;
+  }
+
+  /* Decorative Scribner/Underline */
+  .scribble {
+    @apply relative inline-block px-[0.1em] font-bold text-foreground;
+  }
+
+  .scribble::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: -0.5em;
+    height: 0.6em;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 22'%3E%3Cpath d='M3 17 C35 5 72 20 104 12 C136 4 170 17 206 8' stroke='%2340513B' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: -1; /* Goes slightly behind text */
+  }
+
+  .dark .scribble::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 22'%3E%3Cpath d='M3 17 C35 5 72 20 104 12 C136 4 170 17 206 8' stroke='%2394B574' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  }
+
+  .scribble-accent::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 22'%3E%3Cpath d='M3 17 C35 5 72 20 104 12 C136 4 170 17 206 8' stroke='%23E67E22' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  }
+
+  /* Glassmorphism helpers for premium feel */
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-premium rounded-2xl md:rounded-3xl;
+  }
 }
 
-body {
-  @apply bg-[var(--bg)] text-[var(--ink)];
-  line-height: 1.6;
-  direction: rtl;
-}
-
-/* Utilities for strict design rules */
-.glass {
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.text-gradient {
-  background: linear-gradient(135deg, var(--sea-600), var(--sea-400));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+/* Animations and a11y */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
