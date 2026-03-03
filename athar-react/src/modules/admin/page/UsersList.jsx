@@ -5,15 +5,13 @@ import {
   Search,
   RefreshCw,
   MoreVertical,
+  Eye,
+  Copy,
   CheckCircle2,
-  AlertTriangle,
   Loader2,
-  Calendar,
-  Mail,
   Shield,
 } from "lucide-react";
 import { format } from "date-fns";
-import { arSA } from "date-fns/locale";
 
 import { Button } from "@shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@shared/ui/card";
@@ -43,15 +41,24 @@ import {
 import { Badge } from "@shared/ui/badge";
 import { getAdminUsersList, adminActivateUser } from "@shared/api";
 
+function formatDateTime(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return format(date, "dd/MM/yyyy HH:mm");
+}
+
 export default function UsersList() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
+  const [viewingUser, setViewingUser] = useState(null);
 
   // Activation Modal State
   const [isActivateOpen, setIsActivateOpen] = useState(false);
   const [activating, setActivating] = useState(false);
+  const [isUserInfoOpen, setIsUserInfoOpen] = useState(false);
   const [activationForm, setActivationForm] = useState({
     amount: 1,
     unit: "months",
@@ -117,6 +124,21 @@ export default function UsersList() {
     setSelectedUser(user);
     setActivationForm({ amount: 12, unit: "months", note: "" });
     setIsActivateOpen(true);
+  };
+
+  const handleOpenUserInfo = (user) => {
+    setViewingUser(user);
+    setIsUserInfoOpen(true);
+  };
+
+  const handleCopyUserData = async () => {
+    if (!viewingUser) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(viewingUser, null, 2));
+      toast.success("تم نسخ بيانات المستخدم");
+    } catch {
+      toast.error("تعذّر نسخ البيانات");
+    }
   };
 
   const handleActivate = async () => {
@@ -223,7 +245,7 @@ export default function UsersList() {
               {filteredUsers.map((user) => (
                 <Card
                   key={user.user_id || user.email}
-                  className="overflow-hidden border-primary bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:bg-secondary/40"
+                  className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md hover:bg-secondary/30"
                 >
                   <div className="p-4 space-y-3 ">
                     <div className="flex justify-between items-start  ">
@@ -261,6 +283,12 @@ export default function UsersList() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleOpenUserInfo(user)}
+                          >
+                            <Eye className="ml-2 h-4 w-4" />
+                            عرض كل البيانات
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleOpenActivate(user)}
                           >
@@ -326,6 +354,101 @@ export default function UsersList() {
           )}
         </CardContent>
       </Card>
+
+      {/* User Info Modal */}
+      <Dialog open={isUserInfoOpen} onOpenChange={setIsUserInfoOpen}>
+        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>بيانات المستخدم الكاملة</DialogTitle>
+            <DialogDescription>
+              عرض جميع المعلومات المتوفرة للمستخدم: {viewingUser?.email || "-"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewingUser && (
+            <div className="space-y-4 py-2">
+              <div className="grid gap-3 rounded-xl border border-border bg-secondary/40 p-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">الاسم</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {viewingUser.name || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {viewingUser.email || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">User ID</p>
+                  <p className="font-mono text-xs text-foreground break-all">
+                    {viewingUser.user_id || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">تاريخ الإنشاء</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {formatDateTime(viewingUser.created_at)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">آخر دخول</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {formatDateTime(viewingUser.last_login)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">عدد مرات الدخول</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {viewingUser.logins_count ?? "-"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">
+                    App Metadata
+                  </Label>
+                </div>
+                <pre className="max-h-44 overflow-auto rounded-xl border border-border bg-card p-3 text-[11px] text-foreground">
+                  {JSON.stringify(viewingUser.app_metadata || {}, null, 2)}
+                </pre>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">
+                  User Metadata
+                </Label>
+                <pre className="max-h-44 overflow-auto rounded-xl border border-border bg-card p-3 text-[11px] text-foreground">
+                  {JSON.stringify(viewingUser.user_metadata || {}, null, 2)}
+                </pre>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">
+                    البيانات الكاملة (Raw JSON)
+                  </Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyUserData}
+                  >
+                    <Copy className="mr-2 h-3.5 w-3.5" />
+                    نسخ JSON
+                  </Button>
+                </div>
+                <pre className="max-h-72 overflow-auto rounded-xl border border-border bg-card p-3 text-[11px] text-foreground">
+                  {JSON.stringify(viewingUser, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Activate Modal */}
       <Dialog open={isActivateOpen} onOpenChange={setIsActivateOpen}>
