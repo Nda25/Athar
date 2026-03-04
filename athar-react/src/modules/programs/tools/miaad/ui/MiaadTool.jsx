@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Bell, Loader2, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@modules/auth";
@@ -10,12 +10,14 @@ import { Label } from "@shared/ui/label";
 import {
   addMiyadEvent,
   deleteMiyadEvent,
+  getMiyadEvents,
   getReminderSettings,
   saveReminderSettings,
 } from "@modules/programs/api";
 
 export default function MiaadTool() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [events, setEvents] = useState([]);
   const [form, setForm] = useState({
     subj: "",
@@ -32,9 +34,23 @@ export default function MiaadTool() {
 
   const userSub = user?.sub || "";
 
+  // ---- Load saved events from DB ----
+  const eventsQuery = useQuery({
+    queryKey: ["miyad-events", userSub],
+    queryFn: getMiyadEvents,
+    enabled: Boolean(userSub),
+  });
+
+  useEffect(() => {
+    if (eventsQuery.data && Array.isArray(eventsQuery.data)) {
+      setEvents(eventsQuery.data);
+    }
+  }, [eventsQuery.data]);
+
+  // ---- Load reminder settings ----
   const settingsQuery = useQuery({
     queryKey: ["miyad-settings", userSub],
-    queryFn: () => getReminderSettings({ user_sub: userSub }),
+    queryFn: () => getReminderSettings(),
     enabled: Boolean(userSub),
   });
 
@@ -68,7 +84,9 @@ export default function MiaadTool() {
   const deleteMutation = useMutation({
     mutationFn: deleteMiyadEvent,
     onSuccess: (_, variables) => {
-      setEvents((prev) => prev.filter((item) => item.id !== variables.event_id));
+      setEvents((prev) =>
+        prev.filter((item) => item.id !== variables.event_id),
+      );
       toast.success("تم حذف الموعد");
     },
     onError: (error) => {
@@ -102,7 +120,6 @@ export default function MiaadTool() {
     }
 
     addMutation.mutate({
-      user_sub: userSub,
       event_data: {
         subj: form.subj.trim(),
         cls: form.cls.trim(),
@@ -117,7 +134,6 @@ export default function MiaadTool() {
   const persistSettings = () => {
     if (!userSub) return;
     settingsMutation.mutate({
-      user_id: userSub,
       email: user?.email || "",
       reminders_enabled: settings.reminders_enabled,
       remind_days_before: Number(settings.remind_days_before) || 1,
@@ -128,7 +144,9 @@ export default function MiaadTool() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold">ميعــاد</h1>
-        <p className="text-muted-foreground">لا تفوّت لحظة، وابقَ مطلعًا على كل موعد مهم.</p>
+        <p className="text-muted-foreground">
+          لا تفوّت لحظة، وابقَ مطلعًا على كل موعد مهم.
+        </p>
       </div>
 
       <Card>
@@ -142,16 +160,23 @@ export default function MiaadTool() {
                 <Label>المادة</Label>
                 <Input
                   value={form.subj}
-                  onChange={(e) => setForm((prev) => ({ ...prev, subj: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, subj: e.target.value }))
+                  }
                   placeholder="اسم المادة"
                 />
               </div>
               <div className="space-y-2">
                 <Label>الفصل / الشعبة</Label>
                 <Input
+                  type="number"
+                  min={1}
+                  max={12}
                   value={form.cls}
-                  onChange={(e) => setForm((prev) => ({ ...prev, cls: e.target.value }))}
-                  placeholder="مثال: 2-ب"
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, cls: e.target.value }))
+                  }
+                  placeholder="مثال: 2"
                 />
               </div>
               <div className="space-y-2">
@@ -159,7 +184,9 @@ export default function MiaadTool() {
                 <select
                   className="w-full rounded-md border bg-background px-3 py-2"
                   value={form.day}
-                  onChange={(e) => setForm((prev) => ({ ...prev, day: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, day: e.target.value }))
+                  }
                 >
                   <option>الأحد</option>
                   <option>الإثنين</option>
@@ -171,9 +198,14 @@ export default function MiaadTool() {
               <div className="space-y-2">
                 <Label>الحصة / الوقت</Label>
                 <Input
+                  type="number"
+                  min={1}
+                  max={12}
                   value={form.slot}
-                  onChange={(e) => setForm((prev) => ({ ...prev, slot: e.target.value }))}
-                  placeholder="مثال: الحصة الثالثة"
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, slot: e.target.value }))
+                  }
+                  placeholder="مثال: 3"
                 />
               </div>
               <div className="space-y-2">
@@ -181,7 +213,9 @@ export default function MiaadTool() {
                 <Input
                   type="date"
                   value={form.date}
-                  onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, date: e.target.value }))
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -189,7 +223,9 @@ export default function MiaadTool() {
                 <Input
                   type="color"
                   value={form.color}
-                  onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, color: e.target.value }))
+                  }
                 />
               </div>
             </div>
@@ -237,7 +273,7 @@ export default function MiaadTool() {
             <Label>عدد الأيام قبل التذكير</Label>
             <Input
               type="number"
-              min={0}
+              min={1}
               max={14}
               value={settings.remind_days_before}
               onChange={(e) =>
@@ -249,7 +285,10 @@ export default function MiaadTool() {
             />
           </div>
           <div className="md:col-span-2">
-            <Button onClick={persistSettings} disabled={settingsMutation.isPending || settingsQuery.isLoading}>
+            <Button
+              onClick={persistSettings}
+              disabled={settingsMutation.isPending || settingsQuery.isLoading}
+            >
               {settingsMutation.isPending ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" /> جار الحفظ...
@@ -264,14 +303,19 @@ export default function MiaadTool() {
 
       <Card>
         <CardHeader>
-          <CardTitle>المواعيد المضافة في الجلسة</CardTitle>
+          <CardTitle>المواعيد المحفوظة</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {events.length === 0 ? (
-            <p className="text-sm text-muted-foreground">لا توجد مواعيد حتى الآن.</p>
+            <p className="text-sm text-muted-foreground">
+              لا توجد مواعيد حتى الآن.
+            </p>
           ) : (
             events.map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-md border p-3">
+              <div
+                key={item.id}
+                className="flex items-center justify-between rounded-md border p-3"
+              >
                 <div className="space-y-1">
                   <p className="font-medium">{item.subj}</p>
                   <p className="text-sm text-muted-foreground">
@@ -282,7 +326,9 @@ export default function MiaadTool() {
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    deleteMutation.mutate({ user_sub: userSub, event_id: item.id })
+                    deleteMutation.mutate({
+                      event_id: item.id,
+                    })
                   }
                   disabled={deleteMutation.isPending}
                 >

@@ -6,7 +6,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE;
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
+  if (event.httpMethod !== "GET") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
@@ -19,28 +19,30 @@ exports.handler = async (event) => {
     };
   }
   const user_sub = auth.user.sub;
-  const user_email = auth.user.email;
 
   try {
-    const body = JSON.parse(event.body);
-
-    // Whitelist only allowed fields — never pass raw body to upsert
-    const safePayload = {
-      user_id: user_sub,
-      email: user_email || body.email || "", // JWT email first, then frontend fallback
-      reminders_enabled: Boolean(body.reminders_enabled),
-      remind_days_before: Number(body.remind_days_before) || 1,
-    };
-
     const { data, error } = await supabaseAdmin
-      .from("miyad_settings")
-      .upsert(safePayload, { onConflict: "user_id" });
+      .from("miyad_events")
+      .select("id, subj, class, day, slot, date, color")
+      .eq("user_id", user_sub)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    return { statusCode: 200, body: JSON.stringify(data) };
+    // Map DB column "class" back to "cls" for the frontend
+    const events = (data || []).map((row) => ({
+      id: row.id,
+      subj: row.subj,
+      cls: row.class,
+      day: row.day,
+      slot: row.slot,
+      date: row.date,
+      color: row.color,
+    }));
+
+    return { statusCode: 200, body: JSON.stringify(events) };
   } catch (error) {
-    console.error("Error in save-reminder-settings:", error);
+    console.error("Error in get-miyad-events:", error);
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
 };
