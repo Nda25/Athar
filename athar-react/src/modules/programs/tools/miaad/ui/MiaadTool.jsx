@@ -134,6 +134,7 @@ export default function MiaadTool() {
   const persistSettings = () => {
     if (!userSub) return;
     settingsMutation.mutate({
+      email: user?.email || "",
       reminders_enabled: settings.reminders_enabled,
       remind_days_before: Number(settings.remind_days_before) || 1,
     });
@@ -272,7 +273,7 @@ export default function MiaadTool() {
             <Label>عدد الأيام قبل التذكير</Label>
             <Input
               type="number"
-              min={0}
+              min={1}
               max={14}
               value={settings.remind_days_before}
               onChange={(e) =>

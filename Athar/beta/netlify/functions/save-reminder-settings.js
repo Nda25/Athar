@@ -27,7 +27,7 @@ exports.handler = async (event) => {
     // Whitelist only allowed fields — never pass raw body to upsert
     const safePayload = {
       user_id: user_sub,
-      email: user_email || body.email || "",
+      email: user_email || body.email || "", // JWT email first, then frontend fallback
       reminders_enabled: Boolean(body.reminders_enabled),
       remind_days_before: Number(body.remind_days_before) || 1,
     };
