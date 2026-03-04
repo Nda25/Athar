@@ -223,6 +223,13 @@ export async function generateMurtakaz(params) {
 // ===== Miyad (Calendar) Functions =====
 
 /**
+ * Get all miyad events for the authenticated user
+ */
+export async function getMiyadEvents() {
+  return api.get("/get-miyad-events");
+}
+
+/**
  * Add a miyad event
  * @param {Object} eventData - Event data
  */

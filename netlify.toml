@@ -1,6 +1,7 @@
 [build]
   command = "npm --prefix Athar/beta ci && npm --prefix athar-react ci && npm --prefix athar-react run build"
   publish = "athar-react/dist"
+  ignore = "exit 1"
 
 [functions]
   directory = "Athar/beta/netlify/functions"
