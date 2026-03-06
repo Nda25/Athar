@@ -169,7 +169,7 @@ export function Navbar() {
         scrollDirection === "down" ? "-translate-y-full" : "translate-y-0"
       }`}
     >
-      <div className="container mx-auto relative flex h-16 items-center justify-between px-4 md:px-8">
+      <div className="container mx-auto relative flex h-16 items-center justify-between px-4 lg:px-8">
         <div className="relative z-20 flex min-w-0 items-center gap-2 md:gap-3">
           {/* Logo */}
           <Link
@@ -196,7 +196,7 @@ export function Navbar() {
         </div>
 
         {/* Desktop Middle Area */}
-        <div className="absolute left-1/2 hidden w-[min(62vw,860px)] -translate-x-1/2 items-center justify-center md:flex">
+        <div className="absolute left-1/2 hidden w-[min(62vw,860px)] -translate-x-1/2 items-center justify-center xl:flex">
           <div className="flex min-w-0 items-center gap-4">
             <div className="flex shrink-0 items-center gap-8">
               {NAV_LINKS.map((link) => (
@@ -213,7 +213,7 @@ export function Navbar() {
         </div>
 
         {/* Auth Buttons & Theme Toggle */}
-        <div className="absolute left-4 top-1/2 z-20 flex -translate-y-1/2 items-center gap-2 md:static md:left-auto md:top-auto md:translate-y-0 md:gap-3">
+        <div className="absolute left-4 top-1/2 z-20 flex -translate-y-1/2 items-center gap-2 xl:static xl:left-auto xl:top-auto xl:translate-y-0 xl:gap-3">
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -228,7 +228,7 @@ export function Navbar() {
           </button>
 
           {/* Auth Buttons - Desktop */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden xl:flex items-center gap-2">
             {isLoading ? (
               <div className="w-20 h-9 bg-secondary animate-pulse rounded-md" />
             ) : isAuthenticated ? (
@@ -271,7 +271,7 @@ export function Navbar() {
 
           {/* Mobile Menu Toggle */}
           <button
-            className="md:hidden p-2 text-foreground"
+            className="xl:hidden p-2 text-foreground"
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -281,7 +281,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden border-t border-border bg-card p-4 space-y-4 shadow-lg absolute w-full left-0 top-16">
+        <div className="xl:hidden border-t border-border bg-card p-4 space-y-4 shadow-lg absolute w-full left-0 top-16">
           <div className="flex flex-col space-y-2">
             {NAV_LINKS.map((link) => (
               <Link
