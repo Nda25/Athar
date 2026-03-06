@@ -1,4 +1,4 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@200..1000&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Cairo:wght@200..1000&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -95,7 +95,7 @@
 
 @theme {
   --font-sans: "Cairo", system-ui, sans-serif;
-  --font-display: "Aref Ruqaa", "Cairo", serif;
+  --font-display: "IBM Plex Sans Arabic", "Cairo", sans-serif;
 
   --color-brand: var(--brand);
   --color-brand-2: var(--brand-2);
