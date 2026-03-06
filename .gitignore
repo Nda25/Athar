@@ -7,7 +7,7 @@
 # Dependencies
 node_modules/
 **/node_modules/
-
+newLine
 # Build artifacts
 dist/
 **/dist/
