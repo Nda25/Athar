@@ -4,6 +4,7 @@
  */
 
 import { useAuth } from "@modules/auth/model";
+import { useEffect, useRef } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { checkUserStatus } from "@shared/api";
@@ -28,16 +29,33 @@ function LoadingSpinner({ message = "جاري التحقق..." }) {
 export function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading, loginWithRedirect } = useAuth();
   const location = useLocation();
+  const hasTriggeredRedirectRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || isAuthenticated || hasTriggeredRedirectRef.current) return;
+
+    hasTriggeredRedirectRef.current = true;
+    Promise.resolve(
+      loginWithRedirect({
+        appState: { returnTo: location.pathname + location.search },
+      }),
+    ).catch((error) => {
+      console.warn("[AuthRoute] Failed to redirect to login:", error);
+      hasTriggeredRedirectRef.current = false;
+    });
+  }, [
+    isLoading,
+    isAuthenticated,
+    loginWithRedirect,
+    location.pathname,
+    location.search,
+  ]);
 
   if (isLoading) {
     return <LoadingSpinner message="جاري التحقق من الصلاحيات..." />;
   }
 
   if (!isAuthenticated) {
-    // Store the intended destination
-    loginWithRedirect({
-      appState: { returnTo: location.pathname + location.search },
-    });
     return <LoadingSpinner message="جاري توجيهك لتسجيل الدخول..." />;
   }
 
@@ -50,6 +68,27 @@ export function ProtectedRoute({ children }) {
 export function SubscriptionRoute({ children }) {
   const { isAuthenticated, isLoading, loginWithRedirect } = useAuth();
   const location = useLocation();
+  const hasTriggeredRedirectRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || isAuthenticated || hasTriggeredRedirectRef.current) return;
+
+    hasTriggeredRedirectRef.current = true;
+    Promise.resolve(
+      loginWithRedirect({
+        appState: { returnTo: location.pathname + location.search },
+      }),
+    ).catch((error) => {
+      console.warn("[AuthRoute] Failed to redirect to login:", error);
+      hasTriggeredRedirectRef.current = false;
+    });
+  }, [
+    isLoading,
+    isAuthenticated,
+    loginWithRedirect,
+    location.pathname,
+    location.search,
+  ]);
 
   // Axios interceptor handles auth automatically
   const { data: userStatus, isLoading: statusLoading } = useQuery({
@@ -65,9 +104,6 @@ export function SubscriptionRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    loginWithRedirect({
-      appState: { returnTo: location.pathname + location.search },
-    });
     return <LoadingSpinner message="جاري توجيهك لتسجيل الدخول..." />;
   }
 
@@ -90,6 +126,27 @@ export function SubscriptionRoute({ children }) {
 export function AdminRoute({ children }) {
   const { isAuthenticated, isLoading, isAdmin, loginWithRedirect } = useAuth();
   const location = useLocation();
+  const hasTriggeredRedirectRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || isAuthenticated || hasTriggeredRedirectRef.current) return;
+
+    hasTriggeredRedirectRef.current = true;
+    Promise.resolve(
+      loginWithRedirect({
+        appState: { returnTo: location.pathname + location.search },
+      }),
+    ).catch((error) => {
+      console.warn("[AuthRoute] Failed to redirect to login:", error);
+      hasTriggeredRedirectRef.current = false;
+    });
+  }, [
+    isLoading,
+    isAuthenticated,
+    loginWithRedirect,
+    location.pathname,
+    location.search,
+  ]);
 
   // Axios interceptor handles auth automatically
   const { data: userStatus, isLoading: statusLoading } = useQuery({
@@ -112,9 +169,6 @@ export function AdminRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    loginWithRedirect({
-      appState: { returnTo: location.pathname + location.search },
-    });
     return <LoadingSpinner message="جاري توجيهك لتسجيل الدخول..." />;
   }
 

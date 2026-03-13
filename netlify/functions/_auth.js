@@ -73,11 +73,53 @@ function pickNs(payload, key) {
          null;
 }
 
+function getBearerToken(event) {
+  const header =
+    event?.headers?.authorization || event?.headers?.Authorization || "";
+
+  if (!header) return "";
+
+  const match = String(header).match(/^Bearer\s+(.+)$/i);
+  return match ? match[1].trim() : "";
+}
+
+function mapAuthError(error) {
+  const name = error?.name || "";
+  const message = String(error?.message || "").toLowerCase();
+
+  if (name === "TokenExpiredError") {
+    return { status: 401, code: "token_expired", error: "Token expired" };
+  }
+
+  if (message.includes("jwt audience invalid")) {
+    return { status: 401, code: "invalid_audience", error: "Invalid token audience" };
+  }
+
+  if (message.includes("jwt issuer invalid")) {
+    return { status: 401, code: "invalid_issuer", error: "Invalid token issuer" };
+  }
+
+  if (message.includes("invalid signature")) {
+    return { status: 401, code: "invalid_signature", error: "Invalid token signature" };
+  }
+
+  if (message.includes("jwt malformed") || message.includes("invalid token")) {
+    return { status: 401, code: "malformed_token", error: "Malformed token" };
+  }
+
+  if (message.includes("jwt not active")) {
+    return { status: 401, code: "token_not_active", error: "Token not active yet" };
+  }
+
+  return { status: 401, code: "invalid_token", error: "Bad token" };
+}
+
 // =============== requireAdmin ===============
 exports.requireAdmin = async function requireAdmin(event) {
-  const auth = event.headers.authorization || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token) return { ok:false, status:401, error:"Missing token" };
+  const token = getBearerToken(event);
+  if (!token) {
+    return { ok:false, status:401, code:"missing_token", error:"Missing token" };
+  }
 
   try {
     const payload = await decodeJwt(token);
@@ -99,15 +141,17 @@ exports.requireAdmin = async function requireAdmin(event) {
       }
     };
   } catch (e) {
-    return { ok:false, status:401, error:"Bad token" };
+    const mapped = mapAuthError(e);
+    return { ok:false, ...mapped };
   }
 };
 
 // =============== requireUser ===============
 exports.requireUser = async function requireUser(event) {
-  const auth = event.headers.authorization || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token) return { ok:false, status:401, error:"Missing token" };
+  const token = getBearerToken(event);
+  if (!token) {
+    return { ok:false, status:401, code:"missing_token", error:"Missing token" };
+  }
 
   try {
     const payload = await decodeJwt(token);
@@ -122,6 +166,7 @@ exports.requireUser = async function requireUser(event) {
       roles: pickNs(payload, "roles") || []
     };
   } catch (e) {
-    return { ok:false, status:401, error:"Bad token" };
+    const mapped = mapAuthError(e);
+    return { ok:false, ...mapped };
   }
 };

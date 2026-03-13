@@ -37,6 +37,65 @@ const api = axios.create({
 let tokenGetter = null;
 let unauthorizedHandler = null;
 let isHandlingUnauthorized = false;
+let pendingTokenPromise = null;
+
+const REAUTH_SIGNALS = [
+  "token expired",
+  "token_expired",
+  "missing token",
+  "missing_token",
+  "login_required",
+  "consent_required",
+  "interaction_required",
+  "missing refresh token",
+  "missing_refresh_token",
+  "invalid_grant",
+];
+
+function toSignal(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function extractAuthSignal(error) {
+  const data = error?.response?.data;
+
+  if (typeof data === "string") {
+    return toSignal(data);
+  }
+
+  return toSignal(
+    data?.code ||
+      data?.error ||
+      data?.message ||
+      error?.code ||
+      error?.error ||
+      error?.message,
+  );
+}
+
+function shouldTriggerReauth(error) {
+  const signal = extractAuthSignal(error);
+  if (!signal) return false;
+  return REAUTH_SIGNALS.some((item) => signal.includes(item));
+}
+
+function triggerUnauthorizedOnce(error) {
+  if (!unauthorizedHandler || isHandlingUnauthorized) return;
+
+  isHandlingUnauthorized = true;
+  try {
+    Promise.resolve(unauthorizedHandler(error)).finally(() => {
+      setTimeout(() => {
+        isHandlingUnauthorized = false;
+      }, 1500);
+    });
+  } catch (handlerError) {
+    console.warn("[API] Unauthorized handler failed:", handlerError);
+    isHandlingUnauthorized = false;
+  }
+}
 
 /**
  * Set the token getter function (called from AuthProvider)
@@ -61,12 +120,32 @@ api.interceptors.request.use(
     // Get fresh token for each request
     if (tokenGetter) {
       try {
-        const token = await tokenGetter();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        if (!pendingTokenPromise) {
+          pendingTokenPromise = Promise.resolve(tokenGetter()).finally(() => {
+            pendingTokenPromise = null;
+          });
         }
+
+        const token = await pendingTokenPromise;
+        if (!token) {
+          const missingTokenError = new Error("Missing access token");
+          missingTokenError.code = "missing_token";
+          throw missingTokenError;
+        }
+
+        config.headers.Authorization = `Bearer ${token}`;
       } catch (error) {
-        console.warn("[API] Failed to get access token:", error);
+        console.warn("[API] Failed to attach access token:", error);
+
+        if (shouldTriggerReauth(error)) {
+          triggerUnauthorizedOnce(error);
+        }
+
+        const authError = new Error("Authentication token unavailable");
+        authError.status = 401;
+        authError.code = error?.code || error?.error || "token_unavailable";
+        authError.data = error;
+        return Promise.reject(authError);
       }
     }
 
@@ -97,20 +176,14 @@ api.interceptors.response.use(
       switch (status) {
         case 401:
           console.error("[API] Unauthorized - Token may be expired");
-          if (unauthorizedHandler && !isHandlingUnauthorized) {
-            isHandlingUnauthorized = true;
-            try {
-              Promise.resolve(unauthorizedHandler(error)).finally(() => {
-                setTimeout(() => {
-                  isHandlingUnauthorized = false;
-                }, 1000);
-              });
-            } catch (handlerError) {
-              console.warn("[API] Unauthorized handler failed:", handlerError);
-              isHandlingUnauthorized = false;
-            }
+
+          // Trigger re-auth only for explicit session signals.
+          // This prevents infinite redirect loops for generic 401 causes
+          // like invalid audience/issuer or backend config mismatches.
+          if (shouldTriggerReauth(error)) {
+            triggerUnauthorizedOnce(error);
           }
-          // Could trigger a re-login here
+
           break;
         case 403:
           console.error("[API] Forbidden - Insufficient permissions");

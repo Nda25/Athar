@@ -13,6 +13,8 @@ const AUTH0_CLIENT_ID = import.meta.env.VITE_AUTH0_CLIENT_ID;
 const AUTH0_AUDIENCE = import.meta.env.VITE_AUTH0_AUDIENCE;
 const AUTH0_CALLBACK_URL =
   import.meta.env.VITE_AUTH0_CALLBACK_URL || window.location.origin;
+const AUTH_REDIRECT_TS_KEY = "athar:auth-redirect-ts";
+const AUTH_REDIRECT_COOLDOWN_MS = 10 * 1000;
 
 /**
  * Inner component that sets up the token getter after Auth0 is initialized
@@ -24,6 +26,22 @@ function AuthSetup({ children }) {
   useEffect(() => {
     const redirectToLogin = () => {
       if (isRedirectingToLoginRef.current) return;
+
+      try {
+        const lastRedirectAt = Number(
+          sessionStorage.getItem(AUTH_REDIRECT_TS_KEY) || "0",
+        );
+        if (
+          Number.isFinite(lastRedirectAt) &&
+          Date.now() - lastRedirectAt < AUTH_REDIRECT_COOLDOWN_MS
+        ) {
+          return;
+        }
+
+        sessionStorage.setItem(AUTH_REDIRECT_TS_KEY, String(Date.now()));
+      } catch {
+        // ignore storage errors
+      }
 
       isRedirectingToLoginRef.current = true;
       Promise.resolve(
@@ -42,11 +60,17 @@ function AuthSetup({ children }) {
         .finally(() => {
           setTimeout(() => {
             isRedirectingToLoginRef.current = false;
-          }, 1000);
+          }, 5000);
         });
     };
 
     if (isAuthenticated) {
+      try {
+        sessionStorage.removeItem(AUTH_REDIRECT_TS_KEY);
+      } catch {
+        // ignore storage errors
+      }
+
       // Set the token getter for Axios interceptor
       setTokenGetter(async () => {
         try {
@@ -62,7 +86,6 @@ function AuthSetup({ children }) {
             code === "interaction_required" ||
             code === "missing_refresh_token" ||
             code === "invalid_grant" ||
-            code === "invalid_token" ||
             message.includes("login required") ||
             message.includes("missing refresh token") ||
             message.includes("invalid_grant");
@@ -71,7 +94,10 @@ function AuthSetup({ children }) {
             redirectToLogin();
           }
 
-          return null;
+          const authError = new Error("AUTH_TOKEN_UNAVAILABLE");
+          authError.code = code || "token_unavailable";
+          authError.originalError = error;
+          throw authError;
         }
       });
 
